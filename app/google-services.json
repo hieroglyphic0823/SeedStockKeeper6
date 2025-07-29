@@ -1,0 +1,113 @@
+{
+  "project_info": {
+    "project_number": "639347804790",
+    "project_id": "seedstockkeeper",
+    "storage_bucket": "seedstockkeeper.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:639347804790:android:2490ec279785aa02492d57",
+        "android_client_info": {
+          "package_name": "com.example.seedstockkeeper4"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "639347804790-f0ketlm62k7omoe64eu9q0n975ub8fuh.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.seedstockkeeper4",
+            "certificate_hash": "e40d39b022e3953ee7c11807d2680827aed6c31a"
+          }
+        },
+        {
+          "client_id": "639347804790-m1llndci906llu8inij5gr6s0g0iv6lj.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDon8fNUtqaF8CdnF1bc9et-b83Eq3u7mo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "639347804790-m1llndci906llu8inij5gr6s0g0iv6lj.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:639347804790:android:57d3b232eb48507d492d57",
+        "android_client_info": {
+          "package_name": "com.example.seedstockkeeper5"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "639347804790-36b94oeao9bmg615ea4nfpnqsiugug1s.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.seedstockkeeper5",
+            "certificate_hash": "e40d39b022e3953ee7c11807d2680827aed6c31a"
+          }
+        },
+        {
+          "client_id": "639347804790-m1llndci906llu8inij5gr6s0g0iv6lj.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDon8fNUtqaF8CdnF1bc9et-b83Eq3u7mo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "639347804790-m1llndci906llu8inij5gr6s0g0iv6lj.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:639347804790:android:85e03d4491f80003492d57",
+        "android_client_info": {
+          "package_name": "com.example.seedstockkeeper6"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "639347804790-m1llndci906llu8inij5gr6s0g0iv6lj.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDon8fNUtqaF8CdnF1bc9et-b83Eq3u7mo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "639347804790-m1llndci906llu8inij5gr6s0g0iv6lj.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

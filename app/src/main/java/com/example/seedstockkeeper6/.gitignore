@@ -1,0 +1,21 @@
+gitignore
+    # API Keys and Secrets (もし特定のファイルに書いている場合)
+    secrets.properties
+    local.properties
+    apikeys.xml
+
+    # ビルドフォルダ (Android Studioが自動生成するものが多い)
+    /build
+    /.idea/workspace.xml # ユーザー固有の設定
+    /.idea/libraries/ # ユーザー固有の設定
+    *.iml
+    *.apk
+    *.aab
+
+    # ローカル設定ファイル
+    local.properties # Google Maps APIキーなどもここに含まれることがある
+
+    # Gemini APIキーを直接コードに書いている場合は、そのファイル名を指定
+    # (ただし、これは非推奨。下記の方法で外部化すべき)
+    # src/main/java/com/example/seedstockkeeper6/data/GeminiApiClient.kt # ← もしここにキー直書きなら
+
