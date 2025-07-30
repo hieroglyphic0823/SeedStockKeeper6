@@ -2,6 +2,7 @@ package com.example.seedstockkeeper6
 
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -34,7 +35,6 @@ import androidx.navigation.navArgument
 import com.example.seedstockkeeper6.model.SeedPacket
 import com.example.seedstockkeeper6.ui.screens.SeedInputScreen
 import com.example.seedstockkeeper6.ui.screens.SeedListScreen
-import com.example.seedstockkeeper6.ui.screens.deleteSeedPacketWithImages
 import com.example.seedstockkeeper6.ui.theme.SeedStockTheme
 import com.example.seedstockkeeper6.viewmodel.SeedInputViewModel
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
@@ -84,10 +84,25 @@ fun AppNavHost() {
                     when {
                         isListScreen && selectedIds.isNotEmpty() -> {
                             IconButton(onClick = {
-                                selectedIds.forEach { id ->
-                                    deleteSeedPacketWithImages(id)
+                                val currentVm = inputViewModel
+                                if (currentVm != null) {
+                                    Log.d("AppNavHost", "Attempting deletion using inputViewModel.")
+                                    selectedIds.forEach { id ->
+                                        currentVm.deleteSeedPacketWithImages(id) { result -> // ← onComplete コールバックを渡す
+                                            if (result.isSuccess) {
+                                                Log.d("AppNavHost", "Successfully deleted $id")
+                                                // 必要であれば、UI を更新するロジックをここに追加
+                                                // 例: 削除されたアイテムをリストから取り除く、など
+                                            } else {
+                                                Log.e("AppNavHost", "Failed to delete $id", result.exceptionOrNull())
+                                                // ユーザーにエラーを通知するロジックなど
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    Log.e("AppNavHost", "inputViewModel is null. Deletion skipped.")
                                 }
-                                selectedIds.clear()
+                                selectedIds.clear() // 処理の成否に関わらず選択はクリア (要件による)
                             }) {
                                 Icon(Icons.Default.Delete, contentDescription = "Delete")
                             }
@@ -135,8 +150,9 @@ fun AppNavHost() {
                     inputViewModel = viewModel()
                     SeedInputScreen(
                         navController = navController,
-                        packet = packet,
-                        viewModel = inputViewModel!!
+                        viewModel = inputViewModel!!.apply {
+                            setSeed(packet)
+                        }
                     )
                 }
             }
