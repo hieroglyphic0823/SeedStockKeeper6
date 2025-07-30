@@ -2,6 +2,7 @@ package com.example.seedstockkeeper6.viewmodel
 
 import android.graphics.Bitmap
 import android.net.Uri
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -9,17 +10,12 @@ import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.seedstockkeeper6.model.SeedPacket
-import com.example.seedstockkeeper6.model.Cultivation
-import com.example.seedstockkeeper6.model.SoilPrep
 import com.google.firebase.firestore.ktx.firestore
-import com.google.firebase.storage.ktx.storage
 import com.google.firebase.ktx.Firebase
-import kotlinx.coroutines.Dispatchers
+import com.google.firebase.storage.ktx.storage
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
-import android.util.Log
 
 class SeedInputViewModel : ViewModel() {
     var packet by mutableStateOf(SeedPacket())
