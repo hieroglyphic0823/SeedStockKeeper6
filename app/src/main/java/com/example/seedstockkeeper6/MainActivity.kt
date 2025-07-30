@@ -37,27 +37,15 @@ import com.example.seedstockkeeper6.ui.screens.SeedInputScreen
 import com.example.seedstockkeeper6.ui.screens.SeedListScreen
 import com.example.seedstockkeeper6.ui.theme.SeedStockTheme
 import com.example.seedstockkeeper6.viewmodel.SeedInputViewModel
+import com.example.seedstockkeeper6.viewmodel.SeedListViewModel
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
-import com.google.firebase.Firebase
-import com.google.firebase.auth.auth
 import com.google.gson.Gson
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // 匿名認証を行う
-        if (Firebase.auth.currentUser == null) {
-            Firebase.auth.signInAnonymously()
-                .addOnCompleteListener { task ->
-                    if (task.isSuccessful) {
-                        Log.d("Auth", "Anonymous sign-in successful")
-                    } else {
-                        Log.e("Auth", "Anonymous sign-in failed", task.exception)
-                    }
-                }
-        }
         setContent {
-            SeedStockTheme( // ← ここで壁紙連動テーマが有効に！
+            SeedStockTheme(
                 dynamicColor = true
             ) {
                 AppNavHost()
@@ -86,8 +74,8 @@ fun AppNavHost() {
         )
     }
 
-    // 入力画面で使うViewModelの一時保存
     var inputViewModel: SeedInputViewModel? = null
+    val listViewModel: SeedListViewModel = viewModel()
 
     Scaffold(
         topBar = {
@@ -97,25 +85,16 @@ fun AppNavHost() {
                     when {
                         isListScreen && selectedIds.isNotEmpty() -> {
                             IconButton(onClick = {
-                                val currentVm = inputViewModel
-                                if (currentVm != null) {
-                                    Log.d("AppNavHost", "Attempting deletion using inputViewModel.")
-                                    selectedIds.forEach { id ->
-                                        currentVm.deleteSeedPacketWithImages(id) { result -> // ← onComplete コールバックを渡す
-                                            if (result.isSuccess) {
-                                                Log.d("AppNavHost", "Successfully deleted $id")
-                                                // 必要であれば、UI を更新するロジックをここに追加
-                                                // 例: 削除されたアイテムをリストから取り除く、など
-                                            } else {
-                                                Log.e("AppNavHost", "Failed to delete $id", result.exceptionOrNull())
-                                                // ユーザーにエラーを通知するロジックなど
-                                            }
+                                selectedIds.forEach { id ->
+                                    listViewModel.deleteSeedPacketWithImages(id) { result ->
+                                        if (result.isSuccess) {
+                                            Log.d("MainActivity", "Deleted $id successfully")
+                                        } else {
+                                            Log.e("MainActivity", "Failed to delete $id", result.exceptionOrNull())
                                         }
                                     }
-                                } else {
-                                    Log.e("AppNavHost", "inputViewModel is null. Deletion skipped.")
                                 }
-                                selectedIds.clear() // 処理の成否に関わらず選択はクリア (要件による)
+                                selectedIds.clear()
                             }) {
                                 Icon(Icons.Default.Delete, contentDescription = "Delete")
                             }
@@ -150,7 +129,10 @@ fun AppNavHost() {
         Surface(modifier = Modifier.padding(padding)) {
             NavHost(navController = navController, startDestination = "list") {
                 composable("list") {
-                    SeedListScreen(navController, selectedIds)
+                    SeedListScreen(
+                        navController = navController,
+                        selectedIds = selectedIds
+                    )
                 }
                 composable(
                     route = "input/{packet}",

@@ -93,40 +93,4 @@ class SeedInputViewModel : ViewModel() {
             onComplete()
         }
     }
-
-
-    fun deleteSeedPacketWithImages(documentId: String, onComplete: (Result<Unit>) -> Unit) {
-        viewModelScope.launch {
-            val result = deleteSeedPacketWithImagesInternal(documentId)
-            onComplete(result)
-        }
-    }
-
-    private suspend fun deleteSeedPacketWithImagesInternal(documentId: String): Result<Unit> =
-        withContext(Dispatchers.IO) {
-            val db = Firebase.firestore
-            val storage = Firebase.storage
-            return@withContext try {
-                val docRef = db.collection("seeds").document(documentId)
-                val snapshot = docRef.get().await()
-                val imageUrls = snapshot.get("imageUrls") as? List<String> ?: emptyList()
-
-                imageUrls.forEach { url ->
-                    if (url.isNotBlank()) {
-                        try {
-                            val path = Uri.decode(url).substringAfter("/o/").substringBefore("?")
-                            if (path.isNotEmpty()) storage.reference.child(path).delete().await()
-                        } catch (e: Exception) {
-                            Log.e("ViewModelDelete", "Image delete failed: $url", e)
-                        }
-                    }
-                }
-
-                docRef.delete().await()
-                Result.success(Unit)
-            } catch (e: Exception) {
-                Log.e("ViewModelDelete", "Delete failed for $documentId", e)
-                Result.failure(e)
-            }
-        }
 }
