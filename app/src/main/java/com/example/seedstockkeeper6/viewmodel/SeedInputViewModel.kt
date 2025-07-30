@@ -3,10 +3,7 @@ package com.example.seedstockkeeper6.viewmodel
 import android.graphics.Bitmap
 import android.net.Uri
 import android.util.Log
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
-import androidx.core.net.toUri
+import androidx.compose.runtime.*
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.seedstockkeeper6.model.SeedPacket
@@ -18,26 +15,33 @@ import kotlinx.coroutines.tasks.await
 import java.io.ByteArrayOutputStream
 
 class SeedInputViewModel : ViewModel() {
+    // 編集対象の種データ
     var packet by mutableStateOf(SeedPacket())
         private set
 
-    val imageUri: Uri?
-        get() = packet.imageUrls.firstOrNull()?.toUri()
+    // ユーザーがローカルから選択した画像（nullならFirebase画像を使用）
+    private val _imageUri = mutableStateOf<Uri?>(null)
+    val imageUri: State<Uri?> = _imageUri
 
+    // OCR処理と画像アップロード用のBitmap
     private var bitmap: Bitmap? = null
 
+    /** Firebaseから渡されたデータで初期化 */
     fun setSeed(seed: SeedPacket?) {
         packet = seed ?: SeedPacket()
     }
 
+    /** ユーザーが画像を選択したときに呼ばれる */
     fun onImageSelected(uri: Uri) {
-        packet = packet.copy(imageUrls = listOf(uri.toString()))
+        _imageUri.value = uri
+        packet = packet.copy(imageUrls = listOf(uri.toString())) // 一時的に画像URLにもセット
     }
 
     fun setBitmap(bmp: Bitmap?) {
         bitmap = bmp
     }
 
+    /** OCR結果を反映 */
     fun applyOcrResult(parsed: SeedPacket) {
         packet = parsed.copy(
             id = packet.id,
@@ -46,7 +50,7 @@ class SeedInputViewModel : ViewModel() {
         )
     }
 
-    // 各フィールドの更新メソッド
+    // フィールド更新メソッド（略さずにそのまま）
     fun onProductNameChange(v: String) = update { it.copy(productName = v) }
     fun onVarietyChange(v: String) = update { it.copy(variety = v) }
     fun onFamilyChange(v: String) = update { it.copy(family = v) }
@@ -61,12 +65,15 @@ class SeedInputViewModel : ViewModel() {
     fun onSpacingRowMinChange(v: String) = update {
         it.copy(cultivation = it.cultivation.copy(spacing_cm_row_min = v.toIntOrNull() ?: 0))
     }
+
     fun onSpacingRowMaxChange(v: String) = update {
         it.copy(cultivation = it.cultivation.copy(spacing_cm_row_max = v.toIntOrNull() ?: 0))
     }
+
     fun onSpacingPlantMinChange(v: String) = update {
         it.copy(cultivation = it.cultivation.copy(spacing_cm_plant_min = v.toIntOrNull() ?: 0))
     }
+
     fun onSpacingPlantMaxChange(v: String) = update {
         it.copy(cultivation = it.cultivation.copy(spacing_cm_plant_max = v.toIntOrNull() ?: 0))
     }
@@ -74,23 +81,33 @@ class SeedInputViewModel : ViewModel() {
     fun onGermTempChange(v: String) = update {
         it.copy(cultivation = it.cultivation.copy(germinationTemp_c = v))
     }
+
     fun onGrowTempChange(v: String) = update {
         it.copy(cultivation = it.cultivation.copy(growingTemp_c = v))
     }
 
     fun onCompostChange(v: String) = update {
-        it.copy(cultivation = it.cultivation.copy(soilPrep_per_sqm = it.cultivation.soilPrep_per_sqm.copy(compost_kg = v.toIntOrNull() ?: 0)))
+        it.copy(cultivation = it.cultivation.copy(
+            soilPrep_per_sqm = it.cultivation.soilPrep_per_sqm.copy(compost_kg = v.toIntOrNull() ?: 0)
+        ))
     }
+
     fun onLimeChange(v: String) = update {
-        it.copy(cultivation = it.cultivation.copy(soilPrep_per_sqm = it.cultivation.soilPrep_per_sqm.copy(dolomite_lime_g = v.toIntOrNull() ?: 0)))
+        it.copy(cultivation = it.cultivation.copy(
+            soilPrep_per_sqm = it.cultivation.soilPrep_per_sqm.copy(dolomite_lime_g = v.toIntOrNull() ?: 0)
+        ))
     }
+
     fun onFertilizerChange(v: String) = update {
-        it.copy(cultivation = it.cultivation.copy(soilPrep_per_sqm = it.cultivation.soilPrep_per_sqm.copy(chemical_fertilizer_g = v.toIntOrNull() ?: 0)))
+        it.copy(cultivation = it.cultivation.copy(
+            soilPrep_per_sqm = it.cultivation.soilPrep_per_sqm.copy(chemical_fertilizer_g = v.toIntOrNull() ?: 0)
+        ))
     }
 
     fun onNotesChange(v: String) = update {
         it.copy(cultivation = it.cultivation.copy(notes = v))
     }
+
     fun onHarvestingChange(v: String) = update {
         it.copy(cultivation = it.cultivation.copy(harvesting = v))
     }
@@ -99,6 +116,7 @@ class SeedInputViewModel : ViewModel() {
         packet = transform(packet)
     }
 
+    /** FirestoreとStorageにデータ保存 */
     fun saveSeed(onComplete: () -> Unit) {
         viewModelScope.launch {
             val db = Firebase.firestore

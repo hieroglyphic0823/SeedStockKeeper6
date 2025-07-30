@@ -139,8 +139,7 @@ fun AppNavHost() {
                     arguments = listOf(navArgument("packet") { defaultValue = "" })
                 ) { backStackEntry ->
                     val json = backStackEntry.arguments?.getString("packet") ?: ""
-                    val decodedJson = Uri.decode(json)
-                    val packet = if (decodedJson.isNotEmpty()) Gson().fromJson(decodedJson, SeedPacket::class.java) else null
+                    val packet = if (json.isNotEmpty()) Gson().fromJson(json, SeedPacket::class.java) else null
 
                     inputViewModel = viewModel()
                     SeedInputScreen(
