@@ -11,19 +11,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Save
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.SideEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.remember
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -74,7 +63,6 @@ fun AppNavHost() {
         )
     }
 
-    var inputViewModel: SeedInputViewModel? = null
     val listViewModel: SeedListViewModel = viewModel()
 
     Scaffold(
@@ -101,8 +89,9 @@ fun AppNavHost() {
                         }
 
                         isInputScreen -> {
+                            val inputViewModel: SeedInputViewModel = viewModel()
                             IconButton(onClick = {
-                                inputViewModel?.saveSeed {
+                                inputViewModel.saveSeed {
                                     navController.popBackStack()
                                 }
                             }) {
@@ -141,12 +130,17 @@ fun AppNavHost() {
                     val json = backStackEntry.arguments?.getString("packet") ?: ""
                     val packet = if (json.isNotEmpty()) Gson().fromJson(json, SeedPacket::class.java) else null
 
-                    inputViewModel = viewModel()
+                    val currentInputViewModel: SeedInputViewModel = viewModel()
+
+                    LaunchedEffect(json) {
+                        Log.d("AppNavHost_LE", "Before setSeed, imageUris: ${currentInputViewModel.imageUris}")
+                        currentInputViewModel.setSeed(packet)
+                        Log.d("AppNavHost_LE", "After setSeed, imageUris: ${currentInputViewModel.imageUris}")
+                    }
+
                     SeedInputScreen(
                         navController = navController,
-                        viewModel = inputViewModel!!.apply {
-                            setSeed(packet)
-                        }
+                        viewModel = currentInputViewModel
                     )
                 }
             }
