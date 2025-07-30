@@ -17,6 +17,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
+import java.io.ByteArrayOutputStream
 
 class SeedInputViewModel : ViewModel() {
     // UI にバインドする主要な packet
@@ -73,10 +74,26 @@ class SeedInputViewModel : ViewModel() {
             val db = Firebase.firestore
             val ref = db.collection("seeds")
             val id = packet.id ?: ref.document().id
-            ref.document(id).set(packet.copy(id = id)).await()
+            val storageRef = Firebase.storage.reference.child("seed_images/$id.jpg")
+
+            val finalPacket = if (bitmap != null) {
+                // bitmap をアップロード
+                val baos = ByteArrayOutputStream().apply {
+                    bitmap!!.compress(Bitmap.CompressFormat.JPEG, 90, this)
+                }
+                val uploadTask = storageRef.putBytes(baos.toByteArray()).await()
+                val url = storageRef.downloadUrl.await().toString()
+                packet.copy(id = id, imageUrls = listOf(url))
+            } else {
+                packet.copy(id = id)
+            }
+
+            db.collection("seeds").document(id).set(finalPacket).await()
+            packet = finalPacket
             onComplete()
         }
     }
+
 
     fun deleteSeedPacketWithImages(documentId: String, onComplete: (Result<Unit>) -> Unit) {
         viewModelScope.launch {

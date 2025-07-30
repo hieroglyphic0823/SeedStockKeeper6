@@ -38,11 +38,24 @@ import com.example.seedstockkeeper6.ui.screens.SeedListScreen
 import com.example.seedstockkeeper6.ui.theme.SeedStockTheme
 import com.example.seedstockkeeper6.viewmodel.SeedInputViewModel
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import com.google.firebase.Firebase
+import com.google.firebase.auth.auth
 import com.google.gson.Gson
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // 匿名認証を行う
+        if (Firebase.auth.currentUser == null) {
+            Firebase.auth.signInAnonymously()
+                .addOnCompleteListener { task ->
+                    if (task.isSuccessful) {
+                        Log.d("Auth", "Anonymous sign-in successful")
+                    } else {
+                        Log.e("Auth", "Anonymous sign-in failed", task.exception)
+                    }
+                }
+        }
         setContent {
             SeedStockTheme( // ← ここで壁紙連動テーマが有効に！
                 dynamicColor = true
