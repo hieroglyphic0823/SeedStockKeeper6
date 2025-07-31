@@ -38,7 +38,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun SeedInputScreen(
     navController: NavController,
-    viewModel: SeedInputViewModel = viewModel()
+    viewModel: SeedInputViewModel
 ) {
     val context = LocalContext.current
     val scroll = rememberScrollState()

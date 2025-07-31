@@ -2,6 +2,7 @@ package com.example.seedstockkeeper6.viewmodel
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.util.Log
 import androidx.compose.runtime.*
@@ -16,15 +17,13 @@ import com.google.firebase.storage.ktx.storage
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import java.io.ByteArrayOutputStream
+import java.net.URL
 
 class SeedInputViewModel : ViewModel() {
-    // ここに init ブロックを追加します
     init {
         Log.d("SeedInputVM_Lifecycle", "SeedInputViewModel instance created: $this")
-        // ここでViewModel初期化時に行いたい処理を記述できます。
-        // 例えば、既存データのロードを開始するなど。
-        // loadExistingSeedDataIfNeeded() // 仮のメソッド呼び出し
     }
+
     var packet by mutableStateOf(SeedPacket())
         private set
 
@@ -32,9 +31,8 @@ class SeedInputViewModel : ViewModel() {
     var ocrTargetIndex by mutableStateOf(-1)
         private set
 
-    private var bitmap: Bitmap? = null
-
     fun setSeed(seed: SeedPacket?) {
+        Log.w("SET_SEED_CALLED", "setSeed called with: $seed. Current packet BEFORE change: ${this.packet}", Throwable())
         packet = seed ?: SeedPacket()
         imageUris.clear()
         seed?.imageUrls?.forEach { url ->
@@ -67,14 +65,21 @@ class SeedInputViewModel : ViewModel() {
         }
     }
 
-    fun setBitmap(bmp: Bitmap?) {
-        bitmap = bmp
-    }
-
     suspend fun performOcr(context: Context) {
         if (ocrTargetIndex !in imageUris.indices) return
         val uri = imageUris[ocrTargetIndex]
-        val bmp = uriToBitmap(context, uri)
+        val bmp = when {
+            uri.scheme == "content" -> uriToBitmap(context, uri)
+            uri.scheme == "https" || uri.scheme == "http" -> {
+                val stream = URL(uri.toString()).openStream()
+                BitmapFactory.decodeStream(stream)
+            }
+            else -> null
+        }
+        if (bmp == null){
+            Log.e("OCR","Bitmap is null,cannot run OCR")
+            return
+        }
         val parsedJson = runGeminiOcr(context, bmp)
         val cleaned = parsedJson.removePrefix("```json").removeSuffix("```").trim()
         val parsedPacket = com.google.gson.Gson().fromJson(cleaned, SeedPacket::class.java)
@@ -140,31 +145,40 @@ class SeedInputViewModel : ViewModel() {
     }
 
     private fun update(transform: (SeedPacket) -> SeedPacket) {
+        val oldPacket = packet
         packet = transform(packet)
+        Log.d("VM_PacketUpdate", "Packet updated. Old: $oldPacket, New: $packet")
     }
 
-    fun saveSeed(onComplete: () -> Unit) {
+    fun saveSeed(context: Context, onComplete: () -> Unit) {
         viewModelScope.launch {
             val db = Firebase.firestore
             val storageRoot = Firebase.storage.reference
             val ref = db.collection("seeds")
             val id = packet.id ?: ref.document().id
-            var final = packet.copy(id = id, imageUrls = imageUris.map { it.toString() })
+            val uploadedUrls = mutableListOf<String>()
 
-            bitmap?.let { bmp ->
-                try {
-                    val baos = ByteArrayOutputStream().apply {
-                        bmp.compress(Bitmap.CompressFormat.JPEG, 80, this)
+            imageUris.forEachIndexed { index, uri ->
+                if (uri.toString().startsWith("http")) {
+                    uploadedUrls.add(uri.toString())
+                } else {
+                    try {
+                        val bmp = uriToBitmap(context, uri)
+                        val bytes = ByteArrayOutputStream().apply {
+                            bmp.compress(Bitmap.CompressFormat.JPEG, 80, this)
+                        }.toByteArray()
+                        val path = "seed_images/${id}_$index.jpg"
+                        val imageRef = storageRoot.child(path)
+                        imageRef.putBytes(bytes).await()
+                        val url = imageRef.downloadUrl.await().toString()
+                        uploadedUrls.add(url)
+                    } catch (e: Exception) {
+                        Log.e("SeedInputVM", "Upload failed: $uri", e)
                     }
-                    val path = "seed_images/$id.jpg"
-                    val imageRef = storageRoot.child(path)
-                    imageRef.putBytes(baos.toByteArray()).await()
-                    val url = imageRef.downloadUrl.await().toString()
-                    final = final.copy(imageUrls = listOf(url))
-                } catch (e: Exception) {
-                    Log.e("ViewModel", "Upload failed", e)
                 }
             }
+
+            val final = packet.copy(id = id, imageUrls = uploadedUrls)
 
             try {
                 db.collection("seeds").document(id).set(final).await()

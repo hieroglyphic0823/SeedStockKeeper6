@@ -21,7 +21,8 @@ class SeedListViewModel : ViewModel() {
         }
     }
 
-    private suspend fun deleteSeedPacketWithImagesInternal(documentId: String): Result<Unit> =
+    // ★ public に変更
+    suspend fun deleteSeedPacketWithImagesInternal(documentId: String): Result<Unit> =
         withContext(Dispatchers.IO) {
             val db = Firebase.firestore
             val storage = Firebase.storage

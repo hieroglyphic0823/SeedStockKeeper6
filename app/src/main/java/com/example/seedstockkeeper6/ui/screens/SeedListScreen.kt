@@ -12,6 +12,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.seedstockkeeper6.model.SeedPacket
 import com.example.seedstockkeeper6.ui.components.FamilyIcon
+import com.example.seedstockkeeper6.viewmodel.SeedListViewModel
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.google.gson.Gson
@@ -21,7 +22,8 @@ import java.nio.charset.StandardCharsets
 @Composable
 fun SeedListScreen(
     navController: NavController,
-    selectedIds: MutableList<String>
+    selectedIds: MutableList<String>,
+    viewModel: SeedListViewModel
 ) {
     val db = Firebase.firestore
     var seeds by remember { mutableStateOf(listOf<Pair<String, SeedPacket>>()) }
