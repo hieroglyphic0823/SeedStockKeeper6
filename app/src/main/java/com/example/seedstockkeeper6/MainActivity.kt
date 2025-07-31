@@ -2,12 +2,10 @@
 
 package com.example.seedstockkeeper6
 
-import android.graphics.BitmapFactory
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
@@ -15,9 +13,7 @@ import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -47,9 +43,11 @@ class MainActivity : ComponentActivity() {
             val isListScreen = currentRoute == "list"
             val isInputScreen = currentRoute?.startsWith("input") == true
 
+            val snackbarHostState = remember { SnackbarHostState() }
             val listViewModel: SeedListViewModel = viewModel()
 
             Scaffold(
+                snackbarHost = { SnackbarHost(snackbarHostState) },
                 topBar = {
                     TopAppBar(
                         title = { Text("SeedStockKeeper6") },
@@ -59,7 +57,16 @@ class MainActivity : ComponentActivity() {
                                     IconButton(onClick = {
                                         CoroutineScope(Dispatchers.IO).launch {
                                             selectedIds.forEach { id ->
-                                                listViewModel.deleteSeedPacketWithImages(documentId = id) {}
+                                                listViewModel.deleteSeedPacketWithImages(id) { result ->
+                                                    CoroutineScope(Dispatchers.Main).launch {
+                                                        val message = if (result.isSuccess) {
+                                                            "削除しました"
+                                                        } else {
+                                                            "削除に失敗しました: ${result.exceptionOrNull()?.localizedMessage ?: "不明なエラー"}"
+                                                        }
+                                                        snackbarHostState.showSnackbar(message)
+                                                    }
+                                                }
                                             }
                                             selectedIds.clear()
                                         }
@@ -74,12 +81,21 @@ class MainActivity : ComponentActivity() {
                                     val context = LocalContext.current
 
                                     IconButton(onClick = {
-                                        inputViewModel.saveSeed(context) {
-                                            navController.popBackStack()
+                                        inputViewModel.saveSeed(context) { result ->
+                                            CoroutineScope(Dispatchers.Main).launch {
+                                                val message = if (result.isSuccess) {
+                                                    navController.popBackStack()
+                                                    "保存しました"
+                                                } else {
+                                                    "保存に失敗しました: ${result.exceptionOrNull()?.localizedMessage ?: "不明なエラー"}"
+                                                }
+                                                snackbarHostState.showSnackbar(message)
+                                            }
                                         }
                                     }) {
                                         Icon(Icons.Default.Save, contentDescription = "Save")
                                     }
+
                                 }
                             }
                         }
@@ -88,7 +104,10 @@ class MainActivity : ComponentActivity() {
                 floatingActionButton = {
                     if (isListScreen && selectedIds.isEmpty()) {
                         FloatingActionButton(onClick = {
-                            val emptyPacketJson = URLEncoder.encode(Gson().toJson(SeedPacket()), StandardCharsets.UTF_8.toString())
+                            val emptyPacketJson = URLEncoder.encode(
+                                Gson().toJson(SeedPacket()),
+                                StandardCharsets.UTF_8.toString()
+                            )
                             navController.navigate("input/$emptyPacketJson")
                         }) {
                             Icon(Icons.Default.Add, contentDescription = "Add")

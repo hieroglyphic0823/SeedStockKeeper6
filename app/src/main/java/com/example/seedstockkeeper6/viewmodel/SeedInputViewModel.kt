@@ -10,14 +10,29 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.seedstockkeeper6.model.SeedPacket
 import com.example.seedstockkeeper6.data.runGeminiOcr
-import com.example.seedstockkeeper6.data.uriToBitmap
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.ktx.storage
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.InputStream
+import java.net.HttpURLConnection
 import java.net.URL
+
+fun uriToBitmap(context: Context, uri: Uri): Bitmap? {
+    return try {
+        context.contentResolver.openInputStream(uri)?.use { input ->
+            BitmapFactory.decodeStream(input)
+        }
+    } catch (e: Exception) {
+        Log.e("UriToBitmap", "Failed to decode bitmap from uri: $uri", e)
+        null
+    }
+}
 
 class SeedInputViewModel : ViewModel() {
     init {
@@ -30,6 +45,20 @@ class SeedInputViewModel : ViewModel() {
     val imageUris = mutableStateListOf<Uri>()
     var ocrTargetIndex by mutableStateOf(-1)
         private set
+
+    var ocrErrorMessage by mutableStateOf<String?>(null)
+        private set
+
+    var ocrSuccessMessage by mutableStateOf<String?>(null)
+        private set
+
+    fun clearOcrError() {
+        ocrErrorMessage = null
+    }
+
+    fun clearOcrSuccess() {
+        ocrSuccessMessage = null
+    }
 
     fun setSeed(seed: SeedPacket?) {
         Log.w("SET_SEED_CALLED", "setSeed called with: $seed. Current packet BEFORE change: ${this.packet}", Throwable())
@@ -63,7 +92,6 @@ class SeedInputViewModel : ViewModel() {
             } else if (ocrTargetIndex > index) {
                 ocrTargetIndex--
             }
-            // Firebase Storage の画像削除処理
             if (uri.toString().startsWith("http")) {
                 try {
                     val path = Uri.decode(uri.toString()).substringAfter("/o/").substringBefore("?")
@@ -78,28 +106,66 @@ class SeedInputViewModel : ViewModel() {
     }
 
     suspend fun performOcr(context: Context) {
-        if (ocrTargetIndex !in imageUris.indices) return
-        val uri = imageUris[ocrTargetIndex]
-        val bmp = when {
-            uri.scheme == "content" -> uriToBitmap(context, uri)
-            uri.scheme == "https" || uri.scheme == "http" -> {
-                val stream = URL(uri.toString()).openStream()
-                BitmapFactory.decodeStream(stream)
-            }
-            else -> null
-        }
-        if (bmp == null){
-            Log.e("OCR","Bitmap is null,cannot run OCR")
+        if (ocrTargetIndex !in imageUris.indices) {
+            ocrErrorMessage = "対象の画像がありません。"
             return
         }
-        val parsedJson = runGeminiOcr(context, bmp)
+        val uri = imageUris[ocrTargetIndex]
+
+        val bmp: Bitmap? = try {
+            withContext(Dispatchers.IO) {
+                when {
+                    uri.scheme == "content" -> uriToBitmap(context, uri)
+                    uri.scheme == "https" || uri.scheme == "http" -> {
+                        try {
+                            val path = Uri.decode(uri.toString()).substringAfter("/o/").substringBefore("?")
+                            val tempFile = File.createTempFile("tempImage", ".jpg")
+                            Firebase.storage.reference.child(path).getFile(tempFile).await()
+                            BitmapFactory.decodeFile(tempFile.absolutePath)
+                        } catch (e: Exception) {
+                            Log.e("OCR", "Failed to download remote image to temp file: ${uri}", e)
+                            null
+                        }
+                    }
+                    else -> null
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("OCR", "Failed to load bitmap from uri: $uri", e)
+            ocrErrorMessage = "画像の読み込みに失敗しました: ${e.message}"
+            null
+        }
+
+        if (bmp == null) {
+            Log.e("OCR", "Bitmap is null after attempting to load, cannot run OCR for URI: $uri")
+            if (ocrErrorMessage == null) {
+                ocrErrorMessage = "画像が読み込めませんでした。"
+            }
+            return
+        }
+
+        val parsedJson = try {
+            runGeminiOcr(context, bmp)
+        } catch (e: Exception) {
+            Log.e("OCR_Gemini", "Gemini OCR failed", e)
+            ocrErrorMessage = "AI解析中にエラーが発生しました: ${e.message}"
+            return
+        }
+
         val cleaned = parsedJson.removePrefix("```json").removeSuffix("```").trim()
-        val parsedPacket = com.google.gson.Gson().fromJson(cleaned, SeedPacket::class.java)
-        packet = parsedPacket.copy(
-            id = packet.id,
-            imageUrls = packet.imageUrls,
-            cultivation = parsedPacket.cultivation
-        )
+
+        try {
+            val parsedPacket = com.google.gson.Gson().fromJson(cleaned, SeedPacket::class.java)
+            packet = parsedPacket.copy(
+                id = packet.id,
+                imageUrls = packet.imageUrls,
+                cultivation = parsedPacket.cultivation
+            )
+            ocrSuccessMessage = "AIで解析が完了しました"
+        } catch (e: Exception) {
+            Log.e("OCR", "JSON parse error", e)
+            ocrErrorMessage = "AI解析に失敗しました"
+        }
     }
 
     fun onProductNameChange(v: String) = update { it.copy(productName = v) }
@@ -162,7 +228,7 @@ class SeedInputViewModel : ViewModel() {
         Log.d("VM_PacketUpdate", "Packet updated. Old: $oldPacket, New: $packet")
     }
 
-    fun saveSeed(context: Context, onComplete: () -> Unit) {
+    fun saveSeed(context: Context, onComplete: (Result<Unit>) -> Unit) {
         viewModelScope.launch {
             val db = Firebase.firestore
             val storageRoot = Firebase.storage.reference
@@ -177,13 +243,15 @@ class SeedInputViewModel : ViewModel() {
                     try {
                         val bmp = uriToBitmap(context, uri)
                         val bytes = ByteArrayOutputStream().apply {
-                            bmp.compress(Bitmap.CompressFormat.JPEG, 80, this)
-                        }.toByteArray()
+                            bmp?.compress(Bitmap.CompressFormat.JPEG, 80, this)
+                        }?.toByteArray()
                         val path = "seed_images/${id}_$index.jpg"
                         val imageRef = storageRoot.child(path)
-                        imageRef.putBytes(bytes).await()
-                        val url = imageRef.downloadUrl.await().toString()
-                        uploadedUrls.add(url)
+                        if (bytes != null) {
+                            imageRef.putBytes(bytes).await()
+                            val url = imageRef.downloadUrl.await().toString()
+                            uploadedUrls.add(url)
+                        }
                     } catch (e: Exception) {
                         Log.e("SeedInputVM", "Upload failed: $uri", e)
                     }
@@ -195,9 +263,10 @@ class SeedInputViewModel : ViewModel() {
             try {
                 db.collection("seeds").document(id).set(final).await()
                 packet = final
-                onComplete()
+                onComplete(Result.success(Unit))
             } catch (e: Exception) {
                 Log.e("ViewModel", "Firestore save failed", e)
+                onComplete(Result.failure(e))
             }
         }
     }
