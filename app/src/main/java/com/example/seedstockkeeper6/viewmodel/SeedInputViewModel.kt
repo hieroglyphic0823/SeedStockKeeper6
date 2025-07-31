@@ -56,11 +56,23 @@ class SeedInputViewModel : ViewModel() {
 
     fun removeImage(index: Int) {
         if (index in imageUris.indices) {
+            val uri = imageUris[index]
             imageUris.removeAt(index)
             if (ocrTargetIndex == index) {
                 ocrTargetIndex = if (imageUris.isNotEmpty()) 0 else -1
             } else if (ocrTargetIndex > index) {
                 ocrTargetIndex--
+            }
+            // Firebase Storage の画像削除処理
+            if (uri.toString().startsWith("http")) {
+                try {
+                    val path = Uri.decode(uri.toString()).substringAfter("/o/").substringBefore("?")
+                    if (path.isNotEmpty()) {
+                        Firebase.storage.reference.child(path).delete()
+                    }
+                } catch (e: Exception) {
+                    Log.e("SeedInputVM", "Failed to delete image from storage: $uri", e)
+                }
             }
         }
     }
