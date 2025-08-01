@@ -2,33 +2,35 @@ package com.example.seedstockkeeper6.viewmodel
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.util.Log
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.seedstockkeeper6.model.SeedPacket
 import com.example.seedstockkeeper6.data.runGeminiOcr
 import com.example.seedstockkeeper6.data.uriToBitmap
-import com.example.seedstockkeeper6.model.SeedPacket
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.ktx.Firebase
+import com.google.firebase.storage.ktx.storage
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
+import java.io.ByteArrayOutputStream
+import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
 import java.util.UUID
 
 class SeedInputViewModel : ViewModel() {
 
-    var packet = SeedPacket()
+    var packet by mutableStateOf(SeedPacket())
         private set
 
-    var imageUris = mutableStateListOf<Uri>()
-        private set
-
-    var ocrTargetIndex by mutableStateOf(0)
+    val imageUris = mutableStateListOf<Uri>()
+    var ocrTargetIndex by mutableStateOf(-1)
         private set
 
     var showSnackbar by mutableStateOf<String?>(null)
@@ -36,28 +38,60 @@ class SeedInputViewModel : ViewModel() {
     var aiDiffList = mutableStateListOf<Triple<String, String, String>>()
         private set
 
-    fun setOcrTarget(index: Int) {
-        ocrTargetIndex = index
+    fun setSeed(seed: SeedPacket?) {
+        packet = seed ?: SeedPacket()
+        imageUris.clear()
+        seed?.imageUrls?.forEach { url ->
+            imageUris.add(Uri.parse(url))
+        }
+        ocrTargetIndex = if (imageUris.isNotEmpty()) 0 else -1
     }
 
     fun addImages(uris: List<Uri>) {
         imageUris.addAll(uris)
+        if (ocrTargetIndex == -1 && imageUris.isNotEmpty()) {
+            ocrTargetIndex = 0
+        }
+    }
+
+    fun setOcrTarget(index: Int) {
+        if (index in imageUris.indices) {
+            ocrTargetIndex = index
+        }
     }
 
     fun removeImage(index: Int) {
+        if (index !in imageUris.indices) return
+
         val uri = imageUris[index]
-        val url = uri.toString()
-        if (url.startsWith("https://")) {
-            FirebaseStorage.getInstance().getReferenceFromUrl(url).delete()
-                .addOnSuccessListener {
-                    Log.d("Firebase", "Image deleted: $url")
-                }
-                .addOnFailureListener {
-                    Log.e("Firebase", "Image deletion failed: $url", it)
-                }
-        }
+
+        // まず画面から削除
         imageUris.removeAt(index)
+
+        // OCR 対象インデックスの更新
+        if (ocrTargetIndex == index) {
+            ocrTargetIndex = if (imageUris.isNotEmpty()) 0 else -1
+        } else if (ocrTargetIndex > index) {
+            ocrTargetIndex--
+        }
+
+        // Firebase Storage に保存されている画像なら削除
+        if (uri.toString().startsWith("https://firebasestorage.googleapis.com")) {
+            val path = uri.toString()
+                .substringAfter("/o/")
+                .substringBefore("?") // 例: seed_images%2Fxxx.jpg
+
+            viewModelScope.launch {
+                try {
+                    Firebase.storage.reference.child(path).delete().await()
+                    Log.d("SeedInputVM", "Firebase画像削除成功: $path")
+                } catch (e: Exception) {
+                    Log.e("SeedInputVM", "Firebase画像削除失敗: $path", e)
+                }
+            }
+        }
     }
+
 
     suspend fun performOcr(context: Context) {
         if (ocrTargetIndex !in imageUris.indices) {
@@ -77,7 +111,7 @@ class SeedInputViewModel : ViewModel() {
                         urlConnection.doInput = true
                         urlConnection.connect()
                         if (urlConnection.responseCode == HttpURLConnection.HTTP_OK) {
-                            val bitmap = android.graphics.BitmapFactory.decodeStream(urlConnection.inputStream)
+                            val bitmap = BitmapFactory.decodeStream(urlConnection.inputStream)
                             urlConnection.inputStream.close()
                             bitmap
                         } else {
@@ -108,7 +142,7 @@ class SeedInputViewModel : ViewModel() {
         }
 
         val parsed = try {
-            val cleanedJson = jsonText.removePrefix("```json").removeSuffix("```").trim()
+            val cleanedJson = jsonText.removePrefix("```json").removeSuffix("```" ).trim()
             kotlinx.serialization.json.Json.decodeFromString<SeedPacket>(cleanedJson)
         } catch (e: Exception) {
             Log.e("OCR_Parse", "解析結果のJSON変換失敗", e)
@@ -221,25 +255,76 @@ class SeedInputViewModel : ViewModel() {
     }
 
     fun saveSeed(context: Context, onComplete: (Result<Unit>) -> Unit) {
-        val db = FirebaseFirestore.getInstance()
-        val data = packet.copy(imageUrls = imageUris.map { it.toString() })
-        val target = packet.documentId?.let { db.collection("seeds").document(it) } ?: db.collection("seeds").document(UUID.randomUUID().toString())
-        target.set(data)
-            .addOnSuccessListener {
-                showSnackbar = "保存が完了しました"
-                onComplete(Result.success(Unit))
-            }
-            .addOnFailureListener {
-                showSnackbar = "保存に失敗しました: ${it.localizedMessage ?: "不明なエラー"}"
-                onComplete(Result.failure(it))
-            }
-    }
+        val db = Firebase.firestore
+        val storageRef = Firebase.storage.reference
+        val target = packet.documentId?.let { db.collection("seeds").document(it) }
+            ?: db.collection("seeds").document(UUID.randomUUID().toString())
 
-    fun setSeed(newPacket: SeedPacket?) {
-        if (newPacket != null) {
-            packet = newPacket
-            imageUris.clear()
-            imageUris.addAll(newPacket.imageUrls.map { Uri.parse(it) })
+        val id = target.id
+
+        viewModelScope.launch(Dispatchers.Main) {
+            val uploadedUrls = mutableListOf<String>()
+
+            withContext(Dispatchers.IO) {
+                Log.d("Upload", "画像数: ${imageUris.size}")
+
+                imageUris.forEachIndexed { index, uri ->
+                    val bitmap = try {
+                        when (uri.scheme) {
+                            "content" -> uriToBitmap(context, uri)
+                            "https", "http" -> {
+                                val urlConnection = URL(uri.toString()).openConnection() as HttpURLConnection
+                                urlConnection.connectTimeout = 15000
+                                urlConnection.readTimeout = 15000
+                                urlConnection.doInput = true
+                                urlConnection.connect()
+                                if (urlConnection.responseCode == HttpURLConnection.HTTP_OK) {
+                                    val bitmap = BitmapFactory.decodeStream(urlConnection.inputStream)
+                                    urlConnection.inputStream.close()
+                                    bitmap
+                                } else null
+                            }
+                            else -> null
+                        }
+                    } catch (e: Exception) {
+                        Log.e("Upload", "画像読み込み失敗: $uri", e)
+                        null
+                    }
+
+                    if (bitmap != null) {
+                        val baos = ByteArrayOutputStream()
+                        bitmap.compress(Bitmap.CompressFormat.JPEG, 80, baos)
+                        val bytes = baos.toByteArray()
+                        val imagePath = "seed_images/${id}_${index}.jpg"
+                        val imageRef = storageRef.child(imagePath)
+                        try {
+                            imageRef.putBytes(bytes).await()
+                            val downloadUrl = imageRef.downloadUrl.await().toString()
+                            uploadedUrls.add(downloadUrl)
+                            Log.d("Upload", "アップロード成功: $downloadUrl")
+                        } catch (e: Exception) {
+                            Log.e("Upload", "アップロード失敗: $uri", e)
+                        }
+                    }
+                }
+            }
+
+            val updatedPacket = packet.copy(
+                documentId = id,
+                imageUrls = uploadedUrls
+            )
+
+            target.set(updatedPacket)
+                .addOnSuccessListener {
+                    packet = updatedPacket
+                    showSnackbar = "保存が完了しました（画像数: ${uploadedUrls.size}）"
+                    onComplete(Result.success(Unit))
+                }
+                .addOnFailureListener {
+                    showSnackbar = "保存に失敗しました: ${it.localizedMessage ?: "不明なエラー"}"
+                    onComplete(Result.failure(it))
+                }
         }
     }
+
 }

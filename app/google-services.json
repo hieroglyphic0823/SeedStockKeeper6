@@ -88,6 +88,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "639347804790-7fro4gosti277jiesbt9enictukjkqn7.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.seedstockkeeper6",
+            "certificate_hash": "e40d39b022e3953ee7c11807d2680827aed6c31a"
+          }
+        },
+        {
           "client_id": "639347804790-m1llndci906llu8inij5gr6s0g0iv6lj.apps.googleusercontent.com",
           "client_type": 3
         }

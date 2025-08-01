@@ -2,22 +2,32 @@ package com.example.seedstockkeeper6.data
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.ImageDecoder
 import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
+import android.util.Log
 import com.example.seedstockkeeper6.BuildConfig
 import com.google.ai.client.generativeai.GenerativeModel
 import com.google.ai.client.generativeai.type.content
 import java.io.ByteArrayOutputStream
+import java.io.File
 
-fun uriToBitmap(context: Context, uri: Uri): Bitmap {
-    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-        val source = ImageDecoder.createSource(context.contentResolver, uri)
-        ImageDecoder.decodeBitmap(source)
-    } else {
-        @Suppress("DEPRECATION")
-        MediaStore.Images.Media.getBitmap(context.contentResolver, uri)
+fun uriToBitmap(context: Context, uri: Uri): Bitmap? {
+    return try {
+        val inputStream = context.contentResolver.openInputStream(uri)
+        if (inputStream != null) {
+            val tempFile = File.createTempFile("temp_img", ".jpg", context.cacheDir)
+            tempFile.outputStream().use { fileOut -> inputStream.copyTo(fileOut) }
+            BitmapFactory.decodeFile(tempFile.absolutePath)
+        } else {
+            Log.e("Image", "InputStream null: $uri")
+            null
+        }
+    } catch (e: Exception) {
+        Log.e("Image", "uriToBitmap failed", e)
+        null
     }
 }
 
