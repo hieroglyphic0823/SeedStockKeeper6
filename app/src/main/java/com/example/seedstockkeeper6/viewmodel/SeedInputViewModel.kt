@@ -2,128 +2,86 @@ package com.example.seedstockkeeper6.viewmodel
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.net.Uri
 import android.util.Log
-import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import com.example.seedstockkeeper6.model.SeedPacket
 import com.example.seedstockkeeper6.data.runGeminiOcr
-import com.google.firebase.firestore.ktx.firestore
-import com.google.firebase.ktx.Firebase
-import com.google.firebase.storage.ktx.storage
+import com.example.seedstockkeeper6.data.uriToBitmap
+import com.example.seedstockkeeper6.model.SeedPacket
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
-import java.io.ByteArrayOutputStream
-import java.io.File
-import java.io.InputStream
 import java.net.HttpURLConnection
 import java.net.URL
-
-fun uriToBitmap(context: Context, uri: Uri): Bitmap? {
-    return try {
-        context.contentResolver.openInputStream(uri)?.use { input ->
-            BitmapFactory.decodeStream(input)
-        }
-    } catch (e: Exception) {
-        Log.e("UriToBitmap", "Failed to decode bitmap from uri: $uri", e)
-        null
-    }
-}
+import java.util.UUID
 
 class SeedInputViewModel : ViewModel() {
-    init {
-        Log.d("SeedInputVM_Lifecycle", "SeedInputViewModel instance created: $this")
-    }
 
-    var packet by mutableStateOf(SeedPacket())
+    var packet = SeedPacket()
         private set
 
-    val imageUris = mutableStateListOf<Uri>()
-    var ocrTargetIndex by mutableStateOf(-1)
+    var imageUris = mutableStateListOf<Uri>()
         private set
 
-    var ocrErrorMessage by mutableStateOf<String?>(null)
+    var ocrTargetIndex by mutableStateOf(0)
         private set
 
-    var ocrSuccessMessage by mutableStateOf<String?>(null)
+    var showSnackbar by mutableStateOf<String?>(null)
+    var showAIDiffDialog by mutableStateOf(false)
+    var aiDiffList = mutableStateListOf<Triple<String, String, String>>()
         private set
 
-    fun clearOcrError() {
-        ocrErrorMessage = null
-    }
-
-    fun clearOcrSuccess() {
-        ocrSuccessMessage = null
-    }
-
-    fun setSeed(seed: SeedPacket?) {
-        Log.w("SET_SEED_CALLED", "setSeed called with: $seed. Current packet BEFORE change: ${this.packet}", Throwable())
-        packet = seed ?: SeedPacket()
-        imageUris.clear()
-        seed?.imageUrls?.forEach { url ->
-            imageUris.add(Uri.parse(url))
-        }
-        ocrTargetIndex = if (imageUris.isNotEmpty()) 0 else -1
+    fun setOcrTarget(index: Int) {
+        ocrTargetIndex = index
     }
 
     fun addImages(uris: List<Uri>) {
         imageUris.addAll(uris)
-        if (ocrTargetIndex == -1 && imageUris.isNotEmpty()) {
-            ocrTargetIndex = 0
-        }
-    }
-
-    fun setOcrTarget(index: Int) {
-        if (index in imageUris.indices) {
-            ocrTargetIndex = index
-        }
     }
 
     fun removeImage(index: Int) {
-        if (index in imageUris.indices) {
-            val uri = imageUris[index]
-            imageUris.removeAt(index)
-            if (ocrTargetIndex == index) {
-                ocrTargetIndex = if (imageUris.isNotEmpty()) 0 else -1
-            } else if (ocrTargetIndex > index) {
-                ocrTargetIndex--
-            }
-            if (uri.toString().startsWith("http")) {
-                try {
-                    val path = Uri.decode(uri.toString()).substringAfter("/o/").substringBefore("?")
-                    if (path.isNotEmpty()) {
-                        Firebase.storage.reference.child(path).delete()
-                    }
-                } catch (e: Exception) {
-                    Log.e("SeedInputVM", "Failed to delete image from storage: $uri", e)
+        val uri = imageUris[index]
+        val url = uri.toString()
+        if (url.startsWith("https://")) {
+            FirebaseStorage.getInstance().getReferenceFromUrl(url).delete()
+                .addOnSuccessListener {
+                    Log.d("Firebase", "Image deleted: $url")
                 }
-            }
+                .addOnFailureListener {
+                    Log.e("Firebase", "Image deletion failed: $url", it)
+                }
         }
+        imageUris.removeAt(index)
     }
 
     suspend fun performOcr(context: Context) {
         if (ocrTargetIndex !in imageUris.indices) {
-            ocrErrorMessage = "対象の画像がありません。"
+            showSnackbar = "対象の画像がありません。"
             return
         }
-        val uri = imageUris[ocrTargetIndex]
 
-        val bmp: Bitmap? = try {
+        val uri = imageUris[ocrTargetIndex]
+        val bmp = try {
             withContext(Dispatchers.IO) {
-                when {
-                    uri.scheme == "content" -> uriToBitmap(context, uri)
-                    uri.scheme == "https" || uri.scheme == "http" -> {
-                        try {
-                            val path = Uri.decode(uri.toString()).substringAfter("/o/").substringBefore("?")
-                            val tempFile = File.createTempFile("tempImage", ".jpg")
-                            Firebase.storage.reference.child(path).getFile(tempFile).await()
-                            BitmapFactory.decodeFile(tempFile.absolutePath)
-                        } catch (e: Exception) {
-                            Log.e("OCR", "Failed to download remote image to temp file: ${uri}", e)
+                when (uri.scheme) {
+                    "content" -> uriToBitmap(context, uri)
+                    "https", "http" -> {
+                        val urlConnection = URL(uri.toString()).openConnection() as HttpURLConnection
+                        urlConnection.connectTimeout = 15000
+                        urlConnection.readTimeout = 15000
+                        urlConnection.doInput = true
+                        urlConnection.connect()
+                        if (urlConnection.responseCode == HttpURLConnection.HTTP_OK) {
+                            val bitmap = android.graphics.BitmapFactory.decodeStream(urlConnection.inputStream)
+                            urlConnection.inputStream.close()
+                            bitmap
+                        } else {
+                            Log.e("OCR_Download", "Failed response: ${urlConnection.responseCode}")
                             null
                         }
                     }
@@ -131,143 +89,157 @@ class SeedInputViewModel : ViewModel() {
                 }
             }
         } catch (e: Exception) {
-            Log.e("OCR", "Failed to load bitmap from uri: $uri", e)
-            ocrErrorMessage = "画像の読み込みに失敗しました: ${e.message}"
-            null
+            Log.e("OCR", "Error loading image: $uri", e)
+            showSnackbar = "画像の読み込みに失敗しました。"
+            return
         }
 
         if (bmp == null) {
-            Log.e("OCR", "Bitmap is null after attempting to load, cannot run OCR for URI: $uri")
-            if (ocrErrorMessage == null) {
-                ocrErrorMessage = "画像が読み込めませんでした。"
-            }
+            showSnackbar = "画像が読み込めませんでした。"
             return
         }
 
-        val parsedJson = try {
+        val jsonText = try {
             runGeminiOcr(context, bmp)
         } catch (e: Exception) {
-            Log.e("OCR_Gemini", "Gemini OCR failed", e)
-            ocrErrorMessage = "AI解析中にエラーが発生しました: ${e.message}"
+            Log.e("OCR_Gemini", "解析失敗", e)
+            showSnackbar = "AI解析中にエラーが発生しました"
             return
         }
 
-        val cleaned = parsedJson.removePrefix("```json").removeSuffix("```").trim()
-
-        try {
-            val parsedPacket = com.google.gson.Gson().fromJson(cleaned, SeedPacket::class.java)
-            packet = parsedPacket.copy(
-                id = packet.id,
-                imageUrls = packet.imageUrls,
-                cultivation = parsedPacket.cultivation
-            )
-            ocrSuccessMessage = "AIで解析が完了しました"
+        val parsed = try {
+            val cleanedJson = jsonText.removePrefix("```json").removeSuffix("```").trim()
+            kotlinx.serialization.json.Json.decodeFromString<SeedPacket>(cleanedJson)
         } catch (e: Exception) {
-            Log.e("OCR", "JSON parse error", e)
-            ocrErrorMessage = "AI解析に失敗しました"
+            Log.e("OCR_Parse", "解析結果のJSON変換失敗", e)
+            showSnackbar = "解析結果の読み取りに失敗しました"
+            return
+        }
+
+        val newDiffs = mutableListOf<Triple<String, String, String>>()
+
+        if (packet.productName.isEmpty() && packet.variety.isEmpty() && packet.family.isEmpty()) {
+            packet = parsed
+            showSnackbar = "AI解析結果を反映しました"
+            return
+        }
+
+        if (packet.productName != parsed.productName) newDiffs.add(Triple("商品名", packet.productName, parsed.productName))
+        if (packet.variety != parsed.variety) newDiffs.add(Triple("品種", packet.variety, parsed.variety))
+        if (packet.family != parsed.family) newDiffs.add(Triple("科名", packet.family, parsed.family))
+        if (packet.company != parsed.company) newDiffs.add(Triple("会社", packet.company, parsed.company))
+        if (packet.expirationDate != parsed.expirationDate) newDiffs.add(Triple("有効期限", packet.expirationDate, parsed.expirationDate))
+        if (packet.contents != parsed.contents) newDiffs.add(Triple("内容量", packet.contents, parsed.contents))
+
+        aiDiffList.clear()
+        aiDiffList.addAll(newDiffs)
+        if (newDiffs.isNotEmpty()) {
+            showAIDiffDialog = true
+        } else {
+            showSnackbar = "差異はありませんでした"
         }
     }
 
-    fun onProductNameChange(v: String) = update { it.copy(productName = v) }
-    fun onVarietyChange(v: String) = update { it.copy(variety = v) }
-    fun onFamilyChange(v: String) = update { it.copy(family = v) }
-    fun onProductNumberChange(v: String) = update { it.copy(productNumber = v) }
-    fun onCompanyChange(v: String) = update { it.copy(company = v) }
-    fun onOriginCountryChange(v: String) = update { it.copy(originCountry = v) }
-    fun onExpirationDateChange(v: String) = update { it.copy(expirationDate = v) }
-    fun onContentsChange(v: String) = update { it.copy(contents = v) }
-    fun onGerminationRateChange(v: String) = update { it.copy(germinationRate = v) }
-    fun onSeedTreatmentChange(v: String) = update { it.copy(seedTreatment = v) }
-
-    fun onSpacingRowMinChange(v: String) = update {
-        it.copy(cultivation = it.cultivation.copy(spacing_cm_row_min = v.toIntOrNull() ?: 0))
-    }
-    fun onSpacingRowMaxChange(v: String) = update {
-        it.copy(cultivation = it.cultivation.copy(spacing_cm_row_max = v.toIntOrNull() ?: 0))
-    }
-    fun onSpacingPlantMinChange(v: String) = update {
-        it.copy(cultivation = it.cultivation.copy(spacing_cm_plant_min = v.toIntOrNull() ?: 0))
-    }
-    fun onSpacingPlantMaxChange(v: String) = update {
-        it.copy(cultivation = it.cultivation.copy(spacing_cm_plant_max = v.toIntOrNull() ?: 0))
+    fun applyAIDiffResult() {
+        if (aiDiffList.isNotEmpty()) {
+            aiDiffList.forEach { (label, _, aiValue) ->
+                when (label) {
+                    "商品名" -> onProductNameChange(aiValue)
+                    "品種" -> onVarietyChange(aiValue)
+                    "科名" -> onFamilyChange(aiValue)
+                    "会社" -> onCompanyChange(aiValue)
+                    "有効期限" -> onExpirationDateChange(aiValue)
+                    "内容量" -> onContentsChange(aiValue)
+                }
+            }
+            showSnackbar = "AI解析結果を反映しました"
+        }
+        showAIDiffDialog = false
     }
 
-    fun onGermTempChange(v: String) = update {
-        it.copy(cultivation = it.cultivation.copy(germinationTemp_c = v))
-    }
-    fun onGrowTempChange(v: String) = update {
-        it.copy(cultivation = it.cultivation.copy(growingTemp_c = v))
+    fun onAIDiffDialogDismiss() {
+        showAIDiffDialog = false
     }
 
-    fun onCompostChange(v: String) = update {
-        it.copy(cultivation = it.cultivation.copy(
-            soilPrep_per_sqm = it.cultivation.soilPrep_per_sqm.copy(compost_kg = v.toIntOrNull() ?: 0)
-        ))
-    }
-    fun onLimeChange(v: String) = update {
-        it.copy(cultivation = it.cultivation.copy(
-            soilPrep_per_sqm = it.cultivation.soilPrep_per_sqm.copy(dolomite_lime_g = v.toIntOrNull() ?: 0)
-        ))
-    }
-    fun onFertilizerChange(v: String) = update {
-        it.copy(cultivation = it.cultivation.copy(
-            soilPrep_per_sqm = it.cultivation.soilPrep_per_sqm.copy(chemical_fertilizer_g = v.toIntOrNull() ?: 0)
-        ))
-    }
+    fun onProductNameChange(value: String) { packet = packet.copy(productName = value) }
+    fun onVarietyChange(value: String) { packet = packet.copy(variety = value) }
+    fun onFamilyChange(value: String) { packet = packet.copy(family = value) }
+    fun onProductNumberChange(value: String) { packet = packet.copy(productNumber = value) }
+    fun onCompanyChange(value: String) { packet = packet.copy(company = value) }
+    fun onOriginCountryChange(value: String) { packet = packet.copy(originCountry = value) }
+    fun onExpirationDateChange(value: String) { packet = packet.copy(expirationDate = value) }
+    fun onContentsChange(value: String) { packet = packet.copy(contents = value) }
+    fun onGerminationRateChange(value: String) { packet = packet.copy(germinationRate = value) }
+    fun onSeedTreatmentChange(value: String) { packet = packet.copy(seedTreatment = value) }
 
-    fun onNotesChange(v: String) = update {
-        it.copy(cultivation = it.cultivation.copy(notes = v))
+    fun onSpacingRowMinChange(value: String) {
+        val new = packet.cultivation.copy(spacing_cm_row_min = value.toIntOrNull() ?: 0)
+        packet = packet.copy(cultivation = new)
     }
-    fun onHarvestingChange(v: String) = update {
-        it.copy(cultivation = it.cultivation.copy(harvesting = v))
+    fun onSpacingRowMaxChange(value: String) {
+        val new = packet.cultivation.copy(spacing_cm_row_max = value.toIntOrNull() ?: 0)
+        packet = packet.copy(cultivation = new)
     }
-
-    private fun update(transform: (SeedPacket) -> SeedPacket) {
-        val oldPacket = packet
-        packet = transform(packet)
-        Log.d("VM_PacketUpdate", "Packet updated. Old: $oldPacket, New: $packet")
+    fun onSpacingPlantMinChange(value: String) {
+        val new = packet.cultivation.copy(spacing_cm_plant_min = value.toIntOrNull() ?: 0)
+        packet = packet.copy(cultivation = new)
+    }
+    fun onSpacingPlantMaxChange(value: String) {
+        val new = packet.cultivation.copy(spacing_cm_plant_max = value.toIntOrNull() ?: 0)
+        packet = packet.copy(cultivation = new)
+    }
+    fun onGermTempChange(value: String) {
+        val new = packet.cultivation.copy(germinationTemp_c = value)
+        packet = packet.copy(cultivation = new)
+    }
+    fun onGrowTempChange(value: String) {
+        val new = packet.cultivation.copy(growingTemp_c = value)
+        packet = packet.copy(cultivation = new)
+    }
+    fun onCompostChange(value: String) {
+        val newSoil = packet.cultivation.soilPrep_per_sqm.copy(compost_kg = value.toIntOrNull() ?: 0)
+        val new = packet.cultivation.copy(soilPrep_per_sqm = newSoil)
+        packet = packet.copy(cultivation = new)
+    }
+    fun onLimeChange(value: String) {
+        val newSoil = packet.cultivation.soilPrep_per_sqm.copy(dolomite_lime_g = value.toIntOrNull() ?: 0)
+        val new = packet.cultivation.copy(soilPrep_per_sqm = newSoil)
+        packet = packet.copy(cultivation = new)
+    }
+    fun onFertilizerChange(value: String) {
+        val newSoil = packet.cultivation.soilPrep_per_sqm.copy(chemical_fertilizer_g = value.toIntOrNull() ?: 0)
+        val new = packet.cultivation.copy(soilPrep_per_sqm = newSoil)
+        packet = packet.copy(cultivation = new)
+    }
+    fun onNotesChange(value: String) {
+        val new = packet.cultivation.copy(notes = value)
+        packet = packet.copy(cultivation = new)
+    }
+    fun onHarvestingChange(value: String) {
+        val new = packet.cultivation.copy(harvesting = value)
+        packet = packet.copy(cultivation = new)
     }
 
     fun saveSeed(context: Context, onComplete: (Result<Unit>) -> Unit) {
-        viewModelScope.launch {
-            val db = Firebase.firestore
-            val storageRoot = Firebase.storage.reference
-            val ref = db.collection("seeds")
-            val id = packet.id ?: ref.document().id
-            val uploadedUrls = mutableListOf<String>()
-
-            imageUris.forEachIndexed { index, uri ->
-                if (uri.toString().startsWith("http")) {
-                    uploadedUrls.add(uri.toString())
-                } else {
-                    try {
-                        val bmp = uriToBitmap(context, uri)
-                        val bytes = ByteArrayOutputStream().apply {
-                            bmp?.compress(Bitmap.CompressFormat.JPEG, 80, this)
-                        }?.toByteArray()
-                        val path = "seed_images/${id}_$index.jpg"
-                        val imageRef = storageRoot.child(path)
-                        if (bytes != null) {
-                            imageRef.putBytes(bytes).await()
-                            val url = imageRef.downloadUrl.await().toString()
-                            uploadedUrls.add(url)
-                        }
-                    } catch (e: Exception) {
-                        Log.e("SeedInputVM", "Upload failed: $uri", e)
-                    }
-                }
-            }
-
-            val final = packet.copy(id = id, imageUrls = uploadedUrls)
-
-            try {
-                db.collection("seeds").document(id).set(final).await()
-                packet = final
+        val db = FirebaseFirestore.getInstance()
+        val data = packet.copy(imageUrls = imageUris.map { it.toString() })
+        val target = packet.documentId?.let { db.collection("seeds").document(it) } ?: db.collection("seeds").document(UUID.randomUUID().toString())
+        target.set(data)
+            .addOnSuccessListener {
+                showSnackbar = "保存が完了しました"
                 onComplete(Result.success(Unit))
-            } catch (e: Exception) {
-                Log.e("ViewModel", "Firestore save failed", e)
-                onComplete(Result.failure(e))
             }
+            .addOnFailureListener {
+                showSnackbar = "保存に失敗しました: ${it.localizedMessage ?: "不明なエラー"}"
+                onComplete(Result.failure(it))
+            }
+    }
+
+    fun setSeed(newPacket: SeedPacket?) {
+        if (newPacket != null) {
+            packet = newPacket
+            imageUris.clear()
+            imageUris.addAll(newPacket.imageUrls.map { Uri.parse(it) })
         }
     }
 }

@@ -1,5 +1,8 @@
 package com.example.seedstockkeeper6.model
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class SeedPacket(
     val id: String? = null,
     val productName: String = "",
@@ -18,7 +21,7 @@ data class SeedPacket(
     val calendar: List<CalendarEntry> = emptyList(),
     val documentId: String? = null // FirestoreのドキュメントIDを保持する場合
 )
-
+@Serializable
 data class Cultivation(
     val spacing_cm_row_min: Int = 0,
     val spacing_cm_row_max: Int = 0,
@@ -30,13 +33,13 @@ data class Cultivation(
     val notes: String = "",
     val harvesting: String = ""
 )
-
+@Serializable
 data class SoilPrep(
     val compost_kg: Int = 0,
     val dolomite_lime_g: Int = 0,
     val chemical_fertilizer_g: Int = 0
 )
-
+@Serializable
 data class CalendarEntry(
     val region: String = "",
     val sowing: String = "",

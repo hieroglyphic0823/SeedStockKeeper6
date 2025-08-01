@@ -13,6 +13,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     id("com.google.gms.google-services")
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
@@ -87,4 +88,5 @@ dependencies {
     implementation(libs.material.icons.extended)
     implementation(libs.material3)
     implementation(libs.accompanist.systemuicontroller)
+    implementation(libs.kotlinx.serialization.json)
 }

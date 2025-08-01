@@ -17,6 +17,7 @@ navigation = "2.7.5"
 compose = "1.6.7"
 compose-material3 = "1.2.1"
 accompanist = "0.30.1"
+kotlinx-serialization = "1.6.3"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -46,8 +47,10 @@ compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling
 material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended", version.ref = "compose" }
 material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "compose-material3" }
 accompanist-systemuicontroller = { group = "com.google.accompanist", name = "accompanist-systemuicontroller", version.ref = "accompanist" }
+kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version = "1.9.10" }

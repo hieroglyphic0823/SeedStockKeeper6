@@ -1,0 +1,52 @@
+package com.example.seedstockkeeper6.ui.components
+
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.*
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
+
+@Composable
+fun AIDiffDialog(
+    showDialog: Boolean,
+    diffList: List<Triple<String, String, String>>,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    if (!showDialog) return
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("AI解析結果の確認") },
+        text = {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text("以下の項目に差異があります。上書きしてよいですか？")
+                Spacer(Modifier.height(8.dp))
+                LazyColumn {
+                    items(diffList) { (label, current, ai) ->
+                        Column(Modifier.padding(vertical = 4.dp)) {
+                            Text(label, style = MaterialTheme.typography.labelSmall)
+                            Row(Modifier.fillMaxWidth()) {
+                                Text("現: $current", modifier = Modifier.weight(1f), color = Color.Gray)
+                                Text("新: $ai", modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.primary)
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                Text("上書きする")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("キャンセル")
+            }
+        }
+    )
+}
