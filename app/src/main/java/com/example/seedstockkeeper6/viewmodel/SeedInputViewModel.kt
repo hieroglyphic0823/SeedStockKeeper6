@@ -80,7 +80,7 @@ class SeedInputViewModel : ViewModel() {
             val path = uri.toString()
                 .substringAfter("/o/")
                 .substringBefore("?") // 例: seed_images%2Fxxx.jpg
-
+                .replace("%2F", "/")
             viewModelScope.launch {
                 try {
                     Firebase.storage.reference.child(path).delete().await()
