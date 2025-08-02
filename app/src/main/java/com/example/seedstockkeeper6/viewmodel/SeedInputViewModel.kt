@@ -63,34 +63,23 @@ class SeedInputViewModel : ViewModel() {
     fun removeImage(index: Int) {
         if (index !in imageUris.indices) return
 
+        // URI を取り出す（ログ出力にも使用）
         val uri = imageUris[index]
+        Log.d("SeedInputVM", "画面上から画像削除: $uri")
 
-        // まず画面から削除
+        // 表示用 URI リストから削除
         imageUris.removeAt(index)
 
-        // OCR 対象インデックスの更新
+        // OCR ターゲット調整
         if (ocrTargetIndex == index) {
             ocrTargetIndex = if (imageUris.isNotEmpty()) 0 else -1
         } else if (ocrTargetIndex > index) {
             ocrTargetIndex--
         }
 
-        // Firebase Storage に保存されている画像なら削除
-        if (uri.toString().startsWith("https://firebasestorage.googleapis.com")) {
-            val path = uri.toString()
-                .substringAfter("/o/")
-                .substringBefore("?") // 例: seed_images%2Fxxx.jpg
-                .replace("%2F", "/")
-            viewModelScope.launch {
-                try {
-                    Firebase.storage.reference.child(path).delete().await()
-                    Log.d("SeedInputVM", "Firebase画像削除成功: $path")
-                } catch (e: Exception) {
-                    Log.e("SeedInputVM", "Firebase画像削除失敗: $path", e)
-                }
-            }
-        }
+        // ※ Firebase Storage 削除はここでは行わない
     }
+
 
 
     suspend fun performOcr(context: Context) {
@@ -118,6 +107,24 @@ class SeedInputViewModel : ViewModel() {
                             Log.e("OCR_Download", "Failed response: ${urlConnection.responseCode}")
                             null
                         }
+                    }
+                    null, "" -> {
+                        // ここでFirebase StorageパスだったらdownloadUrlを取得してダウンロードする
+                        val path = uri.toString()
+                        val downloadUrl =
+                            getDownloadUrlFromPath(path) // 既存のsuspend関数
+                        if (downloadUrl != null) {
+                            val urlConnection = URL(downloadUrl).openConnection() as HttpURLConnection
+                            urlConnection.connectTimeout = 15000
+                            urlConnection.readTimeout = 15000
+                            urlConnection.doInput = true
+                            urlConnection.connect()
+                            if (urlConnection.responseCode == HttpURLConnection.HTTP_OK) {
+                                val bitmap = BitmapFactory.decodeStream(urlConnection.inputStream)
+                                urlConnection.inputStream.close()
+                                bitmap
+                            } else null
+                        } else null
                     }
                     else -> null
                 }
@@ -257,73 +264,107 @@ class SeedInputViewModel : ViewModel() {
     fun saveSeed(context: Context, onComplete: (Result<Unit>) -> Unit) {
         val db = Firebase.firestore
         val storageRef = Firebase.storage.reference
-        val target = packet.documentId?.let { db.collection("seeds").document(it) }
-            ?: db.collection("seeds").document(UUID.randomUUID().toString())
+        val target = packet.documentId?.let {
+            db.collection("seeds").document(it)
+        } ?: db.collection("seeds").document(UUID.randomUUID().toString())
 
         val id = target.id
 
         viewModelScope.launch(Dispatchers.Main) {
-            val uploadedUrls = mutableListOf<String>()
+            val uploadedPaths = mutableListOf<String>()
+
+            // ストレージからの削除候補を判定
+            val currentStrings = imageUris.map { it.toString().trimEnd('/') }
+            val toDelete = packet.imageUrls.map { it.trimEnd('/') }
+                .filter { it !in currentStrings }
 
             withContext(Dispatchers.IO) {
-                Log.d("Upload", "画像数: ${imageUris.size}")
+                toDelete.forEach { pathUrl ->
+                    try {
+                        val raw = pathUrl.substringAfter("/o/").substringBefore("?")
+                        val decodedPath = raw.replace("%2F", "/")
+                        storageRef.child(decodedPath).delete().await()
+                        Log.d("SeedInputVM", "Deleted: $decodedPath")
+                    } catch (e: Exception) {
+                        Log.e("SeedInputVM", "Delete failure: $pathUrl", e)
+                    }
+                }
+            }
 
+            // 画面上で残っている画像をアップロードする
+            val existingImagePaths = mutableListOf<String>()
+            packet.imageUrls.forEach { existingPath ->
+                val uriString = existingPath
+                if (imageUris.any { it.toString() == uriString }) {
+                    existingImagePaths.add(existingPath)
+                }
+            }
+
+            withContext(Dispatchers.IO) {
                 imageUris.forEachIndexed { index, uri ->
+                    val scheme = uri.scheme
                     val bitmap = try {
-                        when (uri.scheme) {
+                        when (scheme) {
                             "content" -> uriToBitmap(context, uri)
                             "https", "http" -> {
-                                val urlConnection = URL(uri.toString()).openConnection() as HttpURLConnection
-                                urlConnection.connectTimeout = 15000
-                                urlConnection.readTimeout = 15000
-                                urlConnection.doInput = true
-                                urlConnection.connect()
-                                if (urlConnection.responseCode == HttpURLConnection.HTTP_OK) {
-                                    val bitmap = BitmapFactory.decodeStream(urlConnection.inputStream)
-                                    urlConnection.inputStream.close()
-                                    bitmap
-                                } else null
+                                (URL(uri.toString()).openConnection() as HttpURLConnection).run {
+                                    connectTimeout = 15000; readTimeout = 15000; doInput = true
+                                    connect()
+                                    if (responseCode == HttpURLConnection.HTTP_OK) {
+                                        BitmapFactory.decodeStream(inputStream)
+                                    } else null
+                                }
                             }
                             else -> null
                         }
                     } catch (e: Exception) {
-                        Log.e("Upload", "画像読み込み失敗: $uri", e)
+                        Log.e("SeedInputVM", "Bitmap load failed: $uri", e)
                         null
                     }
 
                     if (bitmap != null) {
-                        val baos = ByteArrayOutputStream()
-                        bitmap.compress(Bitmap.CompressFormat.JPEG, 80, baos)
+                        val baos = ByteArrayOutputStream().apply {
+                            bitmap.compress(Bitmap.CompressFormat.JPEG, 80, this)
+                        }
                         val bytes = baos.toByteArray()
                         val imagePath = "seed_images/${id}_${index}.jpg"
-                        val imageRef = storageRef.child(imagePath)
                         try {
-                            imageRef.putBytes(bytes).await()
-                            val downloadUrl = imageRef.downloadUrl.await().toString()
-                            uploadedUrls.add(downloadUrl)
-                            Log.d("Upload", "アップロード成功: $downloadUrl")
+                            storageRef.child(imagePath).putBytes(bytes).await()
+                            uploadedPaths.add(imagePath)
+                            Log.d("SeedInputVM", "Uploaded path: $imagePath")
                         } catch (e: Exception) {
-                            Log.e("Upload", "アップロード失敗: $uri", e)
+                            Log.e("SeedInputVM", "Upload fail: $imagePath", e)
                         }
                     }
                 }
             }
 
+            uploadedPaths.addAll(existingImagePaths)
+
             val updatedPacket = packet.copy(
                 documentId = id,
-                imageUrls = uploadedUrls
+                imageUrls = uploadedPaths
             )
 
             target.set(updatedPacket)
                 .addOnSuccessListener {
                     packet = updatedPacket
-                    showSnackbar = "保存が完了しました（画像数: ${uploadedUrls.size}）"
+                    showSnackbar = "保存が完了しました（画像: ${uploadedPaths.size}）"
                     onComplete(Result.success(Unit))
                 }
                 .addOnFailureListener {
-                    showSnackbar = "保存に失敗しました: ${it.localizedMessage ?: "不明なエラー"}"
+                    showSnackbar =
+                        "保存に失敗しました: ${it.localizedMessage ?: "不明なエラー"}"
                     onComplete(Result.failure(it))
                 }
+        }
+    }
+    suspend fun getDownloadUrlFromPath(path: String): String? {
+        return try {
+            Firebase.storage.reference.child(path).downloadUrl.await().toString()
+        } catch (e: Exception) {
+            Log.e("Image", "URL取得失敗: $path", e)
+            null
         }
     }
 

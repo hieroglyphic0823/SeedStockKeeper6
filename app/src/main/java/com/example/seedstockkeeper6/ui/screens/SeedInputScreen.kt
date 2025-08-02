@@ -8,9 +8,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -34,6 +32,9 @@ import coil.compose.AsyncImage
 import com.example.seedstockkeeper6.ui.components.AIDiffDialog
 import com.example.seedstockkeeper6.viewmodel.SeedInputViewModel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
+import com.google.firebase.ktx.Firebase
+import com.google.firebase.storage.ktx.storage
 
 @Composable
 fun SeedInputScreen(
@@ -54,16 +55,35 @@ fun SeedInputScreen(
     Column(modifier = Modifier.verticalScroll(scroll).padding(16.dp)) {
         LazyRow(verticalAlignment = Alignment.CenterVertically) {
             itemsIndexed(viewModel.imageUris) { index, uri ->
+                var downloadUrl by remember { mutableStateOf<String?>(null) }
+
+                LaunchedEffect(uri) {
+                    if (uri.toString().startsWith("seed_images/")) {
+                        val storageRef = Firebase.storage.reference.child(uri.toString())
+                        downloadUrl = try {
+                            storageRef.downloadUrl.await().toString()
+                        } catch (e: Exception) {
+                            Log.e("ImageLoad", "URL取得失敗: $uri", e)
+                            null
+                        }
+                    } else {
+                        downloadUrl = uri.toString()
+                    }
+                }
+
                 Box(modifier = Modifier.padding(end = 8.dp)) {
-                    AsyncImage(
-                        model = uri,
-                        contentDescription = "画像$index",
-                        modifier = Modifier
-                            .size(100.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                            .clickable { viewModel.setOcrTarget(index) },
-                        contentScale = ContentScale.Crop
-                    )
+                    downloadUrl?.let {
+                        AsyncImage(
+                            model = it,
+                            contentDescription = "画像$index",
+                            modifier = Modifier
+                                .size(100.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .clickable { viewModel.setOcrTarget(index) },
+                            contentScale = ContentScale.Crop
+                        )
+                    }
+
                     if (viewModel.ocrTargetIndex == index) {
                         Icon(
                             Icons.Default.CheckCircle,
@@ -72,7 +92,20 @@ fun SeedInputScreen(
                             modifier = Modifier.align(Alignment.TopStart)
                         )
                     }
-                    IconButton(onClick = { viewModel.removeImage(index) }, modifier = Modifier.align(Alignment.TopEnd)) {
+                    IconButton(onClick = {
+                        cs.launch {
+                            val path = viewModel.imageUris[index].toString()
+                            if (path.startsWith("seed_images/")) {
+                                try {
+                                    Firebase.storage.reference.child(path).delete().await()
+                                    Log.d("SeedInputScreen", "削除成功: $path")
+                                } catch (e: Exception) {
+                                    Log.e("SeedInputScreen", "削除失敗: $path", e)
+                                }
+                            }
+                            viewModel.removeImage(index)
+                        }
+                    }, modifier = Modifier.align(Alignment.TopEnd)) {
                         Icon(Icons.Default.Delete, contentDescription = "削除")
                     }
                 }
