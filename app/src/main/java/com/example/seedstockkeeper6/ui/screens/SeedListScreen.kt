@@ -72,9 +72,7 @@ fun SeedListScreen(
                     Column(modifier = Modifier.weight(1f)) {
                         Text("${seed.productName} (${seed.variety})", style = MaterialTheme.typography.titleMedium)
                         Spacer(modifier = Modifier.height(4.dp))
-                        Text("${seed.company}", style = MaterialTheme.typography.bodyMedium)
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text("期限: ${seed.expirationDate}", style = MaterialTheme.typography.bodySmall)
+                        Text("有効期限: ${seed.expirationDate}", style = MaterialTheme.typography.bodySmall)
                     }
                     Checkbox(
                         checked = checked,
