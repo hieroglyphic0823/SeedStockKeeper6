@@ -59,123 +59,133 @@ fun SeedInputScreen(
         viewModel.addImages(uris)
     }
 
-    Column(modifier = Modifier.verticalScroll(scroll).padding(16.dp)) {
-        LazyRow(verticalAlignment = Alignment.CenterVertically) {
-            itemsIndexed(viewModel.imageUris) { index, uri ->
-                var downloadUrl by remember { mutableStateOf<String?>(null) }
-
-                LaunchedEffect(uri) {
-                    if (uri.toString().startsWith("seed_images/")) {
-                        val storageRef = Firebase.storage.reference.child(uri.toString())
-                        downloadUrl = try {
-                            storageRef.downloadUrl.await().toString()
-                        } catch (e: Exception) {
-                            Log.e("ImageLoad", "URL取得失敗: $uri", e)
-                            null
-                        }
-                    } else {
-                        downloadUrl = uri.toString()
-                    }
-                }
-
-                Box(modifier = Modifier.padding(end = 8.dp)) {
-                    downloadUrl?.let {
-                        AsyncImage(
-                            model = it,
-                            contentDescription = "画像$index",
-                            modifier = Modifier
-                                .size(100.dp)
-                                .clip(RoundedCornerShape(8.dp))
-                                .clickable { viewModel.setOcrTarget(index) },
-                            contentScale = ContentScale.Crop
-                        )
-                    }
-
-                    if (viewModel.ocrTargetIndex == index) {
-                        Icon(
-                            Icons.Default.CheckCircle,
-                            contentDescription = "OCR対象",
-                            tint = Color.Green,
-                            modifier = Modifier.align(Alignment.TopStart)
-                        )
-                    }
-                    IconButton(onClick = {
-                        cs.launch {
-                            val path = viewModel.imageUris[index].toString()
-                            if (path.startsWith("seed_images/")) {
-                                try {
-                                    Firebase.storage.reference.child(path).delete().await()
-                                    Log.d("SeedInputScreen", "削除成功: $path")
-                                } catch (e: Exception) {
-                                    Log.e("SeedInputScreen", "削除失敗: $path", e)
-                                }
-                            }
-                            viewModel.removeImage(index)
-                        }
-                    }, modifier = Modifier.align(Alignment.TopEnd)) {
-                        Icon(Icons.Default.Delete, contentDescription = "削除")
-                    }
-                }
-            }
-            item {
-                IconButton(onClick = { pickImagesLauncher.launch("image/*") }) {
-                    Icon(Icons.Default.AddAPhoto, contentDescription = "追加")
-                }
-            }
-        }
-
-        Button(
-            onClick = {
-                cs.launch {
-                    viewModel.isLoading = true
-                    viewModel.performOcr(context)
-                    viewModel.isLoading = false
-                }
-            },
-            enabled = viewModel.imageUris.isNotEmpty(),
-            modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp)
+    Box(Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .verticalScroll(scroll)
+                .padding(16.dp)
+                .fillMaxWidth()
         ) {
-            Icon(Icons.Default.AutoFixHigh, contentDescription = "OCR")
-            Spacer(Modifier.width(8.dp))
-            Text("AIで解析")
+            LazyRow(verticalAlignment = Alignment.CenterVertically) {
+                itemsIndexed(viewModel.imageUris) { index, uri ->
+                    var downloadUrl by remember { mutableStateOf<String?>(null) }
+
+                    LaunchedEffect(uri) {
+                        if (uri.toString().startsWith("seed_images/")) {
+                            val storageRef = Firebase.storage.reference.child(uri.toString())
+                            downloadUrl = try {
+                                storageRef.downloadUrl.await().toString()
+                            } catch (e: Exception) {
+                                Log.e("ImageLoad", "URL取得失敗: $uri", e)
+                                null
+                            }
+                        } else {
+                            downloadUrl = uri.toString()
+                        }
+                    }
+
+                    Box(modifier = Modifier.padding(end = 8.dp)) {
+                        downloadUrl?.let {
+                            AsyncImage(
+                                model = it,
+                                contentDescription = "画像$index",
+                                modifier = Modifier
+                                    .size(100.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .clickable { viewModel.setOcrTarget(index) },
+                                contentScale = ContentScale.Crop
+                            )
+                        }
+
+                        if (viewModel.ocrTargetIndex == index) {
+                            Icon(
+                                Icons.Default.CheckCircle,
+                                contentDescription = "OCR対象",
+                                tint = Color.Green,
+                                modifier = Modifier.align(Alignment.TopStart)
+                            )
+                        }
+                        IconButton(onClick = {
+                            cs.launch {
+                                val path = viewModel.imageUris[index].toString()
+                                if (path.startsWith("seed_images/")) {
+                                    try {
+                                        Firebase.storage.reference.child(path).delete().await()
+                                        Log.d("SeedInputScreen", "削除成功: $path")
+                                    } catch (e: Exception) {
+                                        Log.e("SeedInputScreen", "削除失敗: $path", e)
+                                    }
+                                }
+                                viewModel.removeImage(index)
+                            }
+                        }, modifier = Modifier.align(Alignment.TopEnd)) {
+                            Icon(Icons.Default.Delete, contentDescription = "削除")
+                        }
+                    }
+                }
+                item {
+                    IconButton(onClick = { pickImagesLauncher.launch("image/*") }) {
+                        Icon(Icons.Default.AddAPhoto, contentDescription = "追加")
+                    }
+                }
+            }
+
+            Button(
+                onClick = {
+                    cs.launch {
+                        viewModel.isLoading = true
+                        viewModel.performOcr(context)
+                        viewModel.isLoading = false
+                    }
+                },
+                enabled = viewModel.imageUris.isNotEmpty(),
+                modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp)
+            ) {
+                Icon(Icons.Default.AutoFixHigh, contentDescription = "OCR")
+                Spacer(Modifier.width(8.dp))
+                Text("AIで解析")
+            }
+
+            OutlinedTextField(viewModel.packet.productName, viewModel::onProductNameChange, label = { Text("商品名") }, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(viewModel.packet.variety, viewModel::onVarietyChange, label = { Text("品種") }, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(viewModel.packet.family, viewModel::onFamilyChange, label = { Text("科名") }, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(viewModel.packet.productNumber, viewModel::onProductNumberChange, label = { Text("商品番号") }, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(viewModel.packet.company, viewModel::onCompanyChange, label = { Text("会社") }, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(viewModel.packet.originCountry, viewModel::onOriginCountryChange, label = { Text("原産国") }, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(viewModel.packet.expirationDate, viewModel::onExpirationDateChange, label = { Text("有効期限") }, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(viewModel.packet.contents, viewModel::onContentsChange, label = { Text("内容量") }, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(viewModel.packet.germinationRate, viewModel::onGerminationRateChange, label = { Text("発芽率") }, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(viewModel.packet.seedTreatment, viewModel::onSeedTreatmentChange, label = { Text("種子処理") }, modifier = Modifier.fillMaxWidth())
+
+            OutlinedTextField(viewModel.packet.cultivation.spacing_cm_row_min.toString(), viewModel::onSpacingRowMinChange, label = { Text("条間最小 (cm)") }, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(viewModel.packet.cultivation.spacing_cm_row_max.toString(), viewModel::onSpacingRowMaxChange, label = { Text("条間最大 (cm)") }, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(viewModel.packet.cultivation.spacing_cm_plant_min.toString(), viewModel::onSpacingPlantMinChange, label = { Text("株間最小 (cm)") }, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(viewModel.packet.cultivation.spacing_cm_plant_max.toString(), viewModel::onSpacingPlantMaxChange, label = { Text("株間最大 (cm)") }, modifier = Modifier.fillMaxWidth())
+
+            OutlinedTextField(viewModel.packet.cultivation.germinationTemp_c, viewModel::onGermTempChange, label = { Text("発芽温度") }, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(viewModel.packet.cultivation.growingTemp_c, viewModel::onGrowTempChange, label = { Text("生育温度") }, modifier = Modifier.fillMaxWidth())
+
+            OutlinedTextField(viewModel.packet.cultivation.soilPrep_per_sqm.compost_kg.toString(), viewModel::onCompostChange, label = { Text("堆肥 (kg/㎡)") }, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(viewModel.packet.cultivation.soilPrep_per_sqm.dolomite_lime_g.toString(), viewModel::onLimeChange, label = { Text("苦土石灰 (g/㎡)") }, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(viewModel.packet.cultivation.soilPrep_per_sqm.chemical_fertilizer_g.toString(), viewModel::onFertilizerChange, label = { Text("化成肥料 (g/㎡)") }, modifier = Modifier.fillMaxWidth())
+
+            OutlinedTextField(viewModel.packet.cultivation.notes, viewModel::onNotesChange, label = { Text("栽培メモ") }, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(viewModel.packet.cultivation.harvesting, viewModel::onHarvestingChange, label = { Text("収穫") }, modifier = Modifier.fillMaxWidth())
+
+            Spacer(modifier = Modifier.height(16.dp))
         }
 
         if (viewModel.isLoading) {
             Box(
-                Modifier.fillMaxSize().background(Color(0x88000000)).zIndex(999f),
+                Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.5f))
+                    .zIndex(999f),
                 contentAlignment = Alignment.Center
             ) {
                 LoadingAnimation()
             }
         }
-
-        OutlinedTextField(viewModel.packet.productName, viewModel::onProductNameChange, label = { Text("商品名") }, modifier = Modifier.fillMaxWidth())
-        OutlinedTextField(viewModel.packet.variety, viewModel::onVarietyChange, label = { Text("品種") }, modifier = Modifier.fillMaxWidth())
-        OutlinedTextField(viewModel.packet.family, viewModel::onFamilyChange, label = { Text("科名") }, modifier = Modifier.fillMaxWidth())
-        OutlinedTextField(viewModel.packet.productNumber, viewModel::onProductNumberChange, label = { Text("商品番号") }, modifier = Modifier.fillMaxWidth())
-        OutlinedTextField(viewModel.packet.company, viewModel::onCompanyChange, label = { Text("会社") }, modifier = Modifier.fillMaxWidth())
-        OutlinedTextField(viewModel.packet.originCountry, viewModel::onOriginCountryChange, label = { Text("原産国") }, modifier = Modifier.fillMaxWidth())
-        OutlinedTextField(viewModel.packet.expirationDate, viewModel::onExpirationDateChange, label = { Text("有効期限") }, modifier = Modifier.fillMaxWidth())
-        OutlinedTextField(viewModel.packet.contents, viewModel::onContentsChange, label = { Text("内容量") }, modifier = Modifier.fillMaxWidth())
-        OutlinedTextField(viewModel.packet.germinationRate, viewModel::onGerminationRateChange, label = { Text("発芽率") }, modifier = Modifier.fillMaxWidth())
-        OutlinedTextField(viewModel.packet.seedTreatment, viewModel::onSeedTreatmentChange, label = { Text("種子処理") }, modifier = Modifier.fillMaxWidth())
-
-        OutlinedTextField(viewModel.packet.cultivation.spacing_cm_row_min.toString(), viewModel::onSpacingRowMinChange, label = { Text("条間最小 (cm)") }, modifier = Modifier.fillMaxWidth())
-        OutlinedTextField(viewModel.packet.cultivation.spacing_cm_row_max.toString(), viewModel::onSpacingRowMaxChange, label = { Text("条間最大 (cm)") }, modifier = Modifier.fillMaxWidth())
-        OutlinedTextField(viewModel.packet.cultivation.spacing_cm_plant_min.toString(), viewModel::onSpacingPlantMinChange, label = { Text("株間最小 (cm)") }, modifier = Modifier.fillMaxWidth())
-        OutlinedTextField(viewModel.packet.cultivation.spacing_cm_plant_max.toString(), viewModel::onSpacingPlantMaxChange, label = { Text("株間最大 (cm)") }, modifier = Modifier.fillMaxWidth())
-
-        OutlinedTextField(viewModel.packet.cultivation.germinationTemp_c, viewModel::onGermTempChange, label = { Text("発芽温度") }, modifier = Modifier.fillMaxWidth())
-        OutlinedTextField(viewModel.packet.cultivation.growingTemp_c, viewModel::onGrowTempChange, label = { Text("生育温度") }, modifier = Modifier.fillMaxWidth())
-
-        OutlinedTextField(viewModel.packet.cultivation.soilPrep_per_sqm.compost_kg.toString(), viewModel::onCompostChange, label = { Text("堆肥 (kg/㎡)") }, modifier = Modifier.fillMaxWidth())
-        OutlinedTextField(viewModel.packet.cultivation.soilPrep_per_sqm.dolomite_lime_g.toString(), viewModel::onLimeChange, label = { Text("苦土石灰 (g/㎡)") }, modifier = Modifier.fillMaxWidth())
-        OutlinedTextField(viewModel.packet.cultivation.soilPrep_per_sqm.chemical_fertilizer_g.toString(), viewModel::onFertilizerChange, label = { Text("化成肥料 (g/㎡)") }, modifier = Modifier.fillMaxWidth())
-
-        OutlinedTextField(viewModel.packet.cultivation.notes, viewModel::onNotesChange, label = { Text("栽培メモ") }, modifier = Modifier.fillMaxWidth())
-        OutlinedTextField(viewModel.packet.cultivation.harvesting, viewModel::onHarvestingChange, label = { Text("収穫") }, modifier = Modifier.fillMaxWidth())
-
-        Spacer(modifier = Modifier.height(16.dp))
     }
 
     AIDiffDialog(
@@ -188,7 +198,7 @@ fun SeedInputScreen(
 
 @Composable
 fun LoadingAnimation() {
-    val composition by rememberLottieComposition(LottieCompositionSpec.Asset("Seed.json"))
+    val composition by rememberLottieComposition(LottieCompositionSpec.Asset("AI_network.json"))
     val progress by animateLottieCompositionAsState(composition, iterations = LottieConstants.IterateForever)
     LottieAnimation(
         composition = composition,
