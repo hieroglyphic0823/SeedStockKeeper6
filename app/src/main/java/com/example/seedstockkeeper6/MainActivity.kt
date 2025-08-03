@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -24,6 +25,10 @@ import androidx.navigation.compose.rememberNavController
 import com.example.seedstockkeeper6.model.SeedPacket
 import com.example.seedstockkeeper6.ui.screens.SeedInputScreen
 import com.example.seedstockkeeper6.ui.screens.SeedListScreen
+import com.example.seedstockkeeper6.ui.theme.AppTypography
+import com.example.seedstockkeeper6.ui.theme.AppTheme
+import com.example.seedstockkeeper6.ui.theme.darkScheme
+import com.example.seedstockkeeper6.ui.theme.lightScheme
 import com.example.seedstockkeeper6.viewmodel.SeedInputViewModel
 import com.example.seedstockkeeper6.viewmodel.SeedListViewModel
 import com.google.firebase.FirebaseApp
@@ -38,16 +43,18 @@ import java.nio.charset.StandardCharsets
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Log.d("DebugTrace", "MainActivity.onCreate called")
         FirebaseApp.initializeApp(this)
-
+        Log.d("DebugTrace", "FirebaseApp initialized")
         FirebaseAuth.getInstance().signInAnonymously()
-            .addOnSuccessListener {
-                Log.d("Auth", "匿名ログイン成功")
+            .addOnSuccessListener { 
+                Log.d("DebugTrace", "FirebaseAuth anonymous login success") 
             }
-            .addOnFailureListener {
-                Log.e("Auth", "匿名ログイン失敗", it)
+            .addOnFailureListener { e -> 
+                Log.e("DebugTrace", "FirebaseAuth anonymous login failed", e) 
             }
         setContent {
+            Log.d("DebugTrace", "setContent initializing")
             val navController = rememberNavController()
             val selectedIds = remember { mutableStateListOf<String>() }
             val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -58,81 +65,87 @@ class MainActivity : ComponentActivity() {
             val snackbarHostState = remember { SnackbarHostState() }
             val listViewModel: SeedListViewModel = viewModel()
 
-            Scaffold(
-                snackbarHost = { SnackbarHost(snackbarHostState) },
-                topBar = {
-                    TopAppBar(
-                        title = { Text("SeedStockKeeper6") },
-                        actions = {
-                            when {
-                                isListScreen && selectedIds.isNotEmpty() -> {
-                                    IconButton(onClick = {
-                                        CoroutineScope(Dispatchers.IO).launch {
-                                            selectedIds.forEach { id ->
-                                                listViewModel.deleteSeedPacketWithImages(id) { result ->
+            SeedStockKeeper6Theme(
+                darkTheme = isSystemInDarkTheme(),
+                dynamicColor = false,
+                content = {
+                    Scaffold(
+                        snackbarHost = { SnackbarHost(snackbarHostState) },
+                        topBar = {
+                            TopAppBar(
+                                title = { Text("SeedStockKeeper6") },
+                                actions = {
+                                    when {
+                                        isListScreen && selectedIds.isNotEmpty() -> {
+                                            IconButton(onClick = {
+                                                CoroutineScope(Dispatchers.IO).launch {
+                                                    selectedIds.forEach { id ->
+                                                        listViewModel.deleteSeedPacketWithImages(id) { result ->
+                                                            CoroutineScope(Dispatchers.Main).launch {
+                                                                val message = if (result.isSuccess) {
+                                                                    "削除しました"
+                                                                } else {
+                                                                    "削除に失敗しました: ${result.exceptionOrNull()?.localizedMessage ?: "不明なエラー"}"
+                                                                }
+                                                                snackbarHostState.showSnackbar(message)
+                                                            }
+                                                        }
+                                                    }
+                                                    selectedIds.clear()
+                                                }
+                                            }) {
+                                                Icon(Icons.Default.Delete, contentDescription = "Delete")
+                                            }
+                                        }
+                                        isInputScreen && navBackStackEntry != null -> {
+                                            val inputViewModel: SeedInputViewModel = viewModel(
+                                                viewModelStoreOwner = navBackStackEntry!!
+                                            )
+                                            val context = LocalContext.current
+
+                                            IconButton(onClick = {
+                                                inputViewModel.saveSeed(context) { result ->
                                                     CoroutineScope(Dispatchers.Main).launch {
                                                         val message = if (result.isSuccess) {
-                                                            "削除しました"
+                                                            navController.popBackStack()
+                                                            "保存しました"
                                                         } else {
-                                                            "削除に失敗しました: ${result.exceptionOrNull()?.localizedMessage ?: "不明なエラー"}"
+                                                            "保存に失敗しました: ${result.exceptionOrNull()?.localizedMessage ?: "不明なエラー"}"
                                                         }
                                                         snackbarHostState.showSnackbar(message)
                                                     }
                                                 }
+                                            }) {
+                                                Icon(Icons.Default.Save, contentDescription = "Save")
                                             }
-                                            selectedIds.clear()
+
                                         }
-                                    }) {
-                                        Icon(Icons.Default.Delete, contentDescription = "Delete")
                                     }
                                 }
-                                isInputScreen && navBackStackEntry != null -> {
-                                    val inputViewModel: SeedInputViewModel = viewModel(
-                                        viewModelStoreOwner = navBackStackEntry!!
+                            )
+                        },
+                        floatingActionButton = {
+                            if (isListScreen && selectedIds.isEmpty()) {
+                                FloatingActionButton(onClick = {
+                                    val emptyPacketJson = URLEncoder.encode(
+                                        Gson().toJson(SeedPacket()),
+                                        StandardCharsets.UTF_8.toString()
                                     )
-                                    val context = LocalContext.current
-
-                                    IconButton(onClick = {
-                                        inputViewModel.saveSeed(context) { result ->
-                                            CoroutineScope(Dispatchers.Main).launch {
-                                                val message = if (result.isSuccess) {
-                                                    navController.popBackStack()
-                                                    "保存しました"
-                                                } else {
-                                                    "保存に失敗しました: ${result.exceptionOrNull()?.localizedMessage ?: "不明なエラー"}"
-                                                }
-                                                snackbarHostState.showSnackbar(message)
-                                            }
-                                        }
-                                    }) {
-                                        Icon(Icons.Default.Save, contentDescription = "Save")
-                                    }
-
+                                    navController.navigate("input/$emptyPacketJson")
+                                }) {
+                                    Icon(Icons.Default.Add, contentDescription = "Add")
                                 }
                             }
                         }
-                    )
-                },
-                floatingActionButton = {
-                    if (isListScreen && selectedIds.isEmpty()) {
-                        FloatingActionButton(onClick = {
-                            val emptyPacketJson = URLEncoder.encode(
-                                Gson().toJson(SeedPacket()),
-                                StandardCharsets.UTF_8.toString()
-                            )
-                            navController.navigate("input/$emptyPacketJson")
-                        }) {
-                            Icon(Icons.Default.Add, contentDescription = "Add")
-                        }
+                    ) { padding ->
+                        AppNavHost(
+                            navController = navController,
+                            modifier = Modifier.padding(padding),
+                            selectedIds = selectedIds
+                        )
                     }
                 }
-            ) { padding ->
-                AppNavHost(
-                    navController = navController,
-                    modifier = Modifier.padding(padding),
-                    selectedIds = selectedIds
-                )
-            }
+            )
         }
     }
 }
@@ -149,6 +162,7 @@ fun AppNavHost(
         modifier = modifier
     ) {
         composable("list") {
+            Log.d("BootTrace", "Screen: SeedListScreen初期化")
             val listViewModel: SeedListViewModel = viewModel()
             SeedListScreen(
                 navController = navController,
@@ -157,6 +171,7 @@ fun AppNavHost(
             )
         }
         composable("input/{packet}") { backStackEntry ->
+            Log.d("BootTrace", "Screen: SeedInputScreen初期化")
             val json = backStackEntry.arguments?.getString("packet") ?: ""
             val packet = if (json.isNotEmpty()) Gson().fromJson(json, SeedPacket::class.java) else null
             val currentInputViewModel: SeedInputViewModel = viewModel(viewModelStoreOwner = backStackEntry)
@@ -169,4 +184,26 @@ fun AppNavHost(
             )
         }
     }
+}
+
+@Composable
+fun SeedStockKeeper6Theme(
+    darkTheme: Boolean = isSystemInDarkTheme(),
+    dynamicColor: Boolean = false,
+    content: @Composable () -> Unit
+) {
+    val colorScheme = when {
+        dynamicColor && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S -> {
+            val context = LocalContext.current
+            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+        }
+        darkTheme -> darkScheme
+        else -> lightScheme
+    }
+
+    MaterialTheme(
+        colorScheme = colorScheme,
+        typography = AppTypography,
+        content = content
+    )
 }

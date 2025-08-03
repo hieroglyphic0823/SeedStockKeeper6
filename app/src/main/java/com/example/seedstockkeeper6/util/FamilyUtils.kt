@@ -5,6 +5,7 @@ fun normalizeFamilyName(rawFamily: String?): String {
     return when {
         normalized.contains("ナス") -> "ナス科"
         normalized.contains("アブラナ") || normalized.contains("十字") -> "アブラナ科"
+        normalized.contains("ヒルガオ") -> "ヒルガオ科"
         normalized.contains("ウリ") -> "ウリ科"
         normalized.contains("マメ") -> "マメ科"
         normalized.contains("セリ") -> "セリ科"

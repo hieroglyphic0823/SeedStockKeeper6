@@ -6,6 +6,7 @@ import android.net.Uri
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
@@ -27,8 +28,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import com.airbnb.lottie.compose.LottieAnimation
+import com.airbnb.lottie.compose.LottieCompositionSpec
+import com.airbnb.lottie.compose.LottieConstants
+import com.airbnb.lottie.compose.animateLottieCompositionAsState
+import com.airbnb.lottie.compose.rememberLottieComposition
 import com.example.seedstockkeeper6.ui.components.AIDiffDialog
 import com.example.seedstockkeeper6.viewmodel.SeedInputViewModel
 import kotlinx.coroutines.launch
@@ -120,7 +127,9 @@ fun SeedInputScreen(
         Button(
             onClick = {
                 cs.launch {
+                    viewModel.isLoading = true
                     viewModel.performOcr(context)
+                    viewModel.isLoading = false
                 }
             },
             enabled = viewModel.imageUris.isNotEmpty(),
@@ -129,6 +138,15 @@ fun SeedInputScreen(
             Icon(Icons.Default.AutoFixHigh, contentDescription = "OCR")
             Spacer(Modifier.width(8.dp))
             Text("AIで解析")
+        }
+
+        if (viewModel.isLoading) {
+            Box(
+                Modifier.fillMaxSize().background(Color(0x88000000)).zIndex(999f),
+                contentAlignment = Alignment.Center
+            ) {
+                LoadingAnimation()
+            }
         }
 
         OutlinedTextField(viewModel.packet.productName, viewModel::onProductNameChange, label = { Text("商品名") }, modifier = Modifier.fillMaxWidth())
@@ -165,5 +183,15 @@ fun SeedInputScreen(
         diffList = viewModel.aiDiffList,
         onConfirm = { viewModel.applyAIDiffResult() },
         onDismiss = { viewModel.onAIDiffDialogDismiss() }
+    )
+}
+
+@Composable
+fun LoadingAnimation() {
+    val composition by rememberLottieComposition(LottieCompositionSpec.Asset("Seed.json"))
+    val progress by animateLottieCompositionAsState(composition, iterations = LottieConstants.IterateForever)
+    LottieAnimation(
+        composition = composition,
+        progress = { progress }
     )
 }

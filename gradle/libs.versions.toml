@@ -21,6 +21,7 @@ kotlinx-serialization = "1.6.3"
 googleServicesPlugin = "4.4.3"
 playServices = "18.7.1"
 desugar = "2.1.3"
+lottieCompose = "6.1.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -54,6 +55,7 @@ kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serializa
 play-services-base = { module = "com.google.android.gms:play-services-base", version.ref = "playServices" }
 play-services-basement = { module = "com.google.android.gms:play-services-basement", version.ref = "playServices" }
 desugar-jdk-libs = { module = "com.android.tools:desugar_jdk_libs", version.ref = "desugar" }
+lottie-compose = { module = "com.airbnb.android:lottie-compose", version.ref = "lottieCompose" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

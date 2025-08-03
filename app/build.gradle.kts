@@ -90,7 +90,8 @@ dependencies {
     implementation(libs.material3)
     implementation(libs.accompanist.systemuicontroller)
     implementation(libs.kotlinx.serialization.json)
-    implementation(libs.play.services.base)
-    implementation(libs.play.services.basement)
+//    implementation(libs.play.services.base)
+//    implementation(libs.play.services.basement)
+    implementation(libs.lottie.compose)
     coreLibraryDesugaring(libs.desugar.jdk.libs)
 }

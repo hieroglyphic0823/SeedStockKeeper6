@@ -13,6 +13,9 @@ import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 
 class SeedListViewModel : ViewModel() {
+    init {
+        Log.d("BootTrace", "SeedListViewModel init")
+    }
 
     fun deleteSeedPacketWithImages(documentId: String, onComplete: (Result<Unit>) -> Unit) {
         viewModelScope.launch {

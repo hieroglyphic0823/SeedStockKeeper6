@@ -38,6 +38,8 @@ class SeedInputViewModel : ViewModel() {
     var aiDiffList = mutableStateListOf<Triple<String, String, String>>()
         private set
 
+    var isLoading by mutableStateOf(false)
+
     fun setSeed(seed: SeedPacket?) {
         packet = seed ?: SeedPacket()
         imageUris.clear()
