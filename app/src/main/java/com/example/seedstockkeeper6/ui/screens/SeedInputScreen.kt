@@ -139,7 +139,9 @@ fun SeedInputScreen(
                     }
                 },
                 enabled = viewModel.imageUris.isNotEmpty(),
-                modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 16.dp)
             ) {
                 Icon(Icons.Default.AutoFixHigh, contentDescription = "OCR")
                 Spacer(Modifier.width(8.dp))
@@ -173,6 +175,63 @@ fun SeedInputScreen(
             OutlinedTextField(viewModel.packet.cultivation.harvesting, viewModel::onHarvestingChange, label = { Text("収穫") }, modifier = Modifier.fillMaxWidth())
 
             Spacer(modifier = Modifier.height(16.dp))
+
+            // --- コンパニオンプランツ表示＆追加部 ---
+            Text("コンパニオンプランツと効果", style = MaterialTheme.typography.titleMedium)
+            viewModel.packet.companionPlants.forEachIndexed { i, companion ->
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp)
+                ) {
+                    Row(Modifier.padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            "植物: ${companion.plant} ／ 効果: ${companion.effect}",
+                            Modifier.weight(1f)
+                        )
+                        IconButton(onClick = { viewModel.removeCompanionPlant(i) }) {
+                            Icon(Icons.Default.Delete, contentDescription = "削除")
+                        }
+                    }
+                }
+            }
+            var cpPlant by remember { mutableStateOf("") }
+            var cpEffect by remember { mutableStateOf("") }
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                OutlinedTextField(
+                    cpPlant,
+                    { cpPlant = it },
+                    label = { Text("植物名") },
+                    modifier = Modifier.weight(1f)
+                )
+                Spacer(Modifier.width(8.dp))
+                OutlinedTextField(
+                    cpEffect,
+                    { cpEffect = it },
+                    label = { Text("効果") },
+                    modifier = Modifier.weight(1f)
+                )
+                Spacer(Modifier.width(8.dp))
+                Button(onClick = {
+                    if (cpPlant.isNotBlank() || cpEffect.isNotBlank()) {
+                        viewModel.addCompanionPlant(
+                            com.example.seedstockkeeper6.model.CompanionPlant(
+                                cpPlant,
+                                cpEffect
+                            )
+                        )
+                        cpPlant = ""
+                        cpEffect = ""
+                    }
+                }) {
+                    Text("追加")
+                }
+            }
+            // --- ここまでコンパニオンプランツ部 ---
+
         }
 
         if (viewModel.isLoading) {

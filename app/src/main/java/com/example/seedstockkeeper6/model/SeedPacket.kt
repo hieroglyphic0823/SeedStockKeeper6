@@ -3,6 +3,12 @@ package com.example.seedstockkeeper6.model
 import kotlinx.serialization.Serializable
 
 @Serializable
+data class CompanionPlant(
+    val plant: String = "",
+    val effect: String = ""
+)
+
+@Serializable
 data class SeedPacket(
     val id: String? = null,
     val productName: String = "",
@@ -19,6 +25,7 @@ data class SeedPacket(
     val features: List<String> = emptyList(),
     val cultivation: Cultivation = Cultivation(),
     val calendar: List<CalendarEntry> = emptyList(),
+    val companionPlants: List<CompanionPlant> = emptyList(),
     val documentId: String? = null // FirestoreのドキュメントIDを保持する場合
 )
 @Serializable

@@ -263,6 +263,21 @@ class SeedInputViewModel : ViewModel() {
         packet = packet.copy(cultivation = new)
     }
 
+    fun onCompanionPlantsChange(value: List<com.example.seedstockkeeper6.model.CompanionPlant>) {
+        packet = packet.copy(companionPlants = value)
+    }
+
+    fun addCompanionPlant(plant: com.example.seedstockkeeper6.model.CompanionPlant) {
+        val newList = packet.companionPlants + plant
+        packet = packet.copy(companionPlants = newList)
+    }
+
+    fun removeCompanionPlant(index: Int) {
+        if (index !in packet.companionPlants.indices) return
+        val newList = packet.companionPlants.toMutableList().apply { removeAt(index) }
+        packet = packet.copy(companionPlants = newList)
+    }
+
     fun saveSeed(context: Context, onComplete: (Result<Unit>) -> Unit) {
         val db = Firebase.firestore
         val storageRef = Firebase.storage.reference
