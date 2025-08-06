@@ -55,6 +55,7 @@ android {
     buildFeatures {
         buildConfig = true
         compose = true
+        mlModelBinding = true
     }
 }
 
@@ -67,6 +68,7 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    implementation(libs.tensorflow.lite.metadata)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -94,4 +96,7 @@ dependencies {
 //    implementation(libs.play.services.basement)
     implementation(libs.lottie.compose)
     coreLibraryDesugaring(libs.desugar.jdk.libs)
+    implementation(libs.tflite)
+    implementation(libs.tflite.support)
+    implementation(libs.tflite.task.vision)
 }
