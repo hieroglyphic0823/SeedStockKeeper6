@@ -23,6 +23,9 @@ import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
 import java.util.UUID
+import org.tensorflow.lite.support.image.TensorImage
+import com.example.seedstockkeeper6.ml.CalendarDetector
+import java.io.FileOutputStream
 
 class SeedInputViewModel : ViewModel() {
 
@@ -164,6 +167,11 @@ class SeedInputViewModel : ViewModel() {
         if (packet.productName.isEmpty() && packet.variety.isEmpty() && packet.family.isEmpty()) {
             packet = parsed
             showSnackbar = "AI解析結果を反映しました"
+            try {
+                tryAddCroppedCalendarImage(context, bmp)
+            } catch (e: Exception) {
+                Log.e("MLCrop", "performOcr内の切り抜き失敗", e)
+            }
             return
         }
 
@@ -382,6 +390,39 @@ class SeedInputViewModel : ViewModel() {
         } catch (e: Exception) {
             Log.e("Image", "URL取得失敗: $path", e)
             null
+        }
+    }
+    private suspend fun tryAddCroppedCalendarImage(context: Context, bmp: Bitmap) {
+        try {
+            val model = CalendarDetector.newInstance(context)
+            val outputs = model.process(TensorImage.fromBitmap(bmp))
+            model.close()
+
+            val locations = outputs.locationsAsTensorBuffer.floatArray
+            val scores = outputs.scoresAsTensorBuffer.floatArray
+            val numDetections = outputs.numberOfDetectionsAsTensorBuffer.floatArray[0].toInt()
+
+            if (numDetections > 0 && scores[0] > 0.5) {
+                val top = (locations[0] * bmp.height).toInt()
+                val left = (locations[1] * bmp.width).toInt()
+                val bottom = (locations[2] * bmp.height).toInt()
+                val right = (locations[3] * bmp.width).toInt()
+                val width = right - left
+                val height = bottom - top
+
+                val croppedBitmap = Bitmap.createBitmap(bmp, left, top, width, height)
+                val file = File(context.cacheDir, "cropped_${System.currentTimeMillis()}.jpg")
+                FileOutputStream(file).use {
+                    croppedBitmap.compress(Bitmap.CompressFormat.JPEG, 90, it)
+                }
+                imageUris.add(Uri.fromFile(file))
+
+                Log.d("MLCrop", "新規登録で切り抜き追加成功")
+            } else {
+                Log.w("MLCrop", "新規登録：有効なカレンダー検出なし")
+            }
+        } catch (e: Exception) {
+            Log.e("MLCrop", "新規登録中の切り抜き失敗", e)
         }
     }
 
