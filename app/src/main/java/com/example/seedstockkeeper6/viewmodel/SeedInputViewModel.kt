@@ -26,6 +26,7 @@ import java.util.UUID
 import org.tensorflow.lite.support.image.TensorImage
 import com.example.seedstockkeeper6.ml.CalendarDetector
 import java.io.FileOutputStream
+import android.graphics.Matrix
 
 class SeedInputViewModel : ViewModel() {
 
@@ -72,28 +73,62 @@ class SeedInputViewModel : ViewModel() {
             ocrTargetIndex = index
         }
     }
+    var selectedImageUri: Uri? by mutableStateOf(null)
+        private set
     var selectedImageUrl by mutableStateOf<String?>(null)
         private set
+    var selectedImageBitmap by mutableStateOf<Bitmap?>(null)
+        private set
+    fun selectImage(context: Context, uri: Uri) {
+        selectedImageUri = uri  // ★ ここで選択したURIを保存
+        selectedImageBitmap = uriToBitmap(context, uri)
 
-    fun selectImage(uri: Uri) {
         viewModelScope.launch {
             if (uri.toString().startsWith("seed_images/")) {
                 val ref = Firebase.storage.reference.child(uri.toString())
                 try {
-                    selectedImageUrl = ref.downloadUrl.await().toString()
+                    val stream = ref.getBytes(5 * 1024 * 1024).await()
+                    val bitmap = BitmapFactory.decodeByteArray(stream, 0, stream.size)
+                    selectedImageBitmap = bitmap
                 } catch (e: Exception) {
-                    selectedImageUrl = null
-                    // エラーハンドリング
+                    selectedImageBitmap = null
                 }
             } else {
-                selectedImageUrl = uri.toString()
+                try {
+                    val stream = context.contentResolver.openInputStream(uri)
+                    val bitmap = BitmapFactory.decodeStream(stream)
+                    selectedImageBitmap = bitmap
+                } catch (e: Exception) {
+                    selectedImageBitmap = null
+                }
             }
+        }
+    }
+
+
+    fun loadBitmapFromUri(context: Context, uri: Uri): Bitmap? {
+        return try {
+            val inputStream = context.contentResolver.openInputStream(uri)
+            BitmapFactory.decodeStream(inputStream)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
+    fun rotateSelectedImage() {
+        selectedImageBitmap?.let { original ->
+            val matrix = Matrix().apply { postRotate(90f) }
+            selectedImageBitmap = Bitmap.createBitmap(
+                original, 0, 0, original.width, original.height, matrix, true
+            )
         }
     }
 
 
     fun clearSelectedImage() {
         selectedImageUrl = null
+        selectedImageBitmap = null
     }
 
     fun removeImage(index: Int) {
@@ -116,7 +151,52 @@ class SeedInputViewModel : ViewModel() {
         // ※ Firebase Storage 削除はここでは行わない
     }
 
+    fun rotateAndReplaceImage(context: Context, uri: Uri, degrees: Float) {
+        viewModelScope.launch {
+            try {
+                val bitmap: Bitmap? = withContext(Dispatchers.IO) {
+                    if (uri.toString().startsWith("seed_images/")) {
+                        val storageRef = Firebase.storage.reference.child(uri.toString())
+                        val downloadUrl = storageRef.downloadUrl.await().toString()
+                        val urlConnection = URL(downloadUrl).openConnection() as HttpURLConnection
+                        urlConnection.connectTimeout = 10000
+                        urlConnection.readTimeout = 10000
+                        urlConnection.doInput = true
+                        urlConnection.connect()
+                        BitmapFactory.decodeStream(urlConnection.inputStream)
+                    } else {
+                        val input = context.contentResolver.openInputStream(uri)
+                        BitmapFactory.decodeStream(input)
+                    }
+                }
 
+                if (bitmap == null) throw Exception("Bitmap取得失敗")
+
+                val matrix = Matrix().apply { postRotate(degrees) }
+                val rotated = Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
+
+                // 一時ファイルに保存
+                val file = File(context.cacheDir, "rotated_${System.currentTimeMillis()}.jpg")
+                FileOutputStream(file).use {
+                    rotated.compress(Bitmap.CompressFormat.JPEG, 90, it)
+                }
+                val rotatedUri = Uri.fromFile(file)
+
+                // imageUrisの該当箇所を置き換え
+                val index = imageUris.indexOf(uri)
+                if (index != -1) {
+                    imageUris[index] = rotatedUri
+                }
+
+                // ダイアログ表示用にも反映
+                selectedImageBitmap = rotated
+                selectedImageUri = rotatedUri
+
+            } catch (e: Exception) {
+                Log.e("ImageRotate", "回転失敗: $uri", e)
+            }
+        }
+    }
 
     suspend fun performOcr(context: Context) {
         if (ocrTargetIndex !in imageUris.indices) {
@@ -144,11 +224,11 @@ class SeedInputViewModel : ViewModel() {
                             null
                         }
                     }
+                    "file" -> BitmapFactory.decodeFile(uri.path) // ← 追加
                     null, "" -> {
-                        // ここでFirebase StorageパスだったらdownloadUrlを取得してダウンロードする
+                        // Firebase Storageパス
                         val path = uri.toString()
-                        val downloadUrl =
-                            getDownloadUrlFromPath(path) // 既存のsuspend関数
+                        val downloadUrl = getDownloadUrlFromPath(path)
                         if (downloadUrl != null) {
                             val urlConnection = URL(downloadUrl).openConnection() as HttpURLConnection
                             urlConnection.connectTimeout = 15000
@@ -192,11 +272,13 @@ class SeedInputViewModel : ViewModel() {
             showSnackbar = "解析結果の読み取りに失敗しました"
             return
         }
-
+        val currentImageUris = imageUris.toList()
         val newDiffs = mutableListOf<Triple<String, String, String>>()
 
         if (packet.productName.isEmpty() && packet.variety.isEmpty() && packet.family.isEmpty()) {
             packet = parsed
+            imageUris.clear()
+            imageUris.addAll(currentImageUris)
             showSnackbar = "AI解析結果を反映しました"
             try {
                 tryAddCroppedCalendarImage(context, bmp)

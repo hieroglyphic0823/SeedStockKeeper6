@@ -45,6 +45,12 @@ import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.ktx.storage
 import androidx.compose.ui.window.Dialog
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.gestures.rememberTransformableState
+import androidx.compose.foundation.gestures.transformable
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.rememberAsyncImagePainter
 
@@ -126,9 +132,11 @@ fun SeedInputScreen(
                         }, modifier = Modifier.align(Alignment.TopEnd)) {
                             Icon(Icons.Default.Delete, contentDescription = "削除")
                         }
+                        val context = LocalContext.current
+
                         IconButton(
                             onClick = {
-                                viewModel.selectImage(uri)
+                                viewModel.selectImage(context, uri) // ← Contextを渡す
                             },
                             modifier = Modifier
                                 .align(Alignment.BottomEnd)
@@ -147,6 +155,7 @@ fun SeedInputScreen(
                                     .padding(4.dp)
                             )
                         }
+
 
                     }
                 }
@@ -280,7 +289,7 @@ fun SeedInputScreen(
         onConfirm = { viewModel.applyAIDiffResult() },
         onDismiss = { viewModel.onAIDiffDialogDismiss() }
     )
-    if (viewModel.selectedImageUrl != null) {
+    if (viewModel.selectedImageBitmap != null) {
         Dialog(onDismissRequest = { viewModel.clearSelectedImage() }) {
             Box(
                 modifier = Modifier
@@ -288,17 +297,35 @@ fun SeedInputScreen(
                     .padding(16.dp)
             ) {
                 Image(
-                    painter = rememberAsyncImagePainter(viewModel.selectedImageUrl),
+                    bitmap = viewModel.selectedImageBitmap!!.asImageBitmap(),
                     contentDescription = null,
                     modifier = Modifier
                         .widthIn(max = 300.dp)
                         .heightIn(max = 400.dp)
                         .align(Alignment.Center)
                 )
+                val context = LocalContext.current
+
+                IconButton(
+                    onClick = {
+                        Log.d("SeedInputScreen", "回転アイコンがクリックされた")
+                        viewModel.selectedImageUri?.let { uri ->
+                            viewModel.rotateAndReplaceImage(context, uri, 90f)
+                        }
+                    },
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Refresh,
+                        contentDescription = "回転",
+                        tint = Color.White
+                    )
+                }
             }
         }
     }
-
 
 }
 
