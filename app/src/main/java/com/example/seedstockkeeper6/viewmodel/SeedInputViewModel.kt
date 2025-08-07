@@ -72,15 +72,28 @@ class SeedInputViewModel : ViewModel() {
             ocrTargetIndex = index
         }
     }
-    var selectedImageUri by mutableStateOf<Uri?>(null)
+    var selectedImageUrl by mutableStateOf<String?>(null)
         private set
 
     fun selectImage(uri: Uri) {
-        selectedImageUri = uri
+        viewModelScope.launch {
+            if (uri.toString().startsWith("seed_images/")) {
+                val ref = Firebase.storage.reference.child(uri.toString())
+                try {
+                    selectedImageUrl = ref.downloadUrl.await().toString()
+                } catch (e: Exception) {
+                    selectedImageUrl = null
+                    // エラーハンドリング
+                }
+            } else {
+                selectedImageUrl = uri.toString()
+            }
+        }
     }
 
+
     fun clearSelectedImage() {
-        selectedImageUri = null
+        selectedImageUrl = null
     }
 
     fun removeImage(index: Int) {

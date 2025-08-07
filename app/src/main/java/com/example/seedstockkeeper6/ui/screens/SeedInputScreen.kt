@@ -280,26 +280,26 @@ fun SeedInputScreen(
         onConfirm = { viewModel.applyAIDiffResult() },
         onDismiss = { viewModel.onAIDiffDialogDismiss() }
     )
-    if (viewModel.selectedImageUri != null) {
+    if (viewModel.selectedImageUrl != null) {
         Dialog(onDismissRequest = { viewModel.clearSelectedImage() }) {
             Box(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.8f))
-                    .clickable { viewModel.clearSelectedImage() }
+                    .background(Color.Black.copy(alpha = 0.8f), shape = RoundedCornerShape(16.dp))
+                    .padding(16.dp)
             ) {
                 Image(
-                    painter = rememberAsyncImagePainter(viewModel.selectedImageUri),
-                    Log.d("TAG", "selectedImageUri = ${viewModel.selectedImageUri}"),
+                    painter = rememberAsyncImagePainter(viewModel.selectedImageUrl),
                     contentDescription = null,
                     modifier = Modifier
-                        .fillMaxWidth()
+                        .widthIn(max = 300.dp)
+                        .heightIn(max = 400.dp)
                         .align(Alignment.Center)
-                        .padding(16.dp)
                 )
             }
         }
     }
+
+
 }
 
 @Composable
