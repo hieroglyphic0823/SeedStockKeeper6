@@ -19,6 +19,7 @@ import androidx.compose.material.icons.filled.AddAPhoto
 import androidx.compose.material.icons.filled.AutoFixHigh
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.ZoomIn
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -42,6 +43,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.ktx.storage
+import androidx.compose.ui.window.Dialog
+import androidx.compose.foundation.Image
+import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.rememberAsyncImagePainter
 
 @Composable
 fun SeedInputScreen(
@@ -121,6 +126,28 @@ fun SeedInputScreen(
                         }, modifier = Modifier.align(Alignment.TopEnd)) {
                             Icon(Icons.Default.Delete, contentDescription = "削除")
                         }
+                        IconButton(
+                            onClick = {
+                                viewModel.selectImage(uri)
+                            },
+                            modifier = Modifier
+                                .align(Alignment.BottomEnd)
+                                .padding(4.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ZoomIn,
+                                contentDescription = "拡大表示",
+                                tint = Color.White,
+                                modifier = Modifier
+                                    .size(24.dp)
+                                    .background(
+                                        color = Color.Black.copy(alpha = 0.5f),
+                                        shape = RoundedCornerShape(12.dp)
+                                    )
+                                    .padding(4.dp)
+                            )
+                        }
+
                     }
                 }
                 item {
@@ -253,6 +280,26 @@ fun SeedInputScreen(
         onConfirm = { viewModel.applyAIDiffResult() },
         onDismiss = { viewModel.onAIDiffDialogDismiss() }
     )
+    if (viewModel.selectedImageUri != null) {
+        Dialog(onDismissRequest = { viewModel.clearSelectedImage() }) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.8f))
+                    .clickable { viewModel.clearSelectedImage() }
+            ) {
+                Image(
+                    painter = rememberAsyncImagePainter(viewModel.selectedImageUri),
+                    Log.d("TAG", "selectedImageUri = ${viewModel.selectedImageUri}"),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .align(Alignment.Center)
+                        .padding(16.dp)
+                )
+            }
+        }
+    }
 }
 
 @Composable

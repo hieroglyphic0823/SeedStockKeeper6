@@ -31,11 +31,9 @@ class SeedInputViewModel : ViewModel() {
 
     var packet by mutableStateOf(SeedPacket())
         private set
-
     val imageUris = mutableStateListOf<Uri>()
     var ocrTargetIndex by mutableStateOf(-1)
         private set
-
     var showSnackbar by mutableStateOf<String?>(null)
     var showAIDiffDialog by mutableStateOf(false)
     var aiDiffList = mutableStateListOf<Triple<String, String, String>>()
@@ -43,15 +41,25 @@ class SeedInputViewModel : ViewModel() {
 
     var isLoading by mutableStateOf(false)
 
+//    fun setSeed(seed: SeedPacket?) {
+//        packet = seed ?: SeedPacket()
+//        imageUris.clear()
+//        seed?.imageUrls?.forEach { url ->
+//            imageUris.add(Uri.parse(url))
+//        }
+//        ocrTargetIndex = if (imageUris.isNotEmpty()) 0 else -1
+//    }
     fun setSeed(seed: SeedPacket?) {
         packet = seed ?: SeedPacket()
+        val localUris = imageUris.filter { it.scheme == "file" || it.scheme == "content" }
         imageUris.clear()
         seed?.imageUrls?.forEach { url ->
             imageUris.add(Uri.parse(url))
         }
+        // 画面上で追加されたローカル画像も残す
+        imageUris.addAll(localUris)
         ocrTargetIndex = if (imageUris.isNotEmpty()) 0 else -1
     }
-
     fun addImages(uris: List<Uri>) {
         imageUris.addAll(uris)
         if (ocrTargetIndex == -1 && imageUris.isNotEmpty()) {
@@ -63,6 +71,16 @@ class SeedInputViewModel : ViewModel() {
         if (index in imageUris.indices) {
             ocrTargetIndex = index
         }
+    }
+    var selectedImageUri by mutableStateOf<Uri?>(null)
+        private set
+
+    fun selectImage(uri: Uri) {
+        selectedImageUri = uri
+    }
+
+    fun clearSelectedImage() {
+        selectedImageUri = null
     }
 
     fun removeImage(index: Int) {
@@ -327,6 +345,7 @@ class SeedInputViewModel : ViewModel() {
 
             withContext(Dispatchers.IO) {
                 imageUris.forEachIndexed { index, uri ->
+                    Log.d("SeedInputVM", "アップロード対象URI: $uri")
                     val scheme = uri.scheme
                     val bitmap = try {
                         when (scheme) {
@@ -340,6 +359,7 @@ class SeedInputViewModel : ViewModel() {
                                     } else null
                                 }
                             }
+                            "file" -> BitmapFactory.decodeFile(uri.path)
                             else -> null
                         }
                     } catch (e: Exception) {
@@ -356,15 +376,16 @@ class SeedInputViewModel : ViewModel() {
                         try {
                             storageRef.child(imagePath).putBytes(bytes).await()
                             uploadedPaths.add(imagePath)
-                            Log.d("SeedInputVM", "Uploaded path: $imagePath")
+                            Log.d("SeedInputVM", "アップロード成功: $imagePath")
                         } catch (e: Exception) {
-                            Log.e("SeedInputVM", "Upload fail: $imagePath", e)
+                            Log.e("SeedInputVM", "アップロード失敗: $imagePath", e)
                         }
                     }
                 }
             }
 
             uploadedPaths.addAll(existingImagePaths)
+            Log.d("SeedInputVM", "アップロード済みパス: $uploadedPaths")
 
             val updatedPacket = packet.copy(
                 documentId = id,
@@ -416,7 +437,10 @@ class SeedInputViewModel : ViewModel() {
                     croppedBitmap.compress(Bitmap.CompressFormat.JPEG, 90, it)
                 }
                 imageUris.add(Uri.fromFile(file))
-
+                Log.d("MLCrop", "切り抜き画像サイズ: ${croppedBitmap.width}x${croppedBitmap.height}")
+                Log.d("MLCrop", "切り抜き画像ファイルパス: ${file.absolutePath}")
+                Log.d("MLCrop", "imageUrisに追加: ${Uri.fromFile(file)}")
+                Log.d("MLCrop", "現在のimageUris: $imageUris")
                 Log.d("MLCrop", "新規登録で切り抜き追加成功")
             } else {
                 Log.w("MLCrop", "新規登録：有効なカレンダー検出なし")
