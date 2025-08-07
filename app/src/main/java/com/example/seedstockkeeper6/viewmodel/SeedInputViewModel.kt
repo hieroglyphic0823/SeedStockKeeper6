@@ -32,7 +32,8 @@ class SeedInputViewModel : ViewModel() {
 
     var packet by mutableStateOf(SeedPacket())
         private set
-    val imageUris = mutableStateListOf<Uri>()
+    var imageUris = mutableStateListOf<Uri>()
+
     var ocrTargetIndex by mutableStateOf(-1)
         private set
     var showSnackbar by mutableStateOf<String?>(null)
@@ -106,30 +107,18 @@ class SeedInputViewModel : ViewModel() {
     }
 
 
-    fun loadBitmapFromUri(context: Context, uri: Uri): Bitmap? {
-        return try {
-            val inputStream = context.contentResolver.openInputStream(uri)
-            BitmapFactory.decodeStream(inputStream)
-        } catch (e: Exception) {
-            e.printStackTrace()
-            null
-        }
-    }
-
-    fun rotateSelectedImage() {
-        selectedImageBitmap?.let { original ->
-            val matrix = Matrix().apply { postRotate(90f) }
-            selectedImageBitmap = Bitmap.createBitmap(
-                original, 0, 0, original.width, original.height, matrix, true
-            )
-        }
-    }
-
-
     fun clearSelectedImage() {
         selectedImageUrl = null
         selectedImageBitmap = null
     }
+    fun moveImage(fromIndex: Int, toIndex: Int) {
+        if (toIndex in imageUris.indices) {
+            val item = imageUris.removeAt(fromIndex)
+            imageUris.add(toIndex, item)
+        }
+    }
+
+
 
     fun removeImage(index: Int) {
         if (index !in imageUris.indices) return
@@ -280,11 +269,7 @@ class SeedInputViewModel : ViewModel() {
             imageUris.clear()
             imageUris.addAll(currentImageUris)
             showSnackbar = "AI解析結果を反映しました"
-            try {
-                tryAddCroppedCalendarImage(context, bmp)
-            } catch (e: Exception) {
-                Log.e("MLCrop", "performOcr内の切り抜き失敗", e)
-            }
+
             return
         }
 
@@ -301,6 +286,12 @@ class SeedInputViewModel : ViewModel() {
             showAIDiffDialog = true
         } else {
             showSnackbar = "差異はありませんでした"
+        }
+        // カレンダー切り抜きは毎回実行
+        try {
+            tryAddCroppedCalendarImage(context, bmp)
+        } catch (e: Exception) {
+            Log.e("MLCrop", "カレンダー切り抜き失敗", e)
         }
     }
 
@@ -400,6 +391,11 @@ class SeedInputViewModel : ViewModel() {
     }
 
     fun saveSeed(context: Context, onComplete: (Result<Unit>) -> Unit) {
+        if (packet.productName.isBlank()) {
+            showSnackbar = "商品名を入力してください"
+            onComplete(Result.failure(IllegalArgumentException("商品名が空です")))
+            return
+        }
         val db = Firebase.firestore
         val storageRef = Firebase.storage.reference
         val target = packet.documentId?.let {
@@ -479,13 +475,20 @@ class SeedInputViewModel : ViewModel() {
                 }
             }
 
-            uploadedPaths.addAll(existingImagePaths)
-            Log.d("SeedInputVM", "アップロード済みパス: $uploadedPaths")
+            // 保存対象パスをMap化（uploaded + existing）
+            val allPathsMap = (uploadedPaths + existingImagePaths).associateBy { it.trimEnd('/') }
+
+            // imageUris の順に並べた imageUrls を作成
+            val finalOrderedPaths = imageUris.mapNotNull { uri ->
+                val key = uri.toString().trimEnd('/')
+                allPathsMap[key]
+            }
 
             val updatedPacket = packet.copy(
                 documentId = id,
-                imageUrls = uploadedPaths
+                imageUrls = finalOrderedPaths
             )
+
 
             target.set(updatedPacket)
                 .addOnSuccessListener {
