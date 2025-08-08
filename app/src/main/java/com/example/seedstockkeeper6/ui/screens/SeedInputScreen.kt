@@ -59,6 +59,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -76,7 +77,13 @@ import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.ktx.storage
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-
+import android.content.res.Configuration
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.material.icons.filled.ArrowBackIosNew
+import androidx.compose.material.icons.filled.ChevronLeft
+import androidx.compose.material.icons.filled.ChevronRight
 @Composable
 fun SeedInputScreen(
     navController: NavController,
@@ -97,10 +104,21 @@ fun SeedInputScreen(
         Column(
             modifier = Modifier
                 .verticalScroll(scroll)
-                .padding(16.dp)
+                .padding(horizontal = 2.dp, vertical = 16.dp)
                 .fillMaxWidth()
         ) {
-            LazyRow(verticalAlignment = Alignment.CenterVertically) {
+            // 画面幅から3枚のサイズを計算（縦横どちらでも3枚）
+            val conf = LocalConfiguration.current
+            val screenWidth = conf.screenWidthDp.dp
+            val sidePadding = 0.dp           // 左右の余白
+            val spacing = 0.dp               // 各アイテムの間隔（3枚だと2箇所）
+            val imageSize = (screenWidth - sidePadding * 2 - spacing * 2) / 3
+
+            LazyRow(
+                verticalAlignment = Alignment.CenterVertically,
+                contentPadding = PaddingValues(horizontal = sidePadding),
+                horizontalArrangement = Arrangement.spacedBy(spacing)
+            ) {
                 itemsIndexed(viewModel.imageUris) { index, uri ->
                     var downloadUrl by remember { mutableStateOf<String?>(null) }
 
@@ -118,14 +136,17 @@ fun SeedInputScreen(
                         }
                     }
 
-                    Box(modifier = Modifier.padding(end = 8.dp)) {
+                    Box(
+                        modifier = Modifier
+                            .size(imageSize) // ← 3枚表示に合わせる
+                            .padding(end = 2.dp) // ← 隙間は最小限
+                    ) {
                         downloadUrl?.let {
                             AsyncImage(
                                 model = it,
                                 contentDescription = "画像$index",
                                 modifier = Modifier
-                                    .size(100.dp)
-                                    .clip(RoundedCornerShape(8.dp))
+                                    .fillMaxSize() // ← Box全体にフィット
                                     .clickable { viewModel.setOcrTarget(index) },
                                 contentScale = ContentScale.Crop
                             )
@@ -166,7 +187,7 @@ fun SeedInputScreen(
                                     .align(Alignment.BottomStart)
                                     .padding(4.dp)
                             ) {
-                                Icon(Icons.Default.ArrowBack, contentDescription = "左へ", tint = Color.White)
+                                Icon(Icons.Filled.ChevronLeft, contentDescription = "左へ", tint = Color.White)
                             }
 
                             // 右へ
@@ -177,7 +198,7 @@ fun SeedInputScreen(
                                     .align(Alignment.BottomEnd)
                                     .padding(4.dp)
                             ) {
-                                Icon(Icons.Default.ArrowForward, contentDescription = "右へ", tint = Color.White)
+                                Icon(Icons.Filled.ChevronRight, contentDescription = "右へ", tint = Color.White)
                             }
                         }
                         val context = LocalContext.current
@@ -187,7 +208,7 @@ fun SeedInputScreen(
                                 viewModel.selectImage(context, uri) // ← Contextを渡す
                             },
                             modifier = Modifier
-                                .align(Alignment.BottomEnd)
+                                .align(Alignment.BottomCenter)
                                 .padding(4.dp)
                         ) {
                             Icon(

@@ -436,53 +436,67 @@ class SeedInputViewModel : ViewModel() {
 
             withContext(Dispatchers.IO) {
                 imageUris.forEachIndexed { index, uri ->
-                    Log.d("SeedInputVM", "アップロード対象URI: $uri")
-                    val scheme = uri.scheme
-                    val bitmap = try {
-                        when (scheme) {
-                            "content" -> uriToBitmap(context, uri)
-                            "https", "http" -> {
-                                (URL(uri.toString()).openConnection() as HttpURLConnection).run {
-                                    connectTimeout = 15000; readTimeout = 15000; doInput = true
-                                    connect()
-                                    if (responseCode == HttpURLConnection.HTTP_OK) {
-                                        BitmapFactory.decodeStream(inputStream)
-                                    } else null
-                                }
-                            }
-                            "file" -> BitmapFactory.decodeFile(uri.path)
-                            else -> null
-                        }
-                    } catch (e: Exception) {
-                        Log.e("SeedInputVM", "Bitmap load failed: $uri", e)
-                        null
-                    }
+                    val uriString = uri.toString()
 
-                    if (bitmap != null) {
-                        val baos = ByteArrayOutputStream().apply {
-                            bitmap.compress(Bitmap.CompressFormat.JPEG, 80, this)
-                        }
-                        val bytes = baos.toByteArray()
-                        val imagePath = "seed_images/${id}_${index}.jpg"
-                        try {
-                            storageRef.child(imagePath).putBytes(bytes).await()
-                            uploadedPaths.add(imagePath)
-                            Log.d("SeedInputVM", "アップロード成功: $imagePath")
+                    if (uriString.startsWith("seed_images/")) {
+                        // 既存の Firebase Storage 画像はそのまま採用
+                        existingImagePaths.add(uriString)
+                    } else {
+                        // ローカル（content://, file://）や必要なら http(s):// をアップロード
+                        val bitmap = try {
+                            when (uri.scheme) {
+                                "content" -> uriToBitmap(context, uri)
+                                "file"    -> BitmapFactory.decodeFile(uri.path)
+                                "https", "http" -> {
+                                    (URL(uriString).openConnection() as HttpURLConnection).run {
+                                        connectTimeout = 15000; readTimeout = 15000; doInput = true
+                                        connect()
+                                        if (responseCode == HttpURLConnection.HTTP_OK) {
+                                            BitmapFactory.decodeStream(inputStream).also { inputStream.close() }
+                                        } else null
+                                    }
+                                }
+                                else -> null
+                            }
                         } catch (e: Exception) {
-                            Log.e("SeedInputVM", "アップロード失敗: $imagePath", e)
+                            Log.e("SeedInputVM", "Bitmap load failed: $uri", e)
+                            null
+                        }
+
+                        if (bitmap != null) {
+                            val baos = ByteArrayOutputStream().apply {
+                                bitmap.compress(Bitmap.CompressFormat.JPEG, 80, this)
+                            }
+                            val bytes = baos.toByteArray()
+
+                            // ※ indexベースだと将来の並べ替えで衝突する可能性があるためUUID推奨
+                            val imagePath = "seed_images/${id}_${UUID.randomUUID()}.jpg"
+
+                            try {
+                                storageRef.child(imagePath).putBytes(bytes).await()
+                                uploadedPaths.add(imagePath)
+                                Log.d("SeedInputVM", "アップロード成功: $imagePath")
+                            } catch (e: Exception) {
+                                Log.e("SeedInputVM", "アップロード失敗: $imagePath", e)
+                            }
                         }
                     }
                 }
             }
 
-            // 保存対象パスをMap化（uploaded + existing）
-            val allPathsMap = (uploadedPaths + existingImagePaths).associateBy { it.trimEnd('/') }
-
-            // imageUris の順に並べた imageUrls を作成
+            // --- 表示順で保存順を再構築 ---
+            val allPathsMap = (uploadedPaths + existingImagePaths).associateBy { it }
             val finalOrderedPaths = imageUris.mapNotNull { uri ->
-                val key = uri.toString().trimEnd('/')
-                allPathsMap[key]
+                // Firebase Storage画像はパス、ローカル画像はアップロード後のパス
+                if (uri.toString().startsWith("seed_images/")) {
+                    allPathsMap[uri.toString()]
+                } else {
+                    // ローカル画像はアップロード後のパス（uploadedPathsから取得）
+                    uploadedPaths.find { it.contains(id) && it.endsWith(".jpg") }
+                }
             }
+
+            Log.d("SeedInputVM", "保存順序付きパス: $finalOrderedPaths")
 
             val updatedPacket = packet.copy(
                 documentId = id,
