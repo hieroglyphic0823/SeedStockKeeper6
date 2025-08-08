@@ -46,8 +46,8 @@ fun FamilyIcon(family: String?) {
             imageVector = null
         }
         "ウリ科" -> {
-            iconRes = null
-            imageVector = Icons.Filled.SportsBasketball
+            iconRes = R.drawable.cucumber
+            imageVector = null
         }
         "マメ科" -> {
             iconRes = R.drawable.bean
@@ -58,28 +58,28 @@ fun FamilyIcon(family: String?) {
             imageVector = null
         }
         "セリ科" -> {
-            iconRes = null
-            imageVector = Icons.Filled.FavoriteBorder
+            iconRes = R.drawable.carrot
+            imageVector = null
         }
         "ネギ科" -> {
-            iconRes = null
-            imageVector = Icons.Filled.Grass
+            iconRes = R.drawable.onion2
+            imageVector = null
         }
         "アマランサス科" -> {
-            iconRes = null
-            imageVector = Icons.Filled.Eco
+            iconRes = R.drawable.spinach
+            imageVector = null
         }
         "バラ科" -> {
-            iconRes = null
-            imageVector = Icons.Filled.FilterVintage
+            iconRes = R.drawable.strawberry
+            imageVector = null
         }
         "ミカン科" -> {
-            iconRes = null
-            imageVector = Icons.Filled.Brightness5
+            iconRes =  R.drawable.orange
+            imageVector = null
         }
         else -> {
-            iconRes = null
-            imageVector = Icons.Filled.DeviceUnknown
+            iconRes = R.drawable.vegetables
+            imageVector = null
         }
     }
 
