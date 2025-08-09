@@ -27,6 +27,13 @@ import org.tensorflow.lite.support.image.TensorImage
 import com.example.seedstockkeeper6.ml.CalendarDetector
 import java.io.FileOutputStream
 import android.graphics.Matrix
+import android.graphics.RectF
+import com.google.mlkit.vision.common.InputImage
+import com.google.mlkit.vision.objects.ObjectDetection
+import com.google.mlkit.vision.objects.ObjectDetector
+import com.google.mlkit.vision.objects.defaults.ObjectDetectorOptions
+import kotlin.math.max
+import kotlin.math.min
 
 class SeedInputViewModel : ViewModel() {
 
@@ -560,6 +567,288 @@ class SeedInputViewModel : ViewModel() {
         } catch (e: Exception) {
             Log.e("MLCrop", "新規登録中の切り抜き失敗", e)
         }
+    }
+    private val seedOuterDetector: ObjectDetector by lazy {
+        val options = ObjectDetectorOptions.Builder()
+            .setDetectorMode(ObjectDetectorOptions.SINGLE_IMAGE_MODE)
+            .enableMultipleObjects()   // 複数検出して最大面積を選ぶ
+            .build()
+        ObjectDetection.getClient(options)
+    }
+    private suspend fun detectSeedPacketOuterAndAddCrop(
+        context: Context,
+        sourceBitmap: Bitmap,
+        insertAfterIndex: Int,
+        minAreaRatio: Float = 0.10f,
+        centerBias: Float = 0.15f,
+        marginRatio: Float = 0.05f,        // ← 余白 5%
+        enableAspectFilter: Boolean = true,// ← アスペクト比フィルタ
+        aspectMin: Float = 0.5f,
+        aspectMax: Float = 2.0f
+    ) {
+        val input = InputImage.fromBitmap(sourceBitmap, 0)
+        val objects = runCatching { seedOuterDetector.process(input).await() }
+            .onFailure { Log.e("MLKit", "seed outer detect failed", it) }
+            .getOrNull() ?: return
+
+        if (objects.isEmpty()) {
+            Log.d("MLKit", "no objects for seed outer")
+            return
+        }
+
+        val w = sourceBitmap.width
+        val h = sourceBitmap.height
+        val imgArea = w.toFloat() * h
+
+        fun scoreRect(l: Int, t: Int, r: Int, b: Int): Double {
+            val cw = (l + r) / 2f
+            val ch = (t + b) / 2f
+            val dx = (cw / w - 0.5f)
+            val dy = (ch / h - 0.5f)
+            val raw = 1.0 - (kotlin.math.hypot(dx.toDouble(), dy.toDouble()) * 2.0 * centerBias)
+            val centerPenalty = raw.coerceIn(0.0, 1.0) // ← 負値や>1を抑制
+            val area = (r - l).toFloat() * (b - t)
+            return area * centerPenalty
+        }
+
+        val best = objects
+            .map { it.boundingBox }
+            .map { bb ->
+                // 画像内にまずクリップ
+                val l = bb.left.coerceIn(0, w - 1)
+                val t = bb.top.coerceIn(0, h - 1)
+                val r = bb.right.coerceIn(l + 1, w)
+                val b = bb.bottom.coerceIn(t + 1, h)
+                android.graphics.Rect(l, t, r, b)
+            }
+            .filter { rect ->
+                val area = (rect.width() * rect.height()).toFloat()
+                if (area / imgArea < minAreaRatio) return@filter false
+                if (!enableAspectFilter) return@filter true
+                val ar = rect.width().toFloat() / rect.height().toFloat()
+                ar in aspectMin..aspectMax
+            }
+            .maxByOrNull { r -> scoreRect(r.left, r.top, r.right, r.bottom) }
+            ?: return
+
+        // 余白を付与（Rect → RectF → 余白 → Intに戻す）
+        val inflated = RectF(best).addMargin(w, h, marginRatio)
+        val l = inflated.left.toInt().coerceIn(0, w - 1)
+        val t = inflated.top.toInt().coerceIn(0, h - 1)
+        val r = inflated.right.toInt().coerceIn(l + 1, w)
+        val b = inflated.bottom.toInt().coerceIn(t + 1, h)
+
+        val crop = runCatching {
+            Bitmap.createBitmap(sourceBitmap, l, t, r - l, b - t)
+        }.getOrNull() ?: return
+
+        val file = File(context.cacheDir, "seed_outer_${System.currentTimeMillis()}.jpg")
+        runCatching {
+            FileOutputStream(file).use { out ->
+                crop.compress(Bitmap.CompressFormat.JPEG, 90, out)
+            }
+        }.onFailure {
+            Log.e("MLKit", "save outer crop failed", it)
+            return
+        }
+
+        val insertPos = insertAfterIndex.coerceIn(0, imageUris.size)
+        imageUris.add(insertPos + 1, Uri.fromFile(file))
+        Log.d("MLKit", "outer crop added after $insertAfterIndex : ${file.absolutePath}")
+    }
+
+    fun RectF.addMargin(width: Int, height: Int, marginRatio: Float): RectF {
+        val marginX = width * marginRatio
+        val marginY = height * marginRatio
+        return RectF(
+            max(0f, left - marginX),
+            max(0f, top - marginY),
+            min(width.toFloat(), right + marginX),
+            min(height.toFloat(), bottom + marginY)
+        )
+    }
+    fun cropSeedOuterAtOcrTarget(context: Context) {
+        if (ocrTargetIndex !in imageUris.indices) {
+            showSnackbar = "OCR対象の画像がありません"; return
+        }
+        val targetUri = imageUris[ocrTargetIndex]
+
+        viewModelScope.launch(Dispatchers.Main) {
+            isLoading = true
+            try {
+                val bmp = withContext(Dispatchers.IO) {
+                    when (targetUri.scheme) {
+                        "content" -> uriToBitmap(context, targetUri)
+
+                        "file" -> BitmapFactory.decodeFile(targetUri.path)?.also {
+                            Log.d("CropDebug", "File bitmap: ${it.width}x${it.height}, config=${it.config}")
+                        }
+
+                        "http", "https" -> {
+                            (URL(targetUri.toString()).openConnection() as HttpURLConnection).run {
+                                connectTimeout = 15000; readTimeout = 15000; doInput = true
+                                connect()
+                                if (responseCode == HttpURLConnection.HTTP_OK) {
+                                    val bmp = BitmapFactory.decodeStream(inputStream)
+                                    inputStream.close()
+                                    if (bmp == null) {
+                                        Log.e("CropDebug", "HTTP decode failed: ${targetUri}")
+                                    } else {
+                                        Log.d(
+                                            "CropDebug",
+                                            "HTTP bitmap: ${bmp.width}x${bmp.height}, config=${bmp.config}, bytes=${bmp.byteCount}"
+                                        )
+                                    }
+                                    bmp
+                                } else {
+                                    Log.e("CropDebug", "HTTP response code: $responseCode for $targetUri")
+                                    null
+                                }
+                            }
+                        }
+
+                        null, "" -> { // Firebase Storage パス
+                            val path = targetUri.toString()
+                            val downloadUrl = getDownloadUrlFromPath(path)
+                            Log.d("CropDebug", "Firebase download URL: $downloadUrl")
+                            if (downloadUrl != null) {
+                                (URL(downloadUrl).openConnection() as HttpURLConnection).run {
+                                    connectTimeout = 15000; readTimeout = 15000; doInput = true
+                                    connect()
+                                    if (responseCode == HttpURLConnection.HTTP_OK) {
+                                        val bmp = BitmapFactory.decodeStream(inputStream)
+                                        inputStream.close()
+                                        if (bmp == null) {
+                                            Log.e("CropDebug", "Firebase decode failed: $path")
+                                        } else {
+                                            Log.d(
+                                                "CropDebug",
+                                                "Firebase bitmap: ${bmp.width}x${bmp.height}, config=${bmp.config}, bytes=${bmp.byteCount}"
+                                            )
+                                        }
+                                        bmp
+                                    } else {
+                                        Log.e("CropDebug", "Firebase HTTP response code: $responseCode for $path")
+                                        null
+                                    }
+                                }
+                            } else {
+                                Log.e("CropDebug", "Firebase download URL is null for $path")
+                                null
+                            }
+                        }
+
+                        else -> null
+                    }
+                } ?: run {
+                    showSnackbar = "画像の読み込みに失敗しました"
+                    return@launch
+                }
+
+                checkNotNull(bmp) { "Bitmap is null before crop" }
+                // ---- ここで切り抜き Bitmap を作る（追加はしない）----
+                val crop: Bitmap = createSeedOuterCrop(context, bmp) ?: run {
+                    showSnackbar = "外側を検出できませんでした"; return@launch
+                }
+
+                // 一時ファイル保存（差し替え用）
+                val file = File(context.cacheDir, "seed_outer_${System.currentTimeMillis()}.jpg")
+                withContext(Dispatchers.IO) {
+                    FileOutputStream(file).use { out -> crop.compress(Bitmap.CompressFormat.JPEG, 90, out) }
+                }
+                // ダイアログに渡す一時状態をセット
+                pendingCropUri = Uri.fromFile(file)
+                pendingCropBitmap = crop
+                pendingCropTargetIndex = ocrTargetIndex
+                showCropConfirmDialog = true
+
+            } catch (e: Exception) {
+                Log.e("SeedInputVM", "crop preview failed", e)
+                showSnackbar = "切り抜きに失敗しました"
+            } finally { isLoading = false }
+        }
+    }
+
+    // --- ViewModel 内の状態 ---
+    var showCropConfirmDialog by mutableStateOf(false)
+        private set
+    private var pendingCropUri: Uri? = null
+    private var pendingCropBitmap: Bitmap? = null
+    val pendingCropPreview: Bitmap?
+        get() = pendingCropBitmap
+    private var pendingCropTargetIndex: Int = -1
+
+    fun dismissCropDialog() {
+        showCropConfirmDialog = false
+        pendingCropUri = null
+        pendingCropBitmap = null
+        pendingCropTargetIndex = -1
+    }
+
+    fun confirmCropReplace() {
+        val idx = pendingCropTargetIndex
+        val uri = pendingCropUri
+        if (idx in imageUris.indices && uri != null) {
+            imageUris[idx] = uri   // ← 元画像を差し替え
+            showSnackbar = "画像を切り抜きに差し替えました"
+        }
+        dismissCropDialog()
+    }
+    private suspend fun createSeedOuterCrop(
+        context: Context,
+        sourceBitmap: Bitmap,
+        minAreaRatio: Float = 0.10f,
+        centerBias: Float = 0.15f,
+        marginRatio: Float = 0.05f,
+        aspectMin: Float = 0.5f,
+        aspectMax: Float = 2.0f
+    ): Bitmap? {
+        val input = InputImage.fromBitmap(sourceBitmap, 0)
+        val objects = runCatching { seedOuterDetector.process(input).await() }
+            .onFailure { Log.e("MLKit", "seed outer detect failed", it) }
+            .getOrNull() ?: return null
+
+        if (objects.isEmpty()) return null
+
+        val w = sourceBitmap.width
+        val h = sourceBitmap.height
+        val imgArea = w.toFloat() * h
+
+        fun scoreRect(l: Int, t: Int, r: Int, b: Int): Double {
+            val cw = (l + r) / 2f
+            val ch = (t + b) / 2f
+            val dx = (cw / w - 0.5f)
+            val dy = (ch / h - 0.5f)
+            val centerPenalty = (1.0 - (kotlin.math.hypot(dx.toDouble(), dy.toDouble()) * 2.0 * centerBias))
+                .coerceIn(0.0, 1.0)
+            val area = (r - l).toFloat() * (b - t)
+            return area * centerPenalty
+        }
+
+        val best = objects.map { it.boundingBox }
+            .map { bb ->
+                val l = bb.left.coerceIn(0, w - 1)
+                val t = bb.top.coerceIn(0, h - 1)
+                val r = bb.right.coerceIn(l + 1, w)
+                val b = bb.bottom.coerceIn(t + 1, h)
+                android.graphics.Rect(l, t, r, b)
+            }
+            .filter { rect ->
+                val area = (rect.width() * rect.height()).toFloat()
+                if (area / imgArea < minAreaRatio) return@filter false
+                val ar = rect.width().toFloat() / rect.height().toFloat()
+                ar in aspectMin..aspectMax
+            }
+            .maxByOrNull { r -> scoreRect(r.left, r.top, r.right, r.bottom) }
+            ?: return null
+
+        val inflated = RectF(best).addMargin(w, h, marginRatio)
+        val l = inflated.left.toInt().coerceIn(0, w - 1)
+        val t = inflated.top.toInt().coerceIn(0, h - 1)
+        val r = inflated.right.toInt().coerceIn(l + 1, w)
+        val b = inflated.bottom.toInt().coerceIn(t + 1, h)
+
+        return runCatching { Bitmap.createBitmap(sourceBitmap, l, t, r - l, b - t) }.getOrNull()
     }
 
 }

@@ -68,7 +68,6 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
-    implementation(libs.tensorflow.lite.metadata)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -92,11 +91,12 @@ dependencies {
     implementation(libs.material3)
     implementation(libs.accompanist.systemuicontroller)
     implementation(libs.kotlinx.serialization.json)
-//    implementation(libs.play.services.base)
-//    implementation(libs.play.services.basement)
     implementation(libs.lottie.compose)
     coreLibraryDesugaring(libs.desugar.jdk.libs)
     implementation(libs.tflite)
+    implementation(libs.tflite.api)
     implementation(libs.tflite.support)
     implementation(libs.tflite.task.vision)
+    implementation(libs.tensorflowLiteMetadata)
+    implementation("com.google.mlkit:object-detection:17.0.2")//BoM 管理がうまくいかなかったので直接記載
 }

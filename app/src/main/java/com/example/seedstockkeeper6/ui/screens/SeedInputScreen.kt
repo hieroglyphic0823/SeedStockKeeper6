@@ -78,12 +78,19 @@ import com.google.firebase.storage.ktx.storage
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import android.content.res.Configuration
+import android.graphics.Bitmap
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material.icons.filled.ArrowBackIosNew
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.outlined.ContentCut
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+
 @Composable
 fun SeedInputScreen(
     navController: NavController,
@@ -252,7 +259,13 @@ fun SeedInputScreen(
                 Spacer(Modifier.width(8.dp))
                 Text("AIで解析")
             }
-
+            Spacer(Modifier.width(8.dp))
+            IconButton(
+                onClick = { viewModel.cropSeedOuterAtOcrTarget(context) },
+                enabled = viewModel.ocrTargetIndex in viewModel.imageUris.indices && !viewModel.isLoading
+            ) {
+                Icon(Icons.Outlined.ContentCut, contentDescription = "外側を切り抜く")
+            }
             OutlinedTextField(viewModel.packet.productName, viewModel::onProductNameChange, label = { Text("商品名") }, modifier = Modifier.fillMaxWidth())
             OutlinedTextField(viewModel.packet.variety, viewModel::onVarietyChange, label = { Text("品種") }, modifier = Modifier.fillMaxWidth())
             OutlinedTextField(viewModel.packet.family, viewModel::onFamilyChange, label = { Text("科名") }, modifier = Modifier.fillMaxWidth())
@@ -413,6 +426,40 @@ fun SeedInputScreen(
 
 
 }
+@Composable
+fun CropConfirmDialog(viewModel: SeedInputViewModel) {
+    if (!viewModel.showCropConfirmDialog) return
+    val preview = viewModel.pendingCropPreview
+
+    AlertDialog(
+        onDismissRequest = { viewModel.dismissCropDialog() },
+        title = { Text("切り取った画像を差し替えますか？") },
+        text = {
+            if (preview != null) {
+                Image(
+                    bitmap = preview.asImageBitmap(),
+                    contentDescription = "切り抜きプレビュー",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 180.dp, max = 360.dp)
+                )
+            } else {
+                Text("プレビューを表示できませんでした")
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { viewModel.confirmCropReplace() }) {
+                Text("はい")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = { viewModel.dismissCropDialog() }) {
+                Text("いいえ")
+            }
+        }
+    )
+}
+
 
 @Composable
 fun LoadingAnimation() {

@@ -54,6 +54,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
+import com.example.seedstockkeeper6.debug.DebugDetectOuterScreen
+import com.example.seedstockkeeper6.BuildConfig
+import androidx.compose.material.icons.outlined.BugReport
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -91,17 +94,15 @@ class MainActivity : ComponentActivity() {
                                 title = { Text("SeedStockKeeper6") },
                                 actions = {
                                     when {
+                                        // 1) リスト画面で選択あり → 削除ボタン
                                         isListScreen && selectedIds.isNotEmpty() -> {
                                             IconButton(onClick = {
                                                 CoroutineScope(Dispatchers.IO).launch {
                                                     selectedIds.forEach { id ->
                                                         listViewModel.deleteSeedPacketWithImages(id) { result ->
                                                             CoroutineScope(Dispatchers.Main).launch {
-                                                                val message = if (result.isSuccess) {
-                                                                    "削除しました"
-                                                                } else {
-                                                                    "削除に失敗しました: ${result.exceptionOrNull()?.localizedMessage ?: "不明なエラー"}"
-                                                                }
+                                                                val message = if (result.isSuccess) "削除しました"
+                                                                else "削除に失敗しました: ${result.exceptionOrNull()?.localizedMessage ?: "不明なエラー"}"
                                                                 snackbarHostState.showSnackbar(message)
                                                             }
                                                         }
@@ -109,9 +110,11 @@ class MainActivity : ComponentActivity() {
                                                     selectedIds.clear()
                                                 }
                                             }) {
-                                                Icon(Icons.Default.Delete, contentDescription = "Delete")
+                                                Icon(Icons.Filled.Delete, contentDescription = "Delete")
                                             }
                                         }
+
+                                        // 2) 入力画面 → 保存ボタン
                                         isInputScreen && navBackStackEntry != null -> {
                                             val inputViewModel: SeedInputViewModel = viewModel(
                                                 viewModelStoreOwner = navBackStackEntry!!
@@ -131,10 +134,18 @@ class MainActivity : ComponentActivity() {
                                                     }
                                                 }
                                             }) {
-                                                Icon(Icons.Default.Save, contentDescription = "Save")
+                                                Icon(Icons.Filled.Save, contentDescription = "Save")
                                             }
-
                                         }
+
+                                        // 3) リスト画面で選択なし & DEBUG → 🐞デバッグボタン
+                                        isListScreen && selectedIds.isEmpty() && BuildConfig.DEBUG -> {
+                                            IconButton(onClick = { navController.navigate("debugDetectOuter") }) {
+                                                Icon(Icons.Outlined.BugReport, contentDescription = "Debug: Detect Outer")
+                                            }
+                                        }
+
+                                        else -> { /* 何も出さない */ }
                                     }
                                 }
                             )
@@ -197,6 +208,10 @@ fun AppNavHost(
                 navController = navController,
                 viewModel = currentInputViewModel
             )
+        }
+        // ★ DEBUGビルドのときだけ有効
+        if (BuildConfig.DEBUG) {
+            composable("debugDetectOuter") { DebugDetectOuterScreen() }
         }
     }
 }
