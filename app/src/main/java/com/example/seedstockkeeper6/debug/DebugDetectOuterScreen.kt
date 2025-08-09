@@ -26,7 +26,132 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
+import android.graphics.Rect
+import kotlin.math.hypot
+import kotlin.math.max
+import kotlin.math.min
+import kotlin.math.sqrt
 
+/** 既存のバウンディングボックスを“内側の強いエッジ”に合わせて締める */
+fun tightenRectToEdges(
+    src: Bitmap,
+    rect: Rect,
+    scanFrac: Float = 0.06f,    // 端から何割分を探索するか（0.04～0.10推奨）
+    percentile: Float = 0.85f,  // エッジ強度の上位何割を“壁”とみなすか（0.80～0.92）
+    smoothWin: Int = 5          // プロファイルの移動平均窓（奇数, 3～9）
+): Rect {
+    // ROI を切り出して計算（速さ優先でダウンサンプルは省略）
+    val w = rect.width().coerceAtLeast(4)
+    val h = rect.height().coerceAtLeast(4)
+    val px = IntArray(w * h)
+    src.getPixels(px, 0, w, rect.left, rect.top, w, h)
+
+    // グレースケール
+    val gray = IntArray(w * h)
+    for (i in px.indices) {
+        val c = px[i]
+        val r = (c ushr 16) and 0xFF
+        val g = (c ushr 8) and 0xFF
+        val b =  c and 0xFF
+        gray[i] = (0.299 * r + 0.587 * g + 0.114 * b).toInt()
+    }
+
+    // Sobel 勾配の大きさ
+    fun at(x: Int, y: Int) = gray[y * w + x]
+    val mag = FloatArray(w * h)
+    for (y in 1 until h - 1) for (x in 1 until w - 1) {
+        val gx = -at(x - 1, y - 1) + at(x + 1, y - 1) - 2 * at(x - 1, y) + 2 * at(x + 1, y) - at(x - 1, y + 1) + at(x + 1, y + 1)
+        val gy =  at(x - 1, y - 1) + 2 * at(x, y - 1) + at(x + 1, y - 1) - at(x - 1, y + 1) - 2 * at(x, y + 1) - at(x + 1, y + 1)
+        mag[y * w + x] = sqrt((gx * gx + gy * gy).toFloat())
+    }
+
+    // 端から一定距離の帯で1次元プロファイルを作る
+    val depth = (min(w, h) * scanFrac).toInt().coerceIn(2, min(w, h) / 3)
+
+    fun smooth(a: FloatArray, win: Int): FloatArray {
+        if (win <= 1) return a
+        val n = a.size
+        val out = FloatArray(n)
+        val half = win / 2
+        for (i in 0 until n) {
+            var s = 0f; var c = 0
+            for (k in (i - half)..(i + half)) if (k in 0 until n) { s += a[k]; c++ }
+            out[i] = if (c > 0) s / c else a[i]
+        }
+        return out
+    }
+
+    // 左右上下の各プロファイル（帯全域の合計勾配）
+    fun leftProfile(): FloatArray {
+        val p = FloatArray(depth)
+        for (i in 0 until depth) {
+            val x = (1 + i).coerceAtMost(w - 2)
+            var s = 0f
+            for (y in 1 until h - 1) s += mag[y * w + x]
+            p[i] = s
+        }
+        return smooth(p, smoothWin)
+    }
+    fun rightProfile(): FloatArray {
+        val p = FloatArray(depth)
+        for (i in 0 until depth) {
+            val x = (w - 2 - i).coerceAtLeast(1)
+            var s = 0f
+            for (y in 1 until h - 1) s += mag[y * w + x]
+            p[i] = s
+        }
+        return smooth(p, smoothWin)
+    }
+    fun topProfile(): FloatArray {
+        val p = FloatArray(depth)
+        for (i in 0 until depth) {
+            val y = (1 + i).coerceAtMost(h - 2)
+            var s = 0f
+            for (x in 1 until w - 1) s += mag[y * w + x]
+            p[i] = s
+        }
+        return smooth(p, smoothWin)
+    }
+    fun bottomProfile(): FloatArray {
+        val p = FloatArray(depth)
+        for (i in 0 until depth) {
+            val y = (h - 2 - i).coerceAtLeast(1)
+            var s = 0f
+            for (x in 1 until w - 1) s += mag[y * w + x]
+            p[i] = s
+        }
+        return smooth(p, smoothWin)
+    }
+
+    fun pickInset(p: FloatArray): Int {
+        var mx = 0f
+        for (v in p) if (v > mx) mx = v
+        if (mx <= 0f) return 0
+        val th = mx * percentile
+        for (i in 0 until p.size) if (p[i] >= th) return i
+        // 念のため最大値位置
+        var idx = 0
+        for (i in 1 until p.size) if (p[i] > p[idx]) idx = i
+        return idx
+    }
+
+    val insetL = pickInset(leftProfile())
+    val insetR = pickInset(rightProfile())
+    val insetT = pickInset(topProfile())
+    val insetB = pickInset(bottomProfile())
+
+    val L = rect.left + insetL
+    val R = rect.right - insetR
+    val T = rect.top + insetT
+    val B = rect.bottom - insetB
+
+    return Rect(
+        L.coerceIn(0, src.width - 1),
+        T.coerceIn(0, src.height - 1),
+        R.coerceIn(L + 1, src.width),
+        B.coerceIn(T + 1, src.height)
+    )
+}
 @Composable
 fun DebugDetectOuterScreen() {
     val context = LocalContext.current
@@ -46,7 +171,7 @@ fun DebugDetectOuterScreen() {
     var arMin by remember { mutableStateOf(1.0f) }     // 長辺/短辺
     var arMax by remember { mutableStateOf(2.5f) }
     var centerBias by remember { mutableStateOf(0.20f) }
-    var marginRatio by remember { mutableStateOf(0.08f) }
+    var marginRatio by remember { mutableStateOf(0.04f) }
     var disableFilters by remember { mutableStateOf(false) }
 
     val pick = rememberLauncherForActivityResult(GetContent()) { uri: Uri? ->
@@ -103,7 +228,7 @@ fun DebugDetectOuterScreen() {
                         }
                     }
                 }
-            ) { Text("検出を実行") }
+            ) { Text("検出") }
 
             Button(
                 enabled = overlayBmp != null,
@@ -130,7 +255,7 @@ fun DebugDetectOuterScreen() {
                         lastStats = "fallback: 内側候補なし"
                     }
                 }
-            ) { Text("フォールバックでクロップ") }
+            ) { Text("フォールバック") }
 
             Button(
                 enabled = cropBmp != null,
@@ -185,7 +310,30 @@ fun DebugDetectOuterScreen() {
                 enabled = srcBmp != null && lastCandidates.isNotEmpty(),
                 onClick = {
                     val base = srcBmp ?: return@Button
-                    cropBmp = detector.cropTopCandidate(base, lastCandidates, marginRatio)
+                    val top = lastCandidates.first()  // 1位候補
+
+                    // まずは marginRatio 分だけ外側に広げた下ごしらえ矩形
+                    val pre = Rect(
+                        (top.rect.left  - base.width  * marginRatio).toInt().coerceAtLeast(0),
+                        (top.rect.top   - base.height * marginRatio).toInt().coerceAtLeast(0),
+                        (top.rect.right + base.width  * marginRatio).toInt().coerceAtMost(base.width),
+                        (top.rect.bottom+ base.height * marginRatio).toInt().coerceAtMost(base.height)
+                    )
+
+                    // ←ここで“袋のエッジ”に吸着させてタイト化
+                    val tight = tightenRectToEdges(
+                        src = base,
+                        rect = pre,
+                        scanFrac = 0.06f,   // 端から6%を探索
+                        percentile = 0.86f, // 強いエッジ上位14%を壁とみなす
+                        smoothWin = 5
+                    )
+
+                    // オーバーレイ＆切り抜き
+                    overlayBmp = drawRectOverlay(base, tight)
+                    cropBmp = Bitmap.createBitmap(base, tight.left, tight.top, tight.width(), tight.height())
+
+                    lastStats = "tighten: pre=$pre -> tight=$tight (scan=0.06, p=0.86)"
                 }
             ) { Text("1位でクロップ") }
 
