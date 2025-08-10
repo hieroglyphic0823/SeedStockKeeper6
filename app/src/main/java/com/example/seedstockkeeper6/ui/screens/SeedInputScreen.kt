@@ -91,6 +91,9 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextOverflow
+import com.example.seedstockkeeper6.ui.components.CompanionEffectIcon
+
 @Composable
 fun SeedInputScreen(
     navController: NavController,
@@ -308,14 +311,18 @@ fun SeedInputScreen(
                         .fillMaxWidth()
                         .padding(vertical = 4.dp)
                 ) {
-                    Row(Modifier.padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Row(
+                        Modifier.padding(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Text(
-                            "植物: ${companion.plant} ／ 効果: ${companion.effect}",
-                            Modifier.weight(1f)
+                            "植物: ${companion.plant} ",
+                            Modifier.weight(1f),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
-                        IconButton(onClick = { viewModel.removeCompanionPlant(i) }) {
-                            Icon(Icons.Default.Delete, contentDescription = "削除")
-                        }
+                        Spacer(modifier = Modifier.size(8.dp)) // アイコンとの間隔
+                        CompanionEffectIcon(companion.effect) // ← アイコン表示
                     }
                 }
             }

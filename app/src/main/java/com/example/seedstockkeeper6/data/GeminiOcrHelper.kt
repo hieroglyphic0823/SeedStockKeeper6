@@ -37,8 +37,6 @@ suspend fun runGeminiOcr(context: Context, bitmap: Bitmap): String {
         apiKey = BuildConfig.GEMINI_API_KEY
     )
 
-    val imageBytes = bitmapToByteArray(bitmap)
-
     val inputContent = content {
         image(bitmap)
         text(
@@ -56,8 +54,8 @@ companionPlants 配列について：
 - パッケージに記載されている場合は、それをもとに植物名と効果を記載してください。
 - パッケージに記載がない場合でも、該当植物に対して一般的または推奨される代表的なコンパニオンプランツとその効果を、必ず1つ以上含めて記載してください。
 - 各 companionPlants オブジェクトには、"plant" に1つの植物名、"effect" に1つの効果をそれぞれ記載してください。複数の植物や複数の効果を1つのオブジェクトにまとめないでください。
-- **1つの植物に複数の効果がある場合は、それぞれ別の companionPlants オブジェクトを作成し、同じ植物名で効果ごとに分けて記載してください。**
-- 効果のフィールド（"effect"）は、以下の分類のいずれかを厳密に使用してください：
+- 1つの植物に複数の効果がある場合は、それぞれ別の companionPlants オブジェクトを作成し、同じ植物名で効果ごとに分けて記載してください。
+- 効果のフィールド（"effect"）は、以下の分類のいずれかを**厳密に**使用してください。該当が明確でない場合は「その他」を使用してください：
 
   - 害虫予防
   - 病気予防
@@ -72,7 +70,7 @@ companionPlants 配列について：
   - 土壌pHの調整
   - 作業性向上
   - 収量の安定化
-  - その他：
+  - その他
 
         {
           "productName": "",
@@ -117,15 +115,14 @@ companionPlants 配列について：
             }
           ]
         }
-
-        説明や補足は不要。レスポンスはいかなる追加の引用符やエスケープ文字も含まない、純粋でパース可能なJSONオブジェクトでなければなりません。出力は、直接 JSON.parse() (または同等のメソッド) でパースできる形式である必要があります。先頭にjsonとつけず「」で囲まず、JSONオブジェクトそのものを開始と終了の波括弧 {} で返してください。
-            """.trimIndent()
+        """.trimIndent()
         )
     }
 
     val response = model.generateContent(inputContent)
     return response.text ?: "結果がありません"
 }
+
 
 fun bitmapToByteArray(bitmap: Bitmap): ByteArray {
     val outputStream = ByteArrayOutputStream()
