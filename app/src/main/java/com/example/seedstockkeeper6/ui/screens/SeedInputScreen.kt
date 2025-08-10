@@ -78,9 +78,7 @@ import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.example.seedstockkeeper6.ui.components.AIDiffDialog
 import com.example.seedstockkeeper6.ui.components.CompanionEffectIcon
-import com.example.seedstockkeeper6.ui.components.SeedCalendar
 import com.example.seedstockkeeper6.ui.components.SeedCalendarFromEntries
-import com.example.seedstockkeeper6.ui.components.buildBands
 import com.example.seedstockkeeper6.viewmodel.SeedInputViewModel
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.ktx.storage

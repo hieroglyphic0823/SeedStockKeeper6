@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -16,17 +17,36 @@ import androidx.compose.ui.unit.sp
 import com.example.seedstockkeeper6.model.CalendarEntry
 import kotlin.math.max
 import kotlin.math.min
+import androidx.compose.ui.geometry.Size
 
-data class MonthRange(val start: Int, val end: Int) // 1..12
+data class MonthRange(
+    val start: Int, // 月 (1-12)
+    val end: Int,   // 月 (1-12)
+    val startStage: String? = null, // 例: "上旬", "中旬", "下旬", または null
+    val endStage: String? = null     // 例: "上旬", "中旬", "下旬", または null
+)
 enum class BandStyle { Dotted, Solid }
-data class CalendarBand(
-    val label: String,
-    val labelColor: Color,
+
+//data class CalendarBand(
+//    val label: String,
+//    val labelColor: Color,
+//    val style: BandStyle,
+//    val ranges: List<MonthRange>
+//)
+// 元の CalendarBand は RangeItem に名前変更するか、新しい構造に含める
+data class RangeItem(
+    val ranges: List<MonthRange>,
     val style: BandStyle,
-    val ranges: List<MonthRange>
+    val color: Color, // 個別の色を持たせる
+    val itemLabel: String // "播種", "収穫" など、必要であれば
 )
 
-/** "3-5,9,10-11" → listOf(3..5,9..9,10..11) */
+data class GroupedCalendarBand(
+    val groupLabel: String, // 例: "リージョンA"
+    val labelColor: Color,  // グループのラベル色 (現在のband.labelColorに相当)
+    val items: List<RangeItem>
+)
+
 fun parseMonthRanges(expr: String?): List<MonthRange> {
     if (expr.isNullOrBlank()) return emptyList()
     return expr.split(",")
@@ -46,26 +66,81 @@ fun parseMonthRanges(expr: String?): List<MonthRange> {
 @Composable
 fun SeedCalendarFromEntries(
     entries: List<CalendarEntry>,
-    regionColors: Map<String, Color>, // 地域ごとに色を変えたいときに使えます（例: regionColors["関東"]）
+    regionColors: Map<String, Color>,
     modifier: Modifier = Modifier.fillMaxWidth(),
     heightDp: Int = 160
 ) {
-    val bands = entries.map { entry ->
-        CalendarBand(
-            label = entry.region,
-            labelColor = regionColors[entry.region] ?: Color.Gray,
-            style = BandStyle.Dotted,
-            ranges = listOf(
-                MonthRange(entry.sowing_start, entry.sowing_end)
+    val groupedBands = entries
+        .groupBy { it.region } // まず region でグループ化
+        .map { (region, regionEntries) ->
+            val sowingItems = regionEntries.mapNotNull { entry ->
+                // 播種期間が有効な場合のみ RangeItem を作成
+                if (entry.sowing_start != 0 && entry.sowing_end != 0) { // または適切な有効期間チェック
+                    RangeItem(
+                        ranges = listOf(
+                            MonthRange(
+                                entry.sowing_start,
+                                entry.sowing_end,
+                                entry.sowing_start_stage,
+                                entry.sowing_end_stage
+                            )
+                        ),
+                        style = BandStyle.Dotted,
+                        color = regionColors[region]?.let { adjustBrightness(it, 1.2f) }
+                            ?: Color.Green, // 色を少し明るくするなど調整
+                        itemLabel = "播種"
+                    )
+                } else null
+            }
+            val harvestItems = regionEntries.mapNotNull { entry ->
+                // 収穫期間が有効な場合のみ RangeItem を作成
+                if (entry.harvest_start != 0 && entry.harvest_end != 0) { // または適切な有効期間チェック
+                    RangeItem(
+                        ranges = listOf(
+                            MonthRange(
+                                entry.harvest_start,
+                                entry.harvest_end,
+                                entry.harvest_start_stage,
+                                entry.harvest_end_stage
+                            )
+                        ),
+                        style = BandStyle.Solid,
+                        color = regionColors[region]?.let { adjustBrightness(it, 0.8f) }
+                            ?: Color.Red, // 色を少し暗くするなど調整
+                        itemLabel = "収穫"
+                    )
+                } else null
+            }
+
+            GroupedCalendarBand(
+                groupLabel = region, // ラベルはリージョン名
+                labelColor = regionColors[region] ?: Color.Gray, // グループのラベル色
+                items = sowingItems + harvestItems // 播種と収穫のアイテムを結合
             )
-        )
-    }
-    SeedCalendar(bands = bands, modifier = modifier, heightDp = heightDp)
+        }
+        .filter { it.items.isNotEmpty() } // 描画アイテムがないグループは除外
+
+    // SeedCalendar を新しいデータ構造で呼び出すように修正が必要
+    SeedCalendarGrouped(bands = groupedBands, modifier = modifier, heightDp = heightDp)
+}
+
+// 色の明るさを調整するヘルパー関数（例）
+fun adjustBrightness(color: Color, factor: Float): Color {
+    val hsv = FloatArray(3)
+    android.graphics.Color.RGBToHSV(
+        (color.red * 255).toInt(),
+        (color.green * 255).toInt(),
+        (color.blue * 255).toInt(),
+        hsv
+    )
+    hsv[2] = (hsv[2] * factor).coerceIn(0f, 1f)
+    val newColorInt = android.graphics.Color.HSVToColor(hsv)
+    return Color(newColorInt)
 }
 
 @Composable
-fun SeedCalendar(
-    bands: List<CalendarBand>,
+fun SeedCalendarGrouped( // 名前を変更
+    bands: List<GroupedCalendarBand>, // GroupedCalendarBand を受け取る
     modifier: Modifier = Modifier.fillMaxWidth(),
     heightDp: Int = 140
 ) {
@@ -74,27 +149,32 @@ fun SeedCalendar(
     val labelColWidthDp = 64.dp
     val headerHeightDp = 22.dp
     val gridStroke = 1f
-    // textPaint を Canvas の外側で remember する
     val textPaint = remember {
         Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = android.graphics.Color.DKGRAY
             textAlign = Paint.Align.CENTER
-            // textSize は Canvas 内で toPx() を使って設定する方が良い場合もあるが、
-            // ここで設定しても通常は問題ない。ただし、Density が必要な場合は注意。
-            // textSize = 12.sp.toPx() // ← もしここで設定す
         }
     }
+
+    fun getStageOffset(stage: String?): Float {
+        return when (stage) {
+            "上旬" -> 0.15f
+            "中旬" -> 0.5f
+            "下旬" -> 0.85f
+            else -> 0.5f // デフォルトは中央
+        }
+    }
+
     Canvas(
         modifier = modifier
             .fillMaxWidth()
-            // .then(Modifier) // 冗長なので削除を検討
             .height(heightDp.dp)
-    ) { // ここからは DrawScope
-        // Canvas 内で Density を取得して textSize を設定
-        textPaint.textSize = 12.sp.toPx() // DrawScope内では size や LocalDensity.current.density が使える
+    ) {
+        textPaint.textSize = 12.sp.toPx()
 
         val labelW = labelColWidthDp.toPx()
         val headerH = headerHeightDp.toPx()
+        // ... (他の計算は同様) ...
         val gridLeft = labelW
         val gridTop = headerH
         val gridRight = size.width
@@ -102,22 +182,18 @@ fun SeedCalendar(
         val gridW = gridRight - gridLeft
         val gridH = gridBottom - gridTop
 
-        val rowCount = max(1, bands.size)
+        val rowCount = max(1, bands.size) // 行数は GroupedCalendarBand の数
         val rowH = gridH / rowCount
         val colW = gridW / 12f
 
-        // ヘッダ背景
-        // ヘッダ（月）描画
         for (m in 0 until 12) {
             val xCenter = gridLeft + colW * (m + 0.5f)
-            // 目盛り線
             drawLine(
                 color = Color(0x22000000),
-                start = androidx.compose.ui.geometry.Offset(gridLeft + colW * m, gridTop),
-                end = androidx.compose.ui.geometry.Offset(gridLeft + colW * m, gridBottom),
+                start = Offset(gridLeft + colW * m, gridTop),
+                end = Offset(gridLeft + colW * m, gridBottom),
                 strokeWidth = gridStroke
             )
-            // 月ラベル
             drawContext.canvas.nativeCanvas.drawText(
                 monthLabels[m],
                 xCenter,
@@ -125,110 +201,71 @@ fun SeedCalendar(
                 textPaint
             )
         }
-        // 右端の縦線
+
         drawLine(
             color = Color(0x22000000),
-            start = androidx.compose.ui.geometry.Offset(gridRight, gridTop),
-            end = androidx.compose.ui.geometry.Offset(gridRight, gridBottom),
+            start = Offset(gridRight, gridTop),
+            end = Offset(gridRight, gridBottom),
             strokeWidth = gridStroke
         )
 
-        // 各バンド描画
-        bands.forEachIndexed { row, band ->
+
+        bands.forEachIndexed { row, groupedBand -> // 各 GroupedCalendarBand が1行に対応
             val top = gridTop + rowH * row
             val centerY = top + rowH / 2f
 
-            // ラベル背景
+            // グループラベル背景とテキスト
             drawRect(
-                color = band.labelColor.copy(alpha = 0.15f),
-                topLeft = androidx.compose.ui.geometry.Offset(0f, top),
-                size = androidx.compose.ui.geometry.Size(labelW, rowH)
+                color = groupedBand.labelColor.copy(alpha = 0.15f),
+                topLeft = Offset(0f, top),
+                size = Size(labelW, rowH)
             )
-            // ラベル文字
             drawContext.canvas.nativeCanvas.drawText(
-                band.label,
+                groupedBand.groupLabel,
                 labelW * 0.5f,
                 centerY + (textPaint.textSize / 3f),
-                textPaint.apply {
-                    color = android.graphics.Color.DKGRAY
-                    textAlign = Paint.Align.CENTER
-                }
+                textPaint.apply { color = android.graphics.Color.DKGRAY }
             )
 
-            // バー描画
-            band.ranges.forEach { r ->
-                val startX = gridLeft + colW * (r.start - 1 + 0.1f)
-                val endX = gridLeft + colW * (r.end - 0.1f)
+            // 各アイテム (播種、収穫など) を同じ centerY を使って描画
+            groupedBand.items.forEach { item ->
+                item.ranges.forEach { r ->
+                    val startX = gridLeft + colW * (r.start - 1 + getStageOffset(r.startStage))
+                    val endX = gridLeft + colW * (r.end - 1 + getStageOffset(r.endStage))
 
-                when (band.style) {
-                    BandStyle.Dotted -> {
-                        // 黒の点線 + 両端に●
-                        drawLine(
-                            color = Color(0xFF333333),
-                            start = androidx.compose.ui.geometry.Offset(startX, centerY),
-                            end = androidx.compose.ui.geometry.Offset(endX, centerY),
-                            strokeWidth = 6f,
-                            pathEffect = dash
-                        )
-                        drawCircle(Color(0xFF333333), radius = 6f,
-                            center = androidx.compose.ui.geometry.Offset(startX, centerY))
-                        drawCircle(Color(0xFF333333), radius = 6f,
-                            center = androidx.compose.ui.geometry.Offset(endX, centerY))
-                    }
-                    BandStyle.Solid -> {
-                        // 赤い実線バー（少し太め）
-                        drawLine(
-                            color = Color(0xFFE53935),
-                            start = androidx.compose.ui.geometry.Offset(startX, centerY),
-                            end = androidx.compose.ui.geometry.Offset(endX, centerY),
-                            strokeWidth = 14f,
-                            cap = Stroke.DefaultCap
-                        )
+                    when (item.style) {
+                        BandStyle.Dotted -> {
+                            drawLine(
+                                color = item.color, // アイテムごとの色を使用
+                                start = Offset(startX, centerY),
+                                end = Offset(endX, centerY),
+                                strokeWidth = 6f, // 細めに
+                                pathEffect = dash
+                            )
+                            drawCircle(item.color, radius = 6f, center = Offset(startX, centerY))
+                            drawCircle(item.color, radius = 6f, center = Offset(endX, centerY))
+                        }
+
+                        BandStyle.Solid -> {
+                            drawLine(
+                                color = item.color, // アイテムごとの色を使用
+                                start = Offset(startX, centerY),
+                                end = Offset(endX, centerY),
+                                strokeWidth = 14f, // 太めに
+                                cap = Stroke.DefaultCap
+                            )
+                        }
                     }
                 }
             }
 
-            // 各行の下線
+            // 行の区切り線
             drawLine(
                 color = Color(0x22000000),
-                start = androidx.compose.ui.geometry.Offset(gridLeft, top + rowH),
-                end = androidx.compose.ui.geometry.Offset(gridRight, top + rowH),
+                start = Offset(gridLeft, top + rowH),
+                end = Offset(gridRight, top + rowH),
                 strokeWidth = gridStroke
             )
         }
     }
-}
-fun buildBands(
-    sowing: String? = null,
-    nursery: String? = null,
-    harvest: String? = null
-): List<CalendarBand> {
-    val list = mutableListOf<CalendarBand>()
-
-    parseMonthRanges(sowing).takeIf { it.isNotEmpty() }?.let {
-        list += CalendarBand(
-            label = "播種",
-            labelColor = Color(0xFF2E7D32),
-            style = BandStyle.Dotted,
-            ranges = it
-        )
-    }
-    parseMonthRanges(nursery).takeIf { it.isNotEmpty() }?.let {
-        list += CalendarBand(
-            label = "育苗/定植",
-            labelColor = Color(0xFF1976D2),
-            style = BandStyle.Dotted,
-            ranges = it
-        )
-    }
-    parseMonthRanges(harvest).takeIf { it.isNotEmpty() }?.let {
-        list += CalendarBand(
-            label = "収穫",
-            labelColor = Color(0xFFE53935),
-            style = BandStyle.Solid,
-            ranges = it
-        )
-    }
-
-    return list
 }
