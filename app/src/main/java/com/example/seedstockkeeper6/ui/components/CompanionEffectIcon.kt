@@ -109,7 +109,7 @@ fun CompanionEffectIcon(CompanionEffect: String?) {
             Image(
                 painter = painterResource(id = iconRes),
                 contentDescription = "$normalized のアイコン",
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(32.dp)
             )
         }
     } else if (imageVector != null) {

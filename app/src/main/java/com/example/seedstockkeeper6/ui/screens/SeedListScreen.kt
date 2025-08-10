@@ -15,6 +15,8 @@ import com.example.seedstockkeeper6.model.SeedPacket
 import com.example.seedstockkeeper6.ui.components.FamilyIcon
 import com.example.seedstockkeeper6.ui.components.IconWithLabel
 import com.example.seedstockkeeper6.ui.components.LabelPosition
+import com.example.seedstockkeeper6.util.familyRotationMinYears
+import com.example.seedstockkeeper6.util.familyRotationMinYearsLabel
 import com.example.seedstockkeeper6.viewmodel.SeedListViewModel
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
@@ -69,9 +71,10 @@ fun SeedListScreen(
                     modifier = Modifier.padding(16.dp),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
+                    val label = familyRotationMinYearsLabel(seed.family) ?: ""
                     IconWithLabel(
                         icon = { FamilyIcon(seed.family) },
-                        label = "2",
+                        label = label,
                         position = LabelPosition.Center
                     )
                     Spacer(modifier = Modifier.width(12.dp))

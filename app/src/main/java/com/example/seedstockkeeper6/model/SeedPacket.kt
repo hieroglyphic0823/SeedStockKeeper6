@@ -49,6 +49,13 @@ data class SoilPrep(
 @Serializable
 data class CalendarEntry(
     val region: String = "",
-    val sowing: String = "",
-    val harvest: String = ""
+    val sowing_start: Int = 0,
+    val sowing_start_stage: String = "",
+    val sowing_end: Int = 0,
+    val sowing_end_stage: String = "",
+    val harvest_start: Int = 0,
+    val harvest_start_stage: String = "",
+    val harvest_end: Int = 0,
+    val harvest_end_stage: String = ""
+
 )

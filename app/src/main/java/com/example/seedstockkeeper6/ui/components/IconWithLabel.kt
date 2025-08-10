@@ -49,7 +49,7 @@ fun IconWithLabel(
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             style = MaterialTheme.typography.headlineLarge,
-            color = MaterialTheme.colorScheme.onSurface, // 必要に応じて色変更
+            color = MaterialTheme.colorScheme.onSurfaceVariant, // 必要に応じて色変更
             modifier = Modifier
                 .align(alignment)
                 .zIndex(1f)

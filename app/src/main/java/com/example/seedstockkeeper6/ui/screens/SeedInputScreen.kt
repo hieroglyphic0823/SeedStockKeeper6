@@ -10,8 +10,10 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTransformGestures
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -29,13 +31,15 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddAPhoto
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.AutoFixHigh
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.ChevronLeft
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.ZoomIn
+import androidx.compose.material.icons.outlined.ContentCut
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
@@ -43,6 +47,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -52,7 +57,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
@@ -61,6 +65,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.zIndex
@@ -72,27 +77,15 @@ import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.example.seedstockkeeper6.ui.components.AIDiffDialog
+import com.example.seedstockkeeper6.ui.components.CompanionEffectIcon
+import com.example.seedstockkeeper6.ui.components.SeedCalendar
+import com.example.seedstockkeeper6.ui.components.SeedCalendarFromEntries
+import com.example.seedstockkeeper6.ui.components.buildBands
 import com.example.seedstockkeeper6.viewmodel.SeedInputViewModel
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.ktx.storage
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-import android.content.res.Configuration
-import android.graphics.Bitmap
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.material.icons.filled.ArrowBackIosNew
-import androidx.compose.material.icons.filled.ChevronLeft
-import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.outlined.ContentCut
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.style.TextOverflow
-import com.example.seedstockkeeper6.ui.components.CompanionEffectIcon
 
 @Composable
 fun SeedInputScreen(
@@ -197,7 +190,11 @@ fun SeedInputScreen(
                                     .align(Alignment.BottomStart)
                                     .padding(4.dp)
                             ) {
-                                Icon(Icons.Filled.ChevronLeft, contentDescription = "左へ", tint = Color.White)
+                                Icon(
+                                    Icons.Filled.ChevronLeft,
+                                    contentDescription = "左へ",
+                                    tint = Color.White
+                                )
                             }
 
                             // 右へ
@@ -208,7 +205,11 @@ fun SeedInputScreen(
                                     .align(Alignment.BottomEnd)
                                     .padding(4.dp)
                             ) {
-                                Icon(Icons.Filled.ChevronRight, contentDescription = "右へ", tint = Color.White)
+                                Icon(
+                                    Icons.Filled.ChevronRight,
+                                    contentDescription = "右へ",
+                                    tint = Color.White
+                                )
                             }
                         }
                         val context = LocalContext.current
@@ -275,31 +276,215 @@ fun SeedInputScreen(
                     Icon(Icons.Outlined.ContentCut, contentDescription = "外側を切り抜く")
                 }
             }
-            OutlinedTextField(viewModel.packet.productName, viewModel::onProductNameChange, label = { Text("商品名") }, modifier = Modifier.fillMaxWidth())
-            OutlinedTextField(viewModel.packet.variety, viewModel::onVarietyChange, label = { Text("品種") }, modifier = Modifier.fillMaxWidth())
-            OutlinedTextField(viewModel.packet.family, viewModel::onFamilyChange, label = { Text("科名") }, modifier = Modifier.fillMaxWidth())
-            OutlinedTextField(viewModel.packet.productNumber, viewModel::onProductNumberChange, label = { Text("商品番号") }, modifier = Modifier.fillMaxWidth())
-            OutlinedTextField(viewModel.packet.company, viewModel::onCompanyChange, label = { Text("会社") }, modifier = Modifier.fillMaxWidth())
-            OutlinedTextField(viewModel.packet.originCountry, viewModel::onOriginCountryChange, label = { Text("原産国") }, modifier = Modifier.fillMaxWidth())
-            OutlinedTextField(viewModel.packet.expirationDate, viewModel::onExpirationDateChange, label = { Text("有効期限") }, modifier = Modifier.fillMaxWidth())
-            OutlinedTextField(viewModel.packet.contents, viewModel::onContentsChange, label = { Text("内容量") }, modifier = Modifier.fillMaxWidth())
-            OutlinedTextField(viewModel.packet.germinationRate, viewModel::onGerminationRateChange, label = { Text("発芽率") }, modifier = Modifier.fillMaxWidth())
-            OutlinedTextField(viewModel.packet.seedTreatment, viewModel::onSeedTreatmentChange, label = { Text("種子処理") }, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(
+                viewModel.packet.productName,
+                viewModel::onProductNameChange,
+                label = { Text("商品名") },
+                modifier = Modifier.fillMaxWidth()
+            )
+            OutlinedTextField(
+                viewModel.packet.variety,
+                viewModel::onVarietyChange,
+                label = { Text("品種") },
+                modifier = Modifier.fillMaxWidth()
+            )
+            OutlinedTextField(
+                viewModel.packet.family,
+                viewModel::onFamilyChange,
+                label = { Text("科名") },
+                modifier = Modifier.fillMaxWidth()
+            )
+            // ---- 地域別 まきどき / 収穫カレンダー ----
+            val regionColors = mapOf(
+                "関東" to Color(0xFF42A5F5),
+                "関西" to Color(0xFF66BB6A)
+            )
+            SeedCalendarFromEntries(
+                entries = viewModel.packet.calendar ?: emptyList(),
+                regionColors = regionColors,
+                modifier = Modifier.fillMaxWidth(),
+                heightDp = 140
+            )
 
-            OutlinedTextField(viewModel.packet.cultivation.spacing_cm_row_min.toString(), viewModel::onSpacingRowMinChange, label = { Text("条間最小 (cm)") }, modifier = Modifier.fillMaxWidth())
-            OutlinedTextField(viewModel.packet.cultivation.spacing_cm_row_max.toString(), viewModel::onSpacingRowMaxChange, label = { Text("条間最大 (cm)") }, modifier = Modifier.fillMaxWidth())
-            OutlinedTextField(viewModel.packet.cultivation.spacing_cm_plant_min.toString(), viewModel::onSpacingPlantMinChange, label = { Text("株間最小 (cm)") }, modifier = Modifier.fillMaxWidth())
-            OutlinedTextField(viewModel.packet.cultivation.spacing_cm_plant_max.toString(), viewModel::onSpacingPlantMaxChange, label = { Text("株間最大 (cm)") }, modifier = Modifier.fillMaxWidth())
+            Text("栽培カレンダー", style = MaterialTheme.typography.titleMedium)
 
-            OutlinedTextField(viewModel.packet.cultivation.germinationTemp_c, viewModel::onGermTempChange, label = { Text("発芽温度") }, modifier = Modifier.fillMaxWidth())
-            OutlinedTextField(viewModel.packet.cultivation.growingTemp_c, viewModel::onGrowTempChange, label = { Text("生育温度") }, modifier = Modifier.fillMaxWidth())
+            viewModel.packet.calendar.forEachIndexed { index, entry ->
+                Text("地域 ${index + 1}", style = MaterialTheme.typography.bodyLarge)
 
-            OutlinedTextField(viewModel.packet.cultivation.soilPrep_per_sqm.compost_kg.toString(), viewModel::onCompostChange, label = { Text("堆肥 (kg/㎡)") }, modifier = Modifier.fillMaxWidth())
-            OutlinedTextField(viewModel.packet.cultivation.soilPrep_per_sqm.dolomite_lime_g.toString(), viewModel::onLimeChange, label = { Text("苦土石灰 (g/㎡)") }, modifier = Modifier.fillMaxWidth())
-            OutlinedTextField(viewModel.packet.cultivation.soilPrep_per_sqm.chemical_fertilizer_g.toString(), viewModel::onFertilizerChange, label = { Text("化成肥料 (g/㎡)") }, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(
+                    value = entry.region,
+                    onValueChange = { viewModel.updateCalendarRegion(index, it) },
+                    label = { Text("地域") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = entry.sowing_start?.toString() ?: "",
+                    onValueChange = { viewModel.updateCalendarSowingStart(index, it.toIntOrNull() ?: 0) },
+                    label = { Text("播種開始（月）") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = entry.sowing_start_stage ?: "",
+                    onValueChange = { viewModel.updateCalendarSowingStartStage(index, it) },
+                    label = { Text("播種開始（旬）") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = entry.sowing_end?.toString() ?: "",
+                    onValueChange = { viewModel.updateCalendarSowingEnd(index, it.toIntOrNull() ?: 0) },
+                    label = { Text("播種終了（月）") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = entry.sowing_end_stage ?: "",
+                    onValueChange = { viewModel.updateCalendarSowingEndStage(index, it) },
+                    label = { Text("播種終了（旬）") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = entry.harvest_start?.toString() ?: "",
+                    onValueChange = { viewModel.updateCalendarHarvestStart(index, it.toIntOrNull() ?: 0) },
+                    label = { Text("収穫開始（月）") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = entry.harvest_start_stage ?: "",
+                    onValueChange = { viewModel.updateCalendarHarvestStartStage(index, it) },
+                    label = { Text("収穫開始（旬）") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = entry.harvest_end?.toString() ?: "",
+                    onValueChange = { viewModel.updateCalendarHarvestEnd(index, it.toIntOrNull() ?: 0) },
+                    label = { Text("収穫終了（月）") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = entry.harvest_end_stage ?: "",
+                    onValueChange = { viewModel.updateCalendarHarvestEndStage(index, it) },
+                    label = { Text("収穫終了（旬）") },
+                    modifier = Modifier.fillMaxWidth()
+                )
 
-            OutlinedTextField(viewModel.packet.cultivation.notes, viewModel::onNotesChange, label = { Text("栽培メモ") }, modifier = Modifier.fillMaxWidth())
-            OutlinedTextField(viewModel.packet.cultivation.harvesting, viewModel::onHarvestingChange, label = { Text("収穫") }, modifier = Modifier.fillMaxWidth())
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+
+            Button(onClick = { viewModel.addCalendarEntry() }, modifier = Modifier.fillMaxWidth()) {
+                Text("行を追加")
+            }
+
+            OutlinedTextField(
+                viewModel.packet.productNumber,
+                viewModel::onProductNumberChange,
+                label = { Text("商品番号") },
+                modifier = Modifier.fillMaxWidth()
+            )
+            OutlinedTextField(
+                viewModel.packet.company,
+                viewModel::onCompanyChange,
+                label = { Text("会社") },
+                modifier = Modifier.fillMaxWidth()
+            )
+            OutlinedTextField(
+                viewModel.packet.originCountry,
+                viewModel::onOriginCountryChange,
+                label = { Text("原産国") },
+                modifier = Modifier.fillMaxWidth()
+            )
+            OutlinedTextField(
+                viewModel.packet.expirationDate,
+                viewModel::onExpirationDateChange,
+                label = { Text("有効期限") },
+                modifier = Modifier.fillMaxWidth()
+            )
+            OutlinedTextField(
+                viewModel.packet.contents,
+                viewModel::onContentsChange,
+                label = { Text("内容量") },
+                modifier = Modifier.fillMaxWidth()
+            )
+            OutlinedTextField(
+                viewModel.packet.germinationRate,
+                viewModel::onGerminationRateChange,
+                label = { Text("発芽率") },
+                modifier = Modifier.fillMaxWidth()
+            )
+            OutlinedTextField(
+                viewModel.packet.seedTreatment,
+                viewModel::onSeedTreatmentChange,
+                label = { Text("種子処理") },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            OutlinedTextField(
+                viewModel.packet.cultivation.spacing_cm_row_min.toString(),
+                viewModel::onSpacingRowMinChange,
+                label = { Text("条間最小 (cm)") },
+                modifier = Modifier.fillMaxWidth()
+            )
+            OutlinedTextField(
+                viewModel.packet.cultivation.spacing_cm_row_max.toString(),
+                viewModel::onSpacingRowMaxChange,
+                label = { Text("条間最大 (cm)") },
+                modifier = Modifier.fillMaxWidth()
+            )
+            OutlinedTextField(
+                viewModel.packet.cultivation.spacing_cm_plant_min.toString(),
+                viewModel::onSpacingPlantMinChange,
+                label = { Text("株間最小 (cm)") },
+                modifier = Modifier.fillMaxWidth()
+            )
+            OutlinedTextField(
+                viewModel.packet.cultivation.spacing_cm_plant_max.toString(),
+                viewModel::onSpacingPlantMaxChange,
+                label = { Text("株間最大 (cm)") },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            OutlinedTextField(
+                viewModel.packet.cultivation.germinationTemp_c,
+                viewModel::onGermTempChange,
+                label = { Text("発芽温度") },
+                modifier = Modifier.fillMaxWidth()
+            )
+            OutlinedTextField(
+                viewModel.packet.cultivation.growingTemp_c,
+                viewModel::onGrowTempChange,
+                label = { Text("生育温度") },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            OutlinedTextField(
+                viewModel.packet.cultivation.soilPrep_per_sqm.compost_kg.toString(),
+                viewModel::onCompostChange,
+                label = { Text("堆肥 (kg/㎡)") },
+                modifier = Modifier.fillMaxWidth()
+            )
+            OutlinedTextField(
+                viewModel.packet.cultivation.soilPrep_per_sqm.dolomite_lime_g.toString(),
+                viewModel::onLimeChange,
+                label = { Text("苦土石灰 (g/㎡)") },
+                modifier = Modifier.fillMaxWidth()
+            )
+            OutlinedTextField(
+                viewModel.packet.cultivation.soilPrep_per_sqm.chemical_fertilizer_g.toString(),
+                viewModel::onFertilizerChange,
+                label = { Text("化成肥料 (g/㎡)") },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            OutlinedTextField(
+                viewModel.packet.cultivation.notes,
+                viewModel::onNotesChange,
+                label = { Text("栽培メモ") },
+                modifier = Modifier.fillMaxWidth()
+            )
+            OutlinedTextField(
+                viewModel.packet.cultivation.harvesting,
+                viewModel::onHarvestingChange,
+                label = { Text("収穫") },
+                modifier = Modifier.fillMaxWidth()
+            )
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -441,6 +626,7 @@ fun SeedInputScreen(
 
 
 }
+
 @Composable
 fun CropConfirmDialog(viewModel: SeedInputViewModel) {
     val ctx = LocalContext.current
@@ -480,9 +666,13 @@ fun CropConfirmDialog(viewModel: SeedInputViewModel) {
 @Composable
 fun LoadingAnimation() {
     val composition by rememberLottieComposition(LottieCompositionSpec.Asset("AI_network.json"))
-    val progress by animateLottieCompositionAsState(composition, iterations = LottieConstants.IterateForever)
+    val progress by animateLottieCompositionAsState(
+        composition,
+        iterations = LottieConstants.IterateForever
+    )
     LottieAnimation(
         composition = composition,
         progress = { progress }
     )
+
 }

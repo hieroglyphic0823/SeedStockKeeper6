@@ -267,6 +267,12 @@ class SeedInputViewModel : ViewModel() {
             showSnackbar = "解析結果の読み取りに失敗しました"
             return
         }
+        // カレンダー切り抜きは毎回実行
+        try {
+            tryAddCroppedCalendarImage(context, bmp)
+        } catch (e: Exception) {
+            Log.e("MLCrop", "カレンダー切り抜き失敗", e)
+        }
         val currentImageUris = imageUris.toList()
         val newDiffs = mutableListOf<Triple<String, String, String>>()
 
@@ -292,12 +298,6 @@ class SeedInputViewModel : ViewModel() {
             showAIDiffDialog = true
         } else {
             showSnackbar = "差異はありませんでした"
-        }
-        // カレンダー切り抜きは毎回実行
-        try {
-            tryAddCroppedCalendarImage(context, bmp)
-        } catch (e: Exception) {
-            Log.e("MLCrop", "カレンダー切り抜き失敗", e)
         }
     }
 
@@ -402,127 +402,119 @@ class SeedInputViewModel : ViewModel() {
             onComplete(Result.failure(IllegalArgumentException("商品名が空です")))
             return
         }
+
         val db = Firebase.firestore
         val storageRef = Firebase.storage.reference
         val target = packet.documentId?.let {
             db.collection("seeds").document(it)
         } ?: db.collection("seeds").document(UUID.randomUUID().toString())
-
         val id = target.id
 
         viewModelScope.launch(Dispatchers.Main) {
-            val uploadedPaths = mutableListOf<String>()
+            isLoading = true
+            try {
+                // 表示順 → ストレージパスを1対1で格納
+                val pathsByIndex = MutableList(imageUris.size) { null as String? }
 
-            // ストレージからの削除候補を判定
-            val currentStrings = imageUris.map { it.toString().trimEnd('/') }
-            val toDelete = packet.imageUrls.map { it.trimEnd('/') }
-                .filter { it !in currentStrings }
+                withContext(Dispatchers.IO) {
+                    imageUris.forEachIndexed { index, uri ->
+                        val s = uri.toString()
+                        val scheme = uri.scheme ?: ""
 
-            withContext(Dispatchers.IO) {
-                toDelete.forEach { pathUrl ->
-                    try {
-                        val raw = pathUrl.substringAfter("/o/").substringBefore("?")
-                        val decodedPath = raw.replace("%2F", "/")
-                        storageRef.child(decodedPath).delete().await()
-                        Log.d("SeedInputVM", "Deleted: $decodedPath")
-                    } catch (e: Exception) {
-                        Log.e("SeedInputVM", "Delete failure: $pathUrl", e)
-                    }
-                }
-            }
+                        // すでにFirebase Storage上のパスはそのまま採用
+                        if (s.startsWith("seed_images/") || scheme == "seed_images") {
+                            pathsByIndex[index] = s
+                            Log.d("SaveSeed", "keep @ $index : $s")
+                            return@forEachIndexed
+                        }
 
-            // 画面上で残っている画像をアップロードする
-            val existingImagePaths = mutableListOf<String>()
-            packet.imageUrls.forEach { existingPath ->
-                val uriString = existingPath
-                if (imageUris.any { it.toString() == uriString }) {
-                    existingImagePaths.add(existingPath)
-                }
-            }
-
-            withContext(Dispatchers.IO) {
-                imageUris.forEachIndexed { index, uri ->
-                    val uriString = uri.toString()
-
-                    if (uriString.startsWith("seed_images/")) {
-                        // 既存の Firebase Storage 画像はそのまま採用
-                        existingImagePaths.add(uriString)
-                    } else {
-                        // ローカル（content://, file://）や必要なら http(s):// をアップロード
+                        // ローカル/HTTP等 → ここでBitmap化してアップロード
                         val bitmap = try {
-                            when (uri.scheme) {
+                            when (scheme) {
                                 "content" -> uriToBitmap(context, uri)
                                 "file"    -> BitmapFactory.decodeFile(uri.path)
-                                "https", "http" -> {
-                                    (URL(uriString).openConnection() as HttpURLConnection).run {
-                                        connectTimeout = 15000; readTimeout = 15000; doInput = true
+                                "http", "https" -> {
+                                    (URL(s).openConnection() as HttpURLConnection).run {
+                                        connectTimeout = 15000
+                                        readTimeout = 15000
+                                        doInput = true
                                         connect()
                                         if (responseCode == HttpURLConnection.HTTP_OK) {
-                                            BitmapFactory.decodeStream(inputStream).also { inputStream.close() }
+                                            BitmapFactory.decodeStream(inputStream).also {
+                                                kotlin.runCatching { inputStream.close() }
+                                            }
                                         } else null
                                     }
                                 }
+                                // それ以外は未対応としてスキップ（必要なら分岐を追加）
                                 else -> null
                             }
                         } catch (e: Exception) {
-                            Log.e("SeedInputVM", "Bitmap load failed: $uri", e)
+                            Log.e("SaveSeed", "Bitmap load failed @ $index : $uri", e)
                             null
                         }
 
                         if (bitmap != null) {
                             val baos = ByteArrayOutputStream().apply {
+                                // 画質80で十分。必要なら90に
                                 bitmap.compress(Bitmap.CompressFormat.JPEG, 80, this)
                             }
                             val bytes = baos.toByteArray()
-
-                            // ※ indexベースだと将来の並べ替えで衝突する可能性があるためUUID推奨
                             val imagePath = "seed_images/${id}_${UUID.randomUUID()}.jpg"
 
                             try {
                                 storageRef.child(imagePath).putBytes(bytes).await()
-                                uploadedPaths.add(imagePath)
-                                Log.d("SeedInputVM", "アップロード成功: $imagePath")
+                                pathsByIndex[index] = imagePath
+                                Log.d("SaveSeed", "uploaded @ $index : $imagePath (from $uri)")
                             } catch (e: Exception) {
-                                Log.e("SeedInputVM", "アップロード失敗: $imagePath", e)
+                                Log.e("SaveSeed", "upload failed @ $index : $imagePath", e)
                             }
+                        } else {
+                            Log.e("SaveSeed", "skip @ $index : bitmap null ($uri)")
                         }
                     }
                 }
+
+                // 表示順のまま確定（nullは落とす）
+                val finalOrderedPaths = pathsByIndex.mapNotNull { it }
+                Log.d("SaveSeed", "finalOrderedPaths(size=${finalOrderedPaths.size}): $finalOrderedPaths")
+
+                // 画面から外れた旧ストレージ画像は削除
+                withContext(Dispatchers.IO) {
+                    val oldSet = packet.imageUrls.toSet()
+                    val newSet = finalOrderedPaths.toSet()
+                    val toDelete = oldSet - newSet
+                    toDelete.forEach { path ->
+                        try {
+                            storageRef.child(path).delete().await()
+                            Log.d("SaveSeed", "deleted: $path")
+                        } catch (e: Exception) {
+                            Log.e("SaveSeed", "delete failed: $path", e)
+                        }
+                    }
+                }
+
+                val updatedPacket = packet.copy(
+                    documentId = id,
+                    imageUrls = finalOrderedPaths
+                )
+
+                target.set(updatedPacket)
+                    .addOnSuccessListener {
+                        packet = updatedPacket
+                        showSnackbar = "保存が完了しました（画像: ${finalOrderedPaths.size}）"
+                        onComplete(Result.success(Unit))
+                    }
+                    .addOnFailureListener {
+                        showSnackbar = "保存に失敗しました: ${it.localizedMessage ?: "不明なエラー"}"
+                        onComplete(Result.failure(it))
+                    }
+            } finally {
+                isLoading = false
             }
-
-            // --- 表示順で保存順を再構築 ---
-            val allPathsMap = (uploadedPaths + existingImagePaths).associateBy { it }
-            val finalOrderedPaths = imageUris.mapNotNull { uri ->
-                // Firebase Storage画像はパス、ローカル画像はアップロード後のパス
-                if (uri.toString().startsWith("seed_images/")) {
-                    allPathsMap[uri.toString()]
-                } else {
-                    // ローカル画像はアップロード後のパス（uploadedPathsから取得）
-                    uploadedPaths.find { it.contains(id) && it.endsWith(".jpg") }
-                }
-            }
-
-            Log.d("SeedInputVM", "保存順序付きパス: $finalOrderedPaths")
-
-            val updatedPacket = packet.copy(
-                documentId = id,
-                imageUrls = finalOrderedPaths
-            )
-
-
-            target.set(updatedPacket)
-                .addOnSuccessListener {
-                    packet = updatedPacket
-                    showSnackbar = "保存が完了しました（画像: ${uploadedPaths.size}）"
-                    onComplete(Result.success(Unit))
-                }
-                .addOnFailureListener {
-                    showSnackbar =
-                        "保存に失敗しました: ${it.localizedMessage ?: "不明なエラー"}"
-                    onComplete(Result.failure(it))
-                }
         }
     }
+
     suspend fun getDownloadUrlFromPath(path: String): String? {
         return try {
             Firebase.storage.reference.child(path).downloadUrl.await().toString()
@@ -955,5 +947,148 @@ class SeedInputViewModel : ViewModel() {
         labels.forEach { l -> f += ((weights[l.text.lowercase()] ?: 1.0) - 1.0) * l.confidence }
         return f.coerceIn(0.7, 1.6)
     }
+
+    fun addCalendarEntry() {
+        val list = (packet.calendar ?: emptyList()) + com.example.seedstockkeeper6.model.CalendarEntry()
+        packet = packet.copy(calendar = list)
+    }
+
+    fun updateCalendarEntry(
+        index: Int,
+        region: String? = null,
+        sowing_start: Int? = null,
+        sowing_start_stage: String? = null,
+        sowing_end: Int? = null,
+        sowing_end_stage: String? = null,
+        harvest_start: Int? = null,
+        harvest_start_stage: String? = null,
+        harvest_end: Int? = null,
+        harvest_end_stage: String? = null
+    ) {
+        val cur = packet.calendar ?: return
+        if (index !in cur.indices) return
+        val old = cur[index]
+        val newItem = old.copy(
+            region = region ?: old.region,
+            sowing_start = sowing_start ?: old.sowing_start,
+            sowing_start_stage = sowing_start_stage ?: old.sowing_start_stage,
+            sowing_end = sowing_end ?: old.sowing_end,
+            sowing_end_stage = sowing_end_stage ?: old.sowing_end_stage,
+            harvest_start = harvest_start ?: old.harvest_start,
+            harvest_start_stage = harvest_start_stage ?: old.harvest_start_stage,
+            harvest_end = harvest_end ?: old.harvest_end,
+            harvest_end_stage = harvest_end_stage ?: old.harvest_end_stage
+        )
+        val next = cur.toMutableList().apply { set(index, newItem) }
+        packet = packet.copy(calendar = next)
+    }
+
+
+    fun removeCalendarEntry(index: Int) {
+        val cur = packet.calendar ?: return
+        if (index !in cur.indices) return
+        val next = cur.toMutableList().apply { removeAt(index) }
+        packet = packet.copy(calendar = next)
+    }
+    fun updateCalendarEntryAfterHarvest(
+        index: Int,
+        sowingStart: Int? = null, sowingStartStage: String? = null,
+        sowingEnd: Int? = null, sowingEndStage: String? = null,
+        harvestStart: Int? = null, harvestStartStage: String? = null,
+        harvestEnd: Int? = null, harvestEndStage: String? = null,
+    ) {
+        val cur = packet.calendar ?: return
+        if (index !in cur.indices) return
+        val old = cur[index]
+        val newItem = old.copy(
+            sowing_start = sowingStart ?: old.sowing_start,
+            sowing_start_stage = sowingStartStage ?: old.sowing_start_stage,
+            sowing_end = sowingEnd ?: old.sowing_end,
+            sowing_end_stage = sowingEndStage ?: old.sowing_end_stage,
+            harvest_start = harvestStart ?: old.harvest_start,
+            harvest_start_stage = harvestStartStage ?: old.harvest_start_stage,
+            harvest_end = harvestEnd ?: old.harvest_end,
+            harvest_end_stage = harvestEndStage ?: old.harvest_end_stage
+        )
+        val next = cur.toMutableList().apply { set(index, newItem) }
+        packet = packet.copy(calendar = next)
+    }
+
+    fun updateCalendarRegion(index: Int, value: String) {
+        val cur = packet.calendar ?: return
+        if (index !in cur.indices) return
+        val old = cur[index]
+        val updated = old.copy(region = value)
+        val next = cur.toMutableList().apply { set(index, updated) }
+        packet = packet.copy(calendar = next)
+    }
+    fun updateCalendarSowingStart(index: Int, month: Int) {
+        val cur = packet.calendar ?: return
+        if (index !in cur.indices) return
+        val old = cur[index]
+        val updated = old.copy(sowing_start = month)
+        val next = cur.toMutableList().apply { set(index, updated) }
+        packet = packet.copy(calendar = next)
+    }
+
+    fun updateCalendarSowingStartStage(index: Int, stage: String) {
+        val cur = packet.calendar ?: return
+        if (index !in cur.indices) return
+        val old = cur[index]
+        val updated = old.copy(sowing_start_stage = stage)
+        val next = cur.toMutableList().apply { set(index, updated) }
+        packet = packet.copy(calendar = next)
+    }
+    fun updateCalendarSowingEnd(index: Int, month: Int) {
+        val cur = packet.calendar ?: return
+        if (index !in cur.indices) return
+        val old = cur[index]
+        val updated = old.copy(sowing_end = month)
+        val next = cur.toMutableList().apply { set(index, updated) }
+        packet = packet.copy(calendar = next)
+    }
+    fun updateCalendarSowingEndStage(index: Int, stage: String) {
+        val cur = packet.calendar ?: return
+        if (index !in cur.indices) return
+        val old = cur[index]
+        val updated = old.copy(sowing_end_stage = stage)
+        val next = cur.toMutableList().apply { set(index, updated) }
+        packet = packet.copy(calendar = next)
+    }
+    fun updateCalendarHarvestStart(index: Int, month: Int) {
+        val cur = packet.calendar ?: return
+        if (index !in cur.indices) return
+        val old = cur[index]
+        val updated = old.copy(harvest_start = month)
+        val next = cur.toMutableList().apply { set(index, updated) }
+        packet = packet.copy(calendar = next)
+    }
+    fun updateCalendarHarvestStartStage(index: Int, stage: String) {
+        val cur = packet.calendar ?: return
+        if (index !in cur.indices) return
+        val old = cur[index]
+        val updated = old.copy(harvest_start_stage = stage)
+        val next = cur.toMutableList().apply { set(index, updated) }
+        packet = packet.copy(calendar = next)
+    }
+
+    fun updateCalendarHarvestEnd(index: Int, month: Int) {
+        val cur = packet.calendar ?: return
+        if (index !in cur.indices) return
+        val old = cur[index]
+        val updated = old.copy(harvest_end = month)
+        val next = cur.toMutableList().apply { set(index, updated) }
+        packet = packet.copy(calendar = next)
+    }
+    fun updateCalendarHarvestEndStage(index: Int, stage: String) {
+        val cur = packet.calendar ?: return
+        if (index !in cur.indices) return
+        val old = cur[index]
+        val updated = old.copy(harvest_end_stage = stage)
+        val next = cur.toMutableList().apply { set(index, updated) }
+        packet = packet.copy(calendar = next)
+    }
+
+
 
 }
