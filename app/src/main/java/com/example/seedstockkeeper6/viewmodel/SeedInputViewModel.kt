@@ -34,6 +34,8 @@ import com.google.mlkit.vision.objects.ObjectDetector
 import com.google.mlkit.vision.objects.defaults.ObjectDetectorOptions
 import kotlin.math.max
 import kotlin.math.min
+import android.graphics.Rect
+import com.example.seedstockkeeper6.util.drawRectOverlay
 
 class SeedInputViewModel : ViewModel() {
 
@@ -50,14 +52,11 @@ class SeedInputViewModel : ViewModel() {
 
     var isLoading by mutableStateOf(false)
 
-//    fun setSeed(seed: SeedPacket?) {
-//        packet = seed ?: SeedPacket()
-//        imageUris.clear()
-//        seed?.imageUrls?.forEach { url ->
-//            imageUris.add(Uri.parse(url))
-//        }
-//        ocrTargetIndex = if (imageUris.isNotEmpty()) 0 else -1
-//    }
+    // 画像置換の確認用
+    var showCropConfirmDialog by mutableStateOf(false)
+    var pendingCropOverlay by mutableStateOf<Bitmap?>(null)
+    var pendingCropBitmap by mutableStateOf<Bitmap?>(null)
+
     fun setSeed(seed: SeedPacket?) {
         packet = seed ?: SeedPacket()
         val localUris = imageUris.filter { it.scheme == "file" || it.scheme == "content" }
@@ -668,131 +667,230 @@ class SeedInputViewModel : ViewModel() {
         )
     }
     fun cropSeedOuterAtOcrTarget(context: Context) {
-        if (ocrTargetIndex !in imageUris.indices) {
-            showSnackbar = "OCR対象の画像がありません"; return
-        }
-        val targetUri = imageUris[ocrTargetIndex]
-
-        viewModelScope.launch(Dispatchers.Main) {
+        viewModelScope.launch {
+            if (isLoading) return@launch
+            if (ocrTargetIndex !in imageUris.indices) { showSnackbar = "対象の画像がありません"; return@launch }
             isLoading = true
             try {
+                val targetUri = imageUris[ocrTargetIndex]
+
+                // 画像ロード（content/file/http(s)/Firebase Storage パス対応）
                 val bmp = withContext(Dispatchers.IO) {
                     when (targetUri.scheme) {
                         "content" -> uriToBitmap(context, targetUri)
-
-                        "file" -> BitmapFactory.decodeFile(targetUri.path)?.also {
-                            Log.d("CropDebug", "File bitmap: ${it.width}x${it.height}, config=${it.config}")
+                        "file"    -> BitmapFactory.decodeFile(targetUri.path)
+                        "http", "https" -> (URL(targetUri.toString()).openConnection() as HttpURLConnection).run {
+                            connectTimeout = 15000; readTimeout = 15000; doInput = true; connect()
+                            if (responseCode == HttpURLConnection.HTTP_OK) {
+                                BitmapFactory.decodeStream(inputStream).also { inputStream.close() }
+                            } else null
                         }
-
-                        "http", "https" -> {
-                            (URL(targetUri.toString()).openConnection() as HttpURLConnection).run {
-                                connectTimeout = 15000; readTimeout = 15000; doInput = true
-                                connect()
-                                if (responseCode == HttpURLConnection.HTTP_OK) {
-                                    val bmp = BitmapFactory.decodeStream(inputStream)
-                                    inputStream.close()
-                                    if (bmp == null) {
-                                        Log.e("CropDebug", "HTTP decode failed: ${targetUri}")
-                                    } else {
-                                        Log.d(
-                                            "CropDebug",
-                                            "HTTP bitmap: ${bmp.width}x${bmp.height}, config=${bmp.config}, bytes=${bmp.byteCount}"
-                                        )
-                                    }
-                                    bmp
-                                } else {
-                                    Log.e("CropDebug", "HTTP response code: $responseCode for $targetUri")
-                                    null
-                                }
-                            }
-                        }
-
                         null, "" -> { // Firebase Storage パス
-                            val path = targetUri.toString()
-                            val downloadUrl = getDownloadUrlFromPath(path)
-                            Log.d("CropDebug", "Firebase download URL: $downloadUrl")
-                            if (downloadUrl != null) {
-                                (URL(downloadUrl).openConnection() as HttpURLConnection).run {
-                                    connectTimeout = 15000; readTimeout = 15000; doInput = true
-                                    connect()
-                                    if (responseCode == HttpURLConnection.HTTP_OK) {
-                                        val bmp = BitmapFactory.decodeStream(inputStream)
-                                        inputStream.close()
-                                        if (bmp == null) {
-                                            Log.e("CropDebug", "Firebase decode failed: $path")
-                                        } else {
-                                            Log.d(
-                                                "CropDebug",
-                                                "Firebase bitmap: ${bmp.width}x${bmp.height}, config=${bmp.config}, bytes=${bmp.byteCount}"
-                                            )
-                                        }
-                                        bmp
-                                    } else {
-                                        Log.e("CropDebug", "Firebase HTTP response code: $responseCode for $path")
-                                        null
-                                    }
-                                }
-                            } else {
-                                Log.e("CropDebug", "Firebase download URL is null for $path")
-                                null
-                            }
+                            val downloadUrl = getDownloadUrlFromPath(targetUri.toString())
+                            if (downloadUrl != null) (URL(downloadUrl).openConnection() as HttpURLConnection).run {
+                                connectTimeout = 15000; readTimeout = 15000; doInput = true; connect()
+                                if (responseCode == HttpURLConnection.HTTP_OK) {
+                                    BitmapFactory.decodeStream(inputStream).also { inputStream.close() }
+                                } else null
+                            } else null
                         }
-
                         else -> null
                     }
-                } ?: run {
-                    showSnackbar = "画像の読み込みに失敗しました"
-                    return@launch
+                } ?: run { showSnackbar = "画像の読み込みに失敗しました"; return@launch }
+
+                if (bmp == null) {
+                    Log.e("MLKitInput", "bmp is NULL before creating InputImage.")
+                    showSnackbar = "画像データが不正です (bmp is null)"
+                    return@launch // または適切なエラー処理
+                } else if (bmp.isRecycled) {
+                    Log.e("MLKitInput", "bmp is RECYCLED before creating InputImage.")
+                    showSnackbar = "画像データが不正です (bmp is recycled)"
+                    return@launch // または適切なエラー処理
+                } else if (bmp.width == 0 || bmp.height == 0) {
+                    Log.e("MLKitInput", "bmp has zero width or height. Width: ${bmp.width}, Height: ${bmp.height}")
+                    showSnackbar = "画像データが空です (zero dimensions)"
+                    return@launch // または適切なエラー処理
+                } else {
+                    Log.d("MLKitInput", "bmp is valid before creating InputImage. Width: ${bmp.width}, Height: ${bmp.height}")
+                }
+                // ---- ML Kit 検出 → 1位選出（面積×中心×ラベル係数） ----
+                val input = InputImage.fromBitmap(bmp, 0)
+                val objects = runCatching { seedOuterDetector.process(input).await() }
+                    .onFailure { Log.e("MLKit", "seed outer detect failed", it) }
+                    .getOrNull().orEmpty()
+
+                val w = bmp.width; val h = bmp.height
+                val imgArea = w.toFloat() * h
+                val minAreaRatio = 0.20f
+                val arMin = 1.0f; val arMax = 2.5f
+                val centerBias = 0.20f
+                val marginRatio = 0.06f
+
+                val best = objects.mapNotNull { obj ->
+                    val bb = obj.boundingBox
+                    val r = android.graphics.Rect(
+                        bb.left.coerceIn(0, w - 1),
+                        bb.top.coerceIn(0, h - 1),
+                        bb.right.coerceIn(1, w),
+                        bb.bottom.coerceIn(1, h)
+                    )
+                    val area = r.width() * r.height()
+                    if (area / imgArea < minAreaRatio) return@mapNotNull null
+
+                    val arSym = maxOf(r.width(), r.height()).toFloat() / minOf(r.width(), r.height()).toFloat()
+                    if (arSym < arMin || arSym > arMax) return@mapNotNull null
+
+                    val cx = (r.left + r.right) / 2f
+                    val cy = (r.top + r.bottom) / 2f
+                    val dx = cx / w - 0.5f
+                    val dy = cy / h - 0.5f
+                    val centerPenalty = (1.0 - (kotlin.math.hypot(dx.toDouble(), dy.toDouble()) * 2.0 * centerBias))
+                        .coerceIn(0.0, 1.0)
+
+                    val score = area * centerPenalty * labelFactor(obj.labels)
+                    r to score
+                }.maxByOrNull { it.second }?.first
+
+                if (best == null) { showSnackbar = "外側を検出できませんでした"; return@launch }
+
+                // margin を付け、さらに“袋のエッジ”に吸着させてタイト化
+                val pre = Rect(
+                    (best.left   - (w * marginRatio)).toInt().coerceAtLeast(0),
+                    (best.top    - (h * marginRatio)).toInt().coerceAtLeast(0),
+                    (best.right  + (w * marginRatio)).toInt().coerceAtMost(w),
+                    (best.bottom + (h * marginRatio)).toInt().coerceAtMost(h)
+                )
+
+                Log.d("TightenDebug", "Before calling tightenRectToEdges:")
+                Log.d("TightenDebug", "bmp is null: ${bmp == null}")
+                if (bmp != null) {
+                    Log.d("TightenDebug", "bmp Width: ${bmp.width}, Height: ${bmp.height}, Config: ${bmp.config}, Recycled: ${bmp.isRecycled}")
                 }
 
-                checkNotNull(bmp) { "Bitmap is null before crop" }
-                // ---- ここで切り抜き Bitmap を作る（追加はしない）----
-                val crop: Bitmap = createSeedOuterCrop(context, bmp) ?: run {
-                    showSnackbar = "外側を検出できませんでした"; return@launch
+                Log.d("TightenDebug", "pre is null: ${pre == null}")
+                if (pre != null) {
+                    Log.d("TightenDebug", "pre Left: ${pre.left}, Top: ${pre.top}, Right: ${pre.right}, Bottom: ${pre.bottom}")
+                    Log.d("TightenDebug", "pre Width: ${pre.width()}, Height: ${pre.height()}")
                 }
 
-                // 一時ファイル保存（差し替え用）
-                val file = File(context.cacheDir, "seed_outer_${System.currentTimeMillis()}.jpg")
-                withContext(Dispatchers.IO) {
-                    FileOutputStream(file).use { out -> crop.compress(Bitmap.CompressFormat.JPEG, 90, out) }
+                val tight = com.example.seedstockkeeper6.util.tightenRectToEdges(
+                    src = bmp,
+                    rect = pre,
+                    scanFrac = 0.10f,        // ← 0.06f → 0.08~0.12 に上げると深く探索
+                    percentile = 0.88f,      // ← 0.88 → 0.92~0.96 に上げると内側に寄りやすい
+                    smoothWin = 5,
+                    maxInsetRatioX = 0.15f,  // 横方向の上限（必要に応じて）
+                    maxInsetRatioY = 0.30f   // ← 縦の上限を 0.15 → 0.20~0.25 に上げる
+                )
+                Log.d("drawRectOverlayDebug", "pre is null: ${pre == null}")
+                if (pre != null) {
+                    Log.d("drawRectOverlayDebug", "pre Left: ${pre.left}, Top: ${pre.top}, Right: ${pre.right}, Bottom: ${pre.bottom}")
+                    Log.d("drawRectOverlayDebug", "pre Width: ${pre.width()}, Height: ${pre.height()}")
                 }
-                // ダイアログに渡す一時状態をセット
-                pendingCropUri = Uri.fromFile(file)
+                // プレビュー作成＆確認ダイアログへ
+//                val overlay = com.example.seedstockkeeper6.util.drawRectOverlay(bmp, tight)
+//                val crop = Bitmap.createBitmap(bmp, tight.left, tight.top, tight.width(), tight.height())
+                val overlay = drawRectOverlay(bmp, tight)
+                Log.d(
+                    "CropDebug",
+                    "overlay created. overlay is null: ${overlay == null}"
+                ) // overlay の状態もログに出す
+
+                val crop: Bitmap?
+                try {
+                    Log.d(
+                        "CropDebug",
+                        "Attempting Bitmap.createBitmap with tight: Left=${tight.left}, Top=${tight.top}, Width=${tight.width()}, Height=${tight.height()}"
+                    )
+                    Log.d("CropDebug", "bmp dimensions: Width=${bmp.width}, Height=${bmp.height}")
+
+                    // ここで条件チェックを明示的に行うのも有効
+                    if (tight.width() <= 0 || tight.height() <= 0) {
+                        Log.e(
+                            "CropDebug",
+                            "Bitmap.createBitmap error: tight width or height is zero or negative. Width: ${tight.width()}, Height: ${tight.height()}"
+                        )
+                        showSnackbar = "切り抜き領域のサイズが不正です。"
+                        return@launch
+                    }
+                    if (tight.left < 0 || tight.top < 0 || tight.left + tight.width() > bmp.width || tight.top + tight.height() > bmp.height) {
+                        Log.e(
+                            "CropDebug",
+                            "Bitmap.createBitmap error: tight coordinates are out of bmp bounds."
+                        )
+                        Log.e(
+                            "CropDebug",
+                            "tight: L${tight.left}, T${tight.top}, R${tight.left + tight.width()}, B${tight.top + tight.height()}"
+                        )
+                        Log.e("CropDebug", "bmp: W${bmp.width}, H${bmp.height}")
+                        showSnackbar = "切り抜き領域が画像範囲外です。"
+                        return@launch
+                    }
+
+                    crop = Bitmap.createBitmap(
+                        bmp,
+                        tight.left,
+                        tight.top,
+                        tight.width(),
+                        tight.height()
+                    )
+                    Log.d("CropDebug", "crop created successfully. crop is null: ${crop == null}")
+
+                    pendingCropOverlay = overlay
+                    pendingCropBitmap = crop
+                    showCropConfirmDialog = true
+
+                } catch (e: IllegalArgumentException) {
+                    Log.e(
+                        "CropDebug",
+                        "IllegalArgumentException during Bitmap.createBitmap: ${e.message}",
+                        e
+                    )
+                    showSnackbar = "画像の切り抜きに失敗 (引数エラー): ${e.message}"
+                    return@launch // または適切なエラー処理
+                } catch (e: Exception) {
+                    Log.e(
+                        "CropDebug",
+                        "Exception during Bitmap.createBitmap or subsequent assignments: ${e.message}",
+                        e
+                    )
+                    showSnackbar = "画像の切り抜き処理中に予期せぬエラーが発生しました。"
+                    return@launch // または適切なエラー処理
+                }
+
+                pendingCropOverlay = overlay
                 pendingCropBitmap = crop
-                pendingCropTargetIndex = ocrTargetIndex
                 showCropConfirmDialog = true
 
-            } catch (e: Exception) {
-                Log.e("SeedInputVM", "crop preview failed", e)
-                showSnackbar = "切り抜きに失敗しました"
-            } finally { isLoading = false }
+            } finally {
+                isLoading = false
+            }
         }
     }
 
-    // --- ViewModel 内の状態 ---
-    var showCropConfirmDialog by mutableStateOf(false)
-        private set
-    private var pendingCropUri: Uri? = null
-    private var pendingCropBitmap: Bitmap? = null
-    val pendingCropPreview: Bitmap?
-        get() = pendingCropBitmap
-    private var pendingCropTargetIndex: Int = -1
 
-    fun dismissCropDialog() {
-        showCropConfirmDialog = false
-        pendingCropUri = null
+
+
+    fun confirmCropReplace(context: Context) {
+        val crop = pendingCropBitmap ?: run { showCropConfirmDialog = false; return }
+        val idx = ocrTargetIndex
+        if (idx !in imageUris.indices) { showCropConfirmDialog = false; return }
+
+        // 一時ファイル保存 → imageUris の対象を置換
+        val file = File(context.cacheDir, "seed_outer_${System.currentTimeMillis()}.jpg")
+        FileOutputStream(file).use { crop.compress(Bitmap.CompressFormat.JPEG, 90, it) }
+        imageUris[idx] = Uri.fromFile(file)
+
+        pendingCropOverlay = null
         pendingCropBitmap = null
-        pendingCropTargetIndex = -1
+        showCropConfirmDialog = false
+        showSnackbar = "外側クロップで差し替えました"
     }
 
-    fun confirmCropReplace() {
-        val idx = pendingCropTargetIndex
-        val uri = pendingCropUri
-        if (idx in imageUris.indices && uri != null) {
-            imageUris[idx] = uri   // ← 元画像を差し替え
-            showSnackbar = "画像を切り抜きに差し替えました"
-        }
-        dismissCropDialog()
+    fun cancelCropReplace() {
+        pendingCropOverlay = null
+        pendingCropBitmap = null
+        showCropConfirmDialog = false
     }
     private suspend fun createSeedOuterCrop(
         context: Context,
@@ -849,6 +947,13 @@ class SeedInputViewModel : ViewModel() {
         val b = inflated.bottom.toInt().coerceIn(t + 1, h)
 
         return runCatching { Bitmap.createBitmap(sourceBitmap, l, t, r - l, b - t) }.getOrNull()
+    }
+    private fun labelFactor(labels: List<com.google.mlkit.vision.objects.DetectedObject.Label>): Double {
+        if (labels.isEmpty()) return 1.0
+        val weights = mapOf("food" to 1.25, "home goods" to 1.15, "fashion goods" to 0.95, "place" to 0.85)
+        var f = 1.0
+        labels.forEach { l -> f += ((weights[l.text.lowercase()] ?: 1.0) - 1.0) * l.confidence }
+        return f.coerceIn(0.7, 1.6)
     }
 
 }

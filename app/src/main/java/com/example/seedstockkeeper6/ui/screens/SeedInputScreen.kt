@@ -90,7 +90,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-
+import androidx.compose.ui.platform.LocalContext
 @Composable
 fun SeedInputScreen(
     navController: NavController,
@@ -242,29 +242,35 @@ fun SeedInputScreen(
                 }
             }
 
-            Button(
-                onClick = {
-                    cs.launch {
-                        viewModel.isLoading = true
-                        viewModel.performOcr(context)
-                        viewModel.isLoading = false
-                    }
-                },
-                enabled = viewModel.imageUris.isNotEmpty(),
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 16.dp)
+                    .padding(vertical = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(Icons.Default.AutoFixHigh, contentDescription = "OCR")
-                Spacer(Modifier.width(8.dp))
-                Text("AIで解析")
-            }
-            Spacer(Modifier.width(8.dp))
-            IconButton(
-                onClick = { viewModel.cropSeedOuterAtOcrTarget(context) },
-                enabled = viewModel.ocrTargetIndex in viewModel.imageUris.indices && !viewModel.isLoading
-            ) {
-                Icon(Icons.Outlined.ContentCut, contentDescription = "外側を切り抜く")
+                Button(
+                    onClick = {
+                        cs.launch {
+                            viewModel.isLoading = true
+                            viewModel.performOcr(context)
+                            viewModel.isLoading = false
+                        }
+                    },
+                    enabled = viewModel.imageUris.isNotEmpty(),
+                    modifier = Modifier.weight(1f) // 必要なら横幅を取りたい時
+                ) {
+                    Icon(Icons.Default.AutoFixHigh, contentDescription = "OCR")
+                    Spacer(Modifier.width(8.dp))
+                    Text("AIで解析")
+                }
+
+                IconButton(
+                    onClick = { viewModel.cropSeedOuterAtOcrTarget(context) },
+                    enabled = viewModel.ocrTargetIndex in viewModel.imageUris.indices && !viewModel.isLoading
+                ) {
+                    Icon(Icons.Outlined.ContentCut, contentDescription = "外側を切り抜く")
+                }
             }
             OutlinedTextField(viewModel.packet.productName, viewModel::onProductNameChange, label = { Text("商品名") }, modifier = Modifier.fillMaxWidth())
             OutlinedTextField(viewModel.packet.variety, viewModel::onVarietyChange, label = { Text("品種") }, modifier = Modifier.fillMaxWidth())
@@ -351,7 +357,9 @@ fun SeedInputScreen(
             // --- ここまでコンパニオンプランツ部 ---
 
         }
-
+        if (viewModel.showCropConfirmDialog) {
+            CropConfirmDialog(viewModel = viewModel)
+        }
         if (viewModel.isLoading) {
             Box(
                 Modifier
@@ -428,12 +436,13 @@ fun SeedInputScreen(
 }
 @Composable
 fun CropConfirmDialog(viewModel: SeedInputViewModel) {
+    val ctx = LocalContext.current
     if (!viewModel.showCropConfirmDialog) return
-    val preview = viewModel.pendingCropPreview
+    val preview = viewModel.pendingCropBitmap
 
     AlertDialog(
-        onDismissRequest = { viewModel.dismissCropDialog() },
-        title = { Text("切り取った画像を差し替えますか？") },
+        onDismissRequest = { viewModel.cancelCropReplace() },
+        title = { Text("画像を差し替えますか？") },
         text = {
             if (preview != null) {
                 Image(
@@ -448,12 +457,12 @@ fun CropConfirmDialog(viewModel: SeedInputViewModel) {
             }
         },
         confirmButton = {
-            TextButton(onClick = { viewModel.confirmCropReplace() }) {
+            TextButton(onClick = { viewModel.confirmCropReplace(ctx) }) {
                 Text("はい")
             }
         },
         dismissButton = {
-            TextButton(onClick = { viewModel.dismissCropDialog() }) {
+            TextButton(onClick = { viewModel.cancelCropReplace() }) {
                 Text("いいえ")
             }
         }
