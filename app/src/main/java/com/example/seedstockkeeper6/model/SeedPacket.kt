@@ -1,6 +1,7 @@
 package com.example.seedstockkeeper6.model
 
 import kotlinx.serialization.Serializable
+import java.util.UUID
 
 @Serializable
 data class CompanionPlant(
@@ -49,6 +50,7 @@ data class SoilPrep(
 )
 @Serializable
 data class CalendarEntry(
+    val id: String = UUID.randomUUID().toString(),
     val region: String = "",
     val sowing_start: Int = 0,
     val sowing_start_stage: String = "",
@@ -57,7 +59,5 @@ data class CalendarEntry(
     val harvest_start: Int = 0,
     val harvest_start_stage: String = "",
     val harvest_end: Int = 0,
-    val harvest_end_stage: String = "",
-    val expirationYear: Int = 9999,
-    val expirationMonth: Int = 12
+    val harvest_end_stage: String = ""
 )

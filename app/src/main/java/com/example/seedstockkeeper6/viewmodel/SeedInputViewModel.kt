@@ -35,6 +35,7 @@ import com.google.mlkit.vision.objects.defaults.ObjectDetectorOptions
 import kotlin.math.max
 import kotlin.math.min
 import android.graphics.Rect
+import com.example.seedstockkeeper6.model.CalendarEntry
 import com.example.seedstockkeeper6.util.drawRectOverlay
 
 class SeedInputViewModel : ViewModel() {
@@ -1097,7 +1098,46 @@ class SeedInputViewModel : ViewModel() {
         val next = cur.toMutableList().apply { set(index, updated) }
         packet = packet.copy(calendar = next)
     }
+    fun removeCalendarEntryAtIndex(index: Int) {
+        // 1. 安全チェック: インデックスがカレンダーリストの有効な範囲内にあるか確認します。
+        if (index >= 0 && index < packet.calendar.size) {
+            // 2. 現在のカレンダーリストのミュータブルなコピーを作成します。
+            //    元の packet.calendar は不変(Immutable)なので、直接変更できません。
+            val updatedCalendarList = packet.calendar.toMutableList()
 
+            // 3. ミュータブルなリストから、指定されたインデックスの要素を削除します。
+            updatedCalendarList.removeAt(index)
+
+            // 4. packet ステートを更新します。
+            //    data class の copy() メソッドを使用して、他のプロパティはそのままに、
+            //    calendar プロパティだけを更新されたリストで置き換えた新しい Packet オブジェクトを作成します。
+            //    updatedCalendarList.toList() で、再度不変なリストに戻しています（推奨）。
+            packet = packet.copy(calendar = updatedCalendarList.toList())
+
+            // これで、packet の状態が変わり、Compose UI がこの変更を検知して
+            // 関連する部分を再コンポジション（再描画）します。
+
+        } else {
+            // 5. インデックスが無効だった場合の処理（エラーハンドリング）。
+            //    ここではログに警告を出力しています。必要に応じて他の処理も追加できます。
+            Log.w("YourViewModel", "Attempted to remove calendar entry at invalid index: $index. List size: ${packet.calendar.size}")
+        }
+    }
+
+    // 他のViewModelの関数 (例: カレンダーエントリの追加、更新など)
+    fun addCalendarEntry(newEntry: CalendarEntry) {
+        val updatedCalendarList = packet.calendar.toMutableList()
+        updatedCalendarList.add(newEntry)
+        packet = packet.copy(calendar = updatedCalendarList.toList())
+    }
+
+    fun updateCalendarEntry(index: Int, updatedEntry: CalendarEntry) {
+        if (index >= 0 && index < packet.calendar.size) {
+            val updatedCalendarList = packet.calendar.toMutableList()
+            updatedCalendarList[index] = updatedEntry
+            packet = packet.copy(calendar = updatedCalendarList.toList())
+        }
+    }
 
 
 }

@@ -2,9 +2,12 @@ package com.example.seedstockkeeper6.ui.components
 
 import android.content.res.Configuration
 import android.graphics.Paint
+import android.util.Log
+import androidx.compose.animation.core.copy
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -17,13 +20,14 @@ import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import com.example.seedstockkeeper6.model.CalendarEntry
+import com.example.seedstockkeeper6.ui.theme.AppColors
 import java.time.LocalDate
 import java.time.YearMonth
 import kotlin.math.max
 import kotlin.math.min
-
 
 data class MonthRange(
     val start: Int, // 月 (1-12)
@@ -47,41 +51,136 @@ data class GroupedCalendarBand(
     val items: List<RangeItem>
 )
 
+
+
 @Composable
 fun SeedCalendarGrouped(
-    bands: List<GroupedCalendarBand>,
+    entries: List<CalendarEntry>,
+    packetExpirationYear: Int,
+    packetExpirationMonth: Int,
     modifier: Modifier = Modifier.fillMaxWidth(),
     heightDp: Int = 140
 ) {
     val today = LocalDate.now()
-    val currentMonth = today.monthValue
-    val currentYear = today.year
-    val configuration = LocalConfiguration.current
-    val screenWidth = configuration.screenWidthDp.dp
-    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
-    val columnCount = if (isLandscape) 12 else 13
+    // AppColors を使用する想定
+    val baseSowingColor = AppColors.sowingWithinExpiration
+    val baseHarvestColor = AppColors.harvestWithinExpiration
+    // または直接 MaterialTheme から
+    // val baseSowingColor = MaterialTheme.colorScheme.primary
+    // val baseHarvestColor = MaterialTheme.colorScheme.secondary
 
-    val bodyMediumTextStyle = androidx.compose.material3.MaterialTheme.typography.bodyMedium
+    val groupedBands = entries
+        .groupBy { it.region }
+        .map { (region, regionEntries) ->
+            val items = regionEntries.flatMap { entry ->
+                val sowingItem = if (entry.sowing_start != 0 && entry.sowing_end != 0) {
+                    listOf(
+                        RangeItem(
+                            ranges = listOf(
+                                MonthRange(
+                                    entry.sowing_start,
+                                    entry.sowing_end,
+                                    entry.sowing_start_stage,
+                                    entry.sowing_end_stage
+                                )
+                            ),
+                            style = BandStyle.Dotted,
+                            color = baseSowingColor, // 基本色
+                            itemLabel = "播種"
+                        )
+                    )
+                } else emptyList()
+
+                val harvestItem = if (entry.harvest_start != 0 && entry.harvest_end != 0) {
+                    listOf(
+                        RangeItem(
+                            ranges = listOf(
+                                MonthRange(
+                                    entry.harvest_start,
+                                    entry.harvest_end,
+                                    entry.harvest_start_stage,
+                                    entry.harvest_end_stage
+                                )
+                            ),
+                            style = BandStyle.Solid,
+                            color = baseHarvestColor, // 基本色
+                            itemLabel = "収穫"
+                        )
+                    )
+                } else emptyList()
+
+                sowingItem + harvestItem
+            }
+
+            GroupedCalendarBand(
+                groupLabel = region,
+                expirationYear = packetExpirationYear,
+                expirationMonth = packetExpirationMonth,
+                items = items
+            )
+        }
+        .filter { it.items.isNotEmpty() }
+
+    SeedCalendarGroupedInternal(
+        bands = groupedBands,
+        modifier = modifier,
+        heightDp = heightDp,
+        currentMonth = today.monthValue,
+        currentYear = today.year
+    )
+}
+
+// SeedCalendar.kt
+
+@Composable
+fun SeedCalendarGroupedInternal(
+    bands: List<GroupedCalendarBand>,
+    modifier: Modifier = Modifier.fillMaxWidth(),
+    heightDp: Int = 140,
+    currentMonth: Int,
+    currentYear: Int
+) {
     val density = LocalDensity.current
-    val colorScheme = androidx.compose.material3.MaterialTheme.colorScheme
 
-    val textPaint = remember(bodyMediumTextStyle, density, colorScheme.onPrimary) {
+    // AppColors とテーマから必要な値を取得 (Composable 関数のトップレベル)
+    val actualTextPaintColor = AppColors.textPaintColor
+    val actualOutlineColor = AppColors.outline
+    val expiredColor = AppColors.expired
+    // カレンダーの月背景色
+    val calendarMonthBackgroundWithinExpiration= AppColors.calendarMonthBackgroundWithinExpiration
+    val calendarMonthBackgroundExpired= AppColors.calendarMonthBackgroundExpired
+    val calendarMonthBackground=MaterialTheme.colorScheme.surfaceVariant  // デフォルト背景
+
+    val textPaintFontSize: TextUnit = MaterialTheme.typography.bodyMedium.fontSize // ← fontSizeをここで取得
+    val configuration = LocalConfiguration.current // ← トップレベルで取得
+    val screenWidth = configuration.screenWidthDp.dp // screenWidthもここで取得するのが自然
+    val currentOrientation = configuration.orientation // ← orientationもここで取得
+
+    val textPaint = remember(
+        MaterialTheme.typography.bodyMedium, // typographyはrememberのキーとして適切
+        density,
+        actualTextPaintColor // ★ AppColorsから取得した色をrememberのキーとして渡す
+    ) {
+        // remember の計算ブロック内では @Composable 関数を呼び出さない
         Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = colorScheme.onPrimary.toArgb()
+            color = actualTextPaintColor.toArgb() // ★ rememberの外で取得した色を使用
             textAlign = Paint.Align.CENTER
-            textSize = with(density) { bodyMediumTextStyle.fontSize.toPx() }
+            textSize = with(density) { textPaintFontSize.toPx() }
         }
     }
-
     val dash = remember { PathEffect.dashPathEffect(floatArrayOf(14f, 10f), 0f) }
+
 
     Canvas(
         modifier = modifier
             .fillMaxWidth()
             .height(heightDp.dp)
     ) {
-        val labelColWidth = screenWidth / (columnCount + 1)
-        val labelW = labelColWidth.toPx()
+
+        val labelColWidth = screenWidth.toPx() / (if (currentOrientation == Configuration.ORIENTATION_LANDSCAPE) 13 else 14)
+        val labelColWidthInPx = with(density) { screenWidth.toPx() } / (if (currentOrientation == Configuration.ORIENTATION_LANDSCAPE) 13 else 14)
+        // labelColWidthInPx は既に Float (ピクセル値) なので、toPx() は不要
+        val labelW = labelColWidthInPx
         val headerH = 22.dp.toPx()
         val gridLeft = labelW
         val gridTop = headerH
@@ -92,16 +191,45 @@ fun SeedCalendarGrouped(
         val colW = gridW / 12f
         val rowH = gridH / max(1, bands.size)
 
+        // 月ヘッダと月の背景色描画 (ここは月ごとに有効期限判定している)
         for (m in 0 until 12) {
             val logicalMonth = ((currentMonth - 1 + m) % 12) + 1
             val x = gridLeft + colW * m
-            drawRect(
-                color = Color(colorScheme.surfaceVariant.toArgb()),
-                topLeft = Offset(x, gridTop),
-                size = Size(colW, gridH)
-            )
+            val yearOffset =
+                if (logicalMonth < currentMonth && bands.isNotEmpty()) 1 else 0 // bandsが空の場合のエラーを避ける
+            val logicalYear = currentYear + yearOffset
+
+            // 月の背景色 (有効期限を考慮)
+            if (bands.isNotEmpty()) { // groupedBand がないと expirationYear/Month にアクセスできない
+                val expirationForMonthBg = YearMonth.of(
+                    bands.first().expirationYear,
+                    bands.first().expirationMonth
+                ) // 代表として最初のバンドの期限を使う
+                val targetMonthForBg = YearMonth.of(logicalYear, logicalMonth)
+                if (targetMonthForBg <= expirationForMonthBg) {
+                    drawRect(
+                        color = calendarMonthBackgroundWithinExpiration, // AppColors から
+                        topLeft = Offset(x, gridTop),
+                        size = Size(colW, gridH)
+                    )
+                } else {
+                    drawRect(
+                        color = calendarMonthBackgroundExpired, // AppColors から
+                        topLeft = Offset(x, gridTop),
+                        size = Size(colW, gridH)
+                    )
+                }
+            } else { // バンドがない場合はデフォルトの背景
+                drawRect(
+                    color = calendarMonthBackground, // デフォルト背景
+                    topLeft = Offset(x, gridTop),
+                    size = Size(colW, gridH)
+                )
+            }
+
+
             drawLine(
-                color = Color(colorScheme.primary.toArgb()),
+                color = actualOutlineColor, // グリッド線の色
                 start = Offset(x, gridTop),
                 end = Offset(x, gridBottom),
                 strokeWidth = 1f
@@ -113,40 +241,23 @@ fun SeedCalendarGrouped(
                 textPaint
             )
         }
-
-        drawLine(
-            color = Color(0x22000000),
-            start = Offset(gridRight, gridTop),
-            end = Offset(gridRight, gridBottom),
-            strokeWidth = 1f
-        )
+        // ... (右端の線)
 
         fun getStageOffset(stage: String?): Float = when (stage) {
-            "上旬" -> 0.15f
+            "上旬" -> 0.05f
             "中旬" -> 0.5f
-            "下旬" -> 0.85f
+            "下旬" -> 0.95f
             else -> 0.5f
         }
 
         bands.forEachIndexed { row, groupedBand ->
             val top = gridTop + rowH * row
             val centerY = top + rowH / 2f
-            val labelColor = resolveLabelColor(groupedBand.groupLabel)
+            val labelColor = resolveLabelColor(groupedBand.groupLabel) // 既存の関数
             val labelText = groupedBand.groupLabel.replace("地", "")
 
-            // 有効期限内背景 (年月判定)
-            val now = YearMonth.of(currentYear, currentMonth)
-            val expiration = YearMonth.of(groupedBand.expirationYear, groupedBand.expirationMonth)
-            val monthsRemaining = (expiration.monthValue - currentMonth + (expiration.year - currentYear) * 12).coerceIn(0, 12)
 
-            val bgStartX = gridLeft
-            val bgEndX = gridLeft + colW * monthsRemaining
-            drawRect(
-                color = colorScheme.surfaceVariant.copy(alpha = 0.2f),
-                topLeft = Offset(bgStartX, top),
-                size = Size(bgEndX - bgStartX, rowH)
-            )
-
+            // 地域ラベル背景とテキスト
             drawRect(
                 color = labelColor.copy(alpha = 0.3f),
                 topLeft = Offset(0f, top),
@@ -159,27 +270,72 @@ fun SeedCalendarGrouped(
                 textPaint
             )
 
+            val expirationDate = try {
+                YearMonth.of(groupedBand.expirationYear, groupedBand.expirationMonth)
+            } catch (e: Exception) {
+                YearMonth.of(1900, 1) // Fallback
+            }
+
             groupedBand.items.forEach { item ->
                 item.ranges.forEach { r ->
-                    val startX = gridLeft + colW * ((r.start - currentMonth + 12) % 12 + getStageOffset(r.startStage))
-                    val endX = gridLeft + colW * ((r.end - currentMonth + 12) % 12 + getStageOffset(r.endStage))
+                    // 帯の開始月が属する年を計算
+                    val bandStartActualYear =
+                        currentYear + if (r.start < currentMonth && currentMonth - r.start >= 0) 1 else 0
+                    val bandStartMonthForCheck = YearMonth.of(bandStartActualYear, r.start)
+
+                    // 帯の開始月が有効期限内かで色を決定
+                    val actualColor = if (!bandStartMonthForCheck.isAfter(expirationDate)) {
+                        item.color // 基本色 (有効期限内)
+                    } else {
+                        expiredColor // 期限切れ色
+                    }
+
+                    // 帯のX座標計算 (カレンダー表示上の相対位置)
+                    val startMonthIndexInCalendar = (r.start - currentMonth + 12) % 12
+                    val endMonthIndexInCalendar = (r.end - currentMonth + 12) % 12
+
+                    var startX =
+                        gridLeft + colW * (startMonthIndexInCalendar + getStageOffset(r.startStage))
+                    var endX =
+                        gridLeft + colW * (endMonthIndexInCalendar + getStageOffset(r.endStage))
+
+                    // 年をまたぐ帯の場合のX座標補正 (例: 11月～2月で、カレンダーが1月始まり)
+                    // この補正は非常に複雑で、現在の計算では不十分な場合があります。
+                    // 簡略化のため、帯が12ヶ月を超えるような極端なケースは考慮しない前提。
+                    if (r.start > r.end) { // 年をまたいでいる (例: 11月(start) から 2月(end))
+                        if (endX < startX) { // 描画順が逆転している場合 (例: カレンダー上で2月が11月より左に来る)
+                            // このケースでは、帯を2つに分割して描画するか、
+                            // もしくはstartX, endXのロジックをより精緻にする必要があります。
+                            // ここでは、単純にカレンダーの右端/左端を使うなど、割り切りが必要かもしれません。
+                            // 今回は、年またぎでも連続した一つの線として描画できるケースを想定。
+                            // もし表示がおかしい場合、この部分のロジック見直しが必要です。
+                            // 例: 11月～2月の帯で、カレンダーが1月始まりの場合、
+                            // 11月～12月と、翌年の1月～2月を分けて考える必要がある。
+                            // ただし、現在のstartX/endXの計算では、これを1本の線として扱おうとする。
+                            // ここでは、年を跨いだ帯は、12ヶ月分の幅を上限として、
+                            // (r.end - currentMonth + 12) と (r.start - currentMonth) の差から長さを出す方が
+                            // 安定するかもしれない。
+                            // ひとまず、現状の計算で進めます。
+                        }
+                    }
+
 
                     when (item.style) {
                         BandStyle.Dotted -> {
                             drawLine(
-                                color = item.color,
+                                color = actualColor,
                                 start = Offset(startX, centerY),
                                 end = Offset(endX, centerY),
                                 strokeWidth = 6f,
                                 pathEffect = dash
                             )
-                            drawCircle(item.color, 6f, Offset(startX, centerY))
-                            drawCircle(item.color, 6f, Offset(endX, centerY))
+                            drawCircle(actualColor, 6f, Offset(startX, centerY))
+                            drawCircle(actualColor, 6f, Offset(endX, centerY))
                         }
 
                         BandStyle.Solid -> {
                             drawLine(
-                                color = item.color,
+                                color = actualColor,
                                 start = Offset(startX, centerY),
                                 end = Offset(endX, centerY),
                                 strokeWidth = 14f,
@@ -189,9 +345,9 @@ fun SeedCalendarGrouped(
                     }
                 }
             }
-
+            // 行の区切り線
             drawLine(
-                color = Color(0x22000000),
+                color = actualOutlineColor,// 行の区切り線
                 start = Offset(gridLeft, top + rowH),
                 end = Offset(gridRight, top + rowH),
                 strokeWidth = 1f
@@ -200,75 +356,14 @@ fun SeedCalendarGrouped(
     }
 }
 
-
-// ラベル色をラベルの内容に応じて決定する関数
 fun resolveLabelColor(label: String): Color {
     return when {
-        "冷" in label -> Color(0xFF80DEEA) // 水色
-        "寒" in label -> Color(0xFF1565C0) // 青
-        "涼" in label -> Color(0xFF039BE5) // 水色
-        "中" in label -> Color(0xFF388E3C) // 緑
-        "温" in label -> Color(0xFFFB8C00) // オレンジ
-        "暖" in label -> Color(0xFFD32F2F) // ピンク
+        "冷" in label -> Color(0xFF80DEEA)
+        "寒" in label -> Color(0xFF1565C0)
+        "涼" in label -> Color(0xFF039BE5)
+        "中" in label -> Color(0xFF388E3C)
+        "温" in label -> Color(0xFFFB8C00)
+        "暖" in label -> Color(0xFFD32F2F)
         else -> Color.Gray
     }
-}
-
-@Composable
-fun SeedCalendarFromEntries(
-    entries: List<CalendarEntry>,
-    regionColors: Map<String, Color>,
-    modifier: Modifier = Modifier.fillMaxWidth(),
-    heightDp: Int = 160
-) {
-    val groupedBands = entries
-        .groupBy { it.region }
-        .map { (region, regionEntries) ->
-            val items = regionEntries.flatMap { entry ->
-                val sowingItem = if (entry.sowing_start != 0 && entry.sowing_end != 0) {
-                    listOf(RangeItem(
-                        ranges = listOf(
-                            MonthRange(
-                                entry.sowing_start,
-                                entry.sowing_end,
-                                entry.sowing_start_stage,
-                                entry.sowing_end_stage
-                            )
-                        ),
-                        style = BandStyle.Dotted,
-                        color = regionColors[region] ?: Color.Green,
-                        itemLabel = "播種"
-                    ))
-                } else emptyList()
-
-                val harvestItem = if (entry.harvest_start != 0 && entry.harvest_end != 0) {
-                    listOf(RangeItem(
-                        ranges = listOf(
-                            MonthRange(
-                                entry.harvest_start,
-                                entry.harvest_end,
-                                entry.harvest_start_stage,
-                                entry.harvest_end_stage
-                            )
-                        ),
-                        style = BandStyle.Solid,
-                        color = regionColors[region] ?: Color.Red,
-                        itemLabel = "収穫"
-                    ))
-                } else emptyList()
-
-                sowingItem + harvestItem
-            }
-
-            val firstEntry = regionEntries.firstOrNull()
-            GroupedCalendarBand(
-                groupLabel = region,
-                expirationYear = firstEntry?.expirationYear ?: 9999,
-                expirationMonth = firstEntry?.expirationMonth ?: 12,
-                items = items
-            )
-        }
-        .filter { it.items.isNotEmpty() }
-
-    SeedCalendarGrouped(bands = groupedBands, modifier = modifier, heightDp = heightDp)
 }

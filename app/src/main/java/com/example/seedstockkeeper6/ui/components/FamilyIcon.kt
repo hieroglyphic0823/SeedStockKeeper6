@@ -20,7 +20,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.ui.Alignment
 import androidx.compose.foundation.border
 import androidx.compose.material3.MaterialTheme
-
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.tooling.preview.Preview
 @Composable
 fun FamilyIcon(family: String?) {
     val normalized = normalizeFamilyName(family)
