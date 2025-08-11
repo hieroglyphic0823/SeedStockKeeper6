@@ -84,7 +84,7 @@ import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.ktx.storage
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-
+import androidx.compose.material3.*
 @Composable
 fun SeedInputScreen(
     navController: NavController,
@@ -321,11 +321,10 @@ fun SeedInputScreen(
                     label = { Text("播種開始（月）") },
                     modifier = Modifier.fillMaxWidth()
                 )
-                OutlinedTextField(
+                StageSelector(
+                    label = "播種開始（旬）",
                     value = entry.sowing_start_stage ?: "",
-                    onValueChange = { viewModel.updateCalendarSowingStartStage(index, it) },
-                    label = { Text("播種開始（旬）") },
-                    modifier = Modifier.fillMaxWidth()
+                    onValueChange = { viewModel.updateCalendarSowingStartStage(index, it) }
                 )
                 OutlinedTextField(
                     value = entry.sowing_end?.toString() ?: "",
@@ -333,11 +332,10 @@ fun SeedInputScreen(
                     label = { Text("播種終了（月）") },
                     modifier = Modifier.fillMaxWidth()
                 )
-                OutlinedTextField(
-                    value = entry.sowing_end_stage ?: "",
-                    onValueChange = { viewModel.updateCalendarSowingEndStage(index, it) },
-                    label = { Text("播種終了（旬）") },
-                    modifier = Modifier.fillMaxWidth()
+                StageSelector(
+                    label = "播種終了（旬）",
+                    value = entry.sowing_start_stage ?: "",
+                    onValueChange = { viewModel.updateCalendarSowingEndStage(index, it) }
                 )
                 OutlinedTextField(
                     value = entry.harvest_start?.toString() ?: "",
@@ -345,11 +343,10 @@ fun SeedInputScreen(
                     label = { Text("収穫開始（月）") },
                     modifier = Modifier.fillMaxWidth()
                 )
-                OutlinedTextField(
-                    value = entry.harvest_start_stage ?: "",
-                    onValueChange = { viewModel.updateCalendarHarvestStartStage(index, it) },
-                    label = { Text("収穫開始（旬）") },
-                    modifier = Modifier.fillMaxWidth()
+                StageSelector(
+                    label = "収穫開始（旬）",
+                    value = entry.sowing_start_stage ?: "",
+                    onValueChange = { viewModel.updateCalendarHarvestStartStage(index, it) }
                 )
                 OutlinedTextField(
                     value = entry.harvest_end?.toString() ?: "",
@@ -357,11 +354,10 @@ fun SeedInputScreen(
                     label = { Text("収穫終了（月）") },
                     modifier = Modifier.fillMaxWidth()
                 )
-                OutlinedTextField(
-                    value = entry.harvest_end_stage ?: "",
-                    onValueChange = { viewModel.updateCalendarHarvestEndStage(index, it) },
-                    label = { Text("収穫終了（旬）") },
-                    modifier = Modifier.fillMaxWidth()
+                StageSelector(
+                    label = "収穫終了（旬）",
+                    value = entry.sowing_start_stage ?: "",
+                    onValueChange = { viewModel.updateCalendarHarvestEndStage(index, it) }
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -390,9 +386,15 @@ fun SeedInputScreen(
                 modifier = Modifier.fillMaxWidth()
             )
             OutlinedTextField(
-                viewModel.packet.expirationDate,
-                viewModel::onExpirationDateChange,
-                label = { Text("有効期限") },
+                viewModel.packet.expirationYear.toString(),
+                viewModel::onExpirationYearChange,
+                label = { Text("有効期限(年)") },
+                modifier = Modifier.fillMaxWidth()
+            )
+            OutlinedTextField(
+                viewModel.packet.expirationMonth.toString(),
+                viewModel::onExpirationMonthChange,
+                label = { Text("有効期限(月)") },
                 modifier = Modifier.fillMaxWidth()
             )
             OutlinedTextField(
@@ -659,7 +661,46 @@ fun CropConfirmDialog(viewModel: SeedInputViewModel) {
         }
     )
 }
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun StageSelector(
+    label: String,
+    value: String,
+    onValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val stageOptions = listOf("上旬", "中旬", "下旬")
+    var expanded by remember { mutableStateOf(false) }
 
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = !expanded }
+    ) {
+        OutlinedTextField(
+            value = value,
+            onValueChange = { },
+            readOnly = true,
+            label = { Text(label) },
+            modifier = modifier
+                .menuAnchor()
+                .fillMaxWidth()
+        )
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            stageOptions.forEach { stage ->
+                DropdownMenuItem(
+                    text = { Text(stage) },
+                    onClick = {
+                        onValueChange(stage)
+                        expanded = false
+                    }
+                )
+            }
+        }
+    }
+}
 
 @Composable
 fun LoadingAnimation() {

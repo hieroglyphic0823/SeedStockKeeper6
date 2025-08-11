@@ -289,7 +289,15 @@ class SeedInputViewModel : ViewModel() {
         if (packet.variety != parsed.variety) newDiffs.add(Triple("品種", packet.variety, parsed.variety))
         if (packet.family != parsed.family) newDiffs.add(Triple("科名", packet.family, parsed.family))
         if (packet.company != parsed.company) newDiffs.add(Triple("会社", packet.company, parsed.company))
-        if (packet.expirationDate != parsed.expirationDate) newDiffs.add(Triple("有効期限", packet.expirationDate, parsed.expirationDate))
+        if (packet.expirationYear != parsed.expirationYear) {
+            newDiffs.add(
+                Triple(
+                    "有効期限",
+                    packet.expirationYear.toString(), // Int を String に変換
+                    parsed.expirationYear.toString()  // Int を String に変換
+                )
+            )
+        }
         if (packet.contents != parsed.contents) newDiffs.add(Triple("内容量", packet.contents, parsed.contents))
 
         aiDiffList.clear()
@@ -309,7 +317,7 @@ class SeedInputViewModel : ViewModel() {
                     "品種" -> onVarietyChange(aiValue)
                     "科名" -> onFamilyChange(aiValue)
                     "会社" -> onCompanyChange(aiValue)
-                    "有効期限" -> onExpirationDateChange(aiValue)
+                    "有効期限" -> onExpirationYearChange(aiValue)
                     "内容量" -> onContentsChange(aiValue)
                 }
             }
@@ -328,7 +336,8 @@ class SeedInputViewModel : ViewModel() {
     fun onProductNumberChange(value: String) { packet = packet.copy(productNumber = value) }
     fun onCompanyChange(value: String) { packet = packet.copy(company = value) }
     fun onOriginCountryChange(value: String) { packet = packet.copy(originCountry = value) }
-    fun onExpirationDateChange(value: String) { packet = packet.copy(expirationDate = value) }
+    fun onExpirationYearChange(value: String) { packet = packet.copy(expirationYear = value.toIntOrNull() ?: 0) }
+    fun onExpirationMonthChange(value: String) { packet = packet.copy(expirationMonth = value.toIntOrNull() ?: 0) }
     fun onContentsChange(value: String) { packet = packet.copy(contents = value) }
     fun onGerminationRateChange(value: String) { packet = packet.copy(germinationRate = value) }
     fun onSeedTreatmentChange(value: String) { packet = packet.copy(seedTreatment = value) }

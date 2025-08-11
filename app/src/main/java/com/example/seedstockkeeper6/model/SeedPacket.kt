@@ -17,7 +17,8 @@ data class SeedPacket(
     val productNumber: String = "",
     val company: String = "",
     val originCountry: String = "",
-    val expirationDate: String = "",
+    val expirationYear: Int = 0,
+    val expirationMonth: Int = 0,
     val contents: String = "",
     val germinationRate: String = "",
     val seedTreatment: String = "",
@@ -56,6 +57,7 @@ data class CalendarEntry(
     val harvest_start: Int = 0,
     val harvest_start_stage: String = "",
     val harvest_end: Int = 0,
-    val harvest_end_stage: String = ""
-
+    val harvest_end_stage: String = "",
+    val expirationYear: Int = 9999,
+    val expirationMonth: Int = 12
 )

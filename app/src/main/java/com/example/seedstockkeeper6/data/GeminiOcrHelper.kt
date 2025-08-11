@@ -48,7 +48,8 @@ suspend fun runGeminiOcr(context: Context, bitmap: Bitmap): String {
 2. パッケージに「科名」の明記がない場合でも、製品名、品種名、会社名、その他の記載情報から、その植物が属する可能性が最も高い「科名」を推測し、"family" フィールドに記載してください。例：カイワレ大根 → アブラナ科
 3. どうしても科名が特定・推測できない場合は、"family" フィールドは空文字列 "" としてください。
 
-expirationDate フィールドは、「yyyy年MM月」（例：2025年07月）の形式で記入してください。
+**expirationYear フィールドは、和暦の場合は和暦を西暦に直した「yyyy」（例：2025）の形式で、数値型で記入してください。expirationMonth フィールドは、"10月末日"や"10月"といった表記に関わらず、月を10などの数値型で記入してください。**
+
 
 companionPlants 配列について：
 - パッケージに記載されている場合は、それをもとに植物名と効果を記載してください。
@@ -92,7 +93,8 @@ companionPlants 配列について：
           "productNumber": "",
           "company": "",
           "originCountry": "",
-          "expirationDate": "",
+          "expirationYear": 0,
+          "expirationMonth": 0,
           "contents": "",
           "germinationRate": "",
           "seedTreatment": "",
