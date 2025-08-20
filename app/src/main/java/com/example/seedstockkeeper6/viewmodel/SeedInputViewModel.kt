@@ -37,6 +37,7 @@ import kotlin.math.min
 import android.graphics.Rect
 import com.example.seedstockkeeper6.model.CalendarEntry
 import com.example.seedstockkeeper6.util.drawRectOverlay
+import com.google.firebase.auth.FirebaseAuth
 
 class SeedInputViewModel : ViewModel() {
 
@@ -412,7 +413,13 @@ class SeedInputViewModel : ViewModel() {
             onComplete(Result.failure(IllegalArgumentException("商品名が空です")))
             return
         }
-
+        // ★ ログイン必須
+        val uid = FirebaseAuth.getInstance().currentUser?.uid
+        if (uid == null) {
+            showSnackbar = "ログインが必要です"
+            onComplete(Result.failure(IllegalStateException("未ログインです")))
+            return
+        }
         val db = Firebase.firestore
         val storageRef = Firebase.storage.reference
         val target = packet.documentId?.let {
@@ -506,7 +513,8 @@ class SeedInputViewModel : ViewModel() {
 
                 val updatedPacket = packet.copy(
                     documentId = id,
-                    imageUrls = finalOrderedPaths
+                    imageUrls = finalOrderedPaths,
+                    ownerUid = packet.ownerUid.ifBlank { uid } // ★ 新規は自分のUIDをセット
                 )
 
                 target.set(updatedPacket)

@@ -60,43 +60,53 @@ android {
 }
 
 dependencies {
-    implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.lifecycle.runtime.ktx)
-    implementation(libs.androidx.activity.compose)
+    // Compose
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui)
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
-    testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(platform(libs.androidx.compose.bom))
-    androidTestImplementation(libs.androidx.ui.test.junit4)
+    implementation(libs.material.icons.extended)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+    androidTestImplementation(platform(libs.androidx.compose.bom))
+    androidTestImplementation(libs.androidx.ui.test.junit4)
+
+    // AndroidX
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.navigation.compose)
+
+    // Firebase（BoM で統一）
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)
     implementation(libs.firebase.firestore)
-    implementation(libs.generativeai)
-    implementation(platform(libs.androidx.compose.bom))
-    implementation(libs.coil.compose)
-    implementation(libs.gson)
-    implementation(libs.firebase.firestore)
     implementation(libs.firebase.storage)
-    implementation(libs.firebase.auth)
-    implementation(libs.androidx.navigation.compose)
-    implementation(libs.compose.ui.tooling.preview)
-    implementation(libs.material.icons.extended)
-    implementation(libs.material3)
-    implementation(libs.accompanist.systemuicontroller)
+    implementation(libs.firebase.auth.ktx)
+
+    // Google サインイン（最新推奨：Credential Manager + Google ID）
+    implementation(libs.androidx.credentials)
+    implementation(libs.androidx.credentials.play) // toml に定義してある前提
+    implementation(libs.googleid)
+    implementation(libs.play.services.auth)
+
+    // 画像/AI/その他
+    implementation(libs.coil.compose)
+    implementation(libs.generativeai)
+    implementation(libs.gson)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.lottie.compose)
-    coreLibraryDesugaring(libs.desugar.jdk.libs)
+
+    // ML Kit / TFLite
+    implementation("com.google.mlkit:object-detection:17.0.2")
     implementation(libs.tflite)
     implementation(libs.tflite.api)
     implementation(libs.tflite.support)
     implementation(libs.tflite.task.vision)
     implementation(libs.tensorflowLiteMetadata)
-    implementation("com.google.mlkit:object-detection:17.0.2")//BoM 管理がうまくいかなかったので直接記載
+
+    // desugar
+    coreLibraryDesugaring(libs.desugar.jdk.libs)
+    implementation(libs.accompanist.systemuicontroller)
 }

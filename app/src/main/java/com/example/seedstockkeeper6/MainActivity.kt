@@ -57,13 +57,12 @@ import java.nio.charset.StandardCharsets
 import com.example.seedstockkeeper6.debug.DebugDetectOuterScreen
 import com.example.seedstockkeeper6.BuildConfig
 import androidx.compose.material.icons.outlined.BugReport
+import com.example.seedstockkeeper6.ui.auth.AuthGate
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Log.d("DebugTrace", "MainActivity.onCreate called")
         FirebaseApp.initializeApp(this)
-        Log.d("DebugTrace", "FirebaseApp initialized")
         FirebaseAuth.getInstance().signInAnonymously()
             .addOnSuccessListener { 
                 Log.d("DebugTrace", "FirebaseAuth anonymous login success") 
@@ -72,7 +71,6 @@ class MainActivity : ComponentActivity() {
                 Log.e("DebugTrace", "FirebaseAuth anonymous login failed", e) 
             }
         setContent {
-            Log.d("DebugTrace", "setContent initializing")
             val navController = rememberNavController()
             val selectedIds = remember { mutableStateListOf<String>() }
             val navBackStackEntry by navController.currentBackStackEntryAsState()
