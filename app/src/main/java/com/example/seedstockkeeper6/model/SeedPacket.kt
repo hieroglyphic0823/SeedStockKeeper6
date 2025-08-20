@@ -28,7 +28,8 @@ data class SeedPacket(
     val cultivation: Cultivation = Cultivation(),
     val calendar: List<CalendarEntry> = emptyList(),
     val companionPlants: List<CompanionPlant> = emptyList(),
-    val documentId: String? = null // FirestoreのドキュメントIDを保持する場合
+    val documentId: String? = null, // FirestoreのドキュメントIDを保持する場合
+    val selectedRegion: String? = null //
 )
 @Serializable
 data class Cultivation(
