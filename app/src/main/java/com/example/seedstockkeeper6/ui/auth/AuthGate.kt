@@ -72,7 +72,7 @@ fun SignInScreen(modifier: Modifier = Modifier) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("SeedStockKeeper6 にサインイン", style = MaterialTheme.typography.titleLarge)
+        Text("たねすけさん にサインイン", style = MaterialTheme.typography.titleLarge)
         Spacer(Modifier.height(16.dp))
 
         // Google でサインイン（Credential Manager）
