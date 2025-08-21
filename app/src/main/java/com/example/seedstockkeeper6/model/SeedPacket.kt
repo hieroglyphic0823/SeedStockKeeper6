@@ -63,3 +63,4 @@ data class CalendarEntry(
     val harvest_end: Int = 0,
     val harvest_end_stage: String = ""
 )
+

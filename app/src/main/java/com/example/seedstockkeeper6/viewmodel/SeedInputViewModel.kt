@@ -407,131 +407,146 @@ class SeedInputViewModel : ViewModel() {
         packet = packet.copy(companionPlants = newList)
     }
 
-    fun saveSeed(context: Context, onComplete: (Result<Unit>) -> Unit) {
+    fun saveSeed(context: android.content.Context, onComplete: (Result<Unit>) -> Unit) {
+        val auth = com.google.firebase.auth.FirebaseAuth.getInstance()
+        val uid = auth.currentUser?.uid
+        if (uid == null) {
+            showSnackbar = "保存にはサインインが必要です"
+            onComplete(Result.failure(IllegalStateException("Not signed in")))
+            return
+        }
         if (packet.productName.isBlank()) {
             showSnackbar = "商品名を入力してください"
             onComplete(Result.failure(IllegalArgumentException("商品名が空です")))
             return
         }
-        // ★ ログイン必須
-        val uid = FirebaseAuth.getInstance().currentUser?.uid
-        if (uid == null) {
-            showSnackbar = "ログインが必要です"
-            onComplete(Result.failure(IllegalStateException("未ログインです")))
-            return
-        }
-        val db = Firebase.firestore
-        val storageRef = Firebase.storage.reference
-        val target = packet.documentId?.let {
-            db.collection("seeds").document(it)
-        } ?: db.collection("seeds").document(UUID.randomUUID().toString())
-        val id = target.id
 
-        viewModelScope.launch(Dispatchers.Main) {
+        val db = com.google.firebase.ktx.Firebase.firestore
+        val storageRef = com.google.firebase.ktx.Firebase.storage.reference
+
+        viewModelScope.launch(kotlinx.coroutines.Dispatchers.Main) {
             isLoading = true
             try {
-                // 表示順 → ストレージパスを1対1で格納
-                val pathsByIndex = MutableList(imageUris.size) { null as String? }
+                // 1) docId を確定（既存なら流用、無ければ新規発番）
+                val target = packet.documentId?.let { db.collection("seeds").document(it) }
+                    ?: db.collection("seeds").document()
+                val id = target.id
 
-                withContext(Dispatchers.IO) {
+                // 2) 所有者を確定（ここで create/update を“先に”確定させる）
+                ensureSeedOwnershipOrFail(id, uid)
+
+                // 3) 画像アップロード（命名: seed_images/{docId}_{UUID}.jpg）
+                val pathsByIndex = MutableList(imageUris.size) { null as String? }
+                withContext(kotlinx.coroutines.Dispatchers.IO) {
                     imageUris.forEachIndexed { index, uri ->
                         val s = uri.toString()
                         val scheme = uri.scheme ?: ""
 
-                        // すでにFirebase Storage上のパスはそのまま採用
+                        // 既に Storage パスならそのまま採用
                         if (s.startsWith("seed_images/") || scheme == "seed_images") {
                             pathsByIndex[index] = s
-                            Log.d("SaveSeed", "keep @ $index : $s")
+                            android.util.Log.d("SaveSeed", "keep @ $index : $s")
                             return@forEachIndexed
                         }
 
-                        // ローカル/HTTP等 → ここでBitmap化してアップロード
+                        // Bitmap 化
                         val bitmap = try {
                             when (scheme) {
-                                "content" -> uriToBitmap(context, uri)
-                                "file"    -> BitmapFactory.decodeFile(uri.path)
+                                "content" -> com.example.seedstockkeeper6.data.uriToBitmap(context, uri)
+                                "file"    -> android.graphics.BitmapFactory.decodeFile(uri.path)
                                 "http", "https" -> {
-                                    (URL(s).openConnection() as HttpURLConnection).run {
+                                    (java.net.URL(s).openConnection() as java.net.HttpURLConnection).run {
                                         connectTimeout = 15000
                                         readTimeout = 15000
                                         doInput = true
                                         connect()
-                                        if (responseCode == HttpURLConnection.HTTP_OK) {
-                                            BitmapFactory.decodeStream(inputStream).also {
+                                        if (responseCode == java.net.HttpURLConnection.HTTP_OK) {
+                                            android.graphics.BitmapFactory.decodeStream(inputStream).also {
                                                 kotlin.runCatching { inputStream.close() }
                                             }
                                         } else null
                                     }
                                 }
-                                // それ以外は未対応としてスキップ（必要なら分岐を追加）
                                 else -> null
                             }
                         } catch (e: Exception) {
-                            Log.e("SaveSeed", "Bitmap load failed @ $index : $uri", e)
+                            android.util.Log.e("SaveSeed", "Bitmap load failed @ $index : $uri", e)
                             null
                         }
 
                         if (bitmap != null) {
-                            val baos = ByteArrayOutputStream().apply {
-                                // 画質80で十分。必要なら90に
-                                bitmap.compress(Bitmap.CompressFormat.JPEG, 80, this)
+                            val baos = java.io.ByteArrayOutputStream().apply {
+                                bitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 80, this)
                             }
                             val bytes = baos.toByteArray()
-                            val imagePath = "seed_images/${id}_${UUID.randomUUID()}.jpg"
-
+                            val imagePath = "seed_images/${id}_${java.util.UUID.randomUUID()}.jpg"
                             try {
                                 storageRef.child(imagePath).putBytes(bytes).await()
                                 pathsByIndex[index] = imagePath
-                                Log.d("SaveSeed", "uploaded @ $index : $imagePath (from $uri)")
+                                android.util.Log.d("SaveSeed", "uploaded @ $index : $imagePath (from $uri)")
                             } catch (e: Exception) {
-                                Log.e("SaveSeed", "upload failed @ $index : $imagePath", e)
+                                android.util.Log.e("SaveSeed", "upload failed @ $index : $imagePath", e)
                             }
                         } else {
-                            Log.e("SaveSeed", "skip @ $index : bitmap null ($uri)")
+                            android.util.Log.e("SaveSeed", "skip @ $index : bitmap null ($uri)")
                         }
                     }
                 }
 
-                // 表示順のまま確定（nullは落とす）
-                val finalOrderedPaths = pathsByIndex.mapNotNull { it }
-                Log.d("SaveSeed", "finalOrderedPaths(size=${finalOrderedPaths.size}): $finalOrderedPaths")
-
-                // 画面から外れた旧ストレージ画像は削除
-                withContext(Dispatchers.IO) {
+                // 4) 旧ストレージ画像の削除
+                withContext(kotlinx.coroutines.Dispatchers.IO) {
                     val oldSet = packet.imageUrls.toSet()
-                    val newSet = finalOrderedPaths.toSet()
+                    val newSet = pathsByIndex.mapNotNull { it }.toSet()
                     val toDelete = oldSet - newSet
                     toDelete.forEach { path ->
-                        try {
+                        runCatching {
                             storageRef.child(path).delete().await()
-                            Log.d("SaveSeed", "deleted: $path")
-                        } catch (e: Exception) {
-                            Log.e("SaveSeed", "delete failed: $path", e)
+                            android.util.Log.d("SaveSeed", "deleted: $path")
+                        }.onFailure {
+                            android.util.Log.e("SaveSeed", "delete failed: $path", it)
                         }
                     }
                 }
+
+                // 5) Firestore を最終更新（ownerUid を上書きしない merge）
+                val finalOrderedPaths = pathsByIndex.mapNotNull { it }
+                android.util.Log.d("SaveSeed", "finalOrderedPaths(size=${finalOrderedPaths.size}): $finalOrderedPaths")
 
                 val updatedPacket = packet.copy(
                     documentId = id,
-                    imageUrls = finalOrderedPaths,
-                    ownerUid = packet.ownerUid.ifBlank { uid } // ★ 新規は自分のUIDをセット
+                    imageUrls = finalOrderedPaths
                 )
 
-                target.set(updatedPacket)
-                    .addOnSuccessListener {
-                        packet = updatedPacket
-                        showSnackbar = "保存が完了しました（画像: ${finalOrderedPaths.size}）"
-                        onComplete(Result.success(Unit))
-                    }
-                    .addOnFailureListener {
-                        showSnackbar = "保存に失敗しました: ${it.localizedMessage ?: "不明なエラー"}"
-                        onComplete(Result.failure(it))
-                    }
+                // 失敗している行の置き換え版
+// target.set(updatedPacket, SetOptions.merge()).await()
+
+                val json = com.google.gson.Gson().toJson(updatedPacket)
+                val type = object : com.google.gson.reflect.TypeToken<MutableMap<String, Any?>>() {}.type
+                val map: MutableMap<String, Any?> = com.google.gson.Gson().fromJson(json, type)
+
+                // ここがポイント：同じ ownerUid を必ず送る（ルールの ownerUnchanged を満たす）
+                map["ownerUid"] = uid
+
+                target.set(map, com.google.firebase.firestore.SetOptions.merge()).await()
+
+                // ViewModel の状態を更新
+                packet = updatedPacket
+                showSnackbar = "保存が完了しました（画像: ${finalOrderedPaths.size}）"
+                onComplete(Result.success(Unit))
+            } catch (e: SecurityException) {
+                android.util.Log.e("SaveSeed", "ownership error", e)
+                showSnackbar = "このデータの所有者ではありません"
+                onComplete(Result.failure(e))
+            } catch (e: Exception) {
+                android.util.Log.e("SaveSeed", "failed", e)
+                showSnackbar = "保存に失敗しました: ${e.localizedMessage ?: "不明なエラー"}"
+                onComplete(Result.failure(e))
             } finally {
                 isLoading = false
             }
         }
     }
+
 
     suspend fun getDownloadUrlFromPath(path: String): String? {
         return try {
@@ -1145,6 +1160,17 @@ class SeedInputViewModel : ViewModel() {
             updatedCalendarList[index] = updatedEntry
             packet = packet.copy(calendar = updatedCalendarList.toList())
         }
+    }
+    private suspend fun ensureSeedOwnershipOrFail(seedId: String, uid: String) {
+        val ref = com.google.firebase.ktx.Firebase.firestore
+            .collection("seeds")
+            .document(seedId)
+
+        // 読み取りをせず、ownerUid だけを merge 書き込み（既存フィールドは上書きしない）
+        ref.set(
+            mapOf("ownerUid" to uid),
+            com.google.firebase.firestore.SetOptions.merge()
+        ).await()
     }
 
 
