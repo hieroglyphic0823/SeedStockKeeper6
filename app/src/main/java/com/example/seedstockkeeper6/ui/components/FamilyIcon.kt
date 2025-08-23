@@ -1,5 +1,6 @@
 package com.example.seedstockkeeper6.ui.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -21,90 +22,89 @@ import androidx.compose.ui.Alignment
 import androidx.compose.foundation.border
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
+
 @Composable
-fun FamilyIcon(family: String?) {
+fun FamilyIcon(
+    family: String?,
+    size: Dp = 40.dp,
+    cornerRadius: Dp = 10.dp, // ← 角丸。四角なら 0.dp
+    rotationLabel: String? = null, // ← 右上に出す「連作年数」など（例: "3年" / "3"）
+    // 配色（Material3トークン準拠）
+    containerColor: Color = MaterialTheme.colorScheme.surface,
+    contentColor: Color = MaterialTheme.colorScheme.onPrimaryContainer,
+    badgeBgColor: Color = MaterialTheme.colorScheme.tertiary,
+    badgeTextColor: Color = MaterialTheme.colorScheme.onSecondary,
+    badgeBorderColor: Color = MaterialTheme.colorScheme.outline
+) {
     val normalized = normalizeFamilyName(family)
 
-    // png（画像ID）かImageVectorかを判定
-    val iconRes: Int? // 画像リソース
-    val imageVector: ImageVector? // アイコン
-    when (normalized) {
-        "イネ科" -> {
-            iconRes = R.drawable.corn
-            imageVector = null
-        }
-        "ナス科" -> {
-            iconRes = R.drawable.eggplant
-            imageVector = null
-        }
-        "ヒルガオ科" -> {
-            iconRes = R.drawable.sweet_potato
-            imageVector = null
-        }
-        "アブラナ科" -> {
-            iconRes = R.drawable.broccoli
-            imageVector = null
-        }
-        "ウリ科" -> {
-            iconRes = R.drawable.cucumber
-            imageVector = null
-        }
-        "マメ科" -> {
-            iconRes = R.drawable.bean
-            imageVector = null
-        }
-        "キク科" -> {
-            iconRes = R.drawable.lettuce
-            imageVector = null
-        }
-        "セリ科" -> {
-            iconRes = R.drawable.carrot
-            imageVector = null
-        }
-        "ネギ科" -> {
-            iconRes = R.drawable.onion2
-            imageVector = null
-        }
-        "アマランサス科" -> {
-            iconRes = R.drawable.spinach
-            imageVector = null
-        }
-        "バラ科" -> {
-            iconRes = R.drawable.strawberry
-            imageVector = null
-        }
-        "ミカン科" -> {
-            iconRes =  R.drawable.orange
-            imageVector = null
-        }
-        else -> {
-            iconRes = R.drawable.vegetables
-            imageVector = null
-        }
+    val iconRes: Int? = when (normalized) {
+        "イネ科" -> R.drawable.corn
+        "ナス科" -> R.drawable.eggplant
+        "ヒルガオ科" -> R.drawable.sweet_potato
+        "アブラナ科" -> R.drawable.broccoli
+        "ウリ科" -> R.drawable.cucumber
+        "マメ科" -> R.drawable.bean
+        "キク科" -> R.drawable.lettuce
+        "セリ科" -> R.drawable.carrot
+        "ネギ科" -> R.drawable.onion2
+        "アマランサス科" -> R.drawable.spinach
+        "バラ科" -> R.drawable.strawberry
+        "ミカン科" -> R.drawable.orange
+        else -> R.drawable.vegetables
     }
 
-    if (iconRes != null) {
-        Box(
-            modifier = Modifier
-                .size(40.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.onPrimary), // テーマ色で背景、border無し
-            contentAlignment = Alignment.Center
+    Box(modifier = Modifier.size(size)) {
+        // 本体（四角いタイル）
+        Surface(
+            color = containerColor,
+            contentColor = contentColor,
+            shape = RoundedCornerShape(cornerRadius),
+            tonalElevation = 0.dp,
+            shadowElevation = 0.dp,
+            modifier = Modifier.matchParentSize()
         ) {
-            Image(
-                painter = painterResource(id = iconRes),
-                contentDescription = "$normalized のアイコン",
-                modifier = Modifier.size(24.dp)
-            )
+            Box(
+                modifier = Modifier.matchParentSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                if (iconRes != null) {
+                    Image(
+                        painter = painterResource(id = iconRes),
+                        contentDescription = "$normalized のアイコン",
+                        modifier = Modifier.size((size.value * 0.6f).dp) // 元の 24dp 相当を自動スケール
+                    )
+                }
+            }
         }
-    } else if (imageVector != null) {
-        Icon(
-            imageVector = imageVector,
-            contentDescription = "$normalized のアイコン",
-            modifier = Modifier.size(32.dp)
-        )
+
+        // 右上の枠付きバッジ（連作年数など）
+        val labelText = rotationLabel?.trim().orEmpty()
+        if (labelText.isNotEmpty()) {
+            Surface(
+                color = badgeBgColor.copy(alpha = 0.95f),
+                contentColor = badgeTextColor,
+                shape = RoundedCornerShape(6.dp),
+                border = BorderStroke(1.dp, badgeBorderColor),
+                tonalElevation = 0.dp,
+                shadowElevation = 0.dp,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(top = 2.dp, end = 2.dp)
+            ) {
+                Text(
+                    text = labelText,
+                    style = MaterialTheme.typography.labelSmall,
+                    maxLines = 1,
+                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                )
+            }
+        }
     }
 }

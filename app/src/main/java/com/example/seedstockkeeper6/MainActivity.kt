@@ -9,6 +9,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -70,6 +71,7 @@ import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import androidx.credentials.CredentialManager
 import androidx.credentials.ClearCredentialStateRequest
+import androidx.compose.material3.Surface
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -86,9 +88,13 @@ class MainActivity : ComponentActivity() {
                 darkTheme = isSystemInDarkTheme(),
                 dynamicColor = false
             ) {
-                // 未ログイン → SignInScreen / ログイン済み → アプリ本体
-                AuthGate { user ->
-                    MainScaffold(navController = navController, user = user)
+                Surface(                      // ★ これが“アプリ全体の背景”
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    AuthGate { user ->
+                        MainScaffold(navController = navController, user = user)
+                    }
                 }
             }
         }

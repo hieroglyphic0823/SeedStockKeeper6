@@ -60,6 +60,10 @@ fun SeedListScreen(
             val checked = selectedIds.contains(id)
             val encodedSeed = URLEncoder.encode(Gson().toJson(seed), StandardCharsets.UTF_8.toString())
             Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primary, // ← カードの色
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                ),
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 8.dp)
@@ -71,17 +75,18 @@ fun SeedListScreen(
                     modifier = Modifier.padding(16.dp),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    val label = familyRotationMinYearsLabel(seed.family) ?: ""
-                    IconWithLabel(
-                        icon = { FamilyIcon(seed.family) },
-                        label = label,
-                        position = LabelPosition.Center
+                    val rotation  = familyRotationMinYearsLabel(seed.family) ?: ""
+                    FamilyIcon(
+                        family = seed.family,
+                        size = 60.dp,
+                        cornerRadius = 10.dp,
+                        rotationLabel = rotation
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Column(modifier = Modifier.weight(1f)) {
                         Text("${seed.productName} (${seed.variety})", style = MaterialTheme.typography.titleMedium)
                         Spacer(modifier = Modifier.height(4.dp))
-                        Text("有効期限: ${seed.expirationYear}", style = MaterialTheme.typography.bodySmall)
+                        Text("有効期限: ${seed.expirationYear}年 ${seed.expirationMonth}月", style = MaterialTheme.typography.bodySmall)
                     }
                     Checkbox(
                         checked = checked,
