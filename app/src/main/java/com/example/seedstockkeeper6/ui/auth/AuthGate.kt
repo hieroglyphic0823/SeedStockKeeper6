@@ -58,7 +58,13 @@ fun AuthGate(
 
     when {
         initializing -> Splash(modifier)
-        currentUser == null -> SignInScreen(modifier)
+        currentUser == null -> {
+            // 一時的に匿名認証でログイン
+            LaunchedEffect(Unit) {
+                auth.signInAnonymously()
+            }
+            Splash(modifier)
+        }
         else -> content(currentUser!!)
     }
 }

@@ -85,9 +85,9 @@ dependencies {
     implementation(libs.firebase.storage)
     implementation(libs.firebase.auth.ktx)
 
-    // Google サインイン（最新推奨：Credential Manager + Google ID）
+    // Google サインイン（Credential Manager + Google ID）
     implementation(libs.androidx.credentials)
-    implementation(libs.androidx.credentials.play) // toml に定義してある前提
+    implementation(libs.androidx.credentials.play)
     implementation(libs.googleid)
     implementation(libs.play.services.auth)
 
