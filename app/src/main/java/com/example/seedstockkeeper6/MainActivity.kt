@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -72,6 +73,14 @@ import java.nio.charset.StandardCharsets
 import androidx.credentials.CredentialManager
 import androidx.credentials.ClearCredentialStateRequest
 import androidx.compose.material3.Surface
+import androidx.compose.ui.Alignment
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import com.example.seedstockkeeper6.ui.theme.ThemeFlavor
+
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -85,8 +94,9 @@ class MainActivity : ComponentActivity() {
             val navController = rememberNavController()
 
             SeedStockKeeper6Theme(
+                flavor = ThemeFlavor.Herb , //Vitamin, Soil  ,Herb ,Ocean ,Plum ,Sakura  ← 試したい配色を指定
                 darkTheme = isSystemInDarkTheme(),
-                dynamicColor = false
+                dynamicColor = false          // パレットを見たい時は false 推奨
             ) {
                 Surface(                      // ★ これが“アプリ全体の背景”
                     modifier = Modifier.fillMaxSize(),
@@ -122,11 +132,21 @@ private fun MainScaffold(
         topBar = {
             TopAppBar(
                 navigationIcon = {
-                    AccountMenuButton(
-                        user = user,
-                        size = 36.dp,
-                        onSignOut = { signOut(ctx, scope) }
-                    )
+                    Box(
+                        modifier = Modifier
+                            .size(48.dp) // 丸の大きさ（アイコンより少し大きめ）
+                            .background(
+                                color = MaterialTheme.colorScheme.tertiary, // 好きな色に
+                                shape = CircleShape
+                            ),
+                        contentAlignment = Alignment.Center // アイコンを真ん中に配置
+                    ) {
+                        AccountMenuButton(
+                            user = user,
+                            size = 38.dp, // 中のアイコンを少し小さめに
+                            onSignOut = { signOut(ctx, scope) }
+                        )
+                    }
                 },
                 title = { Text("たねすけさん") },
                 actions = {

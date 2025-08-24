@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -61,12 +62,19 @@ fun SeedListScreen(
             val encodedSeed = URLEncoder.encode(Gson().toJson(seed), StandardCharsets.UTF_8.toString())
             Card(
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primary, // ← カードの色
-                    contentColor = MaterialTheme.colorScheme.onPrimary
+                    containerColor = MaterialTheme.colorScheme.primaryContainer, // surface系にするとナチュラル
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                ),
+                shape = RoundedCornerShape(16.dp), // 角丸
+                elevation = CardDefaults.cardElevation(
+                    defaultElevation = 6.dp,
+                    pressedElevation = 8.dp,
+                    focusedElevation = 6.dp,
+                    hoveredElevation = 6.dp
                 ),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 8.dp)
+                    .padding(horizontal = 12.dp, vertical = 8.dp) // 外側余白
                     .clickable {
                         navController.navigate("input/$encodedSeed")
                     }
@@ -80,7 +88,8 @@ fun SeedListScreen(
                         family = seed.family,
                         size = 60.dp,
                         cornerRadius = 10.dp,
-                        rotationLabel = rotation
+                        rotationLabel = rotation,
+                        badgeProtrusion = 6.dp  // はみ出し量を調整（6–10dpくらいが目安）
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Column(modifier = Modifier.weight(1f)) {

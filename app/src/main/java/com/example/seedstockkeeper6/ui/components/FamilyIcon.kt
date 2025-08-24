@@ -22,12 +22,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.foundation.border
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.zIndex
 
 @Composable
 fun FamilyIcon(
@@ -37,10 +39,11 @@ fun FamilyIcon(
     rotationLabel: String? = null, // ← 右上に出す「連作年数」など（例: "3年" / "3"）
     // 配色（Material3トークン準拠）
     containerColor: Color = MaterialTheme.colorScheme.surface,
-    contentColor: Color = MaterialTheme.colorScheme.onPrimaryContainer,
+    contentColor: Color = MaterialTheme.colorScheme.onSurface,
     badgeBgColor: Color = MaterialTheme.colorScheme.tertiary,
-    badgeTextColor: Color = MaterialTheme.colorScheme.onSecondary,
-    badgeBorderColor: Color = MaterialTheme.colorScheme.outline
+    badgeTextColor: Color = MaterialTheme.colorScheme.onTertiary,
+    badgeBorderColor: Color = MaterialTheme.colorScheme.outline,
+    badgeProtrusion: Dp = 8.dp                   // ← アイコン外へハミ出す量（+X, -Y）
 ) {
     val normalized = normalizeFamilyName(family)
 
@@ -96,7 +99,8 @@ fun FamilyIcon(
                 shadowElevation = 0.dp,
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .padding(top = 2.dp, end = 2.dp)
+                    .offset(x = badgeProtrusion, y = -badgeProtrusion) // ★ はみ出し
+                    .zIndex(1f)
             ) {
                 Text(
                     text = labelText,
