@@ -90,6 +90,8 @@ dependencies {
     implementation(libs.androidx.credentials.play)
     implementation(libs.googleid)
     implementation(libs.play.services.auth)
+    implementation(libs.play.services.base)
+    implementation(libs.play.services.tasks)
 
     // 画像/AI/その他
     implementation(libs.coil.compose)
@@ -109,4 +111,7 @@ dependencies {
     // desugar
     coreLibraryDesugaring(libs.desugar.jdk.libs)
     implementation(libs.accompanist.systemuicontroller)
+    
+    // Test dependencies
+    testImplementation(libs.androidx.test.ext.junit)
 }

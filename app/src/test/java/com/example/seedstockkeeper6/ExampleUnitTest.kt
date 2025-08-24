@@ -1,7 +1,6 @@
 package com.example.seedstockkeeper6
 
 import org.junit.Test
-
 import org.junit.Assert.*
 
 /**

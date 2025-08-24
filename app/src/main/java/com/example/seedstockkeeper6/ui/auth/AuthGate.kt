@@ -59,9 +59,17 @@ fun AuthGate(
     when {
         initializing -> Splash(modifier)
         currentUser == null -> {
-            // 一時的に匿名認証でログイン
+            // 開発環境では匿名認証でログイン
             LaunchedEffect(Unit) {
-                auth.signInAnonymously()
+                try {
+                    auth.signInAnonymously()
+                        .addOnFailureListener { exception ->
+                            // エラーが発生した場合はログに記録
+                            println("Anonymous auth failed: ${exception.message}")
+                        }
+                } catch (e: Exception) {
+                    println("Auth error: ${e.message}")
+                }
             }
             Splash(modifier)
         }
