@@ -102,7 +102,6 @@ fun SeedInputScreen(
     val pickImagesLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetMultipleContents()
     ) { uris: List<Uri> ->
-        Log.d("ImagePicker", "URIs received: $uris")
         viewModel.addImages(uris)
     }
 
@@ -173,7 +172,6 @@ fun SeedInputScreen(
                                 if (path.startsWith("seed_images/")) {
                                     try {
                                         Firebase.storage.reference.child(path).delete().await()
-                                        Log.d("SeedInputScreen", "削除成功: $path")
                                     } catch (e: Exception) {
                                         Log.e("SeedInputScreen", "削除失敗: $path", e)
                                     }
@@ -726,7 +724,6 @@ fun SeedInputScreen(
 
                 IconButton(
                     onClick = {
-                        Log.d("SeedInputScreen", "回転アイコンがクリックされた")
                         viewModel.selectedImageUri?.let { uri ->
                             viewModel.rotateAndReplaceImage(context, uri, 90f)
                         }
