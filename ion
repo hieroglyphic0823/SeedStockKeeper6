@@ -1,0 +1,80 @@
+warning: in the working copy of 'gradle/libs.versions.toml', LF will be replaced by CRLF the next time Git touches it
+[1mdiff --git a/app/src/main/java/com/example/seedstockkeeper6/ui/auth/AuthGate.kt b/app/src/main/java/com/example/seedstockkeeper6/ui/auth/AuthGate.kt[m
+[1mindex d216e30..6369bbb 100644[m
+[1m--- a/app/src/main/java/com/example/seedstockkeeper6/ui/auth/AuthGate.kt[m
+[1m+++ b/app/src/main/java/com/example/seedstockkeeper6/ui/auth/AuthGate.kt[m
+[36m@@ -58,21 +58,7 @@[m [mfun AuthGate([m
+ [m
+     when {[m
+         initializing -> Splash(modifier)[m
+[31m-        currentUser == null -> {[m
+[31m-            // 開発環境では匿名認証でログイン[m
+[31m-            LaunchedEffect(Unit) {[m
+[31m-                try {[m
+[31m-                    auth.signInAnonymously()[m
+[31m-                        .addOnFailureListener { exception ->[m
+[31m-                            // エラーが発生した場合はログに記録[m
+[31m-                            println("Anonymous auth failed: ${exception.message}")[m
+[31m-                        }[m
+[31m-                } catch (e: Exception) {[m
+[31m-                    println("Auth error: ${e.message}")[m
+[31m-                }[m
+[31m-            }[m
+[31m-            Splash(modifier)[m
+[31m-        }[m
+[32m+[m[32m        currentUser == null -> SignInScreen(modifier)[m
+         else -> content(currentUser!!)[m
+     }[m
+ }[m
+[1mdiff --git a/gradle/libs.versions.toml b/gradle/libs.versions.toml[m
+[1mindex 5778727..eb0d43e 100644[m
+[1m--- a/gradle/libs.versions.toml[m
+[1m+++ b/gradle/libs.versions.toml[m
+[36m@@ -1,31 +1,31 @@[m
+ [versions][m
+[32m+[m[32maccompanist = "0.30.1"[m
+[32m+[m[32mactivityCompose = "1.10.1"[m
+ agp = "8.12.1"[m
+[31m-kotlin = "2.2.0"[m
+[32m+[m[32mcoil = "2.5.0"[m
+[32m+[m[32mcomposeBom = "2025.05.01"[m
+ coreKtx = "1.16.0"[m
+[31m-junitVersion = "1.2.1"[m
+[32m+[m[32mcredentials = "1.3.0"[m
+[32m+[m[32mdesugar = "2.1.3"[m
+ espressoCore = "3.6.1"[m
+[31m-lifecycleRuntimeKtx = "2.9.2"[m
+[31m-activityCompose = "1.10.1"[m
+[31m-composeBom = "2025.05.01"[m
+ firebase-bom = "33.16.0"[m
+ generativeai = "0.9.0"[m
+[31m-coil = "2.5.0"[m
+[32m+[m[32mgoogleServicesPlugin = "4.4.3"[m
+ gson = "2.10.1"[m
+[31m-navigation = "2.7.5"[m
+[31m-accompanist = "0.30.1"[m
+[32m+[m[32mgoogleid = "1.1.1"[m
+[32m+[m[32mjunitVersion = "1.2.1"[m
+[32m+[m[32mkotlin = "2.2.0"[m
+ kotlinx-serialization = "1.6.3"[m
+[31m-googleServicesPlugin = "4.4.3"[m
+[31m-desugar = "2.1.3"[m
+[32m+[m[32mlifecycleRuntimeKtx = "2.9.2"[m
+ lottieCompose = "6.1.0"[m
+[31m-tflite = "2.17.0"[m
+[31m-tflite-support = "0.4.3"[m
+[31m-tflite-task-vision = "0.4.3"[m
+[31m-tensorflowLiteMetadata = "0.4.3"[m
+[31m-credentials = "1.3.0"[m
+[31m-googleid = "1.1.1"[m
+[32m+[m[32mnavigation = "2.7.5"[m
+ playServicesAuth = "21.2.0"[m
+ playServicesBase = "18.3.0"[m
+ playServicesTasks = "18.1.0"[m
+[32m+[m[32mtensorflowLiteMetadata = "0.4.3"[m
+[32m+[m[32mtflite = "2.17.0"[m
+[32m+[m[32mtflite-support = "0.4.3"[m
+[32m+[m[32mtflite-task-vision = "0.4.3"[m
+ [m
+ [m
+ [libraries][m

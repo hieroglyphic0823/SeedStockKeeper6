@@ -6,3 +6,10 @@ plugins {
     alias(libs.plugins.googleServices) apply false
     alias(libs.plugins.kotlin.serialization) apply false
 }
+
+allprojects {
+    tasks.withType<JavaCompile> {
+        sourceCompatibility = "21"
+        targetCompatibility = "21"
+    }
+}

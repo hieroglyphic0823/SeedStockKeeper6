@@ -15,7 +15,6 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -25,10 +24,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.google.android.gms.common.api.ApiException
+import androidx.credentials.CredentialManager
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
-import com.google.firebase.auth.GoogleAuthProvider
 import kotlinx.coroutines.launch
 
 /**
@@ -58,21 +56,7 @@ fun AuthGate(
 
     when {
         initializing -> Splash(modifier)
-        currentUser == null -> {
-            // 開発環境では匿名認証でログイン
-            LaunchedEffect(Unit) {
-                try {
-                    auth.signInAnonymously()
-                        .addOnFailureListener { exception ->
-                            // エラーが発生した場合はログに記録
-                            println("Anonymous auth failed: ${exception.message}")
-                        }
-                } catch (e: Exception) {
-                    println("Auth error: ${e.message}")
-                }
-            }
-            Splash(modifier)
-        }
+        currentUser == null -> SignInScreen(modifier)
         else -> content(currentUser!!)
     }
 }
@@ -114,7 +98,7 @@ fun SignInScreen(modifier: Modifier = Modifier) {
                     isLoading = true
                     message = null
                     try {
-                        val credentialManager = androidx.credentials.CredentialManager.create(ctx)
+                        val credentialManager = CredentialManager.create(ctx)
 
                         val googleIdOption = com.google.android.libraries.identity.googleid.GetGoogleIdOption.Builder()
                             .setServerClientId(ctx.getString(com.example.seedstockkeeper6.R.string.default_web_client_id))

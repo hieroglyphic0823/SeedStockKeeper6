@@ -43,13 +43,13 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
         isCoreLibraryDesugaringEnabled = true
     }
 
-    kotlinOptions {
-        jvmTarget = "11"
+    kotlin {
+        jvmToolchain(21)
     }
 
     buildFeatures {
@@ -101,10 +101,12 @@ dependencies {
     implementation(libs.lottie.compose)
 
     // ML Kit / TFLite
-    implementation("com.google.mlkit:object-detection:17.0.2")
+    implementation("com.google.mlkit:object-detection:17.0.2") {
+        exclude(group = "org.tensorflow", module = "tensorflow-lite-support")
+        exclude(group = "org.tensorflow", module = "tensorflow-lite-support-api")
+    }
     implementation(libs.tflite)
     implementation(libs.tflite.api)
-    implementation(libs.tflite.support)
     implementation(libs.tflite.task.vision)
     implementation(libs.tensorflowLiteMetadata)
 
