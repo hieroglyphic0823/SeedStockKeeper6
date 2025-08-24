@@ -2,8 +2,6 @@ package com.example.seedstockkeeper6.ui.components
 
 import android.content.res.Configuration
 import android.graphics.Paint
-import android.util.Log
-import androidx.compose.animation.core.copy
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height

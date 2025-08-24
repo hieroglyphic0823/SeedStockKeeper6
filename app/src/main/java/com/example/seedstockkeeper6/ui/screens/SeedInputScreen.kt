@@ -42,6 +42,10 @@ import androidx.compose.material.icons.outlined.ContentCut
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -51,6 +55,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -78,14 +83,12 @@ import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.example.seedstockkeeper6.ui.components.AIDiffDialog
 import com.example.seedstockkeeper6.ui.components.CompanionEffectIcon
+import com.example.seedstockkeeper6.ui.components.SeedCalendarGrouped
 import com.example.seedstockkeeper6.viewmodel.SeedInputViewModel
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.ktx.storage
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-import androidx.compose.material3.*
-import androidx.compose.runtime.key
-import com.example.seedstockkeeper6.ui.components.SeedCalendarGrouped
 
 @Composable
 fun SeedInputScreen(

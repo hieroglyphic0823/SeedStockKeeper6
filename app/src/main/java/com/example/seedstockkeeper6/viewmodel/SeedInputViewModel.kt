@@ -3,41 +3,41 @@ package com.example.seedstockkeeper6.viewmodel
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Matrix
+import android.graphics.Rect
+import android.graphics.RectF
 import android.net.Uri
 import android.util.Log
 import androidx.compose.runtime.*
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.seedstockkeeper6.model.SeedPacket
 import com.example.seedstockkeeper6.data.runGeminiOcr
 import com.example.seedstockkeeper6.data.uriToBitmap
+import com.example.seedstockkeeper6.ml.CalendarDetector
+import com.example.seedstockkeeper6.model.CalendarEntry
+import com.example.seedstockkeeper6.model.SeedPacket
+import com.example.seedstockkeeper6.util.drawRectOverlay
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.ktx.storage
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
-import kotlinx.coroutines.withContext
-import java.io.ByteArrayOutputStream
-import java.io.File
-import java.net.HttpURLConnection
-import java.net.URL
-import java.util.UUID
-import org.tensorflow.lite.support.image.TensorImage
-import com.example.seedstockkeeper6.ml.CalendarDetector
-import java.io.FileOutputStream
-import android.graphics.Matrix
-import android.graphics.RectF
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.objects.ObjectDetection
 import com.google.mlkit.vision.objects.ObjectDetector
 import com.google.mlkit.vision.objects.defaults.ObjectDetectorOptions
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
+import org.tensorflow.lite.support.image.TensorImage
+import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.FileOutputStream
+import java.net.HttpURLConnection
+import java.net.URL
+import java.util.UUID
 import kotlin.math.max
 import kotlin.math.min
-import android.graphics.Rect
-import com.example.seedstockkeeper6.model.CalendarEntry
-import com.example.seedstockkeeper6.util.drawRectOverlay
-import com.google.firebase.auth.FirebaseAuth
 
 class SeedInputViewModel : ViewModel() {
 
@@ -1023,29 +1023,7 @@ class SeedInputViewModel : ViewModel() {
         val next = cur.toMutableList().apply { removeAt(index) }
         packet = packet.copy(calendar = next)
     }
-    fun updateCalendarEntryAfterHarvest(
-        index: Int,
-        sowingStart: Int? = null, sowingStartStage: String? = null,
-        sowingEnd: Int? = null, sowingEndStage: String? = null,
-        harvestStart: Int? = null, harvestStartStage: String? = null,
-        harvestEnd: Int? = null, harvestEndStage: String? = null,
-    ) {
-        val cur = packet.calendar ?: return
-        if (index !in cur.indices) return
-        val old = cur[index]
-        val newItem = old.copy(
-            sowing_start = sowingStart ?: old.sowing_start,
-            sowing_start_stage = sowingStartStage ?: old.sowing_start_stage,
-            sowing_end = sowingEnd ?: old.sowing_end,
-            sowing_end_stage = sowingEndStage ?: old.sowing_end_stage,
-            harvest_start = harvestStart ?: old.harvest_start,
-            harvest_start_stage = harvestStartStage ?: old.harvest_start_stage,
-            harvest_end = harvestEnd ?: old.harvest_end,
-            harvest_end_stage = harvestEndStage ?: old.harvest_end_stage
-        )
-        val next = cur.toMutableList().apply { set(index, newItem) }
-        packet = packet.copy(calendar = next)
-    }
+
 
     fun updateCalendarRegion(index: Int, value: String) {
         val cur = packet.calendar ?: return
@@ -1147,20 +1125,7 @@ class SeedInputViewModel : ViewModel() {
         }
     }
 
-    // 他のViewModelの関数 (例: カレンダーエントリの追加、更新など)
-    fun addCalendarEntry(newEntry: CalendarEntry) {
-        val updatedCalendarList = packet.calendar.toMutableList()
-        updatedCalendarList.add(newEntry)
-        packet = packet.copy(calendar = updatedCalendarList.toList())
-    }
 
-    fun updateCalendarEntry(index: Int, updatedEntry: CalendarEntry) {
-        if (index >= 0 && index < packet.calendar.size) {
-            val updatedCalendarList = packet.calendar.toMutableList()
-            updatedCalendarList[index] = updatedEntry
-            packet = packet.copy(calendar = updatedCalendarList.toList())
-        }
-    }
     private suspend fun ensureSeedOwnershipOrFail(seedId: String, uid: String) {
         val ref = com.google.firebase.ktx.Firebase.firestore
             .collection("seeds")

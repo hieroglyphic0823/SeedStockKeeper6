@@ -3,10 +3,7 @@ package com.example.seedstockkeeper6.data
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.graphics.ImageDecoder
 import android.net.Uri
-import android.os.Build
-import android.provider.MediaStore
 import android.util.Log
 import com.example.seedstockkeeper6.BuildConfig
 import com.google.ai.client.generativeai.GenerativeModel

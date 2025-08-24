@@ -31,6 +31,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -41,6 +42,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
@@ -59,6 +61,7 @@ import com.example.seedstockkeeper6.ui.auth.AuthGate
 import com.example.seedstockkeeper6.ui.screens.SeedInputScreen
 import com.example.seedstockkeeper6.ui.screens.SeedListScreen
 import com.example.seedstockkeeper6.ui.theme.SeedStockKeeper6Theme
+import com.example.seedstockkeeper6.ui.theme.ThemeFlavor
 import com.example.seedstockkeeper6.viewmodel.SeedInputViewModel
 import com.example.seedstockkeeper6.viewmodel.SeedListViewModel
 import com.google.firebase.FirebaseApp
@@ -72,14 +75,6 @@ import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import androidx.credentials.CredentialManager
 import androidx.credentials.ClearCredentialStateRequest
-import androidx.compose.material3.Surface
-import androidx.compose.ui.Alignment
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
-import com.example.seedstockkeeper6.ui.theme.ThemeFlavor
 
 
 class MainActivity : ComponentActivity() {
