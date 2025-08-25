@@ -29,10 +29,10 @@ fun FamilyIcon(
     cornerRadius: Dp = 10.dp, // ← 角丸。四角なら 0.dp
     rotationLabel: String? = null, // ← 右上に出す「連作年数」など（例: "3年" / "3"）
     // 配色（Material3トークン準拠）
-    containerColor: Color = MaterialTheme.colorScheme.surface,
+    containerColor: Color = MaterialTheme.colorScheme.onPrimary,
     contentColor: Color = MaterialTheme.colorScheme.onSurface,
-    badgeBgColor: Color = MaterialTheme.colorScheme.tertiary,
-    badgeTextColor: Color = MaterialTheme.colorScheme.onTertiary,
+    badgeBgColor: Color = MaterialTheme.colorScheme.primary,
+    badgeTextColor: Color = MaterialTheme.colorScheme.onPrimary,
     badgeBorderColor: Color = MaterialTheme.colorScheme.outline,
     badgeProtrusion: Dp = 8.dp                   // ← アイコン外へハミ出す量（+X, -Y）
 ) {

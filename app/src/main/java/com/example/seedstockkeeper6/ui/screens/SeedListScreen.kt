@@ -21,6 +21,7 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -76,8 +77,8 @@ fun SeedListScreen(
             val encodedSeed = URLEncoder.encode(Gson().toJson(seed), StandardCharsets.UTF_8.toString())
             Card(
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer, // surface系にするとナチュラル
-                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer, // 透明度なし
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer // 文字色の背景は無し
                 ),
                 shape = RoundedCornerShape(16.dp), // 角丸
                 elevation = CardDefaults.cardElevation(
@@ -107,9 +108,9 @@ fun SeedListScreen(
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Column(modifier = Modifier.weight(1f)) {
-                        Text("${seed.productName} (${seed.variety})", style = MaterialTheme.typography.titleMedium)
+                        Text("${seed.productName} (${seed.variety})", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Normal))
                         Spacer(modifier = Modifier.height(4.dp))
-                        Text("有効期限: ${seed.expirationYear}年 ${seed.expirationMonth}月", style = MaterialTheme.typography.bodySmall)
+                        Text("有効期限: ${seed.expirationYear}年 ${seed.expirationMonth}月", style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Light))
                     }
                     Checkbox(
                         checked = checked,

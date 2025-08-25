@@ -41,7 +41,9 @@ import androidx.compose.material.icons.filled.ZoomIn
 import androidx.compose.material.icons.outlined.ContentCut
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -50,6 +52,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -70,6 +73,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -263,7 +267,13 @@ fun SeedInputScreen(
                         }
                     },
                     enabled = viewModel.imageUris.isNotEmpty(),
-                    modifier = Modifier.weight(1f) // 必要なら横幅を取りたい時
+                    modifier = Modifier.weight(1f), // 必要なら横幅を取りたい時
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                        disabledContainerColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
+                        disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                    )
                 ) {
                     Icon(Icons.Default.AutoFixHigh, contentDescription = "OCR")
                     Spacer(Modifier.width(8.dp))
@@ -278,10 +288,16 @@ fun SeedInputScreen(
                 }
             }
             OutlinedTextField(
-                viewModel.packet.productName,
-                viewModel::onProductNameChange,
+                value = viewModel.packet.productName,
+                onValueChange = viewModel::onProductNameChange,
                 label = { Text("商品名") },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                    focusedLabelColor = MaterialTheme.colorScheme.primary,
+                    unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             )
             OutlinedTextField(
                 viewModel.packet.variety,
@@ -493,7 +509,14 @@ fun SeedInputScreen(
                 }
             }
 
-            Button(onClick = { viewModel.addCalendarEntry() }, modifier = Modifier.fillMaxWidth()) {
+            Button(
+                onClick = { viewModel.addCalendarEntry() }, 
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                )
+            ) {
                 Text("地域を追加")
             }
 
@@ -611,6 +634,16 @@ fun SeedInputScreen(
             Text("コンパニオンプランツと効果", style = MaterialTheme.typography.titleMedium)
             viewModel.packet.companionPlants.forEachIndexed { i, companion ->
                 Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer, // 透明度なし
+                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer // 文字色の背景は無し
+                    ),
+                    elevation = CardDefaults.cardElevation(
+                        defaultElevation = 1.dp,
+                        pressedElevation = 2.dp,
+                        focusedElevation = 1.dp,
+                        hoveredElevation = 1.dp
+                    ),
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 4.dp)
@@ -623,7 +656,8 @@ fun SeedInputScreen(
                             "植物: ${companion.plant} ",
                             Modifier.weight(1f),
                             maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
+                            overflow = TextOverflow.Ellipsis,
+                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Normal)
                         )
                         Spacer(modifier = Modifier.size(8.dp)) // アイコンとの間隔
                         CompanionEffectIcon(companion.effect) // ← アイコン表示
@@ -650,18 +684,24 @@ fun SeedInputScreen(
                     modifier = Modifier.weight(1f)
                 )
                 Spacer(Modifier.width(8.dp))
-                Button(onClick = {
-                    if (cpPlant.isNotBlank() || cpEffect.isNotBlank()) {
-                        viewModel.addCompanionPlant(
-                            com.example.seedstockkeeper6.model.CompanionPlant(
-                                cpPlant,
-                                cpEffect
+                Button(
+                    onClick = {
+                        if (cpPlant.isNotBlank() || cpEffect.isNotBlank()) {
+                            viewModel.addCompanionPlant(
+                                com.example.seedstockkeeper6.model.CompanionPlant(
+                                    cpPlant,
+                                    cpEffect
+                                )
                             )
-                        )
-                        cpPlant = ""
-                        cpEffect = ""
-                    }
-                }) {
+                            cpPlant = ""
+                            cpEffect = ""
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
+                    )
+                ) {
                     Text("追加")
                 }
             }

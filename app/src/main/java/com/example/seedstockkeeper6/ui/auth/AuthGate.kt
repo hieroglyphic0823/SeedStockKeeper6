@@ -9,9 +9,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -101,7 +103,7 @@ fun SignInScreen(modifier: Modifier = Modifier) {
                         val credentialManager = CredentialManager.create(ctx)
 
                         val googleIdOption = com.google.android.libraries.identity.googleid.GetGoogleIdOption.Builder()
-                            .setServerClientId(ctx.getString(com.example.seedstockkeeper6.R.string.default_web_client_id))
+                            .setServerClientId("639347804790-m1llndci906llu8inij5gr6s0g0iv6lj.apps.googleusercontent.com")
                             .setFilterByAuthorizedAccounts(false)  // 端末に保存されてるGoogleアカウントのみ絞るなら true
                             .setAutoSelectEnabled(false)           // 単一候補なら自動選択したい場合は true
                             .build()
@@ -156,7 +158,13 @@ fun SignInScreen(modifier: Modifier = Modifier) {
                         message = e.localizedMessage ?: "予期せぬエラーが発生しました"
                     }
                 }
-            }
+            },
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                disabledContainerColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
+                disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+            )
         ) { Text("Googleでサインイン") }
 
         Spacer(Modifier.height(12.dp))
