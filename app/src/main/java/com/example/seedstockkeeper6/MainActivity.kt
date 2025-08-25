@@ -150,7 +150,7 @@ class MainActivity : ComponentActivity() {
             val navController = rememberNavController()
 
             SeedStockKeeper6Theme(
-                flavor = ThemeFlavor.Onion , //Vitamin, Soil, Herb, Ocean, Plum, Sakura, WB,Onion  ← 試したい配色を指定
+                flavor = ThemeFlavor.OnionLightColors , //Vitamin, Soil, Herb, Ocean, Plum, Sakura, WB,Onion,OnionLightColors  ← 試したい配色を指定
                 darkTheme = isSystemInDarkTheme(),
                 dynamicColor = false          // パレットを見たい時は false 推奨
             ) {

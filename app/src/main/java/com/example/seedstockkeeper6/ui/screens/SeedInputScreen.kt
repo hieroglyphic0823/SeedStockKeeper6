@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
@@ -113,7 +114,7 @@ fun SeedInputScreen(
         Column(
             modifier = Modifier
                 .verticalScroll(scroll)
-                .padding(horizontal = 2.dp, vertical = 16.dp)
+                .padding(16.dp)
                 .fillMaxWidth()
         ) {
             // 画面幅から3枚のサイズを計算（縦横どちらでも3枚）
@@ -251,13 +252,25 @@ fun SeedInputScreen(
                 }
             }
 
-            Row(
+            // 操作ボタンセクション
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                ),
+                shape = RoundedCornerShape(16.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
+                    .padding(vertical = 8.dp)
             ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                 Button(
                     onClick = {
                         cs.launch {
@@ -267,7 +280,7 @@ fun SeedInputScreen(
                         }
                     },
                     enabled = viewModel.imageUris.isNotEmpty(),
-                    modifier = Modifier.weight(1f), // 必要なら横幅を取りたい時
+                    modifier = Modifier.wrapContentWidth(), // 横幅を詰める
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.primary,
                         contentColor = MaterialTheme.colorScheme.onPrimary,
@@ -287,23 +300,52 @@ fun SeedInputScreen(
                     Icon(Icons.Outlined.ContentCut, contentDescription = "外側を切り抜く")
                 }
             }
-            OutlinedTextField(
+            }
+
+            // 基本情報セクション
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                ),
+                shape = RoundedCornerShape(16.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    Text(
+                        "基本情報",
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.padding(bottom = 12.dp)
+                    )
+                    
+                    OutlinedTextField(
                 value = viewModel.packet.productName,
                 onValueChange = viewModel::onProductNameChange,
                 label = { Text("商品名") },
                 modifier = Modifier.fillMaxWidth(),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = MaterialTheme.colorScheme.primary,
-                    unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.primary,
                     focusedLabelColor = MaterialTheme.colorScheme.primary,
-                    unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
+                    unfocusedLabelColor = MaterialTheme.colorScheme.primary
                 )
             )
             OutlinedTextField(
                 viewModel.packet.variety,
                 viewModel::onVarietyChange,
                 label = { Text("品種") },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.primary,
+                    focusedLabelColor = MaterialTheme.colorScheme.primary,
+                    unfocusedLabelColor = MaterialTheme.colorScheme.primary
+                )
             )
             FamilySelector(
                 value = viewModel.packet.family,
@@ -317,25 +359,61 @@ fun SeedInputScreen(
                     value = viewModel.packet.expirationYear.toString(),
                     onValueChange = viewModel::onExpirationYearChange,
                     label = { Text("有効期限(年)") },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.primary,
+                        focusedLabelColor = MaterialTheme.colorScheme.primary,
+                        unfocusedLabelColor = MaterialTheme.colorScheme.primary
+                    )
                 )
                 OutlinedTextField(
                     value = viewModel.packet.expirationMonth.toString(),
                     onValueChange = viewModel::onExpirationMonthChange,
                     label = { Text("有効期限(月)") },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.primary,
+                        focusedLabelColor = MaterialTheme.colorScheme.primary,
+                        unfocusedLabelColor = MaterialTheme.colorScheme.primary
+                    )
                 )
+                }
             }
-            // ---- 地域別 まきどき / 収穫カレンダー ----
-            SeedCalendarGrouped(
+            }
+
+            // カレンダーセクション
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                ),
+                shape = RoundedCornerShape(16.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    Text(
+                        "栽培カレンダー",
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.padding(bottom = 12.dp)
+                    )
+                    
+                    // ---- 地域別 まきどき / 収穫カレンダー ----
+                    SeedCalendarGrouped(
                 entries = viewModel.packet.calendar ?: emptyList(),
                 packetExpirationYear = viewModel.packet.expirationYear,    // ★ 追加
                 packetExpirationMonth = viewModel.packet.expirationMonth,  // ★ 追加
                 modifier = Modifier.fillMaxWidth(),
                 heightDp = 140
-            )
+                    )
 
-            Text("栽培カレンダー", style = MaterialTheme.typography.titleMedium)
+                    Text("栽培カレンダー詳細", style = MaterialTheme.typography.titleSmall)
 
             viewModel.packet.calendar.forEachIndexed { index, entry ->
                 key(entry.id) {
@@ -357,12 +435,18 @@ fun SeedInputScreen(
                                     style = MaterialTheme.typography.bodyLarge,
                                     modifier = Modifier.align(Alignment.CenterVertically) // 縦中央揃え
                                 )
-                                OutlinedTextField(
-                                    value = entry.region ?: "",
-                                    onValueChange = { viewModel.updateCalendarRegion(index, it) },
-                                    label = { Text("地域名") },
-                                    modifier = Modifier.weight(1f) // この小さいRowの中で残りのスペースを占める
-                                )
+                                                                 OutlinedTextField(
+                                     value = entry.region ?: "",
+                                     onValueChange = { viewModel.updateCalendarRegion(index, it) },
+                                     label = { Text("地域名") },
+                                     modifier = Modifier.weight(1f), // この小さいRowの中で残りのスペースを占める
+                                     colors = OutlinedTextFieldDefaults.colors(
+                                         focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                         unfocusedBorderColor = MaterialTheme.colorScheme.primary,
+                                         focusedLabelColor = MaterialTheme.colorScheme.primary,
+                                         unfocusedLabelColor = MaterialTheme.colorScheme.primary
+                                     )
+                                 )
                             }
 
                             // 右側: 削除ボタン
@@ -387,120 +471,128 @@ fun SeedInputScreen(
                         Text("播種期間", style = MaterialTheme.typography.titleMedium) // 少し大きなフォントに
                         Spacer(modifier = Modifier.height(8.dp))
 
-                        // 1行目: 播種開始月 と 播種開始旬 (2項目)
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            OutlinedTextField(
-                                value = entry.sowing_start?.toString() ?: "",
-                                onValueChange = {
-                                    viewModel.updateCalendarSowingStart(
-                                        index,
-                                        it.toIntOrNull() ?: 0
-                                    )
-                                },
-                                label = { Text("開始月") },
-                                modifier = Modifier.weight(1f)
-                            )
-                            StageSelector(
-                                label = "開始旬",
-                                value = entry.sowing_start_stage ?: "",
-                                onValueChange = { newStage ->
-                                    viewModel.updateCalendarSowingStartStage(index, newStage)
-                                },
-                                modifier = Modifier.weight(1f)
-                            )
-                        }
-                        Spacer(modifier = Modifier.height(8.dp)) // 項目ペアの間のスペース
-
-                        // 2行目: 播種終了月 と 播種終了旬 (2項目)
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            OutlinedTextField(
-                                value = entry.sowing_end?.toString() ?: "",
-                                onValueChange = {
-                                    viewModel.updateCalendarSowingEnd(
-                                        index,
-                                        it.toIntOrNull() ?: 0
-                                    )
-                                },
-                                label = { Text("終了月") },
-                                modifier = Modifier.weight(1f)
-                            )
-                            StageSelector(
-                                label = "終了旬",
-                                value = entry.sowing_end_stage ?: "",
-                                onValueChange = { newStage ->
-                                    viewModel.updateCalendarSowingEndStage(index, newStage)
-                                },
-                                modifier = Modifier.weight(1f)
-                            )
-                        }
+                                                 // 1行目: 播種開始月、開始旬、終了月、終了旬 (4項目)
+                         Row(
+                             modifier = Modifier.fillMaxWidth(),
+                             horizontalArrangement = Arrangement.spacedBy(4.dp),
+                             verticalAlignment = Alignment.CenterVertically
+                         ) {
+                                                                                                                       OutlinedTextField(
+                                   value = entry.sowing_start?.toString() ?: "",
+                                   onValueChange = {
+                                       viewModel.updateCalendarSowingStart(
+                                           index,
+                                           it.toIntOrNull() ?: 0
+                                       )
+                                   },
+                                   label = { Text("開始月") },
+                                   modifier = Modifier.width(70.dp),
+                                   colors = OutlinedTextFieldDefaults.colors(
+                                       focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                       unfocusedBorderColor = MaterialTheme.colorScheme.primary,
+                                       focusedLabelColor = MaterialTheme.colorScheme.primary,
+                                       unfocusedLabelColor = MaterialTheme.colorScheme.primary
+                                   )
+                               )
+                                                           StageSelector(
+                                  label = "開始旬",
+                                  value = entry.sowing_start_stage ?: "",
+                                  onValueChange = { newStage ->
+                                      viewModel.updateCalendarSowingStartStage(index, newStage)
+                                  },
+                                  modifier = Modifier.width(70.dp)
+                              )
+                              Text("～", style = MaterialTheme.typography.bodyLarge)
+                                                             OutlinedTextField(
+                                   value = entry.sowing_end?.toString() ?: "",
+                                   onValueChange = {
+                                       viewModel.updateCalendarSowingEnd(
+                                           index,
+                                           it.toIntOrNull() ?: 0
+                                       )
+                                   },
+                                   label = { Text("終了月") },
+                                   modifier = Modifier.width(70.dp),
+                                   colors = OutlinedTextFieldDefaults.colors(
+                                       focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                       unfocusedBorderColor = MaterialTheme.colorScheme.primary,
+                                       focusedLabelColor = MaterialTheme.colorScheme.primary,
+                                       unfocusedLabelColor = MaterialTheme.colorScheme.primary
+                                   )
+                               )
+                             StageSelector(
+                                 label = "終了旬",
+                                 value = entry.sowing_end_stage ?: "",
+                                 onValueChange = { newStage ->
+                                     viewModel.updateCalendarSowingEndStage(index, newStage)
+                                 },
+                                 modifier = Modifier.width(70.dp)
+                             )
+                         }
                         Spacer(modifier = Modifier.height(16.dp))
 
                         // --- 収穫期間 ---
                         Text("収穫期間", style = MaterialTheme.typography.titleMedium)
                         Spacer(modifier = Modifier.height(8.dp))
 
-                        // 1行目: 収穫開始月 と 収穫開始旬 (2項目)
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            OutlinedTextField(
-                                value = entry.harvest_start?.toString() ?: "",
-                                onValueChange = {
-                                    viewModel.updateCalendarHarvestStart(
-                                        index,
-                                        it.toIntOrNull() ?: 0
-                                    )
-                                },
-                                label = { Text("開始月") },
-                                modifier = Modifier.weight(1f)
-                            )
-                            StageSelector(
-                                label = "開始旬",
-                                value = entry.harvest_start_stage ?: "",
-                                onValueChange = { newStage ->
-                                    viewModel.updateCalendarHarvestStartStage(index, newStage)
-                                },
-                                modifier = Modifier.weight(1f)
-                            )
-                        }
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        // 2行目: 収穫終了月 と 収穫終了旬 (2項目)
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            OutlinedTextField(
-                                value = entry.harvest_end?.toString() ?: "",
-                                onValueChange = {
-                                    viewModel.updateCalendarHarvestEnd(
-                                        index,
-                                        it.toIntOrNull() ?: 0
-                                    )
-                                },
-                                label = { Text("終了月") },
-                                modifier = Modifier.weight(1f)
-                            )
-                            StageSelector(
-                                label = "終了旬",
-                                value = entry.harvest_end_stage ?: "",
-                                onValueChange = { newStage ->
-                                    viewModel.updateCalendarHarvestEndStage(index, newStage)
-                                },
-                                modifier = Modifier.weight(1f)
-                            )
-                        }
+                                                 // 1行目: 収穫開始月、開始旬、終了月、終了旬 (4項目)
+                         Row(
+                             modifier = Modifier.fillMaxWidth(),
+                             horizontalArrangement = Arrangement.spacedBy(4.dp),
+                             verticalAlignment = Alignment.CenterVertically
+                         ) {
+                                                                                                                       OutlinedTextField(
+                                   value = entry.harvest_start?.toString() ?: "",
+                                   onValueChange = {
+                                       viewModel.updateCalendarHarvestStart(
+                                           index,
+                                           it.toIntOrNull() ?: 0
+                                       )
+                                   },
+                                   label = { Text("開始月") },
+                                   modifier = Modifier.width(70.dp),
+                                   colors = OutlinedTextFieldDefaults.colors(
+                                       focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                       unfocusedBorderColor = MaterialTheme.colorScheme.primary,
+                                       focusedLabelColor = MaterialTheme.colorScheme.primary,
+                                       unfocusedLabelColor = MaterialTheme.colorScheme.primary
+                                   )
+                               )
+                                                           StageSelector(
+                                  label = "開始旬",
+                                  value = entry.harvest_start_stage ?: "",
+                                  onValueChange = { newStage ->
+                                      viewModel.updateCalendarHarvestStartStage(index, newStage)
+                                  },
+                                  modifier = Modifier.width(70.dp)
+                              )
+                              Text("～", style = MaterialTheme.typography.bodyLarge)
+                                                             OutlinedTextField(
+                                   value = entry.harvest_end?.toString() ?: "",
+                                   onValueChange = {
+                                       viewModel.updateCalendarHarvestEnd(
+                                           index,
+                                           it.toIntOrNull() ?: 0
+                                       )
+                                   },
+                                   label = { Text("終了月") },
+                                   modifier = Modifier.width(70.dp),
+                                   colors = OutlinedTextFieldDefaults.colors(
+                                       focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                       unfocusedBorderColor = MaterialTheme.colorScheme.primary,
+                                       focusedLabelColor = MaterialTheme.colorScheme.primary,
+                                       unfocusedLabelColor = MaterialTheme.colorScheme.primary
+                                   )
+                               )
+                             StageSelector(
+                                 label = "終了旬",
+                                 value = entry.harvest_end_stage ?: "",
+                                 onValueChange = { newStage ->
+                                     viewModel.updateCalendarHarvestEndStage(index, newStage)
+                                 },
+                                 modifier = Modifier.width(70.dp)
+                             )
+                         }
                         // 他にもカレンダーエントリ内の項目があれば同様に2項目ずつRowで区切る
                     }
                     Spacer(modifier = Modifier.height(24.dp)) // 各カレンダーエントリ間のスペースをさらに広めに
@@ -520,113 +612,234 @@ fun SeedInputScreen(
                 Text("地域を追加")
             }
 
-            OutlinedTextField(
-                viewModel.packet.productNumber,
-                viewModel::onProductNumberChange,
-                label = { Text("商品番号") },
-                modifier = Modifier.fillMaxWidth()
-            )
-            OutlinedTextField(
-                viewModel.packet.company,
-                viewModel::onCompanyChange,
-                label = { Text("会社") },
-                modifier = Modifier.fillMaxWidth()
-            )
-            OutlinedTextField(
-                viewModel.packet.originCountry,
-                viewModel::onOriginCountryChange,
-                label = { Text("原産国") },
-                modifier = Modifier.fillMaxWidth()
-            )
+                         OutlinedTextField(
+                 viewModel.packet.productNumber,
+                 viewModel::onProductNumberChange,
+                 label = { Text("商品番号") },
+                 modifier = Modifier.fillMaxWidth(),
+                 colors = OutlinedTextFieldDefaults.colors(
+                     focusedBorderColor = MaterialTheme.colorScheme.primary,
+                     unfocusedBorderColor = MaterialTheme.colorScheme.primary,
+                     focusedLabelColor = MaterialTheme.colorScheme.primary,
+                     unfocusedLabelColor = MaterialTheme.colorScheme.primary
+                 )
+             )
+                         OutlinedTextField(
+                 viewModel.packet.company,
+                 viewModel::onCompanyChange,
+                 label = { Text("会社") },
+                 modifier = Modifier.fillMaxWidth(),
+                 colors = OutlinedTextFieldDefaults.colors(
+                     focusedBorderColor = MaterialTheme.colorScheme.primary,
+                     unfocusedBorderColor = MaterialTheme.colorScheme.primary,
+                     focusedLabelColor = MaterialTheme.colorScheme.primary,
+                     unfocusedLabelColor = MaterialTheme.colorScheme.primary
+                 )
+             )
+                         OutlinedTextField(
+                 viewModel.packet.originCountry,
+                 viewModel::onOriginCountryChange,
+                 label = { Text("原産国") },
+                 modifier = Modifier.fillMaxWidth(),
+                 colors = OutlinedTextFieldDefaults.colors(
+                     focusedBorderColor = MaterialTheme.colorScheme.primary,
+                     unfocusedBorderColor = MaterialTheme.colorScheme.primary,
+                     focusedLabelColor = MaterialTheme.colorScheme.primary,
+                     unfocusedLabelColor = MaterialTheme.colorScheme.primary
+                 )
+             )
 
-            OutlinedTextField(
-                viewModel.packet.contents,
-                viewModel::onContentsChange,
-                label = { Text("内容量") },
-                modifier = Modifier.fillMaxWidth()
-            )
-            OutlinedTextField(
-                viewModel.packet.germinationRate,
-                viewModel::onGerminationRateChange,
-                label = { Text("発芽率") },
-                modifier = Modifier.fillMaxWidth()
-            )
-            OutlinedTextField(
-                viewModel.packet.seedTreatment,
-                viewModel::onSeedTreatmentChange,
-                label = { Text("種子処理") },
-                modifier = Modifier.fillMaxWidth()
-            )
+                         OutlinedTextField(
+                 viewModel.packet.contents,
+                 viewModel::onContentsChange,
+                 label = { Text("内容量") },
+                 modifier = Modifier.fillMaxWidth(),
+                 colors = OutlinedTextFieldDefaults.colors(
+                     focusedBorderColor = MaterialTheme.colorScheme.primary,
+                     unfocusedBorderColor = MaterialTheme.colorScheme.primary,
+                     focusedLabelColor = MaterialTheme.colorScheme.primary,
+                     unfocusedLabelColor = MaterialTheme.colorScheme.primary
+                 )
+             )
+                         OutlinedTextField(
+                 viewModel.packet.germinationRate,
+                 viewModel::onGerminationRateChange,
+                 label = { Text("発芽率") },
+                 modifier = Modifier.fillMaxWidth(),
+                 colors = OutlinedTextFieldDefaults.colors(
+                     focusedBorderColor = MaterialTheme.colorScheme.primary,
+                     unfocusedBorderColor = MaterialTheme.colorScheme.primary,
+                     focusedLabelColor = MaterialTheme.colorScheme.primary,
+                     unfocusedLabelColor = MaterialTheme.colorScheme.primary
+                 )
+             )
+                         OutlinedTextField(
+                 viewModel.packet.seedTreatment,
+                 viewModel::onSeedTreatmentChange,
+                 label = { Text("種子処理") },
+                 modifier = Modifier.fillMaxWidth(),
+                 colors = OutlinedTextFieldDefaults.colors(
+                     focusedBorderColor = MaterialTheme.colorScheme.primary,
+                     unfocusedBorderColor = MaterialTheme.colorScheme.primary,
+                     focusedLabelColor = MaterialTheme.colorScheme.primary,
+                     unfocusedLabelColor = MaterialTheme.colorScheme.primary
+                 )
+             )
 
-            OutlinedTextField(
-                viewModel.packet.cultivation.spacing_cm_row_min.toString(),
-                viewModel::onSpacingRowMinChange,
-                label = { Text("条間最小 (cm)") },
-                modifier = Modifier.fillMaxWidth()
-            )
-            OutlinedTextField(
-                viewModel.packet.cultivation.spacing_cm_row_max.toString(),
-                viewModel::onSpacingRowMaxChange,
-                label = { Text("条間最大 (cm)") },
-                modifier = Modifier.fillMaxWidth()
-            )
-            OutlinedTextField(
-                viewModel.packet.cultivation.spacing_cm_plant_min.toString(),
-                viewModel::onSpacingPlantMinChange,
-                label = { Text("株間最小 (cm)") },
-                modifier = Modifier.fillMaxWidth()
-            )
-            OutlinedTextField(
-                viewModel.packet.cultivation.spacing_cm_plant_max.toString(),
-                viewModel::onSpacingPlantMaxChange,
-                label = { Text("株間最大 (cm)") },
-                modifier = Modifier.fillMaxWidth()
-            )
+                                                   // 条間
+                          Row(
+                              modifier = Modifier.fillMaxWidth(),
+                              horizontalArrangement = Arrangement.spacedBy(4.dp),
+                              verticalAlignment = Alignment.CenterVertically
+                          ) {
+                              OutlinedTextField(
+                                  value = viewModel.packet.cultivation.spacing_cm_row_min.toString(),
+                                  onValueChange = viewModel::onSpacingRowMinChange,
+                                  label = { Text("条間最小") },
+                                  modifier = Modifier.width(80.dp),
+                                  colors = OutlinedTextFieldDefaults.colors(
+                                      focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                      unfocusedBorderColor = MaterialTheme.colorScheme.primary,
+                                      focusedLabelColor = MaterialTheme.colorScheme.primary,
+                                      unfocusedLabelColor = MaterialTheme.colorScheme.primary
+                                  )
+                              )
+                              Text("～", style = MaterialTheme.typography.bodyLarge)
+                              OutlinedTextField(
+                                  value = viewModel.packet.cultivation.spacing_cm_row_max.toString(),
+                                  onValueChange = viewModel::onSpacingRowMaxChange,
+                                  label = { Text("条間最大") },
+                                  modifier = Modifier.width(80.dp),
+                                  colors = OutlinedTextFieldDefaults.colors(
+                                      focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                      unfocusedBorderColor = MaterialTheme.colorScheme.primary,
+                                      focusedLabelColor = MaterialTheme.colorScheme.primary,
+                                      unfocusedLabelColor = MaterialTheme.colorScheme.primary
+                                  )
+                              )
+                              Text("(cm)", style = MaterialTheme.typography.bodyMedium)
+                          }
+                          
+                          // 株間
+                          Row(
+                              modifier = Modifier.fillMaxWidth(),
+                              horizontalArrangement = Arrangement.spacedBy(4.dp),
+                              verticalAlignment = Alignment.CenterVertically
+                          ) {
+                              OutlinedTextField(
+                                  value = viewModel.packet.cultivation.spacing_cm_plant_min.toString(),
+                                  onValueChange = viewModel::onSpacingPlantMinChange,
+                                  label = { Text("株間最小") },
+                                  modifier = Modifier.width(80.dp),
+                                  colors = OutlinedTextFieldDefaults.colors(
+                                      focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                      unfocusedBorderColor = MaterialTheme.colorScheme.primary,
+                                      focusedLabelColor = MaterialTheme.colorScheme.primary,
+                                      unfocusedLabelColor = MaterialTheme.colorScheme.primary
+                                  )
+                              )
+                              Text("～", style = MaterialTheme.typography.bodyLarge)
+                              OutlinedTextField(
+                                  value = viewModel.packet.cultivation.spacing_cm_plant_max.toString(),
+                                  onValueChange = viewModel::onSpacingPlantMaxChange,
+                                  label = { Text("株間最大") },
+                                  modifier = Modifier.width(80.dp),
+                                  colors = OutlinedTextFieldDefaults.colors(
+                                      focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                      unfocusedBorderColor = MaterialTheme.colorScheme.primary,
+                                      focusedLabelColor = MaterialTheme.colorScheme.primary,
+                                      unfocusedLabelColor = MaterialTheme.colorScheme.primary
+                                  )
+                              )
+                              Text("(cm)", style = MaterialTheme.typography.bodyMedium)
+                          }
 
-            OutlinedTextField(
-                viewModel.packet.cultivation.germinationTemp_c,
-                viewModel::onGermTempChange,
-                label = { Text("発芽温度") },
-                modifier = Modifier.fillMaxWidth()
-            )
-            OutlinedTextField(
-                viewModel.packet.cultivation.growingTemp_c,
-                viewModel::onGrowTempChange,
-                label = { Text("生育温度") },
-                modifier = Modifier.fillMaxWidth()
-            )
+                         OutlinedTextField(
+                 viewModel.packet.cultivation.germinationTemp_c,
+                 viewModel::onGermTempChange,
+                 label = { Text("発芽温度") },
+                 modifier = Modifier.fillMaxWidth(),
+                 colors = OutlinedTextFieldDefaults.colors(
+                     focusedBorderColor = MaterialTheme.colorScheme.primary,
+                     unfocusedBorderColor = MaterialTheme.colorScheme.primary,
+                     focusedLabelColor = MaterialTheme.colorScheme.primary,
+                     unfocusedLabelColor = MaterialTheme.colorScheme.primary
+                 )
+             )
+                         OutlinedTextField(
+                 viewModel.packet.cultivation.growingTemp_c,
+                 viewModel::onGrowTempChange,
+                 label = { Text("生育温度") },
+                 modifier = Modifier.fillMaxWidth(),
+                 colors = OutlinedTextFieldDefaults.colors(
+                     focusedBorderColor = MaterialTheme.colorScheme.primary,
+                     unfocusedBorderColor = MaterialTheme.colorScheme.primary,
+                     focusedLabelColor = MaterialTheme.colorScheme.primary,
+                     unfocusedLabelColor = MaterialTheme.colorScheme.primary
+                 )
+             )
 
-            OutlinedTextField(
-                viewModel.packet.cultivation.soilPrep_per_sqm.compost_kg.toString(),
-                viewModel::onCompostChange,
-                label = { Text("堆肥 (kg/㎡)") },
-                modifier = Modifier.fillMaxWidth()
-            )
-            OutlinedTextField(
-                viewModel.packet.cultivation.soilPrep_per_sqm.dolomite_lime_g.toString(),
-                viewModel::onLimeChange,
-                label = { Text("苦土石灰 (g/㎡)") },
-                modifier = Modifier.fillMaxWidth()
-            )
-            OutlinedTextField(
-                viewModel.packet.cultivation.soilPrep_per_sqm.chemical_fertilizer_g.toString(),
-                viewModel::onFertilizerChange,
-                label = { Text("化成肥料 (g/㎡)") },
-                modifier = Modifier.fillMaxWidth()
-            )
+                         OutlinedTextField(
+                 viewModel.packet.cultivation.soilPrep_per_sqm.compost_kg.toString(),
+                 viewModel::onCompostChange,
+                 label = { Text("堆肥 (kg/㎡)") },
+                 modifier = Modifier.fillMaxWidth(),
+                 colors = OutlinedTextFieldDefaults.colors(
+                     focusedBorderColor = MaterialTheme.colorScheme.primary,
+                     unfocusedBorderColor = MaterialTheme.colorScheme.primary,
+                     focusedLabelColor = MaterialTheme.colorScheme.primary,
+                     unfocusedLabelColor = MaterialTheme.colorScheme.primary
+                 )
+             )
+                         OutlinedTextField(
+                 viewModel.packet.cultivation.soilPrep_per_sqm.dolomite_lime_g.toString(),
+                 viewModel::onLimeChange,
+                 label = { Text("苦土石灰 (g/㎡)") },
+                 modifier = Modifier.fillMaxWidth(),
+                 colors = OutlinedTextFieldDefaults.colors(
+                     focusedBorderColor = MaterialTheme.colorScheme.primary,
+                     unfocusedBorderColor = MaterialTheme.colorScheme.primary,
+                     focusedLabelColor = MaterialTheme.colorScheme.primary,
+                     unfocusedLabelColor = MaterialTheme.colorScheme.primary
+                 )
+             )
+                         OutlinedTextField(
+                 viewModel.packet.cultivation.soilPrep_per_sqm.chemical_fertilizer_g.toString(),
+                 viewModel::onFertilizerChange,
+                 label = { Text("化成肥料 (g/㎡)") },
+                 modifier = Modifier.fillMaxWidth(),
+                 colors = OutlinedTextFieldDefaults.colors(
+                     focusedBorderColor = MaterialTheme.colorScheme.primary,
+                     unfocusedBorderColor = MaterialTheme.colorScheme.primary,
+                     focusedLabelColor = MaterialTheme.colorScheme.primary,
+                     unfocusedLabelColor = MaterialTheme.colorScheme.primary
+                 )
+             )
 
-            OutlinedTextField(
-                viewModel.packet.cultivation.notes,
-                viewModel::onNotesChange,
-                label = { Text("栽培メモ") },
-                modifier = Modifier.fillMaxWidth()
-            )
-            OutlinedTextField(
-                viewModel.packet.cultivation.harvesting,
-                viewModel::onHarvestingChange,
-                label = { Text("収穫") },
-                modifier = Modifier.fillMaxWidth()
-            )
+                         OutlinedTextField(
+                 viewModel.packet.cultivation.notes,
+                 viewModel::onNotesChange,
+                 label = { Text("栽培メモ") },
+                 modifier = Modifier.fillMaxWidth(),
+                 colors = OutlinedTextFieldDefaults.colors(
+                     focusedBorderColor = MaterialTheme.colorScheme.primary,
+                     unfocusedBorderColor = MaterialTheme.colorScheme.primary,
+                     focusedLabelColor = MaterialTheme.colorScheme.primary,
+                     unfocusedLabelColor = MaterialTheme.colorScheme.primary
+                 )
+             )
+                         OutlinedTextField(
+                 viewModel.packet.cultivation.harvesting,
+                 viewModel::onHarvestingChange,
+                 label = { Text("収穫") },
+                 modifier = Modifier.fillMaxWidth(),
+                 colors = OutlinedTextFieldDefaults.colors(
+                     focusedBorderColor = MaterialTheme.colorScheme.primary,
+                     unfocusedBorderColor = MaterialTheme.colorScheme.primary,
+                     focusedLabelColor = MaterialTheme.colorScheme.primary,
+                     unfocusedLabelColor = MaterialTheme.colorScheme.primary
+                 )
+             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -672,19 +885,31 @@ fun SeedInputScreen(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                OutlinedTextField(
-                    cpPlant,
-                    { cpPlant = it },
-                    label = { Text("植物名") },
-                    modifier = Modifier.weight(1f)
-                )
+                                 OutlinedTextField(
+                     cpPlant,
+                     { cpPlant = it },
+                     label = { Text("植物名") },
+                     modifier = Modifier.weight(1f),
+                     colors = OutlinedTextFieldDefaults.colors(
+                         focusedBorderColor = MaterialTheme.colorScheme.primary,
+                         unfocusedBorderColor = MaterialTheme.colorScheme.primary,
+                         focusedLabelColor = MaterialTheme.colorScheme.primary,
+                         unfocusedLabelColor = MaterialTheme.colorScheme.primary
+                     )
+                 )
                 Spacer(Modifier.width(8.dp))
-                OutlinedTextField(
-                    cpEffect,
-                    { cpEffect = it },
-                    label = { Text("効果") },
-                    modifier = Modifier.weight(1f)
-                )
+                                 OutlinedTextField(
+                     cpEffect,
+                     { cpEffect = it },
+                     label = { Text("効果") },
+                     modifier = Modifier.weight(1f),
+                     colors = OutlinedTextFieldDefaults.colors(
+                         focusedBorderColor = MaterialTheme.colorScheme.primary,
+                         unfocusedBorderColor = MaterialTheme.colorScheme.primary,
+                         focusedLabelColor = MaterialTheme.colorScheme.primary,
+                         unfocusedLabelColor = MaterialTheme.colorScheme.primary
+                     )
+                 )
                 Spacer(Modifier.width(8.dp))
                 Button(
                     onClick = {
@@ -706,10 +931,36 @@ fun SeedInputScreen(
                 ) {
                     Text("追加")
                 }
+                }
             }
-            // --- ここまでコンパニオンプランツ部 ---
+            }
 
+            // コンパニオンプランツセクション
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                ),
+                shape = RoundedCornerShape(16.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    Text(
+                        "コンパニオンプランツと効果",
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.padding(bottom = 12.dp)
+                    )
+                    
+                    // --- ここまでコンパニオンプランツ部 ---
+                }
+            }
         }
+        
         if (viewModel.showCropConfirmDialog) {
             CropConfirmDialog(viewModel = viewModel)
         }
@@ -842,7 +1093,13 @@ fun StageSelector(
             readOnly = true,
             label = { Text(label) },
             modifier = modifier
-                .menuAnchor()
+                .menuAnchor(),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                unfocusedBorderColor = MaterialTheme.colorScheme.primary,
+                focusedLabelColor = MaterialTheme.colorScheme.primary,
+                unfocusedLabelColor = MaterialTheme.colorScheme.primary
+            )
         )
         ExposedDropdownMenu(
             expanded = expanded,
@@ -911,7 +1168,13 @@ fun FamilySelector(
             label = { Text(label) },
             modifier = modifier
                 .menuAnchor()
-                .fillMaxWidth()
+                .fillMaxWidth(),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                unfocusedBorderColor = MaterialTheme.colorScheme.primary,
+                focusedLabelColor = MaterialTheme.colorScheme.primary,
+                unfocusedLabelColor = MaterialTheme.colorScheme.primary
+            )
         )
         ExposedDropdownMenu(
             expanded = expanded,

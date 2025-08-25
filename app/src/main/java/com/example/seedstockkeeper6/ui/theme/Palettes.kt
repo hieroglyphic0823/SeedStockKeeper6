@@ -18,7 +18,7 @@ data class Palette(
     val onSurface: Color
 )
 
-enum class ThemeFlavor { Vitamin, Soil, Herb, Ocean, Plum, Sakura, WB, Onion }
+enum class ThemeFlavor { Vitamin, Soil, Herb, Ocean, Plum, Sakura, WB, Onion, OnionLightColors }
 
 // --- 8パターン ---
 val Vitamin = Palette(
@@ -133,16 +133,72 @@ private val Palettes = mapOf(
 // Palette → Material3 ColorScheme へ
 @Composable
 fun flavorColorScheme(flavor: ThemeFlavor, dark: Boolean): ColorScheme {
-    val p = Palettes.getValue(flavor)
-    val base = if (!dark) lightColorScheme() else darkColorScheme()
-    return base.copy(
-        primary = p.primary, onPrimary = p.onPrimary,
-        primaryContainer = p.primaryContainer, onPrimaryContainer = p.onPrimaryContainer,
-        secondary = p.secondary, onSecondary = p.onSecondary,
-        secondaryContainer = p.secondaryContainer, onSecondaryContainer = p.onSecondaryContainer,
-        tertiary = p.tertiary, onTertiary = p.onTertiary,
-        background = p.background, surface = p.surface, surfaceVariant = p.surfaceVariant,
-        error = p.error, outline = p.outline,
-        onSurface = p.onSurface
-    )
+    return when (flavor) {
+        ThemeFlavor.Onion -> {
+            if (!dark) {
+                lightColorScheme(
+                    primary = Color(0xFFA1887F),       // 外皮ブラウン
+                    onPrimary = Color(0xFFFFFFFF),     // 白文字
+                    primaryContainer = Color(0xFFD7CCC8), // 外皮ベージュ
+                    onPrimaryContainer = Color(0xFF3E2723),
+
+                    secondary = Color(0xFFA5D6A7),     // 芽のグリーン
+                    onSecondary = Color(0xFF1B5E20),
+                    secondaryContainer = Color(0xFFC8E6C9),
+                    onSecondaryContainer = Color(0xFF2E7D32),
+
+                    background = Color(0xFFFAFAFA),    // 内側ホワイト
+                    onBackground = Color(0xFF3E2723),
+
+                    surface = Color(0xFFF5F5F5),       // 優しい白
+                    onSurface = Color(0xFF3E2723),
+
+                    error = Color(0xFFB00020),
+                    onError = Color(0xFFFFFFFF)
+                )
+            } else {
+                darkColorScheme()
+            }
+        }
+        ThemeFlavor.OnionLightColors -> {
+            if (!dark) {
+                lightColorScheme(
+                    primary = Color(0xFFA1887F),       // 外皮ブラウン
+                    onPrimary = Color(0xFFFFFFFF),     // 白文字
+                    primaryContainer = Color(0xFFD7CCC8), // 外皮ベージュ
+                    onPrimaryContainer = Color(0xFF3E2723),
+
+                    secondary = Color(0xFFA5D6A7),     // 芽のグリーン
+                    onSecondary = Color(0xFF1B5E20),
+                    secondaryContainer = Color(0xFFC8E6C9),
+                    onSecondaryContainer = Color(0xFF2E7D32),
+
+                    background = Color(0xFFFAFAFA),    // 内側ホワイト
+                    onBackground = Color(0xFF3E2723),
+
+                    surface = Color(0xFFF5F5F5),       // 優しい白
+                    onSurface = Color(0xFF3E2723),
+
+                    error = Color(0xFFB00020),
+                    onError = Color(0xFFFFFFFF)
+                )
+            } else {
+                darkColorScheme()
+            }
+        }
+        else -> {
+            val p = Palettes.getValue(flavor)
+            val base = if (!dark) lightColorScheme() else darkColorScheme()
+            base.copy(
+                primary = p.primary, onPrimary = p.onPrimary,
+                primaryContainer = p.primaryContainer, onPrimaryContainer = p.onPrimaryContainer,
+                secondary = p.secondary, onSecondary = p.onSecondary,
+                secondaryContainer = p.secondaryContainer, onSecondaryContainer = p.onSecondaryContainer,
+                tertiary = p.tertiary, onTertiary = p.onTertiary,
+                background = p.background, surface = p.surface, surfaceVariant = p.surfaceVariant,
+                error = p.error, outline = p.outline,
+                onSurface = p.onSurface
+            )
+        }
+    }
 }
