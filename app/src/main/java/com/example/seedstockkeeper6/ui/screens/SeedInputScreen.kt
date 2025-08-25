@@ -636,7 +636,9 @@ fun SeedInputScreen(
                 Card(
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.secondaryContainer, // 透明度なし
-                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer // 文字色の背景は無し
+                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer, // 文字色の背景は無し
+                        disabledContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        disabledContentColor = MaterialTheme.colorScheme.onSecondaryContainer
                     ),
                     elevation = CardDefaults.cardElevation(
                         defaultElevation = 1.dp,

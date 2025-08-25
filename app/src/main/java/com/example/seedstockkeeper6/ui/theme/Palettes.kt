@@ -99,20 +99,20 @@ val WB = Palette(
 )
 
 val Onion = Palette(
-    // 上と下のバー（こげ茶色）
-    primary = Color(0xFF884D00), onPrimary = Color.White,  // 上と下のバーの色
-    // カードの背景（黄色）
-    primaryContainer = Color(0xFFD47A4A),
+            // 上と下のバー（統一された茶色）
+        primary = Color(0xFF884D00), onPrimary = Color.White,  // 上と下のバーの色（統一された茶色）
+            // カードのアイコン背景とバッジ（統一された茶色）
+        primaryContainer = Color(0xFF884D00),
     onPrimaryContainer = Color(0xFFF0E8D8),  // カードの文字色
     // 玉ねぎの根元部分（自然な玉ねぎ色）
     secondary = Color(0xFFE8A85A), onSecondary = Color.White,  // 玉ねぎの根元の自然な色
-    // カードの背景（指定された黄色）
-    secondaryContainer = Color(0xFFFFD422),  // カードの色
+            // カードの背景（指定された黄色）
+        secondaryContainer = Color(0xFFFEF7B2),  // カードの色（白っぽい黄色）
     onSecondaryContainer = Color(0xFF3D2A1A),  // カードの文字色（土のようなこげ茶）
     // 玉ねぎの茎部分（自然な玉ねぎ色）
     tertiary = Color(0xFFD47A4A), onTertiary = Color.White,  // 玉ねぎの茎の自然な色
-    // 玉ねぎの果肉（自然な玉ねぎ色のベージュ）
-    background = Color(0xFFFFF8F0), surface = Color(0xFFF8F0E8), surfaceVariant = Color(0xFFF2E8E0),  // 玉ねぎの果肉の自然なベージュ色
+            // 玉ねぎの果肉（自然な玉ねぎ色のベージュ）
+        background = Color(0xFFFFF9E6), surface = Color(0xFFFFF9E6), surfaceVariant = Color(0xFFFFF9E6),  // 薄い卵色（彩度を上げた）
     // エラー色（赤）とアウトライン（自然なグレー）
     error = Color(0xFFBA1A1A), outline = Color(0xFFB0A898),  // アウトラインは自然なグレー
     // 玉ねぎの皮の自然な部分（自然な茶色）
