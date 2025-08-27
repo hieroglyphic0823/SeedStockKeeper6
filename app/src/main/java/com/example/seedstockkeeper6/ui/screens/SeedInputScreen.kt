@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
+
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -52,10 +53,14 @@ import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+
+
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+
+
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -74,8 +79,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
+
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.zIndex
@@ -94,6 +98,11 @@ import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.ktx.storage
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+
+// 分離したコンポーネントのインポート
+import com.example.seedstockkeeper6.ui.screens.*
+
+
 
 @Composable
 fun SeedInputScreen(
@@ -413,193 +422,7 @@ fun SeedInputScreen(
                 heightDp = 140
                     )
 
-                    Text("栽培カレンダー詳細", style = MaterialTheme.typography.titleSmall)
-
-            viewModel.packet.calendar.forEachIndexed { index, entry ->
-                key(entry.id) {
-                    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-                        // --- 地域情報 ---
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween // テキストとボタンを両端に寄せる場合
-                        ) {
-                            // 左側: 地域名テキストと入力フィールド
-                            Row(
-                                modifier = Modifier.weight(1f), // このRowが利用可能なスペースの大部分を占める
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp) // テキストと入力フィールドの間隔
-                            ) {
-                                Text(
-                                    "地域 ${index + 1}",
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    modifier = Modifier.align(Alignment.CenterVertically) // 縦中央揃え
-                                )
-                                                                 OutlinedTextField(
-                                     value = entry.region ?: "",
-                                     onValueChange = { viewModel.updateCalendarRegion(index, it) },
-                                     label = { Text("地域名") },
-                                     modifier = Modifier.weight(1f), // この小さいRowの中で残りのスペースを占める
-                                     colors = OutlinedTextFieldDefaults.colors(
-                                         focusedBorderColor = MaterialTheme.colorScheme.primary,
-                                         unfocusedBorderColor = MaterialTheme.colorScheme.primary,
-                                         focusedLabelColor = MaterialTheme.colorScheme.primary,
-                                         unfocusedLabelColor = MaterialTheme.colorScheme.primary
-                                     )
-                                 )
-                            }
-
-                            // 右側: 削除ボタン
-                            IconButton(
-                                onClick = {
-                                    // ViewModelの関数を呼び出して、このエントリを削除
-                                    // 例: viewModel.removeCalendarEntry(index)
-                                    // または entry.id を使う場合: viewModel.removeCalendarEntryById(entry.id)
-                                    viewModel.removeCalendarEntryAtIndex(index) // 関数名はViewModelの実装に合わせてください
-                                },
-                                modifier = Modifier.padding(start = 8.dp) // 左側に少しパディング
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Filled.Delete,
-                                    contentDescription = "地域情報を削除",
-                                    tint = MaterialTheme.colorScheme.error // エラーカラーで警告を示す
-                                )
-                            }
-                        }
-                        Spacer(modifier = Modifier.height(16.dp))
-                        // --- 播種期間 ---
-                        Text("播種期間", style = MaterialTheme.typography.titleMedium) // 少し大きなフォントに
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                                                 // 1行目: 播種開始月、開始旬、終了月、終了旬 (4項目)
-                         Row(
-                             modifier = Modifier.fillMaxWidth(),
-                             horizontalArrangement = Arrangement.spacedBy(4.dp),
-                             verticalAlignment = Alignment.CenterVertically
-                         ) {
-                                                                                                                       OutlinedTextField(
-                                   value = entry.sowing_start?.toString() ?: "",
-                                   onValueChange = {
-                                       viewModel.updateCalendarSowingStart(
-                                           index,
-                                           it.toIntOrNull() ?: 0
-                                       )
-                                   },
-                                   label = { Text("開始月") },
-                                   modifier = Modifier.width(70.dp),
-                                   colors = OutlinedTextFieldDefaults.colors(
-                                       focusedBorderColor = MaterialTheme.colorScheme.primary,
-                                       unfocusedBorderColor = MaterialTheme.colorScheme.primary,
-                                       focusedLabelColor = MaterialTheme.colorScheme.primary,
-                                       unfocusedLabelColor = MaterialTheme.colorScheme.primary
-                                   )
-                               )
-                                                           StageSelector(
-                                  label = "開始旬",
-                                  value = entry.sowing_start_stage ?: "",
-                                  onValueChange = { newStage ->
-                                      viewModel.updateCalendarSowingStartStage(index, newStage)
-                                  },
-                                  modifier = Modifier.width(70.dp)
-                              )
-                              Text("～", style = MaterialTheme.typography.bodyLarge)
-                                                             OutlinedTextField(
-                                   value = entry.sowing_end?.toString() ?: "",
-                                   onValueChange = {
-                                       viewModel.updateCalendarSowingEnd(
-                                           index,
-                                           it.toIntOrNull() ?: 0
-                                       )
-                                   },
-                                   label = { Text("終了月") },
-                                   modifier = Modifier.width(70.dp),
-                                   colors = OutlinedTextFieldDefaults.colors(
-                                       focusedBorderColor = MaterialTheme.colorScheme.primary,
-                                       unfocusedBorderColor = MaterialTheme.colorScheme.primary,
-                                       focusedLabelColor = MaterialTheme.colorScheme.primary,
-                                       unfocusedLabelColor = MaterialTheme.colorScheme.primary
-                                   )
-                               )
-                             StageSelector(
-                                 label = "終了旬",
-                                 value = entry.sowing_end_stage ?: "",
-                                 onValueChange = { newStage ->
-                                     viewModel.updateCalendarSowingEndStage(index, newStage)
-                                 },
-                                 modifier = Modifier.width(70.dp)
-                             )
-                         }
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        // --- 収穫期間 ---
-                        Text("収穫期間", style = MaterialTheme.typography.titleMedium)
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                                                 // 1行目: 収穫開始月、開始旬、終了月、終了旬 (4項目)
-                         Row(
-                             modifier = Modifier.fillMaxWidth(),
-                             horizontalArrangement = Arrangement.spacedBy(4.dp),
-                             verticalAlignment = Alignment.CenterVertically
-                         ) {
-                                                                                                                       OutlinedTextField(
-                                   value = entry.harvest_start?.toString() ?: "",
-                                   onValueChange = {
-                                       viewModel.updateCalendarHarvestStart(
-                                           index,
-                                           it.toIntOrNull() ?: 0
-                                       )
-                                   },
-                                   label = { Text("開始月") },
-                                   modifier = Modifier.width(70.dp),
-                                   colors = OutlinedTextFieldDefaults.colors(
-                                       focusedBorderColor = MaterialTheme.colorScheme.primary,
-                                       unfocusedBorderColor = MaterialTheme.colorScheme.primary,
-                                       focusedLabelColor = MaterialTheme.colorScheme.primary,
-                                       unfocusedLabelColor = MaterialTheme.colorScheme.primary
-                                   )
-                               )
-                                                           StageSelector(
-                                  label = "開始旬",
-                                  value = entry.harvest_start_stage ?: "",
-                                  onValueChange = { newStage ->
-                                      viewModel.updateCalendarHarvestStartStage(index, newStage)
-                                  },
-                                  modifier = Modifier.width(70.dp)
-                              )
-                              Text("～", style = MaterialTheme.typography.bodyLarge)
-                                                             OutlinedTextField(
-                                   value = entry.harvest_end?.toString() ?: "",
-                                   onValueChange = {
-                                       viewModel.updateCalendarHarvestEnd(
-                                           index,
-                                           it.toIntOrNull() ?: 0
-                                       )
-                                   },
-                                   label = { Text("終了月") },
-                                   modifier = Modifier.width(70.dp),
-                                   colors = OutlinedTextFieldDefaults.colors(
-                                       focusedBorderColor = MaterialTheme.colorScheme.primary,
-                                       unfocusedBorderColor = MaterialTheme.colorScheme.primary,
-                                       focusedLabelColor = MaterialTheme.colorScheme.primary,
-                                       unfocusedLabelColor = MaterialTheme.colorScheme.primary
-                                   )
-                               )
-                             StageSelector(
-                                 label = "終了旬",
-                                 value = entry.harvest_end_stage ?: "",
-                                 onValueChange = { newStage ->
-                                     viewModel.updateCalendarHarvestEndStage(index, newStage)
-                                 },
-                                 modifier = Modifier.width(70.dp)
-                             )
-                         }
-                        // 他にもカレンダーエントリ内の項目があれば同様に2項目ずつRowで区切る
-                    }
-                    Spacer(modifier = Modifier.height(24.dp)) // 各カレンダーエントリ間のスペースをさらに広めに
-                    Divider() // 各カレンダーエントリの区切り線
-                    Spacer(modifier = Modifier.height(24.dp))
-                }
-            }
+                                         CalendarDetailSection(viewModel)
 
             Button(
                 onClick = { viewModel.addCalendarEntry() }, 
@@ -843,122 +666,10 @@ fun SeedInputScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // --- コンパニオンプランツ表示＆追加部 ---
-            Text("コンパニオンプランツと効果", style = MaterialTheme.typography.titleMedium)
-            viewModel.packet.companionPlants.forEachIndexed { i, companion ->
-                Card(
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.secondaryContainer, // 透明度なし
-                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer, // 文字色の背景は無し
-                        disabledContainerColor = MaterialTheme.colorScheme.secondaryContainer,
-                        disabledContentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                    ),
-                    elevation = CardDefaults.cardElevation(
-                        defaultElevation = 1.dp,
-                        pressedElevation = 2.dp,
-                        focusedElevation = 1.dp,
-                        hoveredElevation = 1.dp
-                    ),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp)
-                ) {
-                    Row(
-                        Modifier.padding(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            "植物: ${companion.plant} ",
-                            Modifier.weight(1f),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Normal)
-                        )
-                        Spacer(modifier = Modifier.size(8.dp)) // アイコンとの間隔
-                        CompanionEffectIcon(companion.effect) // ← アイコン表示
-                    }
-                }
-            }
-            var cpPlant by remember { mutableStateOf("") }
-            var cpEffect by remember { mutableStateOf("") }
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                                 OutlinedTextField(
-                     cpPlant,
-                     { cpPlant = it },
-                     label = { Text("植物名") },
-                     modifier = Modifier.weight(1f),
-                     colors = OutlinedTextFieldDefaults.colors(
-                         focusedBorderColor = MaterialTheme.colorScheme.primary,
-                         unfocusedBorderColor = MaterialTheme.colorScheme.primary,
-                         focusedLabelColor = MaterialTheme.colorScheme.primary,
-                         unfocusedLabelColor = MaterialTheme.colorScheme.primary
-                     )
-                 )
-                Spacer(Modifier.width(8.dp))
-                                 OutlinedTextField(
-                     cpEffect,
-                     { cpEffect = it },
-                     label = { Text("効果") },
-                     modifier = Modifier.weight(1f),
-                     colors = OutlinedTextFieldDefaults.colors(
-                         focusedBorderColor = MaterialTheme.colorScheme.primary,
-                         unfocusedBorderColor = MaterialTheme.colorScheme.primary,
-                         focusedLabelColor = MaterialTheme.colorScheme.primary,
-                         unfocusedLabelColor = MaterialTheme.colorScheme.primary
-                     )
-                 )
-                Spacer(Modifier.width(8.dp))
-                Button(
-                    onClick = {
-                        if (cpPlant.isNotBlank() || cpEffect.isNotBlank()) {
-                            viewModel.addCompanionPlant(
-                                com.example.seedstockkeeper6.model.CompanionPlant(
-                                    cpPlant,
-                                    cpEffect
-                                )
-                            )
-                            cpPlant = ""
-                            cpEffect = ""
-                        }
-                    },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary
-                    )
-                ) {
-                    Text("追加")
-                }
-                }
-            }
-            }
+                         // --- コンパニオンプランツ表示＆追加部 ---
+             CompanionPlantsSection(viewModel)
 
-            // コンパニオンプランツセクション
-            Card(
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                ),
-                shape = RoundedCornerShape(16.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp)
-                ) {
-                    Text(
-                        "コンパニオンプランツと効果",
-                        style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.padding(bottom = 12.dp)
-                    )
-                    
-                    // --- ここまでコンパニオンプランツ部 ---
-                }
-            }
+            
         }
         
         if (viewModel.showCropConfirmDialog) {
@@ -975,6 +686,7 @@ fun SeedInputScreen(
                 LoadingAnimation()
             }
         }
+    }
     }
 
     AIDiffDialog(
@@ -1034,161 +746,5 @@ fun SeedInputScreen(
             }
         }
     }
-
-
 }
-
-@Composable
-fun CropConfirmDialog(viewModel: SeedInputViewModel) {
-    val ctx = LocalContext.current
-    if (!viewModel.showCropConfirmDialog) return
-    val preview = viewModel.pendingCropBitmap
-
-    AlertDialog(
-        onDismissRequest = { viewModel.cancelCropReplace() },
-        title = { Text("画像を差し替えますか？") },
-        text = {
-            if (preview != null) {
-                Image(
-                    bitmap = preview.asImageBitmap(),
-                    contentDescription = "切り抜きプレビュー",
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = 180.dp, max = 360.dp)
-                )
-            } else {
-                Text("プレビューを表示できませんでした")
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = { viewModel.confirmCropReplace(ctx) }) {
-                Text("はい")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = { viewModel.cancelCropReplace() }) {
-                Text("いいえ")
-            }
-        }
-    )
-}
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun StageSelector(
-    label: String,
-    value: String,
-    onValueChange: (String) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val stageOptions = listOf("上旬", "中旬", "下旬")
-    var expanded by remember { mutableStateOf(false) }
-
-    ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = { expanded = !expanded }
-    ) {
-        OutlinedTextField(
-            value = value,
-            onValueChange = { },
-            readOnly = true,
-            label = { Text(label) },
-            modifier = modifier
-                .menuAnchor(),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = MaterialTheme.colorScheme.primary,
-                unfocusedBorderColor = MaterialTheme.colorScheme.primary,
-                focusedLabelColor = MaterialTheme.colorScheme.primary,
-                unfocusedLabelColor = MaterialTheme.colorScheme.primary
-            )
-        )
-        ExposedDropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false }
-        ) {
-            stageOptions.forEach { stage ->
-                DropdownMenuItem(
-                    text = { Text(stage) },
-                    onClick = {
-                        onValueChange(stage)
-                        expanded = false
-                    }
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun LoadingAnimation() {
-    val composition by rememberLottieComposition(LottieCompositionSpec.Asset("AI_network.json"))
-    val progress by animateLottieCompositionAsState(
-        composition,
-        iterations = LottieConstants.IterateForever
-    )
-    LottieAnimation(
-        composition = composition,
-        progress = { progress }
-    )
-
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun FamilySelector(
-    label: String = "科名",
-    value: String,
-    onValueChange: (String) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val familyOptions = listOf(
-        "アブラナ科",
-        "アマランサス科",
-        "イネ科",
-        "ウリ科",
-        "キク科",
-        "セリ科",
-        "ネギ科",
-        "ナス科",
-        "バラ科",
-        "ヒルガオ科",
-        "マメ科",
-        "ミカン科",
-        "その他"
-    )
-    var expanded by remember { mutableStateOf(false) }
-
-    ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = { expanded = !expanded }
-    ) {
-        OutlinedTextField(
-            value = value,
-            onValueChange = {},
-            readOnly = true,
-            label = { Text(label) },
-            modifier = modifier
-                .menuAnchor()
-                .fillMaxWidth(),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = MaterialTheme.colorScheme.primary,
-                unfocusedBorderColor = MaterialTheme.colorScheme.primary,
-                focusedLabelColor = MaterialTheme.colorScheme.primary,
-                unfocusedLabelColor = MaterialTheme.colorScheme.primary
-            )
-        )
-        ExposedDropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false }
-        ) {
-            familyOptions.forEach { family ->
-                DropdownMenuItem(
-                    text = { Text(family) },
-                    onClick = {
-                        onValueChange(family)
-                        expanded = false
-                    }
-                )
-            }
-        }
-    }
 }

@@ -28,68 +28,78 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.example.seedstockkeeper6.R
-import com.example.seedstockkeeper6.util.normalizeEffectName
+import com.example.seedstockkeeper6.model.CompanionEffectCode
 
 @Composable
-fun CompanionEffectIcon(CompanionEffect: String?) {
-    val normalized = normalizeEffectName(CompanionEffect)
+fun CompanionEffectIcon(effects: List<String>) {
+    // 最大3つまで表示
+    effects.take(3).forEach { effectCode ->
+        SingleEffectIcon(CompanionEffectCode.fromCode(effectCode))
+        if (effectCode != effects.take(3).last()) {
+            androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(4.dp))
+        }
+    }
+}
+
+@Composable
+fun SingleEffectIcon(effectCode: CompanionEffectCode) {
     // png（画像ID）かImageVectorかを判定
     val iconRes: Int?
     val imageVector: ImageVector?
-    when (normalized) {
-        "害虫予防" -> {
+    when (effectCode) {
+        CompanionEffectCode.PEST_PREVENTION -> {
             iconRes = R.drawable.antivirus
             imageVector = Icons.Outlined.BugReport
         }
-        "病気予防" -> {
+        CompanionEffectCode.DISEASE_PREVENTION -> {
             iconRes = R.drawable.pharmacy
             imageVector = Icons.Outlined.HealthAndSafety
         }
-        "生育促進" -> {
+        CompanionEffectCode.GROWTH_PROMOTION -> {
             iconRes = R.drawable.growth2
             imageVector = Icons.Outlined.Insights
         }
-        "空間活用" -> {
+        CompanionEffectCode.SPACE_UTILIZATION -> {
             iconRes = R.drawable.grass
             imageVector = Icons.Outlined.Inventory2
         }
-        "風味向上" -> {
+        CompanionEffectCode.FLAVOR_ENHANCEMENT -> {
             iconRes = R.drawable.tongue
             imageVector = Icons.Outlined.LocalFlorist
         }
-        "土壌改善" -> {
+        CompanionEffectCode.SOIL_IMPROVEMENT -> {
             iconRes = R.drawable.regenerative
             imageVector = Icons.Outlined.Grass
         }
-        "受粉促進" -> {
+        CompanionEffectCode.POLLINATION_PROMOTION -> {
             iconRes = R.drawable.bee
             imageVector = Icons.Outlined.Nature
         }
-        "雑草抑制" -> {
+        CompanionEffectCode.WEED_SUPPRESSION -> {
             iconRes = R.drawable.weeds
             imageVector = Icons.Outlined.Spa
         }
-        "景観美化" -> {
+        CompanionEffectCode.LANDSCAPE_BEAUTIFICATION -> {
             iconRes = R.drawable.leaf
             imageVector = Icons.Outlined.EnergySavingsLeaf
         }
-        "水分保持" -> {
+        CompanionEffectCode.MOISTURE_RETENTION -> {
             iconRes = R.drawable.absorbent
             imageVector = Icons.Outlined.WaterDrop
         }
-        "土壌pH調整" -> {
+        CompanionEffectCode.SOIL_PH_ADJUSTMENT -> {
             iconRes = R.drawable.soilphmeter
             imageVector = Icons.Outlined.Science
         }
-        "作業性向上" -> {
+        CompanionEffectCode.WORKABILITY_IMPROVEMENT -> {
             iconRes = R.drawable.gardener
             imageVector = Icons.Outlined.FavoriteBorder
         }
-        "収量安定化" -> {
+        CompanionEffectCode.YIELD_STABILIZATION -> {
             iconRes = R.drawable.harvest
             imageVector = Icons.Outlined.HealthAndSafety
         }
-        else -> {
+        CompanionEffectCode.OTHER -> {
             iconRes = R.drawable.soil
             imageVector = Icons.Outlined.FavoriteBorder
         }
@@ -105,14 +115,14 @@ fun CompanionEffectIcon(CompanionEffect: String?) {
         ) {
             Image(
                 painter = painterResource(id = iconRes),
-                contentDescription = "$normalized のアイコン",
+                contentDescription = "${effectCode.displayName} のアイコン",
                 modifier = Modifier.size(32.dp)
             )
         }
     } else if (imageVector != null) {
         Icon(
             imageVector = imageVector,
-            contentDescription = "$normalized のアイコン",
+            contentDescription = "${effectCode.displayName} のアイコン",
             modifier = Modifier.size(32.dp)
         )
     }

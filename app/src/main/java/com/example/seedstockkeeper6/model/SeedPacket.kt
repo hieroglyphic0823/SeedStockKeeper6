@@ -3,10 +3,37 @@ package com.example.seedstockkeeper6.model
 import kotlinx.serialization.Serializable
 import java.util.UUID
 
+enum class CompanionEffectCode(val code: String, val displayName: String) {
+    PEST_PREVENTION("01", "害虫予防"),
+    DISEASE_PREVENTION("02", "病気予防"),
+    GROWTH_PROMOTION("03", "生育促進"),
+    SPACE_UTILIZATION("04", "空間活用"),
+    FLAVOR_ENHANCEMENT("05", "風味向上"),
+    SOIL_IMPROVEMENT("06", "土壌改善"),
+    POLLINATION_PROMOTION("07", "受粉促進"),
+    WEED_SUPPRESSION("08", "雑草抑制"),
+    LANDSCAPE_BEAUTIFICATION("09", "景観美化"),
+    MOISTURE_RETENTION("10", "水分保持の助け"),
+    SOIL_PH_ADJUSTMENT("11", "土壌pHの調整"),
+    WORKABILITY_IMPROVEMENT("12", "作業性向上"),
+    YIELD_STABILIZATION("13", "収量の安定化"),
+    OTHER("99", "その他");
+
+    companion object {
+        fun fromCode(code: String): CompanionEffectCode {
+            return values().find { it.code == code } ?: OTHER
+        }
+        
+        fun fromDisplayName(displayName: String): CompanionEffectCode {
+            return values().find { it.displayName == displayName } ?: OTHER
+        }
+    }
+}
+
 @Serializable
 data class CompanionPlant(
     val plant: String = "",
-    val effect: String = ""
+    val effects: List<String> = emptyList() // 2桁のコードのリスト
 )
 
 @Serializable
