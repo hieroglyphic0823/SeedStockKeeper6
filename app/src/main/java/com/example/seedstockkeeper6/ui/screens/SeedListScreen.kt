@@ -36,6 +36,7 @@ import com.example.seedstockkeeper6.util.familyRotationMinYearsLabel
 import com.example.seedstockkeeper6.viewmodel.SeedListViewModel
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
+import com.google.firebase.auth.ktx.auth
 import com.google.gson.Gson
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
@@ -50,15 +51,41 @@ fun SeedListScreen(
     val db = Firebase.firestore
     var seeds by remember { mutableStateOf(listOf<Pair<String, SeedPacket>>()) }
     val listState = rememberLazyListState()
+    
+    // 現在のユーザーのUIDを取得
+    val auth = Firebase.auth
+    val currentUser = auth.currentUser
+    val currentUid = currentUser?.uid
 
     DisposableEffect(Unit) {
+        if (currentUid == null) {
+            Log.w("SeedListScreen", "No authenticated user")
+            return@DisposableEffect onDispose { }
+        }
+        
         val registration = db.collection("seeds")
-            .addSnapshotListener { snapshot, _ ->
+            .whereEqualTo("ownerUid", currentUid)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    Log.e("SeedListScreen", "Firebase error: ${error.message}")
+                    return@addSnapshotListener
+                }
+                
                 snapshot?.let {
-                    seeds = it.documents.mapNotNull { doc ->
+                    Log.d("SeedListScreen", "Firebase snapshot size: ${it.documents.size}")
+                    val newSeeds = it.documents.mapNotNull { doc ->
+                        Log.d("SeedListScreen", "Processing document: ${doc.id}")
                         val seed = doc.toObject(SeedPacket::class.java)
-                        seed?.let { s -> doc.id to s }
+                        if (seed != null) {
+                            Log.d("SeedListScreen", "Valid seed: ${seed.productName} (${seed.variety})")
+                            doc.id to seed
+                        } else {
+                            Log.w("SeedListScreen", "Failed to convert document ${doc.id} to SeedPacket")
+                            null
+                        }
                     }
+                    Log.d("SeedListScreen", "Final seeds list size: ${newSeeds.size}")
+                    seeds = newSeeds
                 }
             }
         onDispose {
