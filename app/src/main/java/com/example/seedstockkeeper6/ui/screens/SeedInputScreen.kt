@@ -65,7 +65,7 @@ fun SeedInputScreen(
                     .zIndex(999f),
                 contentAlignment = Alignment.Center
             ) {
-                LoadingAnimation()
+                SukesanGifAnimation()
             }
         }
     }

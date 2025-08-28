@@ -95,6 +95,7 @@ dependencies {
 
     // 画像/AI/その他
     implementation(libs.coil.compose)
+    implementation(libs.coil.gif)
     implementation(libs.generativeai)
     implementation(libs.gson)
     implementation(libs.kotlinx.serialization.json)

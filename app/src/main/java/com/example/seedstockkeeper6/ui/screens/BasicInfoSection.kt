@@ -12,8 +12,8 @@ import com.example.seedstockkeeper6.viewmodel.SeedInputViewModel
 fun BasicInfoSection(viewModel: SeedInputViewModel) {
     Card(
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.secondaryContainer,
-            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+            containerColor = MaterialTheme.colorScheme.surface,
+            contentColor = MaterialTheme.colorScheme.onSurface
         ),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
@@ -34,26 +34,14 @@ fun BasicInfoSection(viewModel: SeedInputViewModel) {
                 value = viewModel.packet.productName,
                 onValueChange = viewModel::onProductNameChange,
                 label = { Text("商品名") },
-                modifier = Modifier.fillMaxWidth(),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = MaterialTheme.colorScheme.primary,
-                    unfocusedBorderColor = MaterialTheme.colorScheme.primary,
-                    focusedLabelColor = MaterialTheme.colorScheme.primary,
-                    unfocusedLabelColor = MaterialTheme.colorScheme.primary
-                )
+                modifier = Modifier.fillMaxWidth()
             )
             
             OutlinedTextField(
                 value = viewModel.packet.variety,
                 onValueChange = viewModel::onVarietyChange,
                 label = { Text("品種") },
-                modifier = Modifier.fillMaxWidth(),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = MaterialTheme.colorScheme.primary,
-                    unfocusedBorderColor = MaterialTheme.colorScheme.primary,
-                    focusedLabelColor = MaterialTheme.colorScheme.primary,
-                    unfocusedLabelColor = MaterialTheme.colorScheme.primary
-                )
+                modifier = Modifier.fillMaxWidth()
             )
             
             FamilySelector(
@@ -69,25 +57,13 @@ fun BasicInfoSection(viewModel: SeedInputViewModel) {
                     value = viewModel.packet.expirationYear.toString(),
                     onValueChange = viewModel::onExpirationYearChange,
                     label = { Text("有効期限(年)") },
-                    modifier = Modifier.weight(1f),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.primary,
-                        focusedLabelColor = MaterialTheme.colorScheme.primary,
-                        unfocusedLabelColor = MaterialTheme.colorScheme.primary
-                    )
+                    modifier = Modifier.weight(1f)
                 )
                 OutlinedTextField(
                     value = viewModel.packet.expirationMonth.toString(),
                     onValueChange = viewModel::onExpirationMonthChange,
                     label = { Text("有効期限(月)") },
-                    modifier = Modifier.weight(1f),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.primary,
-                        focusedLabelColor = MaterialTheme.colorScheme.primary,
-                        unfocusedLabelColor = MaterialTheme.colorScheme.primary
-                    )
+                    modifier = Modifier.weight(1f)
                 )
             }
         }

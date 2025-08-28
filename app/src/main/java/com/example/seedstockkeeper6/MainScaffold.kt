@@ -59,19 +59,19 @@ fun MainScaffold(
         topBar = {
             TopAppBar(
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                    actionIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary,
+                    actionIconContentColor = MaterialTheme.colorScheme.onPrimary
                 ),
                 navigationIcon = {
                     Box(
                         modifier = Modifier
                             .size(48.dp) // 丸の大きさ（アイコンより少し大きめ）
-                            .background(
-                                color = MaterialTheme.colorScheme.primaryContainer, // Material 3準拠
-                                shape = CircleShape
-                            ),
+                                                    .background(
+                            color = MaterialTheme.colorScheme.primary, // Material 3準拠
+                            shape = CircleShape
+                        ),
                         contentAlignment = Alignment.Center // アイコンを真ん中に配置
                     ) {
                         AccountMenuButton(
@@ -146,8 +146,8 @@ fun MainScaffold(
         },
         bottomBar = {
             NavigationBar(
-                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
             ) {
                 bottomNavItems.forEach { item ->
                     NavigationBarItem(
@@ -158,26 +158,26 @@ fun MainScaffold(
                                     contentDescription = "ホーム",
                                     tint = Color.Unspecified
                                 )
-                                1 -> AnimatedIcon(
-                                    icon = Icons.Filled.Search, 
-                                    contentDescription = "検索",
-                                    tint = MaterialTheme.colorScheme.onPrimaryContainer
-                                )
-                                2 -> AnimatedIcon(
-                                    icon = Icons.Filled.Add, 
-                                    contentDescription = "追加",
-                                    tint = MaterialTheme.colorScheme.onPrimaryContainer
-                                )
-                                3 -> AnimatedIcon(
-                                    painter = painterResource(id = com.example.seedstockkeeper6.R.drawable.calendar), 
-                                    contentDescription = "カレンダー",
-                                    tint = Color.Unspecified
-                                )
-                                4 -> AnimatedIcon(
-                                    icon = Icons.Filled.Settings, 
-                                    contentDescription = "設定",
-                                    tint = MaterialTheme.colorScheme.onPrimaryContainer
-                                )
+                                                                 1 -> AnimatedIcon(
+                                     icon = Icons.Filled.Search, 
+                                     contentDescription = "検索",
+                                     tint = MaterialTheme.colorScheme.onPrimary
+                                 )
+                                 2 -> AnimatedIcon(
+                                     icon = Icons.Filled.Add, 
+                                     contentDescription = "追加",
+                                     tint = MaterialTheme.colorScheme.onPrimary
+                                 )
+                                 3 -> AnimatedIcon(
+                                     painter = painterResource(id = com.example.seedstockkeeper6.R.drawable.calendar), 
+                                     contentDescription = "カレンダー",
+                                     tint = Color.Unspecified
+                                 )
+                                 4 -> AnimatedIcon(
+                                     icon = Icons.Filled.Settings, 
+                                     contentDescription = "設定",
+                                     tint = MaterialTheme.colorScheme.onPrimary
+                                 )
                                 else -> AnimatedIcon(
                                     painter = painterResource(id = com.example.seedstockkeeper6.R.drawable.indoor_plants), 
                                     contentDescription = "ホーム",

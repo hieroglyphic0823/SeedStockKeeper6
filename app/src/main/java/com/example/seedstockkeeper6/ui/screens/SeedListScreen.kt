@@ -77,10 +77,10 @@ fun SeedListScreen(
             val encodedSeed = URLEncoder.encode(Gson().toJson(seed), StandardCharsets.UTF_8.toString())
             Card(
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                    disabledContainerColor = MaterialTheme.colorScheme.secondaryContainer,
-                    disabledContentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    contentColor = MaterialTheme.colorScheme.onSurface,
+                    disabledContainerColor = MaterialTheme.colorScheme.surface,
+                    disabledContentColor = MaterialTheme.colorScheme.onSurface
                 ),
                 shape = RoundedCornerShape(16.dp), // 角丸
                 elevation = CardDefaults.cardElevation(
@@ -120,9 +120,9 @@ fun SeedListScreen(
                             if (it) selectedIds.add(id) else selectedIds.remove(id)
                         },
                         colors = androidx.compose.material3.CheckboxDefaults.colors(
-                            checkedColor = MaterialTheme.colorScheme.primaryContainer,
-                            uncheckedColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f),
-                            checkmarkColor = MaterialTheme.colorScheme.onPrimaryContainer
+                            checkedColor = MaterialTheme.colorScheme.primary,
+                            uncheckedColor = MaterialTheme.colorScheme.outline,
+                            checkmarkColor = MaterialTheme.colorScheme.onPrimary
                         )
                     )
                 }

@@ -41,12 +41,7 @@ fun CalendarDetailSection(viewModel: SeedInputViewModel) {
                             onValueChange = { viewModel.updateCalendarRegion(index, it) },
                             label = { Text("地域名") },
                             modifier = Modifier.weight(1f),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = MaterialTheme.colorScheme.primary,
-                                unfocusedBorderColor = MaterialTheme.colorScheme.primary,
-                                focusedLabelColor = MaterialTheme.colorScheme.primary,
-                                unfocusedLabelColor = MaterialTheme.colorScheme.primary
-                            )
+
                         )
                     }
 
@@ -85,13 +80,7 @@ fun CalendarDetailSection(viewModel: SeedInputViewModel) {
                             )
                         },
                         label = { Text("開始月") },
-                        modifier = Modifier.width(70.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = MaterialTheme.colorScheme.primary,
-                            unfocusedBorderColor = MaterialTheme.colorScheme.primary,
-                            focusedLabelColor = MaterialTheme.colorScheme.primary,
-                            unfocusedLabelColor = MaterialTheme.colorScheme.primary
-                        )
+                        modifier = Modifier.width(70.dp)
                     )
                     StageSelector(
                         label = "開始旬",
@@ -111,13 +100,7 @@ fun CalendarDetailSection(viewModel: SeedInputViewModel) {
                             )
                         },
                         label = { Text("終了月") },
-                        modifier = Modifier.width(70.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = MaterialTheme.colorScheme.primary,
-                            unfocusedBorderColor = MaterialTheme.colorScheme.primary,
-                            focusedLabelColor = MaterialTheme.colorScheme.primary,
-                            unfocusedLabelColor = MaterialTheme.colorScheme.primary
-                        )
+                        modifier = Modifier.width(70.dp)
                     )
                     StageSelector(
                         label = "終了旬",
@@ -149,13 +132,7 @@ fun CalendarDetailSection(viewModel: SeedInputViewModel) {
                             )
                         },
                         label = { Text("開始月") },
-                        modifier = Modifier.width(70.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = MaterialTheme.colorScheme.primary,
-                            unfocusedBorderColor = MaterialTheme.colorScheme.primary,
-                            focusedLabelColor = MaterialTheme.colorScheme.primary,
-                            unfocusedLabelColor = MaterialTheme.colorScheme.primary
-                        )
+                        modifier = Modifier.width(70.dp)
                     )
                     StageSelector(
                         label = "開始旬",
@@ -175,13 +152,7 @@ fun CalendarDetailSection(viewModel: SeedInputViewModel) {
                             )
                         },
                         label = { Text("終了月") },
-                        modifier = Modifier.width(70.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = MaterialTheme.colorScheme.primary,
-                            unfocusedBorderColor = MaterialTheme.colorScheme.primary,
-                            focusedLabelColor = MaterialTheme.colorScheme.primary,
-                            unfocusedLabelColor = MaterialTheme.colorScheme.primary
-                        )
+                        modifier = Modifier.width(70.dp)
                     )
                     StageSelector(
                         label = "終了旬",

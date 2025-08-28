@@ -18,7 +18,7 @@ data class Palette(
     val onSurface: Color
 )
 
-enum class ThemeFlavor { Vitamin, Soil, Herb, Ocean, Plum, Sakura, WB, Onion, OnionLightColors }
+enum class ThemeFlavor { Vitamin, Soil, Herb, Ocean, Plum, Sakura, WB, Onion, OnionLightColors, Renkon }
 
 // --- 8パターン ---
 val Vitamin = Palette(
@@ -119,6 +119,24 @@ val Onion = Palette(
     onSurface = Color(0xFF5A3F2A)  // 玉ねぎの外皮の自然な茶色
 )
 
+val Renkon = Palette(
+    // メインのブランドカラー（TopAppBar、BottomNavigationBar）
+    primary = Color(0xFF4F2702), onPrimary = Color(0xFFF7F4EA),
+    // プライマリアクションのコンテナ（ボタン）
+    primaryContainer = Color(0xFFEDE5DC), onPrimaryContainer = Color(0xFF333333),
+    // セカンダリアクション（蓮根の節の色）
+    secondary = Color(0xFF5D3A1A), onSecondary = Color(0xFFFFFBFE),
+    // セカンダリアクションのコンテナ（カードの色）
+    secondaryContainer = Color(0xFFD2A36C), onSecondaryContainer = Color(0xFF333333),
+    // テルティアリアクション（蓮根のアクセント色）
+    tertiary = Color(0xFFC67A4A), onTertiary = Color(0xFFFFFBFE),
+    // 背景色と表面色
+    background = Color(0xFFFFFBFE), surface = Color(0xFFD2A36C), surfaceVariant = Color(0xFFF8F4F0),
+    // エラー色とアウトライン
+    error = Color(0xFFBA1A1A), outline = Color(0xFFF7F4EA),
+    // 表面のテキスト色
+    onSurface = Color(0xFF333333)
+)
 private val Palettes = mapOf(
     ThemeFlavor.Vitamin to Vitamin,
     ThemeFlavor.Soil to Soil,
@@ -127,13 +145,48 @@ private val Palettes = mapOf(
     ThemeFlavor.Plum to Plum,
     ThemeFlavor.Sakura to Sakura,
     ThemeFlavor.WB to WB,
-    ThemeFlavor.Onion to Onion
+    ThemeFlavor.Onion to Onion,
+    ThemeFlavor.Renkon to Renkon
 )
 
 // Palette → Material3 ColorScheme へ
 @Composable
 fun flavorColorScheme(flavor: ThemeFlavor, dark: Boolean): ColorScheme {
     return when (flavor) {
+        ThemeFlavor.Renkon -> {
+            if (!dark) {
+                lightColorScheme(
+                    primary = Color(0xFF4F2702),       // メインのブランドカラー（TopAppBar、BottomNavigationBar）
+                    onPrimary = Color(0xFFF7F4EA),     // プライマリ上のテキスト色
+                    primaryContainer = Color(0xFFEDE5DC), // プライマリアクションのコンテナ（アクション付きカード、ボタン）
+                    onPrimaryContainer = Color(0xFF333333), // プライマリコンテナ上のテキスト色
+
+                    secondary = Color(0xFF5D3A1A),     // セカンダリアクション（蓮根の節の色）
+                    onSecondary = Color(0xFFFFFBFE),
+                    secondaryContainer = Color(0xFFD2A36C), // セカンダリアクションのコンテナ（カードの色）
+                    onSecondaryContainer = Color(0xFF333333),
+
+                    tertiary = Color(0xFFC67A4A),      // テルティアリアクション（蓮根のアクセント色）
+                    onTertiary = Color(0xFFFFFBFE),
+
+                    background = Color(0xFFFFFBFE),    // 背景色
+                    onBackground = Color(0xFF333333),
+
+                    surface = Color(0xFFD2A36C),       // 表面色（Cardの色）
+                    onSurface = Color(0xFF333333),
+
+                    surfaceVariant = Color(0xFFF8F4F0), // 表面バリアント
+                    onSurfaceVariant = Color(0xFF333333),
+
+                    error = Color(0xFFBA1A1A),
+                    onError = Color(0xFFFFFBFE),
+
+                    outline = Color(0xFFFBF6F0)
+                )
+            } else {
+                darkColorScheme()
+            }
+        }
         ThemeFlavor.Onion -> {
             if (!dark) {
                 lightColorScheme(

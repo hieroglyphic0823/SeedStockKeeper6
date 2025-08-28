@@ -8,8 +8,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
 import com.airbnb.lottie.compose.*
 import com.example.seedstockkeeper6.viewmodel.SeedInputViewModel
 
@@ -34,13 +36,7 @@ fun StageSelector(
             readOnly = true,
             label = { Text(label) },
             modifier = modifier
-                .menuAnchor(),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = MaterialTheme.colorScheme.primary,
-                unfocusedBorderColor = MaterialTheme.colorScheme.primary,
-                focusedLabelColor = MaterialTheme.colorScheme.primary,
-                unfocusedLabelColor = MaterialTheme.colorScheme.primary
-            )
+                .menuAnchor()
         )
         ExposedDropdownMenu(
             expanded = expanded,
@@ -69,6 +65,20 @@ fun LoadingAnimation() {
     LottieAnimation(
         composition = composition,
         progress = { progress }
+    )
+}
+
+@Composable
+fun SukesanGifAnimation() {
+    val composition by rememberLottieComposition(LottieCompositionSpec.Asset("Loading screen.json"))
+    val progress by animateLottieCompositionAsState(
+        composition,
+        iterations = LottieConstants.IterateForever
+    )
+    LottieAnimation(
+        composition = composition,
+        progress = { progress },
+        modifier = Modifier.size(800.dp)
     )
 }
 
@@ -108,13 +118,7 @@ fun FamilySelector(
             label = { Text(label) },
             modifier = modifier
                 .menuAnchor()
-                .fillMaxWidth(),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = MaterialTheme.colorScheme.primary,
-                unfocusedBorderColor = MaterialTheme.colorScheme.primary,
-                focusedLabelColor = MaterialTheme.colorScheme.primary,
-                unfocusedLabelColor = MaterialTheme.colorScheme.primary
-            )
+                .fillMaxWidth()
         )
         ExposedDropdownMenu(
             expanded = expanded,
