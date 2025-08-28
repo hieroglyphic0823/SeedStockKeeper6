@@ -84,26 +84,7 @@ fun MainScaffold(
                 title = { Text("たねすけさん") },
                 actions = {
                     when {
-                        // 1) リスト画面で選択あり → 削除ボタン
-                        isListScreen && selectedIds.isNotEmpty() -> {
-                            IconButton(onClick = {
-                                scope.launch {
-                                    selectedIds.forEach { id ->
-                                        listViewModel.deleteSeedPacketWithImages(id) { result ->
-                                            scope.launch {
-                                                val message = if (result.isSuccess) "削除しました"
-                                                else "削除に失敗しました: ${result.exceptionOrNull()?.localizedMessage ?: "不明なエラー"}"
-                                                snackbarHostState.showSnackbar(message)
-                                            }
-                                        }
-                                    }
-                                    selectedIds.clear()
-                                }
-                            }) {
-                                Icon(Icons.Filled.Delete, contentDescription = "Delete")
-                            }
-                        }
-                        // 2) 入力画面 → 保存ボタン
+                        // 入力画面 → 保存ボタン
                         isInputScreen && navBackStackEntry != null -> {
                             val inputViewModel: SeedInputViewModel = viewModel(
                                 viewModelStoreOwner = navBackStackEntry!!
@@ -163,11 +144,34 @@ fun MainScaffold(
                                      contentDescription = "検索",
                                      tint = MaterialTheme.colorScheme.onPrimary
                                  )
-                                 2 -> AnimatedIcon(
-                                     icon = Icons.Filled.Add, 
-                                     contentDescription = "追加",
-                                     tint = MaterialTheme.colorScheme.onPrimary
-                                 )
+                                 2 -> {
+                                    if (isListScreen && selectedIds.isNotEmpty()) {
+                                        // チェックボックスがオンの時はゴミ箱アイコン
+                                        Box(
+                                            modifier = Modifier
+                                                .size(48.dp)
+                                                .background(
+                                                    color = MaterialTheme.colorScheme.error,
+                                                    shape = CircleShape
+                                                ),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Filled.Delete,
+                                                contentDescription = "削除",
+                                                tint = MaterialTheme.colorScheme.onError,
+                                                modifier = Modifier.size(24.dp)
+                                            )
+                                        }
+                                    } else {
+                                        // 通常時は＋アイコン
+                                        AnimatedIcon(
+                                            icon = Icons.Filled.Add, 
+                                            contentDescription = "追加",
+                                            tint = MaterialTheme.colorScheme.onPrimary
+                                        )
+                                    }
+                                }
                                  3 -> AnimatedIcon(
                                      painter = painterResource(id = com.example.seedstockkeeper6.R.drawable.calendar), 
                                      contentDescription = "カレンダー",
@@ -189,12 +193,28 @@ fun MainScaffold(
                         onClick = {
                             when (item) {
                                 is BottomNavItem.Add -> {
-                                    // 追加ボタンが押されたら入力画面に遷移
-                                    val emptyPacketJson = URLEncoder.encode(
-                                        Gson().toJson(SeedPacket()),
-                                        StandardCharsets.UTF_8.toString()
-                                    )
-                                    navController.navigate("input/$emptyPacketJson")
+                                    if (isListScreen && selectedIds.isNotEmpty()) {
+                                        // チェックボックスがオンの時は削除処理
+                                        scope.launch {
+                                            selectedIds.forEach { id ->
+                                                listViewModel.deleteSeedPacketWithImages(id) { result ->
+                                                    scope.launch {
+                                                        val message = if (result.isSuccess) "削除しました"
+                                                        else "削除に失敗しました: ${result.exceptionOrNull()?.localizedMessage ?: "不明なエラー"}"
+                                                        snackbarHostState.showSnackbar(message)
+                                                    }
+                                                }
+                                            }
+                                            selectedIds.clear()
+                                        }
+                                    } else {
+                                        // 通常時は追加画面に遷移
+                                        val emptyPacketJson = URLEncoder.encode(
+                                            Gson().toJson(SeedPacket()),
+                                            StandardCharsets.UTF_8.toString()
+                                        )
+                                        navController.navigate("input/$emptyPacketJson")
+                                    }
                                 }
                                 else -> {
                                     // その他のボタンは通常のナビゲーション

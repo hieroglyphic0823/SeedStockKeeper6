@@ -129,11 +129,11 @@ val Renkon = Palette(
     // セカンダリアクションのコンテナ（カードの色）
     secondaryContainer = Color(0xFFD2A36C), onSecondaryContainer = Color(0xFF333333),
     // テルティアリアクション（蓮根のアクセント色）
-    tertiary = Color(0xFFC67A4A), onTertiary = Color(0xFFFFFBFE),
+    tertiary = Color(0xFFFFAF3C), onTertiary = Color(0xFFFFFBFE),
     // 背景色と表面色
     background = Color(0xFFFFFBFE), surface = Color(0xFFD2A36C), surfaceVariant = Color(0xFFF8F4F0),
     // エラー色とアウトライン
-    error = Color(0xFFBA1A1A), outline = Color(0xFFF7F4EA),
+    error = Color(0xFFDB2B39), outline = Color(0xFFF7F4EA),
     // 表面のテキスト色
     onSurface = Color(0xFF333333)
 )
