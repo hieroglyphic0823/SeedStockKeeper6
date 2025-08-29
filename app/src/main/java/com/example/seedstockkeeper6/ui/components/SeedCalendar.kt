@@ -21,7 +21,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import com.example.seedstockkeeper6.model.CalendarEntry
-import com.example.seedstockkeeper6.ui.theme.AppColors
 import java.time.LocalDate
 import java.time.YearMonth
 import kotlin.math.max
@@ -60,12 +59,9 @@ fun SeedCalendarGrouped(
     heightDp: Int = 140
 ) {
     val today = LocalDate.now()
-    // AppColors を使用する想定
-    val baseSowingColor = AppColors.sowingWithinExpiration
-    val baseHarvestColor = AppColors.harvestWithinExpiration
-    // または直接 MaterialTheme から
-    // val baseSowingColor = MaterialTheme.colorScheme.primary
-    // val baseHarvestColor = MaterialTheme.colorScheme.secondary
+    // MaterialTheme から直接取得
+    val baseSowingColor = MaterialTheme.colorScheme.primary
+    val baseHarvestColor = MaterialTheme.colorScheme.secondary
 
     val groupedBands = entries
         .groupBy { it.region }
@@ -141,12 +137,12 @@ fun SeedCalendarGroupedInternal(
     val density = LocalDensity.current
 
     // AppColors とテーマから必要な値を取得 (Composable 関数のトップレベル)
-    val actualTextPaintColor = AppColors.textPaintColor
-    val actualOutlineColor = AppColors.outline
-    val expiredColor = AppColors.expired
+    val actualTextPaintColor = MaterialTheme.colorScheme.onSurface
+    val actualOutlineColor = MaterialTheme.colorScheme.outline
+    val expiredColor = MaterialTheme.colorScheme.error
     // カレンダーの月背景色
-    val calendarMonthBackgroundWithinExpiration= AppColors.calendarMonthBackgroundWithinExpiration
-    val calendarMonthBackgroundExpired= AppColors.calendarMonthBackgroundExpired
+    val calendarMonthBackgroundWithinExpiration= MaterialTheme.colorScheme.surfaceVariant
+    val calendarMonthBackgroundExpired= MaterialTheme.colorScheme.errorContainer
     val calendarMonthBackground=MaterialTheme.colorScheme.surfaceVariant  // デフォルト背景
 
     val textPaintFontSize: TextUnit = MaterialTheme.typography.bodyMedium.fontSize // ← fontSizeをここで取得

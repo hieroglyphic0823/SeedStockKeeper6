@@ -16,6 +16,7 @@ import androidx.compose.ui.platform.LocalContext
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.example.seedstockkeeper6.ui.theme.ThemeFlavor
 import com.example.seedstockkeeper6.ui.theme.flavorColorScheme
+import com.example.seedstockkeeper6.ui.theme.*
 
 
 @Composable
@@ -133,6 +134,8 @@ val darkScheme = darkColorScheme(
     surfaceContainerHigh = surfaceContainerHighDark,
     surfaceContainerHighest = surfaceContainerHighestDark,
 )
+
+
 
 // ---------- Light Medium Contrast ----------
 private val mediumContrastLightColorScheme = lightColorScheme(
