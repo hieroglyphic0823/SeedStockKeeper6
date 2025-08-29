@@ -18,7 +18,7 @@ data class Palette(
     val onSurface: Color
 )
 
-enum class ThemeFlavor { Onion, OnionLightColors, Renkon, Forest }
+enum class ThemeFlavor { Onion, OnionLightColors, Renkon, Forest, SweetPotato, SweetP }
 
 // --- パレット定義 ---
 
@@ -122,19 +122,19 @@ fun flavorColorScheme(flavor: ThemeFlavor, dark: Boolean): ColorScheme {
             )
             generateColorScheme(keyColors, dark)
         }
-        else -> {
-            val p = Palettes.getValue(flavor)
-            val base = if (!dark) lightColorScheme() else darkColorScheme()
-            base.copy(
-                primary = p.primary, onPrimary = p.onPrimary,
-                primaryContainer = p.primaryContainer, onPrimaryContainer = p.onPrimaryContainer,
-                secondary = p.secondary, onSecondary = p.onSecondary,
-                secondaryContainer = p.secondaryContainer, onSecondaryContainer = p.onSecondaryContainer,
-                tertiary = p.tertiary, onTertiary = p.onTertiary,
-                background = p.background, surface = p.surface, surfaceVariant = p.surfaceVariant,
-                error = p.error, outline = p.outline,
-                onSurface = p.onSurface
-            )
+        ThemeFlavor.SweetPotato -> {
+            if (!dark) {
+                sweetPotatoLightScheme
+            } else {
+                sweetPotatoDarkScheme
+            }
+        }
+        ThemeFlavor.SweetP -> {
+            if (!dark) {
+                sweetPLightScheme
+            } else {
+                sweetPDarkScheme
+            }
         }
     }
 }

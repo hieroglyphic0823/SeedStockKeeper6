@@ -32,7 +32,7 @@ class MainActivity : ComponentActivity() {
             val navController = rememberNavController()
 
             SeedStockKeeper6Theme(
-                flavor = ThemeFlavor.Renkon, //Onion, OnionLightColors, Renkon, Forest  ← 試したい配色を指定（Onion/RenkonはColor.kt形式の色ファイルを使用）
+                flavor = ThemeFlavor.SweetP, //Onion, OnionLightColors, Renkon, Forest, SweetPotato, SweetP  ← 試したい配色を指定（Onion/Renkon/SweetPotato/SweetPはColor.kt形式の色ファイルを使用）
                 darkTheme = isSystemInDarkTheme(),
                 dynamicColor = false          // パレットを見たい時は false 推奨
             ) {

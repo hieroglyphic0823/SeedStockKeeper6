@@ -25,11 +25,11 @@ data class KeyColors(
  */
 fun generateLightColorScheme(keyColors: KeyColors): ColorScheme {
     return lightColorScheme(
-        // Primary colors
-        primary = keyColors.primary,
-        onPrimary = Color.White,
-        primaryContainer = keyColors.primary.copy(alpha = 0.9f),
-        onPrimaryContainer = keyColors.primary.copy(alpha = 0.1f),
+        // Primary colors - Material3 Key Colorルールに従う
+        primary = keyColors.primary, // トーン40（Key Color）
+        onPrimary = Color.White, // トーン100
+        primaryContainer = keyColors.primary.copy(alpha = 0.12f), // トーン90（薄い色）
+        onPrimaryContainer = keyColors.primary.copy(alpha = 0.9f), // トーン10（濃い色）
         
         // Secondary colors
         secondary = keyColors.secondary,
@@ -85,58 +85,58 @@ fun generateLightColorScheme(keyColors: KeyColors): ColorScheme {
  */
 fun generateDarkColorScheme(keyColors: KeyColors): ColorScheme {
     return darkColorScheme(
-        // Primary colors
-        primary = keyColors.primary.copy(alpha = 0.8f),
-        onPrimary = keyColors.primary.copy(alpha = 0.1f),
-        primaryContainer = keyColors.primary,
-        onPrimaryContainer = Color.White,
+        // Primary colors - Material3 Key Colorルールに従う
+        primary = keyColors.primary.copy(alpha = 0.8f), // トーン80（明るい色）
+        onPrimary = keyColors.primary.copy(alpha = 0.2f), // トーン20（濃い色）
+        primaryContainer = keyColors.primary.copy(alpha = 0.3f), // トーン30（濃い色）
+        onPrimaryContainer = keyColors.primary.copy(alpha = 0.9f), // トーン90（明るい色）
         
         // Secondary colors
-        secondary = keyColors.secondary.copy(alpha = 0.8f),
-        onSecondary = keyColors.secondary.copy(alpha = 0.1f),
-        secondaryContainer = keyColors.secondary,
-        onSecondaryContainer = Color.White,
+        secondary = keyColors.secondary.copy(alpha = 0.8f), // トーン80
+        onSecondary = keyColors.secondary.copy(alpha = 0.2f), // トーン20
+        secondaryContainer = keyColors.secondary.copy(alpha = 0.3f), // トーン30
+        onSecondaryContainer = keyColors.secondary.copy(alpha = 0.9f), // トーン90
         
         // Tertiary colors
-        tertiary = keyColors.tertiary.copy(alpha = 0.8f),
-        onTertiary = keyColors.tertiary.copy(alpha = 0.1f),
-        tertiaryContainer = keyColors.tertiary,
-        onTertiaryContainer = Color.White,
+        tertiary = keyColors.tertiary.copy(alpha = 0.8f), // トーン80
+        onTertiary = keyColors.tertiary.copy(alpha = 0.2f), // トーン20
+        tertiaryContainer = keyColors.tertiary.copy(alpha = 0.3f), // トーン30
+        onTertiaryContainer = keyColors.tertiary.copy(alpha = 0.9f), // トーン90
         
         // Error colors
-        error = keyColors.error.copy(alpha = 0.8f),
-        onError = keyColors.error.copy(alpha = 0.1f),
-        errorContainer = keyColors.error,
-        onErrorContainer = Color.White,
+        error = keyColors.error.copy(alpha = 0.8f), // トーン80
+        onError = keyColors.error.copy(alpha = 0.2f), // トーン20
+        errorContainer = keyColors.error.copy(alpha = 0.3f), // トーン30
+        onErrorContainer = keyColors.error.copy(alpha = 0.9f), // トーン90
         
         // Neutral colors (Surface, Background, etc.)
-        background = Color(0xFF121212),
-        onBackground = Color.White,
-        surface = Color(0xFF1E1E1E),
-        onSurface = Color.White,
-        surfaceVariant = Color(0xFF2D2D2D),
-        onSurfaceVariant = Color.White.copy(alpha = 0.7f),
+        background = Color(0xFF121212), // トーン6
+        onBackground = Color.White, // トーン90
+        surface = Color(0xFF1E1E1E), // トーン6
+        onSurface = Color.White, // トーン90
+        surfaceVariant = Color(0xFF2D2D2D), // トーン12
+        onSurfaceVariant = Color.White.copy(alpha = 0.7f), // トーン70
         
         // Outline colors
-        outline = Color.White.copy(alpha = 0.5f),
-        outlineVariant = Color.White.copy(alpha = 0.3f),
+        outline = Color.White.copy(alpha = 0.5f), // トーン50
+        outlineVariant = Color.White.copy(alpha = 0.3f), // トーン30
         
         // Inverse colors
-        inverseSurface = Color.White,
-        inverseOnSurface = keyColors.neutral,
-        inversePrimary = keyColors.primary,
+        inverseSurface = Color.White, // トーン90
+        inverseOnSurface = keyColors.neutral, // トーン10
+        inversePrimary = keyColors.primary, // トーン40
         
         // Scrim
         scrim = Color.Black.copy(alpha = 0.32f),
         
         // Surface container colors
-        surfaceDim = Color(0xFF121212),
-        surfaceBright = Color(0xFF2D2D2D),
-        surfaceContainerLowest = Color(0xFF0A0A0A),
-        surfaceContainerLow = Color(0xFF1A1A1A),
-        surfaceContainer = Color(0xFF1E1E1E),
-        surfaceContainerHigh = Color(0xFF2D2D2D),
-        surfaceContainerHighest = Color(0xFF383838)
+        surfaceDim = Color(0xFF121212), // トーン6
+        surfaceBright = Color(0xFF2D2D2D), // トーン24
+        surfaceContainerLowest = Color(0xFF0A0A0A), // トーン4
+        surfaceContainerLow = Color(0xFF1A1A1A), // トーン8
+        surfaceContainer = Color(0xFF1E1E1E), // トーン12
+        surfaceContainerHigh = Color(0xFF2D2D2D), // トーン17
+        surfaceContainerHighest = Color(0xFF383838) // トーン22
     )
 }
 

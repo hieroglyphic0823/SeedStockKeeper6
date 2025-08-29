@@ -33,3 +33,12 @@ object RenkonKeyColors {
     val neutral = Color(0xFF333333)      // ダークグレー
     val error = Color(0xFFBA1A1A)        // レッド
 }
+
+// ---------- SweetPotato Theme Key Colors ----------
+object SweetPotatoKeyColors {
+    val primary = Color(0xFFffdd3d)      // さつまいも色（メイン）
+    val secondary = Color(0xFF80725E)    // さつまいもの皮色
+    val tertiary = Color(0xFFD2A36C)     // さつまいもの茎色
+    val neutral = Color(0xFF211A13)      // ダークブラウン（テキスト用）
+    val error = Color(0xFF93000A)        // エラー色
+}
