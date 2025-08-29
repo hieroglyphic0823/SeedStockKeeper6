@@ -16,7 +16,6 @@ import androidx.compose.ui.platform.LocalContext
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.example.seedstockkeeper6.ui.theme.ThemeFlavor
 import com.example.seedstockkeeper6.ui.theme.flavorColorScheme
-import com.example.seedstockkeeper6.ui.theme.*
 
 
 @Composable
@@ -134,8 +133,6 @@ val darkScheme = darkColorScheme(
     surfaceContainerHigh = surfaceContainerHighDark,
     surfaceContainerHighest = surfaceContainerHighestDark,
 )
-
-
 
 // ---------- Light Medium Contrast ----------
 private val mediumContrastLightColorScheme = lightColorScheme(
@@ -352,3 +349,159 @@ fun AppTheme(
     content = content
   )
 }
+
+// ---------- Onion Light Scheme ----------
+val onionLightScheme = lightColorScheme(
+    primary = primaryOnionLight,
+    onPrimary = onPrimaryOnionLight,
+    primaryContainer = primaryContainerOnionLight,
+    onPrimaryContainer = onPrimaryContainerOnionLight,
+    secondary = secondaryOnionLight,
+    onSecondary = onSecondaryOnionLight,
+    secondaryContainer = secondaryContainerOnionLight,
+    onSecondaryContainer = onSecondaryContainerOnionLight,
+    tertiary = tertiaryOnionLight,
+    onTertiary = onTertiaryOnionLight,
+    tertiaryContainer = tertiaryContainerOnionLight,
+    onTertiaryContainer = onTertiaryContainerOnionLight,
+    error = errorOnionLight,
+    onError = onErrorOnionLight,
+    errorContainer = errorContainerOnionLight,
+    onErrorContainer = onErrorContainerOnionLight,
+    background = backgroundOnionLight,
+    onBackground = onBackgroundOnionLight,
+    surface = surfaceOnionLight,
+    onSurface = onSurfaceOnionLight,
+    surfaceVariant = surfaceVariantOnionLight,
+    onSurfaceVariant = onSurfaceVariantOnionLight,
+    outline = outlineOnionLight,
+    outlineVariant = outlineVariantOnionLight,
+    scrim = scrimOnionLight,
+    inverseSurface = inverseSurfaceOnionLight,
+    inverseOnSurface = inverseOnSurfaceOnionLight,
+    inversePrimary = inversePrimaryOnionLight,
+    surfaceDim = surfaceDimOnionLight,
+    surfaceBright = surfaceBrightOnionLight,
+    surfaceContainerLowest = surfaceContainerLowestOnionLight,
+    surfaceContainerLow = surfaceContainerLowOnionLight,
+    surfaceContainer = surfaceContainerOnionLight,
+    surfaceContainerHigh = surfaceContainerHighOnionLight,
+    surfaceContainerHighest = surfaceContainerHighestOnionLight,
+)
+
+// ---------- Onion Dark Scheme ----------
+val onionDarkScheme = darkColorScheme(
+    primary = primaryOnionDark,
+    onPrimary = onPrimaryOnionDark,
+    primaryContainer = primaryContainerOnionDark,
+    onPrimaryContainer = onPrimaryContainerOnionDark,
+    secondary = secondaryOnionDark,
+    onSecondary = onSecondaryOnionDark,
+    secondaryContainer = secondaryContainerOnionDark,
+    onSecondaryContainer = onSecondaryContainerOnionDark,
+    tertiary = tertiaryOnionDark,
+    onTertiary = onTertiaryOnionDark,
+    tertiaryContainer = tertiaryContainerOnionDark,
+    onTertiaryContainer = onTertiaryContainerOnionDark,
+    error = errorOnionDark,
+    onError = onErrorOnionDark,
+    errorContainer = errorContainerOnionDark,
+    onErrorContainer = onErrorContainerOnionDark,
+    background = backgroundOnionDark,
+    onBackground = onBackgroundOnionDark,
+    surface = surfaceOnionDark,
+    onSurface = onSurfaceOnionDark,
+    surfaceVariant = surfaceVariantOnionDark,
+    onSurfaceVariant = onSurfaceVariantOnionDark,
+    outline = outlineOnionDark,
+    outlineVariant = outlineVariantOnionDark,
+    scrim = scrimOnionDark,
+    inverseSurface = inverseSurfaceOnionDark,
+    inverseOnSurface = inverseOnSurfaceOnionDark,
+    inversePrimary = inversePrimaryOnionDark,
+    surfaceDim = surfaceDimOnionDark,
+    surfaceBright = surfaceBrightOnionDark,
+    surfaceContainerLowest = surfaceContainerLowestOnionDark,
+    surfaceContainerLow = surfaceContainerLowOnionDark,
+    surfaceContainer = surfaceContainerOnionDark,
+    surfaceContainerHigh = surfaceContainerHighOnionDark,
+    surfaceContainerHighest = surfaceContainerHighestOnionDark,
+)
+
+// ---------- Renkon Light Scheme ----------
+val renkonLightScheme = lightColorScheme(
+    primary = primaryRenkonLight,
+    onPrimary = onPrimaryRenkonLight,
+    primaryContainer = primaryContainerRenkonLight,
+    onPrimaryContainer = onPrimaryContainerRenkonLight,
+    secondary = secondaryRenkonLight,
+    onSecondary = onSecondaryRenkonLight,
+    secondaryContainer = secondaryContainerRenkonLight,
+    onSecondaryContainer = onSecondaryContainerRenkonLight,
+    tertiary = tertiaryRenkonLight,
+    onTertiary = onTertiaryRenkonLight,
+    tertiaryContainer = tertiaryContainerRenkonLight,
+    onTertiaryContainer = onTertiaryContainerRenkonLight,
+    error = errorRenkonLight,
+    onError = onErrorRenkonLight,
+    errorContainer = errorContainerRenkonLight,
+    onErrorContainer = onErrorContainerRenkonLight,
+    background = backgroundRenkonLight,
+    onBackground = onBackgroundRenkonLight,
+    surface = surfaceRenkonLight,
+    onSurface = onSurfaceRenkonLight,
+    surfaceVariant = surfaceVariantRenkonLight,
+    onSurfaceVariant = onSurfaceVariantRenkonLight,
+    outline = outlineRenkonLight,
+    outlineVariant = outlineVariantRenkonLight,
+    scrim = scrimRenkonLight,
+    inverseSurface = inverseSurfaceRenkonLight,
+    inverseOnSurface = inverseOnSurfaceRenkonLight,
+    inversePrimary = inversePrimaryRenkonLight,
+    surfaceDim = surfaceDimRenkonLight,
+    surfaceBright = surfaceBrightRenkonLight,
+    surfaceContainerLowest = surfaceContainerLowestRenkonLight,
+    surfaceContainerLow = surfaceContainerLowRenkonLight,
+    surfaceContainer = surfaceContainerRenkonLight,
+    surfaceContainerHigh = surfaceContainerHighRenkonLight,
+    surfaceContainerHighest = surfaceContainerHighestRenkonLight,
+)
+
+// ---------- Renkon Dark Scheme ----------
+val renkonDarkScheme = darkColorScheme(
+    primary = primaryRenkonDark,
+    onPrimary = onPrimaryRenkonDark,
+    primaryContainer = primaryContainerRenkonDark,
+    onPrimaryContainer = onPrimaryContainerRenkonDark,
+    secondary = secondaryRenkonDark,
+    onSecondary = onSecondaryRenkonDark,
+    secondaryContainer = secondaryContainerRenkonDark,
+    onSecondaryContainer = onSecondaryContainerRenkonDark,
+    tertiary = tertiaryRenkonDark,
+    onTertiary = onTertiaryRenkonDark,
+    tertiaryContainer = tertiaryContainerRenkonDark,
+    onTertiaryContainer = onTertiaryContainerRenkonDark,
+    error = errorRenkonDark,
+    onError = onErrorRenkonDark,
+    errorContainer = errorContainerRenkonDark,
+    onErrorContainer = onErrorContainerRenkonDark,
+    background = backgroundRenkonDark,
+    onBackground = onBackgroundRenkonDark,
+    surface = surfaceRenkonDark,
+    onSurface = onSurfaceRenkonDark,
+    surfaceVariant = surfaceVariantRenkonDark,
+    onSurfaceVariant = onSurfaceVariantRenkonDark,
+    outline = outlineRenkonDark,
+    outlineVariant = outlineVariantRenkonDark,
+    scrim = scrimRenkonDark,
+    inverseSurface = inverseSurfaceRenkonDark,
+    inverseOnSurface = inverseOnSurfaceRenkonDark,
+    inversePrimary = inversePrimaryRenkonDark,
+    surfaceDim = surfaceDimRenkonDark,
+    surfaceBright = surfaceBrightRenkonDark,
+    surfaceContainerLowest = surfaceContainerLowestRenkonDark,
+    surfaceContainerLow = surfaceContainerLowRenkonDark,
+    surfaceContainer = surfaceContainerRenkonDark,
+    surfaceContainerHigh = surfaceContainerHighRenkonDark,
+    surfaceContainerHighest = surfaceContainerHighestRenkonDark,
+)
