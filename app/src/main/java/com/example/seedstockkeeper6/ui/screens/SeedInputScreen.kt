@@ -108,11 +108,18 @@ fun SeedInputScreen(
     )
     
     // 地域選択ダイアログ
+    android.util.Log.d("SeedInputScreen", "RegionSelectionDialog呼び出し: showDialog=${viewModel.showRegionSelectionDialog}, regions=${viewModel.detectedRegions}")
     RegionSelectionDialog(
         showDialog = viewModel.showRegionSelectionDialog,
         regionList = viewModel.detectedRegions,
         ocrResult = viewModel.ocrResult,
+        croppedCalendarBitmap = viewModel.croppedCalendarBitmap,
+        editingCalendarEntry = viewModel.editingCalendarEntry,
         onRegionSelected = { viewModel.onRegionSelected(it) },
+        onStartEditing = { viewModel.startEditingCalendarEntry(it) },
+        onUpdateEditing = { viewModel.updateEditingCalendarEntry(it) },
+        onSaveEditing = { viewModel.saveEditingCalendarEntry() },
+        onCancelEditing = { viewModel.cancelEditingCalendarEntry() },
         onDismiss = { viewModel.onRegionSelectionDismiss() }
     )
     

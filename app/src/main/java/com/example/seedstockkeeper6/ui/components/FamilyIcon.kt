@@ -31,8 +31,8 @@ fun FamilyIcon(
     // 配色（Material3トークン準拠）
     containerColor: Color = MaterialTheme.colorScheme.onPrimary,
     contentColor: Color = MaterialTheme.colorScheme.onSurface,
-    badgeBgColor: Color = MaterialTheme.colorScheme.primary,
-    badgeTextColor: Color = MaterialTheme.colorScheme.onPrimary,
+    badgeBgColor: Color = MaterialTheme.colorScheme.onTertiaryContainer,
+    badgeTextColor: Color = MaterialTheme.colorScheme.tertiaryContainer,
     badgeBorderColor: Color = MaterialTheme.colorScheme.outline,
     badgeProtrusion: Dp = 8.dp                   // ← アイコン外へハミ出す量（+X, -Y）
 ) {

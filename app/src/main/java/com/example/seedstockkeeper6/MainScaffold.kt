@@ -51,6 +51,11 @@ fun MainScaffold(
     val scope = rememberCoroutineScope()
     val ctx = LocalContext.current
     
+    // 入力画面用のViewModel（条件付きで取得）
+    val inputViewModel: SeedInputViewModel? = if (isInputScreen && navBackStackEntry != null) {
+        viewModel(viewModelStoreOwner = navBackStackEntry!!)
+    } else null
+    
     // 全画面アニメーション用の状態
     var showSaveAnimation by remember { mutableStateOf(false) }
 
@@ -59,10 +64,10 @@ fun MainScaffold(
         topBar = {
             TopAppBar(
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                    actionIconContentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                    containerColor = MaterialTheme.colorScheme.secondary,
+                    titleContentColor = MaterialTheme.colorScheme.onSecondary,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onSecondary,
+                    actionIconContentColor = MaterialTheme.colorScheme.onSecondary
                 ),
                 navigationIcon = {
                     Box(
@@ -86,45 +91,6 @@ fun MainScaffold(
                 },
                 actions = {
                     when {
-                        // 入力画面 → 保存ボタン
-                        isInputScreen && navBackStackEntry != null -> {
-                            val inputViewModel: SeedInputViewModel = viewModel(
-                                viewModelStoreOwner = navBackStackEntry!!
-                            )
-                            IconButton(onClick = {
-                                // 全画面アニメーションを表示
-                                showSaveAnimation = true
-                                
-                                // アニメーション完了後に保存処理を実行
-                                scope.launch {
-                                    delay(1500) // アニメーション時間
-                                    showSaveAnimation = false
-                                    
-                                    inputViewModel.saveSeed(ctx) { result ->
-                                        scope.launch {
-                                            val message = if (result.isSuccess) {
-                                                navController.popBackStack()
-                                                "保存しました"
-                                            } else {
-                                                "保存に失敗しました: ${result.exceptionOrNull()?.localizedMessage ?: "不明なエラー"}"
-                                            }
-                                            snackbarHostState.showSnackbar(message)
-                                        }
-                                    }
-                                }
-                            }) {
-                                Box(
-                                    modifier = Modifier.padding(horizontal = 12.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        Icons.Filled.Save, 
-                                        contentDescription = "Save",
-                                        modifier = Modifier.size(32.dp)
-                                    )
-                                }
-                            }
-                        }
                         // 3) リスト画面で選択なし & DEBUG → 🐞デバッグボタン
                         isListScreen && selectedIds.isEmpty() && false -> { // デバッグボタンを無効化
                             IconButton(onClick = { navController.navigate("debugDetectOuter") }) {
@@ -141,12 +107,12 @@ fun MainScaffold(
                                     onClick = { /* 設定画面に遷移 */ },
                                     modifier = Modifier.size(32.dp)
                                 ) {
-                                                                         Icon(
-                                         Icons.Filled.Settings,
-                                         contentDescription = "設定",
-                                         tint = MaterialTheme.colorScheme.onSecondaryContainer,
-                                         modifier = Modifier.size(32.dp)
-                                     )
+                                    Icon(
+                                        Icons.Filled.Settings,
+                                        contentDescription = "設定",
+                                        tint = MaterialTheme.colorScheme.onSecondary,
+                                        modifier = Modifier.size(32.dp)
+                                    )
                                 }
                             }
                         }
@@ -156,8 +122,8 @@ fun MainScaffold(
         },
         bottomBar = {
             NavigationBar(
-                containerColor = MaterialTheme.colorScheme.surfaceContainer,
-                contentColor = MaterialTheme.colorScheme.onSurface
+                containerColor = MaterialTheme.colorScheme.secondary,
+                contentColor = MaterialTheme.colorScheme.onSecondary
             ) {
                 bottomNavItems.forEach { item ->
                                             NavigationBarItem(
@@ -176,10 +142,17 @@ fun MainScaffold(
                                                                                                  1 -> AnimatedIcon(
                                     icon = Icons.Filled.Search, 
                                     contentDescription = "検索",
-                                    tint = MaterialTheme.colorScheme.onSurface
+                                    tint = MaterialTheme.colorScheme.onSecondary
                                 )
                                  2 -> {
-                                    if (isListScreen && selectedIds.isNotEmpty()) {
+                                    if (isInputScreen) {
+                                        // 入力画面の時は保存アイコン
+                                        AnimatedIcon(
+                                            icon = Icons.Filled.Save, 
+                                            contentDescription = "保存",
+                                            tint = MaterialTheme.colorScheme.onSecondary
+                                        )
+                                    } else if (isListScreen && selectedIds.isNotEmpty()) {
                                         // チェックボックスがオンの時はゴミ箱アイコン
                                         Box(
                                             modifier = Modifier
@@ -202,7 +175,7 @@ fun MainScaffold(
                                         AnimatedIcon(
                                             icon = Icons.Filled.Add, 
                                             contentDescription = "追加",
-                                            tint = MaterialTheme.colorScheme.onSurface
+                                            tint = MaterialTheme.colorScheme.onSecondary
                                         )
                                     }
                                 }
@@ -223,7 +196,29 @@ fun MainScaffold(
                         onClick = {
                             when (item) {
                                 is BottomNavItem.Add -> {
-                                    if (isListScreen && selectedIds.isNotEmpty()) {
+                                    if (isInputScreen && inputViewModel != null) {
+                                        // 入力画面の時は保存処理
+                                        // 全画面アニメーションを表示
+                                        showSaveAnimation = true
+                                        
+                                        // アニメーション完了後に保存処理を実行
+                                        scope.launch {
+                                            delay(1500) // アニメーション時間
+                                            showSaveAnimation = false
+                                            
+                                            inputViewModel.saveSeed(ctx) { result ->
+                                                scope.launch {
+                                                    val message = if (result.isSuccess) {
+                                                        navController.popBackStack()
+                                                        "保存しました"
+                                                    } else {
+                                                        "保存に失敗しました: ${result.exceptionOrNull()?.localizedMessage ?: "不明なエラー"}"
+                                                    }
+                                                    snackbarHostState.showSnackbar(message)
+                                                }
+                                            }
+                                        }
+                                    } else if (isListScreen && selectedIds.isNotEmpty()) {
                                         // チェックボックスがオンの時は削除処理
                                         scope.launch {
                                             selectedIds.forEach { id ->

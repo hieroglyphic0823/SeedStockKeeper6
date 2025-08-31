@@ -67,6 +67,16 @@ class SeedInputViewModel : ViewModel() {
         private set
     var ocrResult by mutableStateOf<SeedPacket?>(null)
         private set
+    var croppedCalendarBitmap by mutableStateOf<Bitmap?>(null)
+        private set
+
+    // 地域選択ダイアログの編集用状態
+    var editingCalendarEntry by mutableStateOf<CalendarEntry?>(null)
+        private set
+    
+    // 地域選択後の編集モード状態
+    var isCalendarEditMode by mutableStateOf(false)
+        private set
 
     fun setSeed(seed: SeedPacket?) {
         packet = seed ?: SeedPacket()
@@ -281,12 +291,21 @@ class SeedInputViewModel : ViewModel() {
         
         // OCR結果を保存
         ocrResult = parsed
+        Log.d("RegionSelection", "OCR結果保存: ocrResult=$parsed")
         
         // 地域名を検出して地域選択ダイアログを表示
         val detectedRegions = extractRegionsFromOcrResult(parsed)
-        if (detectedRegions.isNotEmpty()) {
-            showRegionSelectionDialog(detectedRegions)
+        Log.d("RegionSelection", "地域検出結果: detectedRegions=$detectedRegions, isNotEmpty=${detectedRegions.isNotEmpty()}")
+        
+        // 地域が検出されていない場合はデフォルト地域リストを使用
+        val regionsToShow = if (detectedRegions.isNotEmpty()) {
+            detectedRegions
+        } else {
+            Log.d("RegionSelection", "地域が検出されませんでした。デフォルト地域リストを使用します")
+            listOf("北海道", "東北", "関東", "中部", "関西", "中国", "四国", "九州", "沖縄")
         }
+        
+        showRegionSelectionDialog(regionsToShow)
         
         // カレンダー切り抜きは毎回実行
         try {
@@ -594,6 +613,10 @@ class SeedInputViewModel : ViewModel() {
                 val height = bottom - top
 
                 val croppedBitmap = Bitmap.createBitmap(bmp, left, top, width, height)
+                
+                // 切り抜きされたカレンダー画像を保存
+                croppedCalendarBitmap = croppedBitmap
+                
                 val file = File(context.cacheDir, "cropped_${System.currentTimeMillis()}.jpg")
                 FileOutputStream(file).use {
                     croppedBitmap.compress(Bitmap.CompressFormat.JPEG, 90, it)
@@ -606,9 +629,11 @@ class SeedInputViewModel : ViewModel() {
                 Log.d("MLCrop", "新規登録で切り抜き追加成功")
             } else {
                 Log.w("MLCrop", "新規登録：有効なカレンダー検出なし")
+                croppedCalendarBitmap = null
             }
         } catch (e: Exception) {
             Log.e("MLCrop", "新規登録中の切り抜き失敗", e)
+            croppedCalendarBitmap = null
         }
     }
     private val seedOuterDetector: ObjectDetector by lazy {
@@ -1159,16 +1184,22 @@ class SeedInputViewModel : ViewModel() {
 
     // 地域選択関連のメソッド
     fun showRegionSelectionDialog(regions: List<String>) {
+        Log.d("RegionSelection", "showRegionSelectionDialog呼び出し: regions=$regions")
         detectedRegions.clear()
         detectedRegions.addAll(regions)
         showRegionSelectionDialog = true
+        Log.d("RegionSelection", "showRegionSelectionDialog設定完了: showRegionSelectionDialog=$showRegionSelectionDialog")
     }
 
     fun onRegionSelected(region: String) {
+        Log.d("RegionSelection", "onRegionSelected開始: $region")
         selectedRegion = region
         showRegionSelectionDialog = false
         // 選択された地域でカレンダーエントリを更新
         updateCalendarWithSelectedRegion(region)
+        // 編集モードを有効にする
+        isCalendarEditMode = true
+        Log.d("RegionSelection", "地域選択完了: $region, 編集モード: $isCalendarEditMode, カレンダーサイズ: ${packet.calendar?.size}")
     }
 
     fun onRegionSelectionDismiss() {
@@ -1182,6 +1213,7 @@ class SeedInputViewModel : ViewModel() {
         if (selectedRegionEntry != null) {
             // OCR結果から該当地域の情報を適用
             packet = packet.copy(calendar = listOf(selectedRegionEntry))
+            Log.d("RegionSelection", "OCR結果から地域情報を適用: $region")
         } else {
             // OCR結果に該当地域がない場合は空のエントリを作成
             val newCalendarEntry = CalendarEntry(
@@ -1196,21 +1228,62 @@ class SeedInputViewModel : ViewModel() {
                 harvest_end_stage = ""
             )
             packet = packet.copy(calendar = listOf(newCalendarEntry))
+            Log.d("RegionSelection", "新規カレンダーエントリを作成: $region")
         }
     }
 
     private fun extractRegionsFromOcrResult(parsed: SeedPacket): List<String> {
         val regions = mutableListOf<String>()
         
+        Log.d("RegionSelection", "extractRegionsFromOcrResult開始: parsed.calendar=${parsed.calendar}")
+        
         // カレンダーエントリから地域名を抽出
         parsed.calendar?.forEach { entry ->
+            Log.d("RegionSelection", "カレンダーエントリ確認: region='${entry.region}', isNotEmpty=${entry.region.isNotEmpty()}")
             if (entry.region.isNotEmpty()) {
                 regions.add(entry.region)
             }
         }
         
         // 重複を除去して返す
-        return regions.distinct()
+        val distinctRegions = regions.distinct()
+        Log.d("RegionSelection", "extractRegionsFromOcrResult完了: regions=$distinctRegions")
+        return distinctRegions
+    }
+
+    // 地域選択ダイアログの編集用メソッド
+    fun startEditingCalendarEntry(entry: CalendarEntry) {
+        editingCalendarEntry = entry.copy()
+    }
+
+    fun updateEditingCalendarEntry(updatedEntry: CalendarEntry) {
+        editingCalendarEntry = updatedEntry
+    }
+
+    fun saveEditingCalendarEntry() {
+        editingCalendarEntry?.let { entry ->
+            // OCR結果を更新
+            ocrResult?.let { result ->
+                val updatedCalendar = result.calendar.map { 
+                    if (it.region == entry.region) entry else it 
+                }
+                ocrResult = result.copy(calendar = updatedCalendar)
+            }
+            
+            // パケットのカレンダーも更新
+            packet = packet.copy(calendar = listOf(entry))
+            
+            // 編集状態をクリア
+            editingCalendarEntry = null
+        }
+    }
+
+    fun cancelEditingCalendarEntry() {
+        editingCalendarEntry = null
+    }
+
+    fun exitCalendarEditMode() {
+        isCalendarEditMode = false
     }
 
 }

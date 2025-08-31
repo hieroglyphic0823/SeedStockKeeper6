@@ -159,7 +159,7 @@ fun SeedListScreen(
                                     modifier = Modifier
                                         .size(16.dp)
                                         .background(
-                                            color = MaterialTheme.colorScheme.primary,
+                                            color = MaterialTheme.colorScheme.onTertiaryContainer,
                                             shape = CircleShape
                                         ),
                                     contentAlignment = androidx.compose.ui.Alignment.Center
@@ -167,7 +167,7 @@ fun SeedListScreen(
                                     Text(
                                         text = "C",
                                         style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.onPrimary,
+                                        color = MaterialTheme.colorScheme.tertiaryContainer,
                                         fontWeight = FontWeight.Bold
                                     )
                                 }
