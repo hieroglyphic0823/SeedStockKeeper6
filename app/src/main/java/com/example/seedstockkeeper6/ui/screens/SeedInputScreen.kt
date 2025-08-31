@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.navigation.NavController
 import com.example.seedstockkeeper6.ui.components.AIDiffDialog
+import com.example.seedstockkeeper6.ui.components.RegionSelectionDialog
 import com.example.seedstockkeeper6.viewmodel.SeedInputViewModel
 
 // 分離したコンポーネントのインポート
@@ -39,14 +40,42 @@ fun SeedInputScreen(
             // 画像管理セクション
             ImageManagementSection(viewModel)
             
+            // 区切り線
+            HorizontalDivider(
+                color = MaterialTheme.colorScheme.outlineVariant,
+                thickness = 1.dp,
+                modifier = Modifier.padding(vertical = 16.dp)
+            )
+            
             // 基本情報セクション
             BasicInfoSection(viewModel)
+            
+            // 区切り線
+            HorizontalDivider(
+                color = MaterialTheme.colorScheme.outlineVariant,
+                thickness = 1.dp,
+                modifier = Modifier.padding(vertical = 16.dp)
+            )
             
             // カレンダーセクション
             CalendarSection(viewModel)
             
+            // 区切り線
+            HorizontalDivider(
+                color = MaterialTheme.colorScheme.outlineVariant,
+                thickness = 1.dp,
+                modifier = Modifier.padding(vertical = 16.dp)
+            )
+            
             // 栽培情報セクション
             CultivationInfoSection(viewModel)
+            
+            // 区切り線
+            HorizontalDivider(
+                color = MaterialTheme.colorScheme.outlineVariant,
+                thickness = 1.dp,
+                modifier = Modifier.padding(vertical = 16.dp)
+            )
             
             // コンパニオンプランツセクション
             CompanionPlantsSection(viewModel)
@@ -76,6 +105,15 @@ fun SeedInputScreen(
         diffList = viewModel.aiDiffList,
         onConfirm = { viewModel.applyAIDiffResult() },
         onDismiss = { viewModel.onAIDiffDialogDismiss() }
+    )
+    
+    // 地域選択ダイアログ
+    RegionSelectionDialog(
+        showDialog = viewModel.showRegionSelectionDialog,
+        regionList = viewModel.detectedRegions,
+        ocrResult = viewModel.ocrResult,
+        onRegionSelected = { viewModel.onRegionSelected(it) },
+        onDismiss = { viewModel.onRegionSelectionDismiss() }
     )
     
     // 画像拡大表示ダイアログ

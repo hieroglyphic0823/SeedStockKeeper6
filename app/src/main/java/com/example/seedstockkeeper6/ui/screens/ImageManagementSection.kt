@@ -179,21 +179,19 @@ fun ImageManagementSection(viewModel: SeedInputViewModel) {
     }
 
     // 操作ボタンセクション
-    Card(
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer,
-            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-        ),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp)
     ) {
+        Text(
+            "画像管理",
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
+        
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -208,8 +206,8 @@ fun ImageManagementSection(viewModel: SeedInputViewModel) {
                 enabled = viewModel.imageUris.isNotEmpty(),
                 modifier = Modifier.wrapContentWidth(), // 横幅を詰める
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    containerColor = MaterialTheme.colorScheme.secondary,
+                    contentColor = MaterialTheme.colorScheme.onSecondary,
                     disabledContainerColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
                     disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
                 )

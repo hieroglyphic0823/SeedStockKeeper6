@@ -47,7 +47,7 @@ fun AccountMenuButton(
                     imageVector = Icons.Outlined.AccountCircle,
                     contentDescription = "プロフィール",
                     modifier = Modifier.size(size),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    tint = MaterialTheme.colorScheme.onSurface
                 )
             }
         }

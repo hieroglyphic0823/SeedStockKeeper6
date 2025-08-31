@@ -10,31 +10,65 @@ import com.example.seedstockkeeper6.viewmodel.SeedInputViewModel
 
 @Composable
 fun BasicInfoSection(viewModel: SeedInputViewModel) {
-    Card(
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-            contentColor = MaterialTheme.colorScheme.onSurface
-        ),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
+        Text(
+            "基本情報",
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
+        
+        OutlinedTextField(
+            value = viewModel.packet.productName,
+            onValueChange = viewModel::onProductNameChange,
+            label = { Text("商品名") },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                focusedLabelColor = MaterialTheme.colorScheme.primary,
+                unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        )
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        OutlinedTextField(
+            value = viewModel.packet.variety,
+            onValueChange = viewModel::onVarietyChange,
+            label = { Text("品種") },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                focusedLabelColor = MaterialTheme.colorScheme.primary,
+                unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        )
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        FamilySelector(
+            value = viewModel.packet.family,
+            onValueChange = viewModel::onFamilyChange
+        )
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp) // 2つの間隔
         ) {
-            Text(
-                "基本情報",
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(bottom = 12.dp)
-            )
-            
             OutlinedTextField(
-                value = viewModel.packet.productName,
-                onValueChange = viewModel::onProductNameChange,
-                label = { Text("商品名") },
-                modifier = Modifier.fillMaxWidth(),
+                value = viewModel.packet.expirationYear.toString(),
+                onValueChange = viewModel::onExpirationYearChange,
+                label = { Text("有効期限(年)") },
+                modifier = Modifier.weight(1f),
                 singleLine = true,
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = MaterialTheme.colorScheme.primary,
@@ -43,12 +77,11 @@ fun BasicInfoSection(viewModel: SeedInputViewModel) {
                     unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             )
-            
             OutlinedTextField(
-                value = viewModel.packet.variety,
-                onValueChange = viewModel::onVarietyChange,
-                label = { Text("品種") },
-                modifier = Modifier.fillMaxWidth(),
+                value = viewModel.packet.expirationMonth.toString(),
+                onValueChange = viewModel::onExpirationMonthChange,
+                label = { Text("有効期限(月)") },
+                modifier = Modifier.weight(1f),
                 singleLine = true,
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = MaterialTheme.colorScheme.primary,
@@ -57,43 +90,6 @@ fun BasicInfoSection(viewModel: SeedInputViewModel) {
                     unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             )
-            
-            FamilySelector(
-                value = viewModel.packet.family,
-                onValueChange = viewModel::onFamilyChange
-            )
-            
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp) // 2つの間隔
-            ) {
-                OutlinedTextField(
-                    value = viewModel.packet.expirationYear.toString(),
-                    onValueChange = viewModel::onExpirationYearChange,
-                    label = { Text("有効期限(年)") },
-                    modifier = Modifier.weight(1f),
-                    singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.outline,
-                        focusedLabelColor = MaterialTheme.colorScheme.primary,
-                        unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                )
-                OutlinedTextField(
-                    value = viewModel.packet.expirationMonth.toString(),
-                    onValueChange = viewModel::onExpirationMonthChange,
-                    label = { Text("有効期限(月)") },
-                    modifier = Modifier.weight(1f),
-                    singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.outline,
-                        focusedLabelColor = MaterialTheme.colorScheme.primary,
-                        unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                )
-            }
         }
     }
 }

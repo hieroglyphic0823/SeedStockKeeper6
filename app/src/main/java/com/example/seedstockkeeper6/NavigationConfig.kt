@@ -26,17 +26,12 @@ sealed class BottomNavItem(
         title = "カレンダー",
         iconRes = 3
     )
-    object Settings : BottomNavItem(
-        route = "settings",
-        title = "設定",
-        iconRes = 4
-    )
+
 }
 
 val bottomNavItems = listOf(
     BottomNavItem.Home,
     BottomNavItem.Search,
     BottomNavItem.Add,
-    BottomNavItem.Calendar,
-    BottomNavItem.Settings
+    BottomNavItem.Calendar
 )

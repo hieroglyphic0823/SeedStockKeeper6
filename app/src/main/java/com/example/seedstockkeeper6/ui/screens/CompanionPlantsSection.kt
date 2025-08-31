@@ -17,28 +17,23 @@ import com.example.seedstockkeeper6.viewmodel.SeedInputViewModel
 
 @Composable
 fun CompanionPlantsSection(viewModel: SeedInputViewModel) {
-    // --- コンパニオンプランツ表示＆追加部 ---
-    Text("コンパニオンプランツと効果", style = MaterialTheme.typography.titleMedium)
-    viewModel.packet.companionPlants.forEachIndexed { i, companion ->
-        Card(
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surface,
-                contentColor = MaterialTheme.colorScheme.onSurface,
-                disabledContainerColor = MaterialTheme.colorScheme.surface,
-                disabledContentColor = MaterialTheme.colorScheme.onSurface
-            ),
-            elevation = CardDefaults.cardElevation(
-                defaultElevation = 1.dp,
-                pressedElevation = 2.dp,
-                focusedElevation = 1.dp,
-                hoveredElevation = 1.dp
-            ),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 4.dp)
-        ) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp)
+    ) {
+        // --- コンパニオンプランツ表示＆追加部 ---
+        Text(
+            "コンパニオンプランツと効果", 
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
+        
+        viewModel.packet.companionPlants.forEachIndexed { i, companion ->
             Row(
-                Modifier.padding(8.dp),
+                Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
@@ -52,9 +47,11 @@ fun CompanionPlantsSection(viewModel: SeedInputViewModel) {
                 CompanionEffectIcon(companion.effects)
             }
         }
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        CompanionPlantInputSection(viewModel)
     }
-    
-    CompanionPlantInputSection(viewModel)
 }
 
 @Composable

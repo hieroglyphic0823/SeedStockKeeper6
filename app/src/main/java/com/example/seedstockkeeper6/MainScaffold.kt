@@ -59,29 +59,31 @@ fun MainScaffold(
         topBar = {
             TopAppBar(
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary,
-                    actionIconContentColor = MaterialTheme.colorScheme.onPrimary
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    titleContentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                    actionIconContentColor = MaterialTheme.colorScheme.onSecondaryContainer
                 ),
                 navigationIcon = {
                     Box(
-                        modifier = Modifier
-                            .size(48.dp) // 丸の大きさ（アイコンより少し大きめ）
-                                                    .background(
-                            color = MaterialTheme.colorScheme.primary, // Material 3準拠
-                            shape = CircleShape
-                        ),
-                        contentAlignment = Alignment.Center // アイコンを真ん中に配置
+                        modifier = Modifier.padding(horizontal = 12.dp),
+                        contentAlignment = Alignment.Center
                     ) {
                         AccountMenuButton(
                             user = user,
-                            size = 38.dp, // 中のアイコンを少し小さめに
+                            size = 32.dp, // BottomToolBarのアイコンと同じサイズ
                             onSignOut = { signOut(ctx, scope) }
                         )
                     }
                 },
-                title = { Text("たねすけさん") },
+                title = { 
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("たねすけさん")
+                    }
+                },
                 actions = {
                     when {
                         // 入力画面 → 保存ボタン
@@ -111,7 +113,16 @@ fun MainScaffold(
                                     }
                                 }
                             }) {
-                                Icon(Icons.Filled.Save, contentDescription = "Save")
+                                Box(
+                                    modifier = Modifier.padding(horizontal = 12.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        Icons.Filled.Save, 
+                                        contentDescription = "Save",
+                                        modifier = Modifier.size(32.dp)
+                                    )
+                                }
                             }
                         }
                         // 3) リスト画面で選択なし & DEBUG → 🐞デバッグボタン
@@ -120,18 +131,41 @@ fun MainScaffold(
                                 Icon(Icons.Outlined.BugReport, contentDescription = "Debug: Detect Outer")
                             }
                         }
-                        else -> Unit
+                        else -> {
+                            // 設定アイコン（常に表示）
+                            Box(
+                                modifier = Modifier.padding(horizontal = 12.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                IconButton(
+                                    onClick = { /* 設定画面に遷移 */ },
+                                    modifier = Modifier.size(32.dp)
+                                ) {
+                                                                         Icon(
+                                         Icons.Filled.Settings,
+                                         contentDescription = "設定",
+                                         tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                                         modifier = Modifier.size(32.dp)
+                                     )
+                                }
+                            }
+                        }
                     }
                 }
             )
         },
         bottomBar = {
             NavigationBar(
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
+                containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                contentColor = MaterialTheme.colorScheme.onSurface
             ) {
                 bottomNavItems.forEach { item ->
-                    NavigationBarItem(
+                                            NavigationBarItem(
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = MaterialTheme.colorScheme.tertiary,
+                                selectedTextColor = MaterialTheme.colorScheme.tertiary,
+                                indicatorColor = MaterialTheme.colorScheme.primaryContainer
+                            ),
                         icon = { 
                             when (item.iconRes) {
                                 0 -> AnimatedIcon(
@@ -139,11 +173,11 @@ fun MainScaffold(
                                     contentDescription = "ホーム",
                                     tint = Color.Unspecified
                                 )
-                                                                 1 -> AnimatedIcon(
-                                     icon = Icons.Filled.Search, 
-                                     contentDescription = "検索",
-                                     tint = MaterialTheme.colorScheme.onPrimary
-                                 )
+                                                                                                 1 -> AnimatedIcon(
+                                    icon = Icons.Filled.Search, 
+                                    contentDescription = "検索",
+                                    tint = MaterialTheme.colorScheme.onSurface
+                                )
                                  2 -> {
                                     if (isListScreen && selectedIds.isNotEmpty()) {
                                         // チェックボックスがオンの時はゴミ箱アイコン
@@ -168,7 +202,7 @@ fun MainScaffold(
                                         AnimatedIcon(
                                             icon = Icons.Filled.Add, 
                                             contentDescription = "追加",
-                                            tint = MaterialTheme.colorScheme.onPrimary
+                                            tint = MaterialTheme.colorScheme.onSurface
                                         )
                                     }
                                 }
@@ -177,11 +211,7 @@ fun MainScaffold(
                                      contentDescription = "カレンダー",
                                      tint = Color.Unspecified
                                  )
-                                 4 -> AnimatedIcon(
-                                     icon = Icons.Filled.Settings, 
-                                     contentDescription = "設定",
-                                     tint = MaterialTheme.colorScheme.onPrimary
-                                 )
+                                
                                 else -> AnimatedIcon(
                                     painter = painterResource(id = com.example.seedstockkeeper6.R.drawable.indoor_plants), 
                                     contentDescription = "ホーム",

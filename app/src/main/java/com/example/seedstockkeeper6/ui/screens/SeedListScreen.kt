@@ -2,7 +2,9 @@ package com.example.seedstockkeeper6.ui.screens
 
 import android.util.Log
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -10,7 +12,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -18,7 +22,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.text.font.FontWeight
@@ -102,57 +108,100 @@ fun SeedListScreen(
         items(seeds) { (id, seed) ->
             val checked = selectedIds.contains(id)
             val encodedSeed = URLEncoder.encode(Gson().toJson(seed), StandardCharsets.UTF_8.toString())
-            Card(
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    contentColor = MaterialTheme.colorScheme.onSurface,
-                    disabledContainerColor = MaterialTheme.colorScheme.surface,
-                    disabledContentColor = MaterialTheme.colorScheme.onSurface
-                ),
-                shape = RoundedCornerShape(16.dp), // 角丸
-                elevation = CardDefaults.cardElevation(
-                    defaultElevation = 6.dp,
-                    pressedElevation = 8.dp,
-                    focusedElevation = 6.dp,
-                    hoveredElevation = 6.dp
-                ),
+            
+            // リストアイテム
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 12.dp, vertical = 8.dp) // 外側余白
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
                     .clickable {
                         navController.navigate("input/$encodedSeed")
-                    }
+                    },
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
             ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    val rotation  = familyRotationMinYearsLabel(seed.family) ?: ""
-                    FamilyIcon(
-                        family = seed.family,
-                        size = 60.dp,
-                        cornerRadius = 10.dp,
-                        rotationLabel = rotation,
-                        badgeProtrusion = 6.dp  // はみ出し量を調整（6–10dpくらいが目安）
+                val rotation = familyRotationMinYearsLabel(seed.family) ?: ""
+                FamilyIcon(
+                    family = seed.family,
+                    size = 50.dp,
+                    cornerRadius = 8.dp,
+                    rotationLabel = rotation,
+                    badgeProtrusion = 4.dp
+                )
+                Spacer(modifier = Modifier.width(16.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        "${seed.productName} (${seed.variety})", 
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Normal)
                     )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text("${seed.productName} (${seed.variety})", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Normal))
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        "有効期限: ${seed.expirationYear}年 ${seed.expirationMonth}月", 
+                        style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Light),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    
+                    // コンパニオンプランツの表示
+                    if (seed.companionPlants.isNotEmpty()) {
                         Spacer(modifier = Modifier.height(4.dp))
-                        Text("有効期限: ${seed.expirationYear}年 ${seed.expirationMonth}月", style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Light))
+                        val companionPlantNames = seed.companionPlants
+                            .filter { it.plant.isNotBlank() }
+                            .map { it.plant }
+                            .take(3) // 最大3つまで表示
+                        
+                        if (companionPlantNames.isNotEmpty()) {
+                            Row(
+                                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                // Cを丸で囲ったアイコン
+                                Box(
+                                    modifier = Modifier
+                                        .size(16.dp)
+                                        .background(
+                                            color = MaterialTheme.colorScheme.primary,
+                                            shape = CircleShape
+                                        ),
+                                    contentAlignment = androidx.compose.ui.Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "C",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onPrimary,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                                
+                                // コンパニオンプランツ名
+                                Text(
+                                    "${companionPlantNames.joinToString(", ")}${if (seed.companionPlants.size > 3) "..." else ""}",
+                                    style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Light),
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
                     }
-                    Checkbox(
-                        checked = checked,
-                        onCheckedChange = {
-                            if (it) selectedIds.add(id) else selectedIds.remove(id)
-                        },
-                        colors = androidx.compose.material3.CheckboxDefaults.colors(
-                            checkedColor = MaterialTheme.colorScheme.primary,
-                            uncheckedColor = MaterialTheme.colorScheme.outline,
-                            checkmarkColor = MaterialTheme.colorScheme.onPrimary
-                        )
-                    )
                 }
+                Checkbox(
+                    checked = checked,
+                    onCheckedChange = {
+                        if (it) selectedIds.add(id) else selectedIds.remove(id)
+                    },
+                    colors = androidx.compose.material3.CheckboxDefaults.colors(
+                        checkedColor = MaterialTheme.colorScheme.primary,
+                        uncheckedColor = MaterialTheme.colorScheme.outline,
+                        checkmarkColor = MaterialTheme.colorScheme.onPrimary
+                    )
+                )
+            }
+            
+            // 区切り線（最後のアイテム以外）
+            if (seeds.indexOf(id to seed) < seeds.size - 1) {
+                HorizontalDivider(
+                    color = MaterialTheme.colorScheme.outlineVariant,
+                    thickness = 1.dp,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
             }
         }
     }
