@@ -14,7 +14,6 @@ fun CalendarEntryDisplay(entry: com.example.seedstockkeeper6.model.CalendarEntry
             Text(
                 "播種期間: ${entry.sowing_start}月${if (entry.sowing_start_stage.isNotEmpty()) "(${entry.sowing_start_stage})" else ""} ～ ${entry.sowing_end}月${if (entry.sowing_end_stage.isNotEmpty()) "(${entry.sowing_end_stage})" else ""}",
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 8.dp)
             )
         }
@@ -24,7 +23,6 @@ fun CalendarEntryDisplay(entry: com.example.seedstockkeeper6.model.CalendarEntry
             Text(
                 "収穫期間: ${entry.harvest_start}月${if (entry.harvest_start_stage.isNotEmpty()) "(${entry.harvest_start_stage})" else ""} ～ ${entry.harvest_end}月${if (entry.harvest_end_stage.isNotEmpty()) "(${entry.harvest_end_stage})" else ""}",
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 4.dp)
             )
         }
@@ -35,7 +33,6 @@ fun CalendarEntryDisplay(entry: com.example.seedstockkeeper6.model.CalendarEntry
             Text(
                 "播種・収穫期間の情報がありません",
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 8.dp)
             )
         }

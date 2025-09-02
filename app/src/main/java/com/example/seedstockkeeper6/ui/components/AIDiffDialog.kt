@@ -39,7 +39,7 @@ fun AIDiffDialog(
                             Text(label, style = MaterialTheme.typography.labelSmall)
                             Row(Modifier.fillMaxWidth()) {
                                 Text("現: $current", modifier = Modifier.weight(1f), color = Color.Gray)
-                                Text("新: $ai", modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.primary)
+                                Text("新: $ai", modifier = Modifier.weight(1f))
                             }
                         }
                     }

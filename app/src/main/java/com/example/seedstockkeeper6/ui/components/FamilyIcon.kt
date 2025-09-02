@@ -28,12 +28,6 @@ fun FamilyIcon(
     size: Dp = 40.dp,
     cornerRadius: Dp = 10.dp, // ← 角丸。四角なら 0.dp
     rotationLabel: String? = null, // ← 右上に出す「連作年数」など（例: "3年" / "3"）
-    // 配色（Material3トークン準拠）
-    containerColor: Color = MaterialTheme.colorScheme.onPrimary,
-    contentColor: Color = MaterialTheme.colorScheme.onSurface,
-    badgeBgColor: Color = MaterialTheme.colorScheme.onTertiaryContainer,
-    badgeTextColor: Color = MaterialTheme.colorScheme.tertiaryContainer,
-    badgeBorderColor: Color = MaterialTheme.colorScheme.outline,
     badgeProtrusion: Dp = 8.dp                   // ← アイコン外へハミ出す量（+X, -Y）
 ) {
     val normalized = normalizeFamilyName(family)
@@ -57,8 +51,8 @@ fun FamilyIcon(
     Box(modifier = Modifier.size(size)) {
         // 本体（四角いタイル）
         Surface(
-            color = containerColor,
-            contentColor = contentColor,
+            color = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
             shape = RoundedCornerShape(cornerRadius),
             tonalElevation = 0.dp,
             shadowElevation = 0.dp,
@@ -82,10 +76,10 @@ fun FamilyIcon(
         val labelText = rotationLabel?.trim().orEmpty()
         if (labelText.isNotEmpty()) {
             Surface(
-                color = badgeBgColor.copy(alpha = 0.95f),
-                contentColor = badgeTextColor,
+                color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.95f),
+                contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
                 shape = RoundedCornerShape(6.dp),
-                border = BorderStroke(1.dp, badgeBorderColor),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
                 tonalElevation = 0.dp,
                 shadowElevation = 0.dp,
                 modifier = Modifier

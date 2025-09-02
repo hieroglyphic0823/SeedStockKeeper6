@@ -187,7 +187,7 @@ fun SignInScreen(modifier: Modifier = Modifier) {
         }
         message?.let {
             Spacer(Modifier.height(12.dp))
-            Text(it, color = MaterialTheme.colorScheme.error)
+            Text(it)
         }
     }
 }

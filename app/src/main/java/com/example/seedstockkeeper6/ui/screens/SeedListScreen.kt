@@ -137,8 +137,7 @@ fun SeedListScreen(
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         "有効期限: ${seed.expirationYear}年 ${seed.expirationMonth}月", 
-                        style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Light),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Light)
                     )
                     
                     // コンパニオンプランツの表示
@@ -159,7 +158,7 @@ fun SeedListScreen(
                                     modifier = Modifier
                                         .size(16.dp)
                                         .background(
-                                            color = MaterialTheme.colorScheme.onTertiaryContainer,
+                                            color = MaterialTheme.colorScheme.primary,
                                             shape = CircleShape
                                         ),
                                     contentAlignment = androidx.compose.ui.Alignment.Center
@@ -167,7 +166,6 @@ fun SeedListScreen(
                                     Text(
                                         text = "C",
                                         style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.tertiaryContainer,
                                         fontWeight = FontWeight.Bold
                                     )
                                 }
@@ -175,8 +173,8 @@ fun SeedListScreen(
                                 // コンパニオンプランツ名
                                 Text(
                                     "${companionPlantNames.joinToString(", ")}${if (seed.companionPlants.size > 3) "..." else ""}",
-                                    style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Light),
-                                    color = MaterialTheme.colorScheme.primary
+                                    style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Light)
+
                                 )
                             }
                         }
@@ -198,7 +196,6 @@ fun SeedListScreen(
             // 区切り線（最後のアイテム以外）
             if (seeds.indexOf(id to seed) < seeds.size - 1) {
                 HorizontalDivider(
-                    color = MaterialTheme.colorScheme.outlineVariant,
                     thickness = 1.dp,
                     modifier = Modifier.padding(horizontal = 16.dp)
                 )

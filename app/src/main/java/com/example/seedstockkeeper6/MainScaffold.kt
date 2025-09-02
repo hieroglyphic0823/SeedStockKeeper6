@@ -158,7 +158,7 @@ fun MainScaffold(
                                             modifier = Modifier
                                                 .size(48.dp)
                                                 .background(
-                                                    color = MaterialTheme.colorScheme.error,
+                                                    color= MaterialTheme.colorScheme.onSurface,
                                                     shape = CircleShape
                                                 ),
                                             contentAlignment = Alignment.Center
@@ -166,7 +166,7 @@ fun MainScaffold(
                                             Icon(
                                                 imageVector = Icons.Filled.Delete,
                                                 contentDescription = "削除",
-                                                tint = MaterialTheme.colorScheme.onError,
+
                                                 modifier = Modifier.size(24.dp)
                                             )
                                         }

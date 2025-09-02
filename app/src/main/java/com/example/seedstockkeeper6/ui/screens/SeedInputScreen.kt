@@ -42,7 +42,6 @@ fun SeedInputScreen(
             
             // 区切り線
             HorizontalDivider(
-                color = MaterialTheme.colorScheme.outlineVariant,
                 thickness = 1.dp,
                 modifier = Modifier.padding(vertical = 16.dp)
             )
@@ -52,7 +51,6 @@ fun SeedInputScreen(
             
             // 区切り線
             HorizontalDivider(
-                color = MaterialTheme.colorScheme.outlineVariant,
                 thickness = 1.dp,
                 modifier = Modifier.padding(vertical = 16.dp)
             )
@@ -62,7 +60,6 @@ fun SeedInputScreen(
             
             // 区切り線
             HorizontalDivider(
-                color = MaterialTheme.colorScheme.outlineVariant,
                 thickness = 1.dp,
                 modifier = Modifier.padding(vertical = 16.dp)
             )
@@ -72,7 +69,6 @@ fun SeedInputScreen(
             
             // 区切り線
             HorizontalDivider(
-                color = MaterialTheme.colorScheme.outlineVariant,
                 thickness = 1.dp,
                 modifier = Modifier.padding(vertical = 16.dp)
             )
