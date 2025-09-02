@@ -32,13 +32,13 @@ class MainActivity : ComponentActivity() {
             val navController = rememberNavController()
 
             SeedStockKeeper6Theme(
-                flavor = ThemeFlavor.Saien, //Onion, OnionLightColors, Renkon, Forest, SweetPotato, SweetP, M3CB3, Saien  ← 試したい配色を指定（Onion/Renkon/SweetPotato/SweetP/M3CB3/SaienはColor.kt形式の色ファイルを使用）
+                flavor = ThemeFlavor.Tanesuke, //Onion, OnionLightColors, Renkon, Forest, SweetPotato, SweetP, M3CB3, Saien, Tanesuke  ← 試したい配色を指定（Onion/Renkon/SweetPotato/SweetP/M3CB3/Saien/TanesukeはColor.kt形式の色ファイルを使用）
                 darkTheme = isSystemInDarkTheme(),
                 dynamicColor = false          // パレットを見たい時は false 推奨
             ) {
                 Surface(                      // ★ これが"アプリ全体の背景"
                     modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
+                    color = MaterialTheme.colorScheme.surface
                 ) {
                     AuthGate { user ->
                         MainScaffold(navController = navController, user = user)

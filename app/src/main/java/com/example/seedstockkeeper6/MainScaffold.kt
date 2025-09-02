@@ -64,10 +64,10 @@ fun MainScaffold(
         topBar = {
             TopAppBar(
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.secondary,
-                    titleContentColor = MaterialTheme.colorScheme.onSecondary,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onSecondary,
-                    actionIconContentColor = MaterialTheme.colorScheme.onSecondary
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
+                    actionIconContentColor = MaterialTheme.colorScheme.onSurface
                 ),
                 navigationIcon = {
                     Box(
@@ -110,7 +110,7 @@ fun MainScaffold(
                                     Icon(
                                         Icons.Filled.Settings,
                                         contentDescription = "設定",
-                                        tint = MaterialTheme.colorScheme.onSecondary,
+                                        tint = MaterialTheme.colorScheme.onSurface,
                                         modifier = Modifier.size(32.dp)
                                     )
                                 }
@@ -122,8 +122,8 @@ fun MainScaffold(
         },
         bottomBar = {
             NavigationBar(
-                containerColor = MaterialTheme.colorScheme.secondary,
-                contentColor = MaterialTheme.colorScheme.onSecondary
+                containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                contentColor = MaterialTheme.colorScheme.onSurface
             ) {
                 bottomNavItems.forEach { item ->
                                             NavigationBarItem(
@@ -139,10 +139,10 @@ fun MainScaffold(
                                     contentDescription = "ホーム",
                                     tint = Color.Unspecified
                                 )
-                                                                                                 1 -> AnimatedIcon(
+                                                                                                 1 ->                                 AnimatedIcon(
                                     icon = Icons.Filled.Search, 
                                     contentDescription = "検索",
-                                    tint = MaterialTheme.colorScheme.onSecondary
+                                    tint = MaterialTheme.colorScheme.onSurface
                                 )
                                  2 -> {
                                     if (isInputScreen) {
@@ -150,7 +150,7 @@ fun MainScaffold(
                                         AnimatedIcon(
                                             icon = Icons.Filled.Save, 
                                             contentDescription = "保存",
-                                            tint = MaterialTheme.colorScheme.onSecondary
+                                            tint = MaterialTheme.colorScheme.onSurface
                                         )
                                     } else if (isListScreen && selectedIds.isNotEmpty()) {
                                         // チェックボックスがオンの時はゴミ箱アイコン
@@ -175,7 +175,7 @@ fun MainScaffold(
                                         AnimatedIcon(
                                             icon = Icons.Filled.Add, 
                                             contentDescription = "追加",
-                                            tint = MaterialTheme.colorScheme.onSecondary
+                                            tint = MaterialTheme.colorScheme.onSurface
                                         )
                                     }
                                 }

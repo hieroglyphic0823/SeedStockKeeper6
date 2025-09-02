@@ -1195,8 +1195,16 @@ class SeedInputViewModel : ViewModel() {
         Log.d("RegionSelection", "onRegionSelected開始: $region")
         selectedRegion = region
         showRegionSelectionDialog = false
-        // 選択された地域でカレンダーエントリを更新
-        updateCalendarWithSelectedRegion(region)
+        
+        // 編集された値がある場合は、それを優先して使用
+        if (editingCalendarEntry != null && editingCalendarEntry!!.region == region) {
+            Log.d("RegionSelection", "編集された値を使用: $editingCalendarEntry")
+            packet = packet.copy(calendar = listOf(editingCalendarEntry!!))
+        } else {
+            // 選択された地域でカレンダーエントリを更新
+            updateCalendarWithSelectedRegion(region)
+        }
+        
         // 編集モードを有効にする
         isCalendarEditMode = true
         Log.d("RegionSelection", "地域選択完了: $region, 編集モード: $isCalendarEditMode, カレンダーサイズ: ${packet.calendar?.size}")
@@ -1257,21 +1265,26 @@ class SeedInputViewModel : ViewModel() {
     }
 
     fun updateEditingCalendarEntry(updatedEntry: CalendarEntry) {
+        Log.d("RegionSelection", "updateEditingCalendarEntry: $updatedEntry")
         editingCalendarEntry = updatedEntry
     }
 
     fun saveEditingCalendarEntry() {
         editingCalendarEntry?.let { entry ->
+            Log.d("RegionSelection", "saveEditingCalendarEntry: $entry")
+            
             // OCR結果を更新
             ocrResult?.let { result ->
                 val updatedCalendar = result.calendar.map { 
                     if (it.region == entry.region) entry else it 
                 }
                 ocrResult = result.copy(calendar = updatedCalendar)
+                Log.d("RegionSelection", "OCR結果更新完了: $updatedCalendar")
             }
             
             // パケットのカレンダーも更新
             packet = packet.copy(calendar = listOf(entry))
+            Log.d("RegionSelection", "パケット更新完了: ${packet.calendar}")
             
             // 編集状態をクリア
             editingCalendarEntry = null

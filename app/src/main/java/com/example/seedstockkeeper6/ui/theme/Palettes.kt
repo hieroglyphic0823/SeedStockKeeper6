@@ -18,7 +18,7 @@ data class Palette(
     val onSurface: Color
 )
 
-enum class ThemeFlavor { Onion, OnionLightColors, Renkon, Forest, SweetPotato, SweetP, M3CB3, Saien }
+enum class ThemeFlavor { Onion, OnionLightColors, Renkon, Forest, SweetPotato, SweetP, M3CB3, Saien, Tanesuke }
 
 // --- パレット定義 ---
 
@@ -148,6 +148,13 @@ fun flavorColorScheme(flavor: ThemeFlavor, dark: Boolean): ColorScheme {
                 saienLightScheme
             } else {
                 saienDarkScheme
+            }
+        }
+        ThemeFlavor.Tanesuke -> {
+            if (!dark) {
+                tanesukeLightScheme
+            } else {
+                tanesukeDarkScheme
             }
         }
     }
