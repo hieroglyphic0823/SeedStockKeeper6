@@ -13,6 +13,7 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.CalendarMonth
@@ -27,6 +28,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -55,16 +57,28 @@ fun MainScaffold(
     navController: NavHostController,
     user: FirebaseUser
 ) {
+    // ステータスバーの色設定は MainActivity の SystemAppearance で制御
+    
     val selectedIds = remember { mutableStateListOf<String>() }
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
     val isListScreen = currentRoute == "list"
     val isInputScreen = currentRoute?.startsWith("input") == true
-
+    
     val snackbarHostState = remember { SnackbarHostState() }
     val listViewModel: SeedListViewModel = viewModel()
     val scope = rememberCoroutineScope()
     val ctx = LocalContext.current
+    
+    // アプリ起動後の初期化完了フラグ
+    var isAppInitialized by remember { mutableStateOf(false) }
+    
+    // アプリ起動から3秒後に初期化完了とする
+    LaunchedEffect(Unit) {
+        kotlinx.coroutines.delay(3000)
+        isAppInitialized = true
+        Log.d("MainScaffold", "アプリ初期化完了")
+    }
     
     // 入力画面用のViewModel（条件付きで取得）
     val inputViewModel: SeedInputViewModel? = if (isInputScreen && navBackStackEntry != null) {
@@ -78,22 +92,34 @@ fun MainScaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
+                modifier = Modifier.statusBarsPadding(),
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    containerColor = MaterialTheme.colorScheme.surface,
                     titleContentColor = MaterialTheme.colorScheme.onSurface,
                     navigationIconContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                     actionIconContentColor = MaterialTheme.colorScheme.onSurfaceVariant
                 ),
                 navigationIcon = {
-                    Box(
-                        modifier = Modifier.padding(horizontal = 12.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        AccountMenuButton(
-                            user = user,
-                            size = 32.dp, // BottomToolBarのアイコンと同じサイズ
-                            onSignOut = { signOut(ctx, scope) }
-                        )
+                    when (currentRoute) {
+                        "settings" -> {
+                            // 設定画面では戻るボタンを表示
+                            IconButton(onClick = { navController.popBackStack() }) {
+                                Icon(Icons.Filled.ArrowBack, contentDescription = "戻る")
+                            }
+                        }
+                        else -> {
+                            // 通常の画面ではログインアイコンを表示
+                            Box(
+                                modifier = Modifier.padding(horizontal = 12.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                AccountMenuButton(
+                                    user = user,
+                                    size = 32.dp,
+                                    onSignOut = { signOut(ctx, scope) }
+                                )
+                            }
+                        }
                     }
                 },
                 title = { 
@@ -101,33 +127,42 @@ fun MainScaffold(
                         modifier = Modifier.fillMaxWidth(),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("たねすけさん")
+                        Text(
+                            text = if (currentRoute == "settings") "設定" else "たねすけさん"
+                        )
                     }
                 },
                 actions = {
-                    when {
-                        // 3) リスト画面で選択なし & DEBUG → 🐞デバッグボタン
-                        isListScreen && selectedIds.isEmpty() && false -> { // デバッグボタンを無効化
-                            IconButton(onClick = { navController.navigate("debugDetectOuter") }) {
-                                Icon(Icons.Outlined.BugReport, contentDescription = "Debug: Detect Outer")
-                            }
+                    when (currentRoute) {
+                        "settings" -> {
+                            // 設定画面では何も表示しない
                         }
                         else -> {
-                            // 設定アイコン（常に表示）
-                            Box(
-                                modifier = Modifier.padding(horizontal = 12.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                IconButton(
-                                    onClick = { /* 設定画面に遷移 */ },
-                                    modifier = Modifier.size(32.dp)
-                                ) {
-                                    Icon(
-                                        Icons.Filled.Settings,
-                                        contentDescription = "設定",
-                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.size(32.dp)
-                                    )
+                            when {
+                                // 3) リスト画面で選択なし & DEBUG → 🐞デバッグボタン
+                                isListScreen && selectedIds.isEmpty() && false -> { // デバッグボタンを無効化
+                                    IconButton(onClick = { navController.navigate("debugDetectOuter") }) {
+                                        Icon(Icons.Outlined.BugReport, contentDescription = "Debug: Detect Outer")
+                                    }
+                                }
+                                else -> {
+                                    // 設定アイコン（常に表示）
+                                    Box(
+                                        modifier = Modifier.padding(horizontal = 12.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        IconButton(
+                                            onClick = { navController.navigate("settings") },
+                                            modifier = Modifier.size(32.dp)
+                                        ) {
+                                            Icon(
+                                                Icons.Filled.Settings,
+                                                contentDescription = "設定",
+                                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                modifier = Modifier.size(32.dp)
+                                            )
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -136,33 +171,12 @@ fun MainScaffold(
             )
         },
                 bottomBar = {
-            // デバッグで色を出力
-            Log.d("Color", "=== THEME DEBUG INFO ===")
-            Log.d("Color", "Theme - surfaceContainer: ${MaterialTheme.colorScheme.surfaceContainer}")
-            Log.d("Color", "Theme - onSurface: ${MaterialTheme.colorScheme.onSurface}")
-            Log.d("Color", "Theme - secondary: ${MaterialTheme.colorScheme.secondary}")
-            Log.d("Color", "Theme - onSecondary: ${MaterialTheme.colorScheme.onSecondary}")
-            Log.d("Color", "Theme - tertiary: ${MaterialTheme.colorScheme.tertiary}")
-            Log.d("Color", "Theme - primaryContainer: ${MaterialTheme.colorScheme.primaryContainer}")
-            Log.d("Color", "Theme - primary: ${MaterialTheme.colorScheme.primary}")
-            Log.d("Color", "Theme - background: ${MaterialTheme.colorScheme.background}")
-            Log.d("Color", "Theme - surface: ${MaterialTheme.colorScheme.surface}")
-            Log.d("Color", "=== CUSTOM COLOR VALUES ===")
-            Log.d("Color", "Custom - surfaceContainerLight: $surfaceContainerLight")
-            Log.d("Color", "Custom - surfaceContainerDark: $surfaceContainerDark")
-            Log.d("Color", "Custom - secondaryLight: $secondaryLight")
-            Log.d("Color", "Custom - secondaryDark: $secondaryDark")
-            Log.d("Color", "Custom - tertiaryLight: $tertiaryLight")
-            Log.d("Color", "Custom - tertiaryDark: $tertiaryDark")
-            Log.d("Color", "=== END THEME DEBUG ===")
-            
             NavigationBar(
                 containerColor = MaterialTheme.colorScheme.surfaceContainer,
                 contentColor = MaterialTheme.colorScheme.onSurface
             ) {
                 // ホームアイコン
                 NavigationBarItem(
-                    label = { Text("ホーム") },
                     icon = { 
                         Icon(
                             painter = painterResource(
@@ -184,7 +198,6 @@ fun MainScaffold(
                 
                 // 検索アイコン
                 NavigationBarItem(
-                    label = { Text("検索") },
                     icon = { 
                         Icon(
                             imageVector = if (currentRoute == "search") Icons.Filled.Search else Icons.Outlined.Search, 
@@ -207,6 +220,12 @@ fun MainScaffold(
                     FloatingActionButton(
                         onClick = {
                             when {
+                                currentRoute == "settings" -> {
+                                    // 設定画面では保存処理を実行
+                                    // SettingsScreen内で保存処理が実行されるため、
+                                    // ここでは前の画面に戻るだけ
+                                    navController.popBackStack()
+                                }
                                 isInputScreen -> {
                                     // 入力画面の時は保存処理
                                     if (inputViewModel != null) {
@@ -263,6 +282,13 @@ fun MainScaffold(
                         contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                     ) {
                         when {
+                            currentRoute == "settings" -> {
+                                Icon(
+                                    imageVector = Icons.Filled.Save,
+                                    contentDescription = "保存",
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
                             isInputScreen -> {
                                 Icon(
                                     imageVector = Icons.Filled.Save,
@@ -292,7 +318,6 @@ fun MainScaffold(
                 
                 // カレンダーアイコン
                 NavigationBarItem(
-                    label = { Text("カレンダー") },
                     icon = { 
                         Icon(
                             painter = painterResource(
@@ -314,7 +339,6 @@ fun MainScaffold(
                 
                 // 通知アイコン
                 NavigationBarItem(
-                    label = { Text("通知") },
                     icon = { 
                         Icon(
                             imageVector = if (currentRoute == "notifications") Icons.Filled.Notifications else Icons.Outlined.Notifications, 

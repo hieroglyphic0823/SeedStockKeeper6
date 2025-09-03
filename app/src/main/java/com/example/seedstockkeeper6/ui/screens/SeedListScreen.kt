@@ -78,19 +78,15 @@ fun SeedListScreen(
                 }
                 
                 snapshot?.let {
-                    Log.d("SeedListScreen", "Firebase snapshot size: ${it.documents.size}")
                     val newSeeds = it.documents.mapNotNull { doc ->
-                        Log.d("SeedListScreen", "Processing document: ${doc.id}")
                         val seed = doc.toObject(SeedPacket::class.java)
                         if (seed != null) {
-                            Log.d("SeedListScreen", "Valid seed: ${seed.productName} (${seed.variety})")
                             doc.id to seed
                         } else {
                             Log.w("SeedListScreen", "Failed to convert document ${doc.id} to SeedPacket")
                             null
                         }
                     }
-                    Log.d("SeedListScreen", "Final seeds list size: ${newSeeds.size}")
                     seeds = newSeeds
                 }
             }

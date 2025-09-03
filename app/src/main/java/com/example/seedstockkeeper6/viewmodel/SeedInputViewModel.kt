@@ -219,6 +219,9 @@ class SeedInputViewModel : ViewModel() {
             showSnackbar = "対象の画像がありません。"
             return
         }
+        
+        // アプリ起動直後は少し待機
+        kotlinx.coroutines.delay(500)
 
         val uri = imageUris[ocrTargetIndex]
         val bmp = try {
@@ -273,9 +276,34 @@ class SeedInputViewModel : ViewModel() {
         }
 
         val jsonText = try {
-            runGeminiOcr(context, bmp)
+            // 初回失敗時は少し待ってからリトライ
+            var attempt = 0
+            var result: String? = null
+            
+            while (attempt < 2 && result == null) {
+                try {
+                    if (attempt > 0) {
+                        // リトライ前に少し待機
+                        kotlinx.coroutines.delay(1000)
+                        Log.d("OCR_Gemini", "リトライ試行: ${attempt + 1}回目")
+                    }
+                    result = runGeminiOcr(context, bmp)
+                } catch (e: Exception) {
+                    Log.e("OCR_Gemini", "解析失敗 (試行${attempt + 1}回目)", e)
+                    if (attempt == 0) {
+                        // 初回失敗時はリトライ
+                        attempt++
+                        continue
+                    } else {
+                        // リトライ後も失敗
+                        throw e
+                    }
+                }
+            }
+            
+            result ?: throw Exception("解析に失敗しました")
         } catch (e: Exception) {
-            Log.e("OCR_Gemini", "解析失敗", e)
+            Log.e("OCR_Gemini", "最終的な解析失敗", e)
             showSnackbar = "解析失敗"
             return
         }

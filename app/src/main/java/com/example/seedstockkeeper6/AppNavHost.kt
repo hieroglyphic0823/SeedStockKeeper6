@@ -57,7 +57,15 @@ fun AppNavHost(
             PlaceholderScreen(title = "カレンダー", description = "種子のカレンダー機能")
         }
         composable("settings") {
-            PlaceholderScreen(title = "設定", description = "アプリの設定")
+            val settingsViewModel: com.example.seedstockkeeper6.viewmodel.SettingsViewModel = viewModel()
+            com.example.seedstockkeeper6.ui.screens.SettingsScreen(
+                navController = navController,
+                viewModel = settingsViewModel,
+                onSaveRequest = {
+                    // FABからの保存要求を処理
+                    settingsViewModel.saveSettings()
+                }
+            )
         }
     }
 }
