@@ -17,7 +17,7 @@ sealed class BottomNavItem(
         iconRes = 1
     )
     object Add : BottomNavItem(
-        route = "add",
+        route = "input/",
         title = "追加",
         iconRes = 2
     )

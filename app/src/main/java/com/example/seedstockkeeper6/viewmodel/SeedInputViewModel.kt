@@ -276,7 +276,7 @@ class SeedInputViewModel : ViewModel() {
             runGeminiOcr(context, bmp)
         } catch (e: Exception) {
             Log.e("OCR_Gemini", "解析失敗", e)
-            showSnackbar = "AI解析中にエラーが発生しました"
+            showSnackbar = "解析失敗"
             return
         }
 
@@ -285,7 +285,7 @@ class SeedInputViewModel : ViewModel() {
             kotlinx.serialization.json.Json.decodeFromString<SeedPacket>(cleanedJson)
         } catch (e: Exception) {
             Log.e("OCR_Parse", "解析結果のJSON変換失敗", e)
-            showSnackbar = "解析結果の読み取りに失敗しました"
+            showSnackbar = "解析失敗"
             return
         }
         
@@ -820,7 +820,7 @@ class SeedInputViewModel : ViewModel() {
                     r to score
                 }.maxByOrNull { it.second }?.first
 
-                if (best == null) { showSnackbar = "外側を検出できませんでした"; return@launch }
+                if (best == null) { showSnackbar = "解析失敗"; return@launch }
 
                 // margin を付け、さらに“袋のエッジ”に吸着させてタイト化
                 val pre = Rect(

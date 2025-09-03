@@ -10,6 +10,14 @@ import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.CalendarMonth
+import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.BugReport
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -71,10 +79,10 @@ fun MainScaffold(
         topBar = {
             TopAppBar(
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.secondary,
-                    titleContentColor = MaterialTheme.colorScheme.onSecondary,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onSecondary,
-                    actionIconContentColor = MaterialTheme.colorScheme.onSecondary
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    actionIconContentColor = MaterialTheme.colorScheme.onSurfaceVariant
                 ),
                 navigationIcon = {
                     Box(
@@ -117,7 +125,7 @@ fun MainScaffold(
                                     Icon(
                                         Icons.Filled.Settings,
                                         contentDescription = "設定",
-                                        tint = MaterialTheme.colorScheme.onSecondary,
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                         modifier = Modifier.size(32.dp)
                                     )
                                 }
@@ -152,135 +160,174 @@ fun MainScaffold(
                 containerColor = MaterialTheme.colorScheme.surfaceContainer,
                 contentColor = MaterialTheme.colorScheme.onSurface
             ) {
-                bottomNavItems.forEach { item ->
-                    NavigationBarItem(
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = MaterialTheme.colorScheme.tertiary,
-                            selectedTextColor = MaterialTheme.colorScheme.tertiary,
-                            indicatorColor = MaterialTheme.colorScheme.primaryContainer
-                        ),
-                        icon = { 
-                            when (item.iconRes) {
-                                0 -> AnimatedIcon(
-                                    painter = painterResource(id = com.example.seedstockkeeper6.R.drawable.indoor_plants), 
-                                    contentDescription = "ホーム",
-                                    tint = Color.Unspecified
-                                )
-                                1 -> AnimatedIcon(
-                                    icon = Icons.Filled.Search, 
-                                    contentDescription = "検索",
-                                    tint = MaterialTheme.colorScheme.onSecondary
-                                )
-                                2 -> {
-                                    if (isInputScreen) {
-                                        // 入力画面の時は保存アイコン
-                                        AnimatedIcon(
-                                            icon = Icons.Filled.Save, 
-                                            contentDescription = "保存",
-                                            tint = MaterialTheme.colorScheme.onSecondary
-                                        )
-                                    } else if (isListScreen && selectedIds.isNotEmpty()) {
-                                        // チェックボックスがオンの時はゴミ箱アイコン
-                                        Box(
-                                            modifier = Modifier
-                                                .size(48.dp)
-                                                .background(
-                                                    color = MaterialTheme.colorScheme.onSurface,
-                                                    shape = CircleShape
-                                                ),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Filled.Delete,
-                                                contentDescription = "削除",
-                                                tint = MaterialTheme.colorScheme.primaryContainer,
-                                                modifier = Modifier.size(24.dp)
-                                            )
+                // ホームアイコン
+                NavigationBarItem(
+                    label = { Text("ホーム") },
+                    icon = { 
+                        Icon(
+                            painter = painterResource(
+                                id = if (currentRoute == "list") 
+                                    com.example.seedstockkeeper6.R.drawable.home_dark 
+                                else 
+                                    com.example.seedstockkeeper6.R.drawable.home_light
+                            ),
+                            contentDescription = "ホーム",
+                            tint = Color.Unspecified,
+                            modifier = Modifier.size(
+                                if (currentRoute == "list") 28.dp else 24.dp
+                            )
+                        )
+                    },
+                    selected = currentRoute == "list",
+                    onClick = { navController.navigate("list") }
+                )
+                
+                // 検索アイコン
+                NavigationBarItem(
+                    label = { Text("検索") },
+                    icon = { 
+                        Icon(
+                            imageVector = if (currentRoute == "search") Icons.Filled.Search else Icons.Outlined.Search, 
+                            contentDescription = "検索",
+                            tint = Color.Unspecified,
+                            modifier = Modifier.size(
+                                if (currentRoute == "search") 28.dp else 24.dp
+                            )
+                        )
+                    },
+                    selected = currentRoute == "search",
+                    onClick = { navController.navigate("search") }
+                )
+                
+                // 中央のFab（状況に応じてアイコンとラベルが変わる）
+                Box(
+                    modifier = Modifier.weight(1f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    FloatingActionButton(
+                        onClick = {
+                            when {
+                                isInputScreen -> {
+                                    // 入力画面の時は保存処理
+                                    if (inputViewModel != null) {
+                                        inputViewModel.saveSeed(ctx) { result ->
+                                            scope.launch {
+                                                val message = if (result.isSuccess) {
+                                                    navController.popBackStack()
+                                                    "保存しました"
+                                                } else {
+                                                    "保存に失敗しました: ${result.exceptionOrNull()?.localizedMessage ?: "不明なエラー"}"
+                                                }
+                                                snackbarHostState.showSnackbar(message)
+                                            }
                                         }
                                     } else {
-                                        // 通常時は＋アイコン
-                                        AnimatedIcon(
-                                            icon = Icons.Filled.Add, 
-                                            contentDescription = "追加",
-                                            tint = MaterialTheme.colorScheme.onSecondary
-                                        )
+                                        // inputViewModelがnullの場合はホームに戻る
+                                        navController.navigate("list")
                                     }
                                 }
-                                3 -> AnimatedIcon(
-                                     painter = painterResource(id = com.example.seedstockkeeper6.R.drawable.calendar), 
-                                     contentDescription = "カレンダー",
-                                     tint = Color.Unspecified
-                                 )
-                                
-                                else -> AnimatedIcon(
-                                    painter = painterResource(id = com.example.seedstockkeeper6.R.drawable.indoor_plants), 
-                                    contentDescription = "ホーム",
-                                    tint = Color.Unspecified
-                                )
-                            }
-                        },
-                        selected = currentRoute == item.route,
-                        onClick = {
-                            when (item) {
-                                is BottomNavItem.Add -> {
-                                    if (isInputScreen && inputViewModel != null) {
-                                        // 入力画面の時は保存処理
-                                        // 全画面アニメーションを表示
-                                        showSaveAnimation = true
-                                        
-                                        // アニメーション完了後に保存処理を実行
-                                        scope.launch {
-                                            delay(1500) // アニメーション時間
-                                            showSaveAnimation = false
-                                            
-                                            inputViewModel.saveSeed(ctx) { result ->
+                                isListScreen && selectedIds.isNotEmpty() -> {
+                                    // チェックボックスがオンの時は削除処理
+                                    scope.launch {
+                                        selectedIds.forEach { id ->
+                                            listViewModel.deleteSeedPacketWithImages(id) { result ->
                                                 scope.launch {
-                                                    val message = if (result.isSuccess) {
-                                                        navController.popBackStack()
-                                                        "保存しました"
-                                                    } else {
-                                                        "保存に失敗しました: ${result.exceptionOrNull()?.localizedMessage ?: "不明なエラー"}"
-                                                    }
+                                                    val message = if (result.isSuccess) "削除しました"
+                                                    else "削除に失敗しました: ${result.exceptionOrNull()?.localizedMessage ?: "不明なエラー"}"
                                                     snackbarHostState.showSnackbar(message)
                                                 }
                                             }
                                         }
-                                    } else if (isListScreen && selectedIds.isNotEmpty()) {
-                                        // チェックボックスがオンの時は削除処理
-                                        scope.launch {
-                                            selectedIds.forEach { id ->
-                                                listViewModel.deleteSeedPacketWithImages(id) { result ->
-                                                    scope.launch {
-                                                        val message = if (result.isSuccess) "削除しました"
-                                                        else "削除に失敗しました: ${result.exceptionOrNull()?.localizedMessage ?: "不明なエラー"}"
-                                                        snackbarHostState.showSnackbar(message)
-                                                    }
-                                                }
-                                            }
-                                            selectedIds.clear()
-                                        }
-                                    } else {
-                                        // 通常時は追加画面に遷移
-                                        val emptyPacketJson = URLEncoder.encode(
-                                            Gson().toJson(SeedPacket()),
-                                            StandardCharsets.UTF_8.toString()
-                                        )
-                                        navController.navigate("input/$emptyPacketJson")
+                                        selectedIds.clear()
                                     }
                                 }
                                 else -> {
-                                    // その他のボタンは通常のナビゲーション
-                                    navController.navigate(item.route) {
-                                        launchSingleTop = true
-                                        popUpTo(navController.graph.startDestinationId) { 
-                                            saveState = true 
+                                    // 通常時は入力画面に遷移（新規登録）
+                                    try {
+                                        navController.navigate("input/") {
+                                            launchSingleTop = true
+                                            popUpTo(navController.graph.startDestinationId) { 
+                                                saveState = true 
+                                            }
                                         }
+                                    } catch (e: Exception) {
+                                        // エラーが発生した場合はログを出力
+                                        Log.e("Navigation", "Navigation error: ${e.message}", e)
+                                        // 代替ルートに遷移
+                                        navController.navigate("list")
                                     }
                                 }
                             }
+                        },
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    ) {
+                        when {
+                            isInputScreen -> {
+                                Icon(
+                                    imageVector = Icons.Filled.Save,
+                                    contentDescription = "保存",
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                            isListScreen && selectedIds.isNotEmpty() -> {
+                                Icon(
+                                    imageVector = Icons.Filled.Delete,
+                                    contentDescription = "削除",
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                            else -> {
+                                Icon(
+                                    imageVector = Icons.Filled.Add,
+                                    contentDescription = "追加",
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
                         }
-                    )
+                    }
+                    
+
                 }
+                
+                // カレンダーアイコン
+                NavigationBarItem(
+                    label = { Text("カレンダー") },
+                    icon = { 
+                        Icon(
+                            painter = painterResource(
+                                id = if (currentRoute == "calendar") 
+                                    com.example.seedstockkeeper6.R.drawable.calendar_dark 
+                                else 
+                                    com.example.seedstockkeeper6.R.drawable.calendar_light
+                            ),
+                            contentDescription = "カレンダー",
+                            tint = Color.Unspecified,
+                            modifier = Modifier.size(
+                                if (currentRoute == "calendar") 28.dp else 24.dp
+                            )
+                        )
+                    },
+                    selected = currentRoute == "calendar",
+                    onClick = { navController.navigate("calendar") }
+                )
+                
+                // 通知アイコン
+                NavigationBarItem(
+                    label = { Text("通知") },
+                    icon = { 
+                        Icon(
+                            imageVector = if (currentRoute == "notifications") Icons.Filled.Notifications else Icons.Outlined.Notifications, 
+                            contentDescription = "通知",
+                            tint = Color.Unspecified,
+                            modifier = Modifier.size(
+                                if (currentRoute == "notifications") 28.dp else 24.dp
+                            )
+                        )
+                    },
+                    selected = currentRoute == "notifications",
+                    onClick = { navController.navigate("notifications") }
+                )
             }
         }
     ) { padding ->
