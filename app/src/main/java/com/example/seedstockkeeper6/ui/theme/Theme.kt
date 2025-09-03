@@ -94,17 +94,19 @@ private val DarkColorScheme = darkColorScheme(
 @Composable
 fun SeedStockKeeper6Theme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = true,
+    dynamicColor: Boolean = false,  // ダイナミックカラーを無効化
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
-    }
+    // 強制的にカスタム色を使用
+    val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
+    
+    // デバッグ情報を出力
+    android.util.Log.d("Theme", "darkTheme: $darkTheme")
+    android.util.Log.d("Theme", "Selected colorScheme: ${if (darkTheme) "DarkColorScheme" else "LightColorScheme"}")
+    android.util.Log.d("Theme", "surfaceContainer: ${colorScheme.surfaceContainer}")
+    android.util.Log.d("Theme", "secondary: ${colorScheme.secondary}")
+    android.util.Log.d("Theme", "tertiary: ${colorScheme.tertiary}")
+    
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {

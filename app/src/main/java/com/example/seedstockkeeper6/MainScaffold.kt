@@ -31,6 +31,13 @@ import com.google.gson.Gson
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 import androidx.compose.runtime.rememberCoroutineScope
+import android.util.Log
+import com.example.seedstockkeeper6.ui.theme.surfaceContainerLight
+import com.example.seedstockkeeper6.ui.theme.surfaceContainerDark
+import com.example.seedstockkeeper6.ui.theme.secondaryLight
+import com.example.seedstockkeeper6.ui.theme.secondaryDark
+import com.example.seedstockkeeper6.ui.theme.tertiaryLight
+import com.example.seedstockkeeper6.ui.theme.tertiaryDark
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
@@ -64,10 +71,10 @@ fun MainScaffold(
         topBar = {
             TopAppBar(
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainer,
-                    titleContentColor = MaterialTheme.colorScheme.onSurface,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
-                    actionIconContentColor = MaterialTheme.colorScheme.onSurface
+                    containerColor = MaterialTheme.colorScheme.secondary,
+                    titleContentColor = MaterialTheme.colorScheme.onSecondary,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onSecondary,
+                    actionIconContentColor = MaterialTheme.colorScheme.onSecondary
                 ),
                 navigationIcon = {
                     Box(
@@ -110,7 +117,7 @@ fun MainScaffold(
                                     Icon(
                                         Icons.Filled.Settings,
                                         contentDescription = "設定",
-                                        tint = MaterialTheme.colorScheme.onSurface,
+                                        tint = MaterialTheme.colorScheme.onSecondary,
                                         modifier = Modifier.size(32.dp)
                                     )
                                 }
@@ -120,18 +127,38 @@ fun MainScaffold(
                 }
             )
         },
-        bottomBar = {
+                bottomBar = {
+            // デバッグで色を出力
+            Log.d("Color", "=== THEME DEBUG INFO ===")
+            Log.d("Color", "Theme - surfaceContainer: ${MaterialTheme.colorScheme.surfaceContainer}")
+            Log.d("Color", "Theme - onSurface: ${MaterialTheme.colorScheme.onSurface}")
+            Log.d("Color", "Theme - secondary: ${MaterialTheme.colorScheme.secondary}")
+            Log.d("Color", "Theme - onSecondary: ${MaterialTheme.colorScheme.onSecondary}")
+            Log.d("Color", "Theme - tertiary: ${MaterialTheme.colorScheme.tertiary}")
+            Log.d("Color", "Theme - primaryContainer: ${MaterialTheme.colorScheme.primaryContainer}")
+            Log.d("Color", "Theme - primary: ${MaterialTheme.colorScheme.primary}")
+            Log.d("Color", "Theme - background: ${MaterialTheme.colorScheme.background}")
+            Log.d("Color", "Theme - surface: ${MaterialTheme.colorScheme.surface}")
+            Log.d("Color", "=== CUSTOM COLOR VALUES ===")
+            Log.d("Color", "Custom - surfaceContainerLight: $surfaceContainerLight")
+            Log.d("Color", "Custom - surfaceContainerDark: $surfaceContainerDark")
+            Log.d("Color", "Custom - secondaryLight: $secondaryLight")
+            Log.d("Color", "Custom - secondaryDark: $secondaryDark")
+            Log.d("Color", "Custom - tertiaryLight: $tertiaryLight")
+            Log.d("Color", "Custom - tertiaryDark: $tertiaryDark")
+            Log.d("Color", "=== END THEME DEBUG ===")
+            
             NavigationBar(
                 containerColor = MaterialTheme.colorScheme.surfaceContainer,
                 contentColor = MaterialTheme.colorScheme.onSurface
             ) {
                 bottomNavItems.forEach { item ->
-                                            NavigationBarItem(
-                            colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = MaterialTheme.colorScheme.tertiary,
-                                selectedTextColor = MaterialTheme.colorScheme.tertiary,
-                                indicatorColor = MaterialTheme.colorScheme.primaryContainer
-                            ),
+                    NavigationBarItem(
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = MaterialTheme.colorScheme.tertiary,
+                            selectedTextColor = MaterialTheme.colorScheme.tertiary,
+                            indicatorColor = MaterialTheme.colorScheme.primaryContainer
+                        ),
                         icon = { 
                             when (item.iconRes) {
                                 0 -> AnimatedIcon(
@@ -139,18 +166,18 @@ fun MainScaffold(
                                     contentDescription = "ホーム",
                                     tint = Color.Unspecified
                                 )
-                                                                                                 1 ->                                 AnimatedIcon(
+                                1 -> AnimatedIcon(
                                     icon = Icons.Filled.Search, 
                                     contentDescription = "検索",
-                                    tint = MaterialTheme.colorScheme.onSurface
+                                    tint = MaterialTheme.colorScheme.onSecondary
                                 )
-                                 2 -> {
+                                2 -> {
                                     if (isInputScreen) {
                                         // 入力画面の時は保存アイコン
                                         AnimatedIcon(
                                             icon = Icons.Filled.Save, 
                                             contentDescription = "保存",
-                                            tint = MaterialTheme.colorScheme.onSurface
+                                            tint = MaterialTheme.colorScheme.onSecondary
                                         )
                                     } else if (isListScreen && selectedIds.isNotEmpty()) {
                                         // チェックボックスがオンの時はゴミ箱アイコン
@@ -158,7 +185,7 @@ fun MainScaffold(
                                             modifier = Modifier
                                                 .size(48.dp)
                                                 .background(
-                                                    color= MaterialTheme.colorScheme.onSurface,
+                                                    color = MaterialTheme.colorScheme.onSurface,
                                                     shape = CircleShape
                                                 ),
                                             contentAlignment = Alignment.Center
@@ -166,7 +193,7 @@ fun MainScaffold(
                                             Icon(
                                                 imageVector = Icons.Filled.Delete,
                                                 contentDescription = "削除",
-
+                                                tint = MaterialTheme.colorScheme.primaryContainer,
                                                 modifier = Modifier.size(24.dp)
                                             )
                                         }
@@ -175,11 +202,11 @@ fun MainScaffold(
                                         AnimatedIcon(
                                             icon = Icons.Filled.Add, 
                                             contentDescription = "追加",
-                                            tint = MaterialTheme.colorScheme.onSurface
+                                            tint = MaterialTheme.colorScheme.onSecondary
                                         )
                                     }
                                 }
-                                 3 -> AnimatedIcon(
+                                3 -> AnimatedIcon(
                                      painter = painterResource(id = com.example.seedstockkeeper6.R.drawable.calendar), 
                                      contentDescription = "カレンダー",
                                      tint = Color.Unspecified
