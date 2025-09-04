@@ -8,7 +8,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Park
+import androidx.compose.material.icons.filled.LocalFlorist
 import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
@@ -99,145 +99,148 @@ fun SettingsScreen(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
-            // 農園名設定
+            // 農園名と地域設定を一つのカードにまとめる
             Card(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                )
             ) {
                 Column(
                     modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    // 農園名設定
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Icon(
-                            Icons.Filled.Park,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                        Text(
-                            text = "農園設定",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                    
-                    // 編集モードまたは新規登録時は入力フィールド、表示モード時は読み取り専用テキスト
-                    if (viewModel.isEditMode || !viewModel.hasExistingData) {
-                        if (viewModel.hasExistingData) {
-                            // 編集モード時はTextField
-                            TextField(
-                                value = viewModel.farmName,
-                                onValueChange = { newValue ->
-                                    viewModel.updateFarmName(newValue)
-                                },
-                                label = { Text("農園名") },
-                                modifier = Modifier.fillMaxWidth(),
-                                singleLine = true
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                Icons.Filled.LocalFlorist,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary
                             )
-                        } else {
-                            // 新規登録時はOutlinedTextField
-                            OutlinedTextField(
-                                value = viewModel.farmName,
-                                onValueChange = { newValue ->
-                                    viewModel.updateFarmName(newValue)
-                                },
-                                label = { Text("農園名") },
-                                modifier = Modifier.fillMaxWidth(),
-                                singleLine = true
+                            Text(
+                                text = "農園名",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
                             )
                         }
-                    } else {
-                        // 表示モード時は読み取り専用テキスト
-                        Text(
-                            text = viewModel.farmName.ifEmpty { "未設定" },
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = if (viewModel.farmName.isEmpty()) 
-                                MaterialTheme.colorScheme.onSurfaceVariant 
-                            else 
-                                MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                     
-                     // デバッグ用：農園名の表示値をログ出力
-                     LaunchedEffect(viewModel.farmName) {
-                         android.util.Log.d("SettingsScreen", "農園名表示値: '${viewModel.farmName}'")
-                     }
-                }
-            }
-            
-            // 地域設定
-            Card(
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                                                 Icon(
-                             Icons.Filled.Public,
-                             contentDescription = null,
-                             tint = MaterialTheme.colorScheme.primary
-                         )
-                        Text(
-                            text = "地域設定",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                    
-                    // 編集モードまたは新規登録時は入力フィールド、表示モード時は読み取り専用テキスト
-                    if (viewModel.isEditMode || !viewModel.hasExistingData) {
-                        if (viewModel.hasExistingData) {
-                            // 編集モード時はTextField
-                            TextField(
-                                value = viewModel.defaultRegion,
-                                onValueChange = { },
-                                label = { Text("地域初期値") },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable { showRegionBottomSheet = true },
-                                readOnly = true
-                            )
+                        
+                        // 編集モードまたは新規登録時は入力フィールド、表示モード時は読み取り専用テキスト
+                        if (viewModel.isEditMode || !viewModel.hasExistingData) {
+                            if (viewModel.hasExistingData) {
+                                // 編集モード時はTextField
+                                TextField(
+                                    value = viewModel.farmName,
+                                    onValueChange = { newValue ->
+                                        viewModel.updateFarmName(newValue)
+                                    },
+                                    label = { Text("農園名") },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    singleLine = true
+                                )
+                            } else {
+                                // 新規登録時はOutlinedTextField
+                                OutlinedTextField(
+                                    value = viewModel.farmName,
+                                    onValueChange = { newValue ->
+                                        viewModel.updateFarmName(newValue)
+                                    },
+                                    label = { Text("農園名") },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    singleLine = true
+                                )
+                            }
                         } else {
-                            // 新規登録時はOutlinedTextField
-                            OutlinedTextField(
-                                value = viewModel.defaultRegion,
-                                onValueChange = { },
-                                label = { Text("地域初期値") },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable { showRegionBottomSheet = true },
-                                readOnly = true
+                            // 表示モード時は読み取り専用テキスト
+                            Text(
+                                text = viewModel.farmName.ifEmpty { "未設定" },
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = if (viewModel.farmName.isEmpty()) 
+                                    MaterialTheme.colorScheme.onSurfaceVariant 
+                                else 
+                                    MaterialTheme.colorScheme.onSurface
                             )
                         }
-                    } else {
-                        // 表示モード時は読み取り専用テキスト
+                         
+                         // デバッグ用：農園名の表示値をログ出力
+                         LaunchedEffect(viewModel.farmName) {
+                             android.util.Log.d("SettingsScreen", "農園名表示値: '${viewModel.farmName}'")
+                         }
+                    }
+                    
+                    // 地域設定
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                Icons.Filled.Public,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                            Text(
+                                text = "地域設定",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        
+                        // 編集モードまたは新規登録時は入力フィールド、表示モード時は読み取り専用テキスト
+                        if (viewModel.isEditMode || !viewModel.hasExistingData) {
+                            if (viewModel.hasExistingData) {
+                                // 編集モード時はTextField
+                                TextField(
+                                    value = viewModel.defaultRegion,
+                                    onValueChange = { },
+                                    label = { Text("地域初期値") },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable { showRegionBottomSheet = true },
+                                    readOnly = true
+                                )
+                            } else {
+                                // 新規登録時はOutlinedTextField
+                                OutlinedTextField(
+                                    value = viewModel.defaultRegion,
+                                    onValueChange = { },
+                                    label = { Text("地域初期値") },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable { showRegionBottomSheet = true },
+                                    readOnly = true
+                                )
+                            }
+                        } else {
+                            // 表示モード時は読み取り専用テキスト
+                            Text(
+                                text = viewModel.defaultRegion.ifEmpty { "未設定" },
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = if (viewModel.defaultRegion.isEmpty()) 
+                                    MaterialTheme.colorScheme.onSurfaceVariant 
+                                else 
+                                    MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                         
+                         // デバッグ用：地域の表示値をログ出力
+                         LaunchedEffect(viewModel.defaultRegion) {
+                             android.util.Log.d("SettingsScreen", "地域表示値: '${viewModel.defaultRegion}'")
+                         }
+                        
                         Text(
-                            text = viewModel.defaultRegion.ifEmpty { "未設定" },
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = if (viewModel.defaultRegion.isEmpty()) 
-                                MaterialTheme.colorScheme.onSurfaceVariant 
-                            else 
-                                MaterialTheme.colorScheme.onSurface
+                            text = "種子登録時の地域初期値として使用されます",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-                     
-                     // デバッグ用：地域の表示値をログ出力
-                     LaunchedEffect(viewModel.defaultRegion) {
-                         android.util.Log.d("SettingsScreen", "地域表示値: '${viewModel.defaultRegion}'")
-                     }
-                    
-                    Text(
-                        text = "種子登録時の地域初期値として使用されます",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
                 }
             }
         }
