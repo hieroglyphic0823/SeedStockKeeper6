@@ -64,6 +64,10 @@ fun AppNavHost(
                 onSaveRequest = {
                     // FABからの保存要求を処理
                     settingsViewModel.saveSettings()
+                },
+                onEditRequest = {
+                    // FABからの編集要求を処理
+                    settingsViewModel.enterEditMode()
                 }
             )
         }

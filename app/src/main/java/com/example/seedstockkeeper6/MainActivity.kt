@@ -41,10 +41,12 @@ class MainActivity : ComponentActivity() {
         
         // エッジトゥエッジ後にステータスバーの色を設定
         // onCreate内ではisSystemInDarkTheme()は使用できないため、デフォルトのライトテーマ色を使用
-        val surfaceColor = 0xFFF0E8D0L // ライトテーマのsurface色
+        val surfaceColor = 0xFFFFF9EEL // ライトテーマのsurface色
         this.window.statusBarColor = surfaceColor.toInt()
         this.window.navigationBarColor = surfaceColor.toInt()
+        this.window.decorView.setBackgroundColor(surfaceColor.toInt())
         Log.d("SystemAppearance", "onCreateでステータスバー色を設定: 0x${String.format("%08X", surfaceColor)}")
+        Log.d("SystemAppearance", "onCreateでWindow decorView背景色を設定: 0x${String.format("%08X", surfaceColor)}")
         
         Log.d("DebugTrace", "MainActivity.onCreate called")
         FirebaseApp.initializeApp(this)
@@ -63,7 +65,7 @@ class MainActivity : ComponentActivity() {
                 
                 Surface(                      // ★ これが"アプリ全体の背景"
                     modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.surface  // background → surface に変更
+                    color = MaterialTheme.colorScheme.background  // background を使用
                 ) {
                     AuthGate { user ->
                         MainScaffold(navController = navController, user = user)
@@ -97,17 +99,18 @@ private fun SystemAppearance(isDarkTheme: Boolean) {
                 Log.d("SystemAppearance", "ColorDrawable の実際の色: 0x${String.format("%08X", colorDrawable.color)}")
                 
                 // 期待される色と実際の色を比較
-                val expectedColor = if (isDarkTheme) 0xFF15130BL else 0xFFF0E8D0L
-                val actualColor = colorDrawable.color.toLong()
-                Log.d("SystemAppearance", "期待される色: 0x${String.format("%08X", expectedColor)}")
-                Log.d("SystemAppearance", "色の一致: ${expectedColor == actualColor}")
-                if (expectedColor != actualColor) {
-                    Log.w("SystemAppearance", "⚠️ 背景色が一致しません！期待: 0x${String.format("%08X", expectedColor)}, 実際: 0x${String.format("%08X", actualColor)}")
+                val expectedColor = if (isDarkTheme) 0xFF15130BL else 0xFFFFF9EEL
+                val actualColor = colorDrawable.color.toLong() and 0xFFFFFFFFL // 32bitにマスク
+                val expectedColorMasked = expectedColor and 0xFFFFFFFFL // 32bitにマスク
+                Log.d("SystemAppearance", "期待される色: 0x${String.format("%08X", expectedColorMasked)}")
+                Log.d("SystemAppearance", "色の一致: ${expectedColorMasked == actualColor}")
+                if (expectedColorMasked != actualColor) {
+                    Log.w("SystemAppearance", "⚠️ 背景色が一致しません！期待: 0x${String.format("%08X", expectedColorMasked)}, 実際: 0x${String.format("%08X", actualColor)}")
                 }
             }
-            Log.d("SystemAppearance", "設定された背景色: ${if (isDarkTheme) "#15130B (Color.kt の backgroundDark)" else "#F0E8D0 (Color.kt の backgroundLight)"}")
+            Log.d("SystemAppearance", "設定された背景色: ${if (isDarkTheme) "#15130B (Color.kt の surfaceDark)" else "#FFF9EE (Color.kt の surfaceLight)"}")
             Log.d("SystemAppearance", "TopAppBar背景色: MaterialTheme.colorScheme.surface")
-            Log.d("SystemAppearance", "Surface背景色: MaterialTheme.colorScheme.surface")
+            Log.d("SystemAppearance", "アプリ全体背景色: MaterialTheme.colorScheme.background")
             Log.d("SystemAppearance", "================================")
 
             // ステータスバーのアイコンの色 (true でダークアイコン = 明るい背景用)
@@ -155,33 +158,51 @@ private fun SystemAppearance(isDarkTheme: Boolean) {
                 Log.d("SystemAppearance", "期待される効果: 背景色 #15130B に対して明るいアイコンでコントラスト向上")
             } else {
                 Log.d("SystemAppearance", "システム選択: ライトテーマ用の暗いアイコン色が適用されています")
-                Log.d("SystemAppearance", "期待される効果: 背景色 #F0E8D0 に対して暗いアイコンでコントラスト向上")
+                Log.d("SystemAppearance", "期待される効果: 背景色 #FFF9EE に対して暗いアイコンでコントラスト向上")
             }
             Log.d("SystemAppearance", "----------------------------------------")
 
             // システムバーの色をMaterialTheme.colorScheme.surfaceと同じ色に設定
             // 注意: この時点ではMaterialTheme.colorScheme.surfaceにアクセスできないため、
             // Color.ktで定義されたsurface色を使用
-            val surfaceColor = if (isDarkTheme) 0xFF15130B else 0xFFF0E8D0
+            val surfaceColor = if (isDarkTheme) 0xFF15130B else 0xFFFFF9EE
             window.statusBarColor = surfaceColor.toInt()
             window.navigationBarColor = surfaceColor.toInt()
             
+            // Window decorViewの背景色も設定
+            window.decorView.setBackgroundColor(surfaceColor.toInt())
+            
             Log.d("SystemAppearance", "システムバー色を設定: 0x${String.format("%08X", surfaceColor)}")
+            Log.d("SystemAppearance", "Window decorView背景色も設定: 0x${String.format("%08X", surfaceColor)}")
             Log.d("SystemAppearance", "MaterialTheme.colorScheme.surfaceと同じ色を使用")
-            Log.d("SystemAppearance", "ライトテーマ: #F0E8D0, ダークテーマ: #15130B")
+            Log.d("SystemAppearance", "ライトテーマ: #FFF9EE, ダークテーマ: #15130B")
 
-            // 設定後の色をログ出力
             // 設定後の色をログ出力
             Log.d("SystemAppearance", "設定後のステータスバー色: 0x${String.format("%08X", window.statusBarColor)}")
             Log.d("SystemAppearance", "設定後のナビゲーションバー色: 0x${String.format("%08X", window.navigationBarColor)}")
             
+            // Window decorViewの背景色も確認
+            if (window.decorView.background is android.graphics.drawable.ColorDrawable) {
+                val colorDrawable = window.decorView.background as android.graphics.drawable.ColorDrawable
+                Log.d("SystemAppearance", "設定後のWindow decorView背景色: 0x${String.format("%08X", colorDrawable.color)}")
+                val actualColor = colorDrawable.color.toLong() and 0xFFFFFFFFL // 32bitにマスク
+                val expectedColor = surfaceColor and 0xFFFFFFFFL // 32bitにマスク
+                Log.d("SystemAppearance", "Window decorView色の一致: ${expectedColor == actualColor}")
+                if (expectedColor == actualColor) {
+                    Log.d("SystemAppearance", "✅ Window decorView背景色が正しく設定されました")
+                } else {
+                    Log.w("SystemAppearance", "❌ Window decorView背景色の設定に失敗: 期待 ${String.format("%08X", expectedColor)}, 実際 ${String.format("%08X", actualColor)}")
+                }
+            }
+            
             // 色の統一状況を確認
             Log.d("SystemAppearance", "=== 色の統一状況 ===")
-            Log.d("SystemAppearance", "1. アプリ全体背景: MaterialTheme.colorScheme.surface")
+            Log.d("SystemAppearance", "1. アプリ全体背景: MaterialTheme.colorScheme.background")
             Log.d("SystemAppearance", "2. TopAppBar背景: MaterialTheme.colorScheme.surface")
-            Log.d("SystemAppearance", "3. ステータスバー: Color.ktのsurface色 (${if (isDarkTheme) "#15130B" else "#F0E8D0"})")
-            Log.d("SystemAppearance", "4. ナビゲーションバー: Color.ktのsurface色 (${if (isDarkTheme) "#15130B" else "#F0E8D0"})")
-            Log.d("SystemAppearance", "すべてsurface色で統一されています")
+            Log.d("SystemAppearance", "3. ステータスバー: Color.ktのsurface色 (${if (isDarkTheme) "#15130B" else "#FFF9EE"})")
+            Log.d("SystemAppearance", "4. ナビゲーションバー: MaterialTheme.colorScheme.surfaceContainer (${if (isDarkTheme) "#222017" else "#FAF3E5"})")
+            Log.d("SystemAppearance", "5. Window decorView背景: Color.ktのsurface色 (${if (isDarkTheme) "#15130B" else "#FFF9EE"})")
+            Log.d("SystemAppearance", "ナビゲーションバーはsurfaceContainer色を使用")
             Log.d("SystemAppearance", "================================")
             
             Log.d("SystemAppearance", "SystemAppearance 完了")

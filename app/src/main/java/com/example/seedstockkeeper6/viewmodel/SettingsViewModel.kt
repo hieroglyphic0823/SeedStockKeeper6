@@ -26,6 +26,12 @@ class SettingsViewModel : ViewModel() {
     var showSnackbar by mutableStateOf<String?>(null)
         private set
     
+    var isEditMode by mutableStateOf(false)
+        private set
+    
+    var hasExistingData by mutableStateOf(false)
+        private set
+    
     init {
         loadSettings()
     }
@@ -59,9 +65,11 @@ class SettingsViewModel : ViewModel() {
                 if (snapshot.exists()) {
                     farmName = snapshot.getString("farmName") ?: ""
                     defaultRegion = snapshot.getString("defaultRegion") ?: ""
+                    hasExistingData = farmName.isNotBlank() || defaultRegion.isNotBlank()
                 } else {
                     // デフォルト値を設定
                     defaultRegion = "温暖地"
+                    hasExistingData = false
                 }
             } catch (e: Exception) {
                 // エラーログを出力
@@ -142,5 +150,17 @@ class SettingsViewModel : ViewModel() {
     
     fun clearSnackbar() {
         showSnackbar = null
+    }
+    
+    fun enterEditMode() {
+        isEditMode = true
+    }
+    
+    fun exitEditMode() {
+        isEditMode = false
+    }
+    
+    fun toggleEditMode() {
+        isEditMode = !isEditMode
     }
 }

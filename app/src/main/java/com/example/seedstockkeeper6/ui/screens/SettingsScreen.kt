@@ -10,6 +10,7 @@ import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Park
 import androidx.compose.material.icons.filled.Public
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -25,7 +26,8 @@ import kotlinx.coroutines.delay
 fun SettingsScreen(
     navController: NavController,
     viewModel: SettingsViewModel,
-    onSaveRequest: (() -> Unit)? = null
+    onSaveRequest: (() -> Unit)? = null,
+    onEditRequest: (() -> Unit)? = null
 ) {
     var showRegionBottomSheet by remember { mutableStateOf(false) }
     
@@ -53,8 +55,16 @@ fun SettingsScreen(
         onSaveRequest?.let { request ->
             if (viewModel.farmName.isNotBlank() && viewModel.defaultRegion.isNotBlank()) {
                 viewModel.saveSettings()
+                viewModel.exitEditMode()
                 navController.popBackStack()
             }
+        }
+    }
+    
+    // FABからの編集要求を処理
+    LaunchedEffect(onEditRequest) {
+        onEditRequest?.let { request ->
+            viewModel.enterEditMode()
         }
     }
     
@@ -101,11 +111,11 @@ fun SettingsScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                                                 Icon(
-                             Icons.Filled.Park,
-                             contentDescription = null,
-                             tint = MaterialTheme.colorScheme.primary
-                         )
+                        Icon(
+                            Icons.Filled.Park,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary
+                        )
                         Text(
                             text = "農園設定",
                             style = MaterialTheme.typography.titleMedium,
@@ -113,19 +123,42 @@ fun SettingsScreen(
                         )
                     }
                     
-                                         OutlinedTextField(
-                         value = viewModel.farmName,
-                         onValueChange = { newValue ->
-                             viewModel.updateFarmName(newValue)
-                             // 農園名が変更されたら直接保存処理を実行
-                             if (newValue.isNotBlank() && viewModel.defaultRegion.isNotBlank()) {
-                                 android.util.Log.d("SettingsScreen", "農園名変更時の保存処理: farmName='$newValue', defaultRegion='${viewModel.defaultRegion}'")
-                             }
-                         },
-                         label = { Text("農園名") },
-                         modifier = Modifier.fillMaxWidth(),
-                         singleLine = true
-                     )
+                    // 編集モードまたは新規登録時は入力フィールド、表示モード時は読み取り専用テキスト
+                    if (viewModel.isEditMode || !viewModel.hasExistingData) {
+                        if (viewModel.hasExistingData) {
+                            // 編集モード時はTextField
+                            TextField(
+                                value = viewModel.farmName,
+                                onValueChange = { newValue ->
+                                    viewModel.updateFarmName(newValue)
+                                },
+                                label = { Text("農園名") },
+                                modifier = Modifier.fillMaxWidth(),
+                                singleLine = true
+                            )
+                        } else {
+                            // 新規登録時はOutlinedTextField
+                            OutlinedTextField(
+                                value = viewModel.farmName,
+                                onValueChange = { newValue ->
+                                    viewModel.updateFarmName(newValue)
+                                },
+                                label = { Text("農園名") },
+                                modifier = Modifier.fillMaxWidth(),
+                                singleLine = true
+                            )
+                        }
+                    } else {
+                        // 表示モード時は読み取り専用テキスト
+                        Text(
+                            text = viewModel.farmName.ifEmpty { "未設定" },
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = if (viewModel.farmName.isEmpty()) 
+                                MaterialTheme.colorScheme.onSurfaceVariant 
+                            else 
+                                MaterialTheme.colorScheme.onSurface
+                        )
+                    }
                      
                      // デバッグ用：農園名の表示値をログ出力
                      LaunchedEffect(viewModel.farmName) {
@@ -158,15 +191,42 @@ fun SettingsScreen(
                         )
                     }
                     
-                                         OutlinedTextField(
-                         value = viewModel.defaultRegion,
-                         onValueChange = { },
-                         label = { Text("地域初期値") },
-                         modifier = Modifier
-                             .fillMaxWidth()
-                             .clickable { showRegionBottomSheet = true },
-                         readOnly = true
-                     )
+                    // 編集モードまたは新規登録時は入力フィールド、表示モード時は読み取り専用テキスト
+                    if (viewModel.isEditMode || !viewModel.hasExistingData) {
+                        if (viewModel.hasExistingData) {
+                            // 編集モード時はTextField
+                            TextField(
+                                value = viewModel.defaultRegion,
+                                onValueChange = { },
+                                label = { Text("地域初期値") },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { showRegionBottomSheet = true },
+                                readOnly = true
+                            )
+                        } else {
+                            // 新規登録時はOutlinedTextField
+                            OutlinedTextField(
+                                value = viewModel.defaultRegion,
+                                onValueChange = { },
+                                label = { Text("地域初期値") },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { showRegionBottomSheet = true },
+                                readOnly = true
+                            )
+                        }
+                    } else {
+                        // 表示モード時は読み取り専用テキスト
+                        Text(
+                            text = viewModel.defaultRegion.ifEmpty { "未設定" },
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = if (viewModel.defaultRegion.isEmpty()) 
+                                MaterialTheme.colorScheme.onSurfaceVariant 
+                            else 
+                                MaterialTheme.colorScheme.onSurface
+                        )
+                    }
                      
                      // デバッグ用：地域の表示値をログ出力
                      LaunchedEffect(viewModel.defaultRegion) {

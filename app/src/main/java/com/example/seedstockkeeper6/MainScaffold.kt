@@ -30,6 +30,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -38,6 +41,7 @@ import androidx.navigation.compose.rememberNavController
 import com.example.seedstockkeeper6.model.SeedPacket
 import com.example.seedstockkeeper6.viewmodel.SeedInputViewModel
 import com.example.seedstockkeeper6.viewmodel.SeedListViewModel
+import com.example.seedstockkeeper6.viewmodel.SettingsViewModel
 import com.google.firebase.auth.FirebaseUser
 import com.google.gson.Gson
 import kotlinx.coroutines.launch
@@ -73,6 +77,7 @@ fun MainScaffold(
     
     val snackbarHostState = remember { SnackbarHostState() }
     val listViewModel: SeedListViewModel = viewModel()
+    val settingsViewModel: SettingsViewModel = viewModel()
     val scope = rememberCoroutineScope()
     val ctx = LocalContext.current
     
@@ -243,10 +248,16 @@ fun MainScaffold(
                         onClick = {
                             when {
                                 currentRoute == "settings" -> {
-                                    // 設定画面では保存処理を実行
-                                    // SettingsScreen内で保存処理が実行されるため、
-                                    // ここでは前の画面に戻るだけ
-                                    navController.popBackStack()
+                                    // 設定画面では編集モードに応じて動作を変更
+                                    if (settingsViewModel.hasExistingData && !settingsViewModel.isEditMode) {
+                                        // 既存データがあり、表示モードの場合は編集モードに切り替え
+                                        settingsViewModel.enterEditMode()
+                                    } else {
+                                        // 編集モードまたは新規登録の場合は保存処理を実行
+                                        // SettingsScreen内で保存処理が実行されるため、
+                                        // ここでは前の画面に戻るだけ
+                                        navController.popBackStack()
+                                    }
                                 }
                                 isInputScreen -> {
                                     // 入力画面の時は保存処理
@@ -306,8 +317,14 @@ fun MainScaffold(
                         when {
                             currentRoute == "settings" -> {
                                 Icon(
-                                    imageVector = Icons.Filled.Save,
-                                    contentDescription = "保存",
+                                    imageVector = if (settingsViewModel.hasExistingData && !settingsViewModel.isEditMode) 
+                                        Icons.Filled.Settings 
+                                    else 
+                                        Icons.Filled.Save,
+                                    contentDescription = if (settingsViewModel.hasExistingData && !settingsViewModel.isEditMode) 
+                                        "編集" 
+                                    else 
+                                        "保存",
                                     modifier = Modifier.size(24.dp)
                                 )
                             }
@@ -452,11 +469,300 @@ fun MainScaffoldPreview_Input() {
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Preview(showBackground = true, name = "設定画面")
+@Preview(showBackground = true, name = "設定画面（表示モード）")
 @Composable
 fun MainScaffoldPreview_Settings() {
     SeedStockKeeper6Theme(darkTheme = false) {
         MainScaffoldPreview(route = "settings", isDarkTheme = false)
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Preview(showBackground = true, name = "NavigationBar色確認")
+@Composable
+fun NavigationBarColorPreview() {
+    // プレビュー用のテーマ設定を明示的に確認
+    val isDarkTheme = false
+    SeedStockKeeper6Theme(darkTheme = isDarkTheme, dynamicColor = false) {
+        Column {
+            // 色の情報を表示
+            Text(
+                text = "NavigationBar色確認",
+                style = MaterialTheme.typography.headlineMedium,
+                modifier = Modifier.padding(16.dp)
+            )
+            
+            Text(
+                text = "surfaceContainer: ${MaterialTheme.colorScheme.surfaceContainer}",
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(16.dp)
+            )
+            
+            Text(
+                text = "期待値: 0xFFFAF3E5",
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(16.dp)
+            )
+            
+            // 色の比較
+            val currentColor = MaterialTheme.colorScheme.surfaceContainer
+            val expectedColor = com.example.seedstockkeeper6.ui.theme.surfaceContainerLight
+            Text(
+                text = "色の一致: ${currentColor == expectedColor}",
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(16.dp)
+            )
+            
+            // NavigationBarを表示
+            NavigationBar(
+                containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                contentColor = MaterialTheme.colorScheme.onSurface
+            ) {
+                NavigationBarItem(
+                    icon = { Icon(Icons.Filled.Home, contentDescription = "ホーム") },
+                    selected = true,
+                    onClick = { }
+                )
+                NavigationBarItem(
+                    icon = { Icon(Icons.Filled.Search, contentDescription = "検索") },
+                    selected = false,
+                    onClick = { }
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Preview(showBackground = true, name = "アプリ全体背景色確認")
+@Composable
+fun AppBackgroundColorPreview() {
+    // プレビュー用のテーマ設定を明示的に確認
+    val isDarkTheme = false
+    SeedStockKeeper6Theme(darkTheme = isDarkTheme, dynamicColor = false) {
+                    Surface(
+                modifier = Modifier.fillMaxSize(),
+                color = MaterialTheme.colorScheme.background
+            ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // 色の情報を表示
+                Text(
+                    text = "アプリ全体背景色確認",
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                
+                // 背景色の情報
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainer
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = "背景色情報",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        
+                        Text(
+                            text = "background: ${MaterialTheme.colorScheme.background}",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        
+                        Text(
+                            text = "期待値: 0xFFFFF9EE",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        
+                        // 色の比較
+                        val currentColor = MaterialTheme.colorScheme.background
+                        val expectedColor = com.example.seedstockkeeper6.ui.theme.surfaceLight
+                        Text(
+                            text = "色の一致: ${currentColor == expectedColor}",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
+                
+                // TopAppBarの色確認
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainer
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = "TopAppBar色情報",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        
+                        Text(
+                            text = "TopAppBar背景: MaterialTheme.colorScheme.surface",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        
+                        Text(
+                            text = "実際の色: ${MaterialTheme.colorScheme.surface}",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
+                
+                // NavigationBarの色確認
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainer
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = "NavigationBar色情報",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        
+                        Text(
+                            text = "NavigationBar背景: MaterialTheme.colorScheme.surfaceContainer",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        
+                        Text(
+                            text = "実際の色: ${MaterialTheme.colorScheme.surfaceContainer}",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        
+                        Text(
+                            text = "期待値: 0xFFFAF3E5",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
+                
+                Spacer(modifier = Modifier.weight(1f))
+                
+                // 実際のNavigationBarを表示
+                NavigationBar(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    contentColor = MaterialTheme.colorScheme.onSurface
+                ) {
+                    NavigationBarItem(
+                        icon = { Icon(Icons.Filled.Home, contentDescription = "ホーム") },
+                        selected = true,
+                        onClick = { }
+                    )
+                    NavigationBarItem(
+                        icon = { Icon(Icons.Filled.Search, contentDescription = "検索") },
+                        selected = false,
+                        onClick = { }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Preview(showBackground = true, name = "設定画面（編集モード）")
+@Composable
+fun MainScaffoldPreview_SettingsEdit() {
+    SeedStockKeeper6Theme(darkTheme = false) {
+        Scaffold(
+            topBar = {
+                PreviewTopAppBar("settings")
+            },
+            bottomBar = {
+                NavigationBar(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    contentColor = MaterialTheme.colorScheme.onSurface
+                ) {
+                    // 簡略化されたNavigationBar
+                    NavigationBarItem(
+                        icon = { PreviewHomeIcon("settings", false) },
+                        selected = false,
+                        onClick = { }
+                    )
+                    NavigationBarItem(
+                        icon = { PreviewFloatingActionButton("settings") },
+                        selected = false,
+                        onClick = { }
+                    )
+                }
+            }
+        ) { padding ->
+            PreviewSettingsContent(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding),
+                isEditMode = true,
+                hasExistingData = true
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Preview(showBackground = true, name = "設定画面（新規登録）")
+@Composable
+fun MainScaffoldPreview_SettingsNew() {
+    SeedStockKeeper6Theme(darkTheme = false) {
+        Scaffold(
+            topBar = {
+                PreviewTopAppBar("settings")
+            },
+            bottomBar = {
+                NavigationBar(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    contentColor = MaterialTheme.colorScheme.onSurface
+                ) {
+                    // 簡略化されたNavigationBar
+                    NavigationBarItem(
+                        icon = { PreviewHomeIcon("settings", false) },
+                        selected = false,
+                        onClick = { }
+                    )
+                    NavigationBarItem(
+                        icon = { PreviewFloatingActionButton("settings") },
+                        selected = false,
+                        onClick = { }
+                    )
+                }
+            }
+        ) { padding ->
+            PreviewSettingsContent(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding),
+                isEditMode = false,
+                hasExistingData = false
+            )
+        }
     }
 }
 
@@ -486,6 +792,141 @@ fun MainScaffoldPreview_Parameterized(
 ) {
     SeedStockKeeper6Theme(darkTheme = false) {
         MainScaffoldPreview(route = route, isDarkTheme = false)
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun PreviewSettingsContent(
+    modifier: Modifier = Modifier,
+    isEditMode: Boolean = false,
+    hasExistingData: Boolean = true
+) {
+    Column(
+        modifier = modifier
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(24.dp)
+    ) {
+        // 農園名設定
+        Card(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        Icons.Filled.Settings,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        text = "農園設定",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                
+                // 編集モードまたは新規登録時は入力フィールド、表示モード時は読み取り専用テキスト
+                if (isEditMode || !hasExistingData) {
+                    if (hasExistingData) {
+                        // 編集モード時はTextField
+                        TextField(
+                            value = "みっちゃん農園",
+                            onValueChange = { },
+                            label = { Text("農園名") },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            readOnly = true
+                        )
+                    } else {
+                        // 新規登録時はOutlinedTextField
+                        OutlinedTextField(
+                            value = "みっちゃん農園",
+                            onValueChange = { },
+                            label = { Text("農園名") },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            readOnly = true
+                        )
+                    }
+                } else {
+                    // 表示モード時は読み取り専用テキスト
+                    Text(
+                        text = "みっちゃん農園",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            }
+        }
+        
+        // 地域設定
+        Card(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        Icons.Filled.Home,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        text = "地域設定",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                
+                // 編集モードまたは新規登録時は入力フィールド、表示モード時は読み取り専用テキスト
+                if (isEditMode || !hasExistingData) {
+                    if (hasExistingData) {
+                        // 編集モード時はTextField
+                        TextField(
+                            value = "温暖地",
+                            onValueChange = { },
+                            label = { Text("地域初期値") },
+                            modifier = Modifier.fillMaxWidth(),
+                            readOnly = true
+                        )
+                    } else {
+                        // 新規登録時はOutlinedTextField
+                        OutlinedTextField(
+                            value = "温暖地",
+                            onValueChange = { },
+                            label = { Text("地域初期値") },
+                            modifier = Modifier.fillMaxWidth(),
+                            readOnly = true
+                        )
+                    }
+                } else {
+                    // 表示モード時は読み取り専用テキスト
+                    Text(
+                        text = "温暖地",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+                
+                Text(
+                    text = "種子登録時の地域初期値として使用されます",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
     }
 }
 
@@ -730,17 +1171,28 @@ private fun MainScaffoldPreview(route: String, isDarkTheme: Boolean = false) {
             }
         }
     ) { padding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = "プレビュー: $route",
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.onSurface
+        if (route == "settings") {
+            // 設定画面のプレビュー（表示モード）
+            PreviewSettingsContent(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding),
+                isEditMode = false,
+                hasExistingData = true
             )
+        } else {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "プレビュー: $route",
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
         }
     }
 }
