@@ -107,14 +107,8 @@ fun SeedStockKeeper6Theme(
     android.util.Log.d("Theme", "secondary: ${colorScheme.secondary}")
     android.util.Log.d("Theme", "tertiary: ${colorScheme.tertiary}")
     
-    val view = LocalView.current
-    if (!view.isInEditMode) {
-        SideEffect {
-            val window = (view.context as android.app.Activity).window
-            window.statusBarColor = colorScheme.primary.toArgb()
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = darkTheme
-        }
-    }
+    // システムバーの制御は MainActivity.kt の SystemAppearance に委ねる
+    // SideEffect を削除して、enableEdgeToEdge() との競合を回避
 
     MaterialTheme(
         colorScheme = colorScheme,

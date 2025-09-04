@@ -2,6 +2,7 @@ package com.example.seedstockkeeper6
 
 import android.content.Context
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -28,6 +29,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.style.TextAlign
 
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -50,6 +52,10 @@ import com.example.seedstockkeeper6.ui.theme.tertiaryLight
 import com.example.seedstockkeeper6.ui.theme.tertiaryDark
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.tooling.preview.PreviewParameterProvider
+import com.example.seedstockkeeper6.ui.theme.SeedStockKeeper6Theme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -94,7 +100,7 @@ fun MainScaffold(
             TopAppBar(
                 modifier = Modifier.statusBarsPadding(),
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
+                    containerColor = Color.Transparent,
                     titleContentColor = MaterialTheme.colorScheme.onSurface,
                     navigationIconContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                     actionIconContentColor = MaterialTheme.colorScheme.onSurfaceVariant
@@ -123,12 +129,11 @@ fun MainScaffold(
                     }
                 },
                 title = { 
-                    Box(
-                        modifier = Modifier.fillMaxWidth(),
-                        contentAlignment = Alignment.Center
-                    ) {
+                    if (currentRoute == "settings") {
                         Text(
-                            text = if (currentRoute == "settings") "設定" else "たねすけさん"
+                            text = "設定",
+                            modifier = Modifier.fillMaxWidth(),
+                            textAlign = TextAlign.Start
                         )
                     }
                 },
@@ -178,19 +183,36 @@ fun MainScaffold(
                 // ホームアイコン
                 NavigationBarItem(
                     icon = { 
-                        Icon(
-                            painter = painterResource(
-                                id = if (currentRoute == "list") 
-                                    com.example.seedstockkeeper6.R.drawable.home_dark 
+                        val isDarkTheme = isSystemInDarkTheme()
+                        if (isDarkTheme) {
+                            // ダークモードではGoogleアイコン
+                            Icon(
+                                imageVector = if (currentRoute == "list") 
+                                    Icons.Filled.Home 
                                 else 
-                                    com.example.seedstockkeeper6.R.drawable.home_light
-                            ),
-                            contentDescription = "ホーム",
-                            tint = Color.Unspecified,
-                            modifier = Modifier.size(
-                                if (currentRoute == "list") 28.dp else 24.dp
+                                    Icons.Outlined.Home,
+                                contentDescription = "ホーム",
+                                tint = MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.size(
+                                    if (currentRoute == "list") 28.dp else 24.dp
+                                )
                             )
-                        )
+                        } else {
+                            // ライトモードではpng画像
+                            Icon(
+                                painter = painterResource(
+                                    id = if (currentRoute == "list") 
+                                        com.example.seedstockkeeper6.R.drawable.home_dark 
+                                    else 
+                                        com.example.seedstockkeeper6.R.drawable.home_light
+                                ),
+                                contentDescription = "ホーム",
+                                tint = Color.Unspecified,
+                                modifier = Modifier.size(
+                                    if (currentRoute == "list") 28.dp else 24.dp
+                                )
+                            )
+                        }
                     },
                     selected = currentRoute == "list",
                     onClick = { navController.navigate("list") }
@@ -202,7 +224,7 @@ fun MainScaffold(
                         Icon(
                             imageVector = if (currentRoute == "search") Icons.Filled.Search else Icons.Outlined.Search, 
                             contentDescription = "検索",
-                            tint = Color.Unspecified,
+                            tint = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.size(
                                 if (currentRoute == "search") 28.dp else 24.dp
                             )
@@ -319,19 +341,36 @@ fun MainScaffold(
                 // カレンダーアイコン
                 NavigationBarItem(
                     icon = { 
-                        Icon(
-                            painter = painterResource(
-                                id = if (currentRoute == "calendar") 
-                                    com.example.seedstockkeeper6.R.drawable.calendar_dark 
+                        val isDarkTheme = isSystemInDarkTheme()
+                        if (isDarkTheme) {
+                            // ダークモードではGoogleアイコン
+                            Icon(
+                                imageVector = if (currentRoute == "calendar") 
+                                    Icons.Filled.CalendarMonth 
                                 else 
-                                    com.example.seedstockkeeper6.R.drawable.calendar_light
-                            ),
-                            contentDescription = "カレンダー",
-                            tint = Color.Unspecified,
-                            modifier = Modifier.size(
-                                if (currentRoute == "calendar") 28.dp else 24.dp
+                                    Icons.Outlined.CalendarMonth,
+                                contentDescription = "カレンダー",
+                                tint = MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.size(
+                                    if (currentRoute == "calendar") 28.dp else 24.dp
+                                )
                             )
-                        )
+                        } else {
+                            // ライトモードではpng画像
+                            Icon(
+                                painter = painterResource(
+                                    id = if (currentRoute == "calendar") 
+                                        com.example.seedstockkeeper6.R.drawable.calendar_dark 
+                                    else 
+                                        com.example.seedstockkeeper6.R.drawable.calendar_light
+                                ),
+                                contentDescription = "カレンダー",
+                                tint = Color.Unspecified,
+                                modifier = Modifier.size(
+                                    if (currentRoute == "calendar") 28.dp else 24.dp
+                                )
+                            )
+                        }
                     },
                     selected = currentRoute == "calendar",
                     onClick = { navController.navigate("calendar") }
@@ -343,7 +382,7 @@ fun MainScaffold(
                         Icon(
                             imageVector = if (currentRoute == "notifications") Icons.Filled.Notifications else Icons.Outlined.Notifications, 
                             contentDescription = "通知",
-                            tint = Color.Unspecified,
+                            tint = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.size(
                                 if (currentRoute == "notifications") 28.dp else 24.dp
                             )
@@ -366,6 +405,342 @@ fun MainScaffold(
             if (showSaveAnimation) {
                 FullScreenSaveAnimation()
             }
+        }
+    }
+}
+
+
+// プレビュー用のナビゲーションパラメータ
+class NavigationRouteProvider : PreviewParameterProvider<String> {
+    override val values = sequenceOf("list", "search", "input/", "calendar", "notifications", "settings")
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Preview(showBackground = true, name = "ホーム画面 (ライトテーマ)")
+@Composable
+fun MainScaffoldPreview_Light_Home() {
+    SeedStockKeeper6Theme(darkTheme = false) {
+        MainScaffoldPreview(route = "list", isDarkTheme = false)
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Preview(showBackground = true, name = "ホーム画面 (ダークテーマ)")
+@Composable
+fun MainScaffoldPreview_Dark_Home() {
+    SeedStockKeeper6Theme(darkTheme = true) {
+        MainScaffoldPreview(route = "list", isDarkTheme = true)
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Preview(showBackground = true, name = "検索画面")
+@Composable
+fun MainScaffoldPreview_Search() {
+    SeedStockKeeper6Theme(darkTheme = false) {
+        MainScaffoldPreview(route = "search", isDarkTheme = false)
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Preview(showBackground = true, name = "入力画面")
+@Composable
+fun MainScaffoldPreview_Input() {
+    SeedStockKeeper6Theme(darkTheme = false) {
+        MainScaffoldPreview(route = "input/", isDarkTheme = false)
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Preview(showBackground = true, name = "設定画面")
+@Composable
+fun MainScaffoldPreview_Settings() {
+    SeedStockKeeper6Theme(darkTheme = false) {
+        MainScaffoldPreview(route = "settings", isDarkTheme = false)
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Preview(showBackground = true, name = "カレンダー画面")
+@Composable
+fun MainScaffoldPreview_Calendar() {
+    SeedStockKeeper6Theme(darkTheme = false) {
+        MainScaffoldPreview(route = "calendar", isDarkTheme = false)
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Preview(showBackground = true, name = "通知画面")
+@Composable
+fun MainScaffoldPreview_Notifications() {
+    SeedStockKeeper6Theme(darkTheme = false) {
+        MainScaffoldPreview(route = "notifications", isDarkTheme = false)
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Preview(showBackground = true, name = "パラメータ付きプレビュー")
+@Composable
+fun MainScaffoldPreview_Parameterized(
+    @PreviewParameter(NavigationRouteProvider::class) route: String
+) {
+    SeedStockKeeper6Theme(darkTheme = false) {
+        MainScaffoldPreview(route = route, isDarkTheme = false)
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun PreviewTopAppBar(route: String) {
+    TopAppBar(
+        modifier = Modifier.statusBarsPadding(),
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = Color.Transparent,
+            titleContentColor = MaterialTheme.colorScheme.onSurface,
+            navigationIconContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            actionIconContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+        ),
+        navigationIcon = {
+            when (route) {
+                "settings" -> {
+                    IconButton(onClick = { }) {
+                        Icon(Icons.Filled.ArrowBack, contentDescription = "戻る")
+                    }
+                }
+                else -> {
+                    Box(
+                        modifier = Modifier.padding(horizontal = 12.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        // プレビュー用の簡略化されたアカウントメニュー
+                        Icon(
+                            Icons.Filled.Settings,
+                            contentDescription = "アカウント",
+                            modifier = Modifier.size(32.dp)
+                        )
+                    }
+                }
+            }
+        },
+        title = { 
+            if (route == "settings") {
+                Text(
+                    text = "設定",
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Start
+                )
+            }
+        },
+        actions = {
+            when (route) {
+                "settings" -> {
+                    // 設定画面では何も表示しない
+                }
+                else -> {
+                    Box(
+                        modifier = Modifier.padding(horizontal = 12.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        IconButton(
+                            onClick = { },
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Icon(
+                                Icons.Filled.Settings,
+                                contentDescription = "設定",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(32.dp)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun PreviewFloatingActionButton(route: String) {
+    FloatingActionButton(
+        onClick = { },
+        containerColor = MaterialTheme.colorScheme.primaryContainer,
+        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+    ) {
+        when {
+            route == "settings" -> {
+                Icon(
+                    imageVector = Icons.Filled.Save,
+                    contentDescription = "保存",
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+            route.startsWith("input") -> {
+                Icon(
+                    imageVector = Icons.Filled.Save,
+                    contentDescription = "保存",
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+            else -> {
+                Icon(
+                    imageVector = Icons.Filled.Add,
+                    contentDescription = "追加",
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun PreviewHomeIcon(route: String, isDarkTheme: Boolean) {
+    if (isDarkTheme) {
+        // ダークモードではGoogleアイコン
+        Icon(
+            imageVector = if (route == "list") 
+                Icons.Filled.Home 
+            else 
+                Icons.Outlined.Home,
+            contentDescription = "ホーム",
+            tint = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.size(
+                if (route == "list") 28.dp else 24.dp
+            )
+        )
+    } else {
+        // ライトモードではpng画像
+        Icon(
+            painter = painterResource(
+                id = if (route == "list") 
+                    com.example.seedstockkeeper6.R.drawable.home_dark 
+                else 
+                    com.example.seedstockkeeper6.R.drawable.home_light
+            ),
+            contentDescription = "ホーム",
+            tint = Color.Unspecified,
+            modifier = Modifier.size(
+                if (route == "list") 28.dp else 24.dp
+            )
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun PreviewCalendarIcon(route: String, isDarkTheme: Boolean) {
+    if (isDarkTheme) {
+        // ダークモードではGoogleアイコン
+        Icon(
+            imageVector = if (route == "calendar") 
+                Icons.Filled.CalendarMonth 
+            else 
+                Icons.Outlined.CalendarMonth,
+            contentDescription = "カレンダー",
+            tint = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.size(
+                if (route == "calendar") 28.dp else 24.dp
+            )
+        )
+    } else {
+        // ライトモードではpng画像
+        Icon(
+            painter = painterResource(
+                id = if (route == "calendar") 
+                    com.example.seedstockkeeper6.R.drawable.calendar_dark 
+                else 
+                    com.example.seedstockkeeper6.R.drawable.calendar_light
+            ),
+            contentDescription = "カレンダー",
+            tint = Color.Unspecified,
+            modifier = Modifier.size(
+                if (route == "calendar") 28.dp else 24.dp
+            )
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun MainScaffoldPreview(route: String, isDarkTheme: Boolean = false) {
+    // プレビュー用の簡略化されたMainScaffold
+    Scaffold(
+        topBar = {
+            PreviewTopAppBar(route)
+        },
+        bottomBar = {
+            NavigationBar(
+                containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                contentColor = MaterialTheme.colorScheme.onSurface
+            ) {
+                // ホームアイコン
+                NavigationBarItem(
+                    icon = { PreviewHomeIcon(route, isDarkTheme) },
+                    selected = route == "list",
+                    onClick = { }
+                )
+                
+                // 検索アイコン
+                NavigationBarItem(
+                    icon = { 
+                        Icon(
+                            imageVector = if (route == "search") Icons.Filled.Search else Icons.Outlined.Search, 
+                            contentDescription = "検索",
+                            tint = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.size(
+                                if (route == "search") 28.dp else 24.dp
+                            )
+                        )
+                    },
+                    selected = route == "search",
+                    onClick = { }
+                )
+                
+                // 中央のFab
+                Box(
+                    modifier = Modifier.weight(1f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    PreviewFloatingActionButton(route)
+                }
+                
+                // カレンダーアイコン
+                NavigationBarItem(
+                    icon = { PreviewCalendarIcon(route, isDarkTheme) },
+                    selected = route == "calendar",
+                    onClick = { }
+                )
+                
+                // 通知アイコン
+                NavigationBarItem(
+                    icon = { 
+                        Icon(
+                            imageVector = if (route == "notifications") Icons.Filled.Notifications else Icons.Outlined.Notifications, 
+                            contentDescription = "通知",
+                            tint = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.size(
+                                if (route == "notifications") 28.dp else 24.dp
+                            )
+                        )
+                    },
+                    selected = route == "notifications",
+                    onClick = { }
+                )
+            }
+        }
+    ) { padding ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "プレビュー: $route",
+                style = MaterialTheme.typography.headlineMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
         }
     }
 }
