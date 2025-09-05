@@ -50,7 +50,10 @@ fun CompanionPlantsSection(viewModel: SeedInputViewModel) {
         
         Spacer(modifier = Modifier.height(16.dp))
         
-        CompanionPlantInputSection(viewModel)
+        // DisplayModeの時はコンパニオンプランツ追加セクションを非表示
+        if (viewModel.isEditMode || !viewModel.hasExistingData) {
+            CompanionPlantInputSection(viewModel)
+        }
     }
 }
 

@@ -81,7 +81,9 @@ fun SeedListScreen(
                     val newSeeds = it.documents.mapNotNull { doc ->
                         val seed = doc.toObject(SeedPacket::class.java)
                         if (seed != null) {
-                            doc.id to seed
+                            // FirestoreのドキュメントIDをSeedPacketのidフィールドに設定
+                            val seedWithId = seed.copy(id = doc.id, documentId = doc.id)
+                            doc.id to seedWithId
                         } else {
                             Log.w("SeedListScreen", "Failed to convert document ${doc.id} to SeedPacket")
                             null

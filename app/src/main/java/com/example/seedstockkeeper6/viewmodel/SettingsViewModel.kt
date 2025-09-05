@@ -37,7 +37,6 @@ class SettingsViewModel : ViewModel() {
     }
     
     fun updateFarmName(name: String) {
-        android.util.Log.d("SettingsViewModel", "農園名更新: '$name'")
         farmName = name
     }
     

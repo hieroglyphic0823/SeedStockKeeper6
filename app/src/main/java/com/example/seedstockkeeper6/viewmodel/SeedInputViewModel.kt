@@ -77,9 +77,22 @@ class SeedInputViewModel : ViewModel() {
     // 地域選択後の編集モード状態
     var isCalendarEditMode by mutableStateOf(false)
         private set
+    
+    // 種情報登録画面の編集モード状態
+    var isEditMode by mutableStateOf(false)
+        private set
+    
+    // 既存データがあるかどうか
+    var hasExistingData by mutableStateOf(false)
+        private set
 
     fun setSeed(seed: SeedPacket?) {
         packet = seed ?: SeedPacket()
+        // idまたはdocumentIdのいずれかが存在すれば既存データとみなす
+        hasExistingData = (seed?.id?.isNotEmpty() == true) || (seed?.documentId?.isNotEmpty() == true)
+        isEditMode = false // 初期状態は表示モード
+        
+        
         val localUris = imageUris.filter { it.scheme == "file" || it.scheme == "content" }
         imageUris.clear()
         seed?.imageUrls?.forEach { url ->
@@ -1325,6 +1338,21 @@ class SeedInputViewModel : ViewModel() {
 
     fun exitCalendarEditMode() {
         isCalendarEditMode = false
+    }
+    
+    // 種情報登録画面の編集モード制御
+    fun enterEditMode() {
+        isEditMode = true
+    }
+    
+    fun exitEditMode() {
+        isEditMode = false
+    }
+    
+    fun saveSeedData(context: android.content.Context, onComplete: (Result<Unit>) -> Unit) {
+        // 種情報の保存処理
+        // 既存のsaveSeedメソッドを呼び出す
+        saveSeed(context, onComplete)
     }
 
 }

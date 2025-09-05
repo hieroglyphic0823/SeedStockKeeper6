@@ -1,11 +1,14 @@
 package com.example.seedstockkeeper6.ui.screens
 
 import android.util.Log
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.Alignment
 import com.example.seedstockkeeper6.ui.components.SeedCalendarGrouped
@@ -54,13 +57,50 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
                 viewModel.packet.calendar ?: emptyList()
             }
             
-            // ---- 地域別 まきどき / 収穫カレンダー ----
+            // ---- 地域表示 ----
+            if (calendarEntries.isNotEmpty()) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    calendarEntries.forEach { entry ->
+                        val regionColor = when {
+                            "冷" in (entry.region ?: "") -> Color(0xFF80DEEA)
+                            "寒" in (entry.region ?: "") -> Color(0xFF1565C0)
+                            "涼" in (entry.region ?: "") -> Color(0xFF039BE5)
+                            "中" in (entry.region ?: "") -> Color(0xFF388E3C)
+                            "温" in (entry.region ?: "") -> Color(0xFFFB8C00)
+                            "暖" in (entry.region ?: "") -> Color(0xFFD32F2F)
+                            else -> Color.Gray
+                        }
+                        
+                        Box(
+                            modifier = Modifier
+                                .background(
+                                    color = regionColor,
+                                    shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
+                                )
+                                .padding(horizontal = 12.dp, vertical = 6.dp)
+                        ) {
+                            Text(
+                                text = entry.region ?: "未設定",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Color.White,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+            
+            // ---- まきどき / 収穫カレンダー ----
             SeedCalendarGrouped(
                 entries = calendarEntries,
                 packetExpirationYear = viewModel.packet.expirationYear,    // ★ 追加
                 packetExpirationMonth = viewModel.packet.expirationMonth,  // ★ 追加
                 modifier = Modifier.fillMaxWidth(),
-                heightDp = 140
+                heightDp = if (viewModel.isEditMode || !viewModel.hasExistingData) 140 else 80 // DisplayModeの時は高さを調整
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -69,15 +109,18 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Button(
-                onClick = { viewModel.addCalendarEntry() }, 
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
-                )
-            ) {
-                Text("地域を追加")
+            // DisplayModeの時は地域追加ボタンを非表示
+            if (viewModel.isEditMode || !viewModel.hasExistingData) {
+                Button(
+                    onClick = { viewModel.addCalendarEntry() }, 
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
+                    )
+                ) {
+                    Text("地域を追加")
+                }
             }
         }
     }

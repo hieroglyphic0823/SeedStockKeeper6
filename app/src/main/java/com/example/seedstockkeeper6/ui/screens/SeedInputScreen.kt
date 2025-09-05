@@ -6,11 +6,14 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.navigation.NavController
@@ -29,14 +32,38 @@ fun SeedInputScreen(
     viewModel: SeedInputViewModel
 ) {
     val scroll = rememberScrollState()
+    val context = LocalContext.current
 
-    Box(Modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier
-                .verticalScroll(scroll)
-                .padding(16.dp)
-                .fillMaxWidth()
-        ) {
+    Scaffold(
+        floatingActionButton = {
+            if (viewModel.isEditMode) {
+                FloatingActionButton(
+                    onClick = {
+                        viewModel.saveSeedData(context) { result ->
+                            if (result.isSuccess) {
+                                viewModel.exitEditMode()
+                            }
+                        }
+                    },
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Save,
+                        contentDescription = "保存"
+                    )
+                }
+            }
+        }
+    ) { paddingValues ->
+        Box(Modifier.fillMaxSize()) {
+            Column(
+                modifier = Modifier
+                    .verticalScroll(scroll)
+                    .padding(paddingValues)
+                    .padding(16.dp)
+                    .fillMaxWidth()
+            ) {
             // 画像管理セクション
             ImageManagementSection(viewModel)
             
@@ -75,22 +102,23 @@ fun SeedInputScreen(
             
             // コンパニオンプランツセクション
             CompanionPlantsSection(viewModel)
-        }
-        
-        // ダイアログ類
-        if (viewModel.showCropConfirmDialog) {
-            CropConfirmDialog(viewModel = viewModel)
-        }
-        
-        if (viewModel.isLoading) {
-            Box(
-                Modifier
-                    .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.5f))
-                    .zIndex(999f),
-                contentAlignment = Alignment.Center
-            ) {
-                SukesanGifAnimation()
+            }
+            
+            // ダイアログ類
+            if (viewModel.showCropConfirmDialog) {
+                CropConfirmDialog(viewModel = viewModel)
+            }
+            
+            if (viewModel.isLoading) {
+                Box(
+                    Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.5f))
+                        .zIndex(999f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    SukesanGifAnimation()
+                }
             }
         }
     }

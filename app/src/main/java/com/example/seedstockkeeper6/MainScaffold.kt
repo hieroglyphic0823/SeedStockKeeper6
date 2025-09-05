@@ -2,17 +2,22 @@ package com.example.seedstockkeeper6
 
 import android.util.Log
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.Image
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Save
@@ -46,10 +51,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -69,7 +74,9 @@ import kotlinx.coroutines.launch
 fun MainScaffoldTopAppBar(
     currentRoute: String?,
     navController: NavHostController,
-    user: FirebaseUser?
+    user: FirebaseUser?,
+    settingsViewModel: SettingsViewModel? = null,
+    seedInputViewModel: com.example.seedstockkeeper6.viewmodel.SeedInputViewModel? = null
 ) {
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -89,8 +96,17 @@ fun MainScaffoldTopAppBar(
                         Icon(Icons.Filled.ArrowBack, contentDescription = "戻る")
                     }
                 }
+                "input" -> {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(Icons.Filled.ArrowBack, contentDescription = "戻る")
+                    }
+                }
                 else -> {
-                    if (user != null) {
+                    if (currentRoute?.startsWith("input") == true) {
+                        IconButton(onClick = { navController.popBackStack() }) {
+                            Icon(Icons.Filled.ArrowBack, contentDescription = "戻る")
+                        }
+                    } else if (user != null) {
                         Box(
                             modifier = Modifier.padding(horizontal = 12.dp),
                             contentAlignment = Alignment.Center
@@ -106,34 +122,163 @@ fun MainScaffoldTopAppBar(
             }
         },
         title = { 
-            if (currentRoute == "settings") {
-                Text(
-                    text = "設定",
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Start
-                )
+            when (currentRoute) {
+                "settings" -> {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(id = com.example.seedstockkeeper6.R.drawable.garden_cart),
+                            contentDescription = "農園設定",
+                            tint = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Text(
+                            text = "農園設定",
+                            modifier = Modifier.fillMaxWidth(),
+                            textAlign = TextAlign.Start
+                        )
+                    }
+                }
+                "input" -> {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Image(
+                            painter = painterResource(id = com.example.seedstockkeeper6.R.drawable.packet),
+                            contentDescription = "種情報",
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Text(
+                            text = "種情報",
+                            modifier = Modifier.fillMaxWidth(),
+                            textAlign = TextAlign.Start
+                        )
+                    }
+                }
+                else -> {
+                    if (currentRoute?.startsWith("input") == true) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Image(
+                                painter = painterResource(id = com.example.seedstockkeeper6.R.drawable.packet),
+                                contentDescription = "種情報",
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Text(
+                                text = "種情報",
+                                modifier = Modifier.fillMaxWidth(),
+                                textAlign = TextAlign.Start
+                            )
+                        }
+                    }
+                }
             }
         },
         actions = {
             when (currentRoute) {
                 "settings" -> {
-                    // 設定画面では何も表示しない
-                }
-                else -> {
+                    // 設定画面では編集アイコンを表示
                     Box(
                         modifier = Modifier.padding(horizontal = 12.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         IconButton(
-                            onClick = { navController.navigate("settings") },
+                            onClick = { 
+                                // 編集モードの切り替え
+                                settingsViewModel?.let { viewModel ->
+                                    if (viewModel.isEditMode) {
+                                        viewModel.exitEditMode()
+                                    } else {
+                                        viewModel.enterEditMode()
+                                    }
+                                }
+                            },
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                                                    Icon(
+                            imageVector = if (settingsViewModel?.isEditMode == true) Icons.Filled.Close else Icons.Filled.Edit,
+                            contentDescription = if (settingsViewModel?.isEditMode == true) "キャンセル" else "編集",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(32.dp)
+                        )
+                        }
+                    }
+                }
+                "input" -> {
+                    // DisplayModeの時はEDITアイコン、EditModeの時は×ボタンを表示
+                    Box(
+                        modifier = Modifier.padding(horizontal = 12.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        IconButton(
+                            onClick = { 
+                                if (seedInputViewModel?.isEditMode == true) {
+                                    // 編集モードを終了
+                                    seedInputViewModel?.exitEditMode()
+                                } else {
+                                    // 編集モードに切り替え
+                                    seedInputViewModel?.enterEditMode()
+                                }
+                            },
                             modifier = Modifier.size(32.dp)
                         ) {
                             Icon(
-                                Icons.Filled.Settings,
-                                contentDescription = "設定",
+                                imageVector = if (seedInputViewModel?.isEditMode == true) Icons.Filled.Close else Icons.Filled.Edit,
+                                contentDescription = if (seedInputViewModel?.isEditMode == true) "キャンセル" else "編集",
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.size(32.dp)
                             )
+                        }
+                    }
+                }
+                else -> {
+                    if (currentRoute?.startsWith("input") == true) {
+                        // DisplayModeの時はEDITアイコン、EditModeの時は×ボタンを表示
+                        Box(
+                            modifier = Modifier.padding(horizontal = 12.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            IconButton(
+                                onClick = { 
+                                    if (seedInputViewModel?.isEditMode == true) {
+                                        // 編集モードを終了
+                                        seedInputViewModel?.exitEditMode()
+                                    } else {
+                                        // 編集モードに切り替え
+                                        seedInputViewModel?.enterEditMode()
+                                    }
+                                },
+                                modifier = Modifier.size(32.dp)
+                            ) {
+                                Icon(
+                                    imageVector = if (seedInputViewModel?.isEditMode == true) Icons.Filled.Close else Icons.Filled.Edit,
+                                    contentDescription = if (seedInputViewModel?.isEditMode == true) "キャンセル" else "編集",
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(32.dp)
+                                )
+                            }
+                        }
+                    } else {
+                        Box(
+                            modifier = Modifier.padding(horizontal = 12.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            IconButton(
+                                onClick = { navController.navigate("settings") },
+                                modifier = Modifier.size(32.dp)
+                            ) {
+                                Icon(
+                                    Icons.Filled.Settings,
+                                    contentDescription = "設定",
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(32.dp)
+                                )
+                            }
                         }
                     }
                 }
@@ -152,8 +297,7 @@ fun MainScaffoldNavigationBar(
     isInputScreen: Boolean,
     inputViewModel: SeedInputViewModel?,
     settingsViewModel: SettingsViewModel,
-    onSaveRequest: () -> Unit,
-    onEditRequest: () -> Unit
+    onSaveRequest: () -> Unit
 ) {
     NavigationBar(
         containerColor = MaterialTheme.colorScheme.surfaceContainer,
@@ -162,27 +306,14 @@ fun MainScaffoldNavigationBar(
         // ホームアイコン
         NavigationBarItem(
             icon = { 
-                val isDarkTheme = isSystemInDarkTheme()
-                if (isDarkTheme) {
-                    Icon(
-                        imageVector = if (currentRoute == "list") Icons.Filled.Home else Icons.Outlined.Home,
-                        contentDescription = "ホーム",
-                        tint = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.size(if (currentRoute == "list") 28.dp else 24.dp)
-                    )
-                } else {
-                    Icon(
-                        painter = painterResource(
-                            id = if (currentRoute == "list") 
-                                com.example.seedstockkeeper6.R.drawable.home_dark 
-                            else 
-                                com.example.seedstockkeeper6.R.drawable.home_light
-                        ),
-                        contentDescription = "ホーム",
-                        tint = Color.Unspecified,
-                        modifier = Modifier.size(if (currentRoute == "list") 28.dp else 24.dp)
-                    )
-                }
+                Icon(
+                    painter = painterResource(
+                        id = com.example.seedstockkeeper6.R.drawable.home_and_garden
+                    ),
+                    contentDescription = "ホーム",
+                    tint = Color.Unspecified,
+                    modifier = Modifier.size(if (currentRoute == "list") 28.dp else 24.dp)
+                )
             },
             selected = currentRoute == "list",
             onClick = { navController.navigate("list") }
@@ -208,21 +339,17 @@ fun MainScaffoldNavigationBar(
             contentAlignment = Alignment.Center
         ) {
             when {
-                currentRoute == "settings" -> {
+                currentRoute == "settings" && settingsViewModel.isEditMode -> {
                     FloatingActionButton(
                         onClick = {
-                            if (settingsViewModel.isEditMode) {
-                                onSaveRequest()
-                            } else {
-                                onEditRequest()
-                            }
+                            onSaveRequest()
                         },
                         containerColor = MaterialTheme.colorScheme.secondaryContainer,
                         contentColor = MaterialTheme.colorScheme.onSecondaryContainer
                     ) {
                         Icon(
-                            imageVector = if (settingsViewModel.isEditMode) Icons.Filled.Save else Icons.Filled.Settings,
-                            contentDescription = if (settingsViewModel.isEditMode) "保存" else "編集"
+                            imageVector = Icons.Filled.Save,
+                            contentDescription = "保存"
                         )
                     }
                 }
@@ -342,32 +469,35 @@ fun MainScaffold(
             MainScaffoldTopAppBar(
                 currentRoute = currentRoute,
                 navController = navController,
-                user = user
+                user = user,
+                settingsViewModel = if (currentRoute == "settings") settingsViewModel else null,
+                seedInputViewModel = if (currentRoute?.startsWith("input") == true) inputViewModel else null
             )
         },
         bottomBar = {
-            MainScaffoldNavigationBar(
-                currentRoute = currentRoute,
-                navController = navController,
-                selectedIds = selectedIds,
-                isListScreen = isListScreen,
-                isInputScreen = isInputScreen,
-                inputViewModel = inputViewModel,
-                settingsViewModel = settingsViewModel,
-                onSaveRequest = {
-                    navController.popBackStack()
-                },
-                onEditRequest = {
-                    settingsViewModel.enterEditMode()
-                }
-            )
+            // 設定画面と入力画面ではNavigationBarを表示しない
+            if (currentRoute != "settings" && currentRoute?.startsWith("input") != true) {
+                MainScaffoldNavigationBar(
+                    currentRoute = currentRoute,
+                    navController = navController,
+                    selectedIds = selectedIds,
+                    isListScreen = isListScreen,
+                    isInputScreen = isInputScreen,
+                    inputViewModel = inputViewModel,
+                    settingsViewModel = settingsViewModel,
+                    onSaveRequest = {
+                        navController.popBackStack()
+                    }
+                )
+            }
         }
     ) { padding ->
         Box(modifier = Modifier.fillMaxSize()) {
             AppNavHost(
                 navController = navController,
                 modifier = Modifier.padding(padding),
-                selectedIds = selectedIds
+                selectedIds = selectedIds,
+                settingsViewModel = settingsViewModel
             )
             
             // 全画面保存アニメーション

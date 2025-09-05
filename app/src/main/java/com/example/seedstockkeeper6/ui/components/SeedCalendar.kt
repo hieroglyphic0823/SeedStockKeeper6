@@ -247,22 +247,6 @@ fun SeedCalendarGroupedInternal(
         bands.forEachIndexed { row, groupedBand ->
             val top = gridTop + rowH * row
             val centerY = top + rowH / 2f
-            val labelColor = resolveLabelColor(groupedBand.groupLabel) // 既存の関数
-            val labelText = groupedBand.groupLabel.replace("地", "")
-
-
-            // 地域ラベル背景とテキスト
-            drawRect(
-                color = labelColor.copy(alpha = 0.3f),
-                topLeft = Offset(0f, top),
-                size = Size(labelW, rowH)
-            )
-            drawContext.canvas.nativeCanvas.drawText(
-                labelText,
-                labelW / 2,
-                centerY + (textPaint.textSize / 3f),
-                textPaint
-            )
 
             val expirationDate = try {
                 YearMonth.of(groupedBand.expirationYear, groupedBand.expirationMonth)

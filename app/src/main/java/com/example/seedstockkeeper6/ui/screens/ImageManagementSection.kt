@@ -99,52 +99,55 @@ fun ImageManagementSection(viewModel: SeedInputViewModel) {
                         modifier = Modifier.align(Alignment.TopStart)
                     )
                 }
-                // 画像削除ボタン
-                IconButton(onClick = {
-                    cs.launch {
-                        val path = viewModel.imageUris[index].toString()
-                        if (path.startsWith("seed_images/")) {
-                            try {
-                                Firebase.storage.reference.child(path).delete().await()
-                            } catch (e: Exception) {
-                                Log.e("SeedInputScreen", "削除失敗: $path", e)
+                // DisplayModeの時は操作ボタンを非表示
+                if (viewModel.isEditMode || !viewModel.hasExistingData) {
+                    // 画像削除ボタン
+                    IconButton(onClick = {
+                        cs.launch {
+                            val path = viewModel.imageUris[index].toString()
+                            if (path.startsWith("seed_images/")) {
+                                try {
+                                    Firebase.storage.reference.child(path).delete().await()
+                                } catch (e: Exception) {
+                                    Log.e("SeedInputScreen", "削除失敗: $path", e)
+                                }
                             }
+                            viewModel.removeImage(index)
                         }
-                        viewModel.removeImage(index)
+                    }, modifier = Modifier.align(Alignment.TopEnd)) {
+                        Icon(Icons.Default.Delete, contentDescription = "削除")
                     }
-                }, modifier = Modifier.align(Alignment.TopEnd)) {
-                    Icon(Icons.Default.Delete, contentDescription = "削除")
-                }
-                // 左右移動ボタン追加
-                if (viewModel.imageUris.size > 1) {
-                    // 左へ
-                    IconButton(
-                        onClick = { viewModel.moveImage(index, index - 1) },
-                        enabled = index > 0,
-                        modifier = Modifier
-                            .align(Alignment.BottomStart)
-                            .padding(4.dp)
-                    ) {
-                        Icon(
-                            Icons.Filled.ChevronLeft,
-                            contentDescription = "左へ",
-                            tint = Color.White
-                        )
-                    }
+                    // 左右移動ボタン追加
+                    if (viewModel.imageUris.size > 1) {
+                        // 左へ
+                        IconButton(
+                            onClick = { viewModel.moveImage(index, index - 1) },
+                            enabled = index > 0,
+                            modifier = Modifier
+                                .align(Alignment.BottomStart)
+                                .padding(4.dp)
+                        ) {
+                            Icon(
+                                Icons.Filled.ChevronLeft,
+                                contentDescription = "左へ",
+                                tint = Color.White
+                            )
+                        }
 
-                    // 右へ
-                    IconButton(
-                        onClick = { viewModel.moveImage(index, index + 1) },
-                        enabled = index < viewModel.imageUris.lastIndex,
-                        modifier = Modifier
-                            .align(Alignment.BottomEnd)
-                            .padding(4.dp)
-                    ) {
-                        Icon(
-                            Icons.Filled.ChevronRight,
-                            contentDescription = "右へ",
-                            tint = Color.White
-                        )
+                        // 右へ
+                        IconButton(
+                            onClick = { viewModel.moveImage(index, index + 1) },
+                            enabled = index < viewModel.imageUris.lastIndex,
+                            modifier = Modifier
+                                .align(Alignment.BottomEnd)
+                                .padding(4.dp)
+                        ) {
+                            Icon(
+                                Icons.Filled.ChevronRight,
+                                contentDescription = "右へ",
+                                tint = Color.White
+                            )
+                        }
                     }
                 }
 
@@ -171,9 +174,12 @@ fun ImageManagementSection(viewModel: SeedInputViewModel) {
                 }
             }
         }
-        item {
-            IconButton(onClick = { pickImagesLauncher.launch("image/*") }) {
-                Icon(Icons.Default.AddAPhoto, contentDescription = "追加")
+        // DisplayModeの時は画像追加ボタンを非表示
+        if (viewModel.isEditMode || !viewModel.hasExistingData) {
+            item {
+                IconButton(onClick = { pickImagesLauncher.launch("image/*") }) {
+                    Icon(Icons.Default.AddAPhoto, contentDescription = "追加")
+                }
             }
         }
     }
@@ -190,38 +196,41 @@ fun ImageManagementSection(viewModel: SeedInputViewModel) {
             modifier = Modifier.padding(bottom = 16.dp)
         )
         
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Button(
-                onClick = {
-                    cs.launch {
-                        viewModel.isLoading = true
-                        viewModel.performOcr(context)
-                        viewModel.isLoading = false
-                    }
-                },
-                enabled = viewModel.imageUris.isNotEmpty(),
-                modifier = Modifier.wrapContentWidth(), // 横幅を詰める
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.secondary,
-                    contentColor = MaterialTheme.colorScheme.onSecondary,
-                    disabledContainerColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
-                    disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
-                )
+        // DisplayModeの時は操作ボタンを非表示
+        if (viewModel.isEditMode || !viewModel.hasExistingData) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(Icons.Default.AutoFixHigh, contentDescription = "OCR")
-                Spacer(Modifier.width(8.dp))
-                Text("AIで解析")
-            }
+                Button(
+                    onClick = {
+                        cs.launch {
+                            viewModel.isLoading = true
+                            viewModel.performOcr(context)
+                            viewModel.isLoading = false
+                        }
+                    },
+                    enabled = viewModel.imageUris.isNotEmpty(),
+                    modifier = Modifier.wrapContentWidth(), // 横幅を詰める
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.secondary,
+                        contentColor = MaterialTheme.colorScheme.onSecondary,
+                        disabledContainerColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
+                        disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                    )
+                ) {
+                    Icon(Icons.Default.AutoFixHigh, contentDescription = "OCR")
+                    Spacer(Modifier.width(8.dp))
+                    Text("AIで解析")
+                }
 
-            IconButton(
-                onClick = { viewModel.cropSeedOuterAtOcrTarget(context) },
-                enabled = viewModel.ocrTargetIndex in viewModel.imageUris.indices && !viewModel.isLoading
-            ) {
-                Icon(Icons.Outlined.ContentCut, contentDescription = "外側を切り抜く")
+                IconButton(
+                    onClick = { viewModel.cropSeedOuterAtOcrTarget(context) },
+                    enabled = viewModel.ocrTargetIndex in viewModel.imageUris.indices && !viewModel.isLoading
+                ) {
+                    Icon(Icons.Outlined.ContentCut, contentDescription = "外側を切り抜く")
+                }
             }
         }
     }

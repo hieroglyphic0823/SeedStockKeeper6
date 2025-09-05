@@ -19,7 +19,8 @@ import com.google.gson.Gson
 fun AppNavHost(
     navController: NavHostController,
     modifier: Modifier = Modifier,
-    selectedIds: MutableList<String>
+    selectedIds: MutableList<String>,
+    settingsViewModel: com.example.seedstockkeeper6.viewmodel.SettingsViewModel? = null
 ) {
     NavHost(
         navController = navController,
@@ -57,18 +58,10 @@ fun AppNavHost(
             PlaceholderScreen(title = "カレンダー", description = "種子のカレンダー機能")
         }
         composable("settings") {
-            val settingsViewModel: com.example.seedstockkeeper6.viewmodel.SettingsViewModel = viewModel()
+            val viewModel = settingsViewModel ?: viewModel<com.example.seedstockkeeper6.viewmodel.SettingsViewModel>()
             com.example.seedstockkeeper6.ui.screens.SettingsScreen(
                 navController = navController,
-                viewModel = settingsViewModel,
-                onSaveRequest = {
-                    // FABからの保存要求を処理
-                    settingsViewModel.saveSettings()
-                },
-                onEditRequest = {
-                    // FABからの編集要求を処理
-                    settingsViewModel.enterEditMode()
-                }
+                viewModel = viewModel
             )
         }
     }

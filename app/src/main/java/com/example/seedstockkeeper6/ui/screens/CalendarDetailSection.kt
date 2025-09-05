@@ -36,27 +36,36 @@ fun CalendarDetailSection(viewModel: SeedInputViewModel) {
                             style = MaterialTheme.typography.bodyLarge,
                             modifier = Modifier.align(Alignment.CenterVertically)
                         )
-                        OutlinedTextField(
-                            value = entry.region ?: "",
-                            onValueChange = { viewModel.updateCalendarRegion(index, it) },
-                            label = { Text("地域名") },
-                            modifier = Modifier.weight(1f),
-
-                        )
+                        if (viewModel.isEditMode || !viewModel.hasExistingData) {
+                            OutlinedTextField(
+                                value = entry.region ?: "",
+                                onValueChange = { viewModel.updateCalendarRegion(index, it) },
+                                label = { Text("地域名") },
+                                modifier = Modifier.weight(1f),
+                            )
+                        } else {
+                            Text(
+                                text = entry.region ?: "未設定",
+                                style = MaterialTheme.typography.bodyLarge,
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
                     }
 
-                    // 右側: 削除ボタン
-                    IconButton(
-                        onClick = {
-                            viewModel.removeCalendarEntryAtIndex(index)
-                        },
-                        modifier = Modifier.padding(start = 8.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Delete,
-                            contentDescription = "地域情報を削除",
-                            tint = MaterialTheme.colorScheme.error
-                        )
+                    // DisplayModeの時は削除ボタンを非表示
+                    if (viewModel.isEditMode || !viewModel.hasExistingData) {
+                        IconButton(
+                            onClick = {
+                                viewModel.removeCalendarEntryAtIndex(index)
+                            },
+                            modifier = Modifier.padding(start = 8.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Delete,
+                                contentDescription = "地域情報を削除",
+                                tint = MaterialTheme.colorScheme.error
+                            )
+                        }
                     }
                 }
                 Spacer(modifier = Modifier.height(16.dp))
@@ -66,49 +75,58 @@ fun CalendarDetailSection(viewModel: SeedInputViewModel) {
                 Spacer(modifier = Modifier.height(8.dp))
 
                 // 1行目: 播種開始月、開始旬、終了月、終了旬 (4項目)
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    OutlinedTextField(
-                        value = entry.sowing_start?.toString() ?: "",
-                        onValueChange = {
-                            viewModel.updateCalendarSowingStart(
-                                index,
-                                it.toIntOrNull() ?: 0
-                            )
-                        },
-                        label = { Text("開始月") },
-                        modifier = Modifier.width(70.dp)
-                    )
-                    StageSelector(
-                        label = "開始旬",
-                        value = entry.sowing_start_stage ?: "",
-                        onValueChange = { newStage ->
-                            viewModel.updateCalendarSowingStartStage(index, newStage)
-                        },
-                        modifier = Modifier.width(70.dp)
-                    )
-                    Text("～", style = MaterialTheme.typography.bodyLarge)
-                    OutlinedTextField(
-                        value = entry.sowing_end?.toString() ?: "",
-                        onValueChange = {
-                            viewModel.updateCalendarSowingEnd(
-                                index,
-                                it.toIntOrNull() ?: 0
-                            )
-                        },
-                        label = { Text("終了月") },
-                        modifier = Modifier.width(70.dp)
-                    )
-                    StageSelector(
-                        label = "終了旬",
-                        value = entry.sowing_end_stage ?: "",
-                        onValueChange = { newStage ->
-                            viewModel.updateCalendarSowingEndStage(index, newStage)
-                        },
-                        modifier = Modifier.width(70.dp)
+                if (viewModel.isEditMode || !viewModel.hasExistingData) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        OutlinedTextField(
+                            value = entry.sowing_start?.toString() ?: "",
+                            onValueChange = {
+                                viewModel.updateCalendarSowingStart(
+                                    index,
+                                    it.toIntOrNull() ?: 0
+                                )
+                            },
+                            label = { Text("開始月") },
+                            modifier = Modifier.width(70.dp)
+                        )
+                        StageSelector(
+                            label = "開始旬",
+                            value = entry.sowing_start_stage ?: "",
+                            onValueChange = { newStage ->
+                                viewModel.updateCalendarSowingStartStage(index, newStage)
+                            },
+                            modifier = Modifier.width(70.dp)
+                        )
+                        Text("～", style = MaterialTheme.typography.bodyLarge)
+                        OutlinedTextField(
+                            value = entry.sowing_end?.toString() ?: "",
+                            onValueChange = {
+                                viewModel.updateCalendarSowingEnd(
+                                    index,
+                                    it.toIntOrNull() ?: 0
+                                )
+                            },
+                            label = { Text("終了月") },
+                            modifier = Modifier.width(70.dp)
+                        )
+                        StageSelector(
+                            label = "終了旬",
+                            value = entry.sowing_end_stage ?: "",
+                            onValueChange = { newStage ->
+                                viewModel.updateCalendarSowingEndStage(index, newStage)
+                            },
+                            modifier = Modifier.width(70.dp)
+                        )
+                    }
+                } else {
+                    // DisplayMode: 読み取り専用表示
+                    Text(
+                        text = "播種期間: ${entry.sowing_start}月${entry.sowing_start_stage} ～ ${entry.sowing_end}月${entry.sowing_end_stage}",
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.padding(vertical = 8.dp)
                     )
                 }
                 Spacer(modifier = Modifier.height(16.dp))
@@ -118,49 +136,58 @@ fun CalendarDetailSection(viewModel: SeedInputViewModel) {
                 Spacer(modifier = Modifier.height(8.dp))
 
                 // 1行目: 収穫開始月、開始旬、終了月、終了旬 (4項目)
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    OutlinedTextField(
-                        value = entry.harvest_start?.toString() ?: "",
-                        onValueChange = {
-                            viewModel.updateCalendarHarvestStart(
-                                index,
-                                it.toIntOrNull() ?: 0
-                            )
-                        },
-                        label = { Text("開始月") },
-                        modifier = Modifier.width(70.dp)
-                    )
-                    StageSelector(
-                        label = "開始旬",
-                        value = entry.harvest_start_stage ?: "",
-                        onValueChange = { newStage ->
-                            viewModel.updateCalendarHarvestStartStage(index, newStage)
-                        },
-                        modifier = Modifier.width(70.dp)
-                    )
-                    Text("～", style = MaterialTheme.typography.bodyLarge)
-                    OutlinedTextField(
-                        value = entry.harvest_end?.toString() ?: "",
-                        onValueChange = {
-                            viewModel.updateCalendarHarvestEnd(
-                                index,
-                                it.toIntOrNull() ?: 0
-                            )
-                        },
-                        label = { Text("終了月") },
-                        modifier = Modifier.width(70.dp)
-                    )
-                    StageSelector(
-                        label = "終了旬",
-                        value = entry.harvest_end_stage ?: "",
-                        onValueChange = { newStage ->
-                            viewModel.updateCalendarHarvestEndStage(index, newStage)
-                        },
-                        modifier = Modifier.width(70.dp)
+                if (viewModel.isEditMode || !viewModel.hasExistingData) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        OutlinedTextField(
+                            value = entry.harvest_start?.toString() ?: "",
+                            onValueChange = {
+                                viewModel.updateCalendarHarvestStart(
+                                    index,
+                                    it.toIntOrNull() ?: 0
+                                )
+                            },
+                            label = { Text("開始月") },
+                            modifier = Modifier.width(70.dp)
+                        )
+                        StageSelector(
+                            label = "開始旬",
+                            value = entry.harvest_start_stage ?: "",
+                            onValueChange = { newStage ->
+                                viewModel.updateCalendarHarvestStartStage(index, newStage)
+                            },
+                            modifier = Modifier.width(70.dp)
+                        )
+                        Text("～", style = MaterialTheme.typography.bodyLarge)
+                        OutlinedTextField(
+                            value = entry.harvest_end?.toString() ?: "",
+                            onValueChange = {
+                                viewModel.updateCalendarHarvestEnd(
+                                    index,
+                                    it.toIntOrNull() ?: 0
+                                )
+                            },
+                            label = { Text("終了月") },
+                            modifier = Modifier.width(70.dp)
+                        )
+                        StageSelector(
+                            label = "終了旬",
+                            value = entry.harvest_end_stage ?: "",
+                            onValueChange = { newStage ->
+                                viewModel.updateCalendarHarvestEndStage(index, newStage)
+                            },
+                            modifier = Modifier.width(70.dp)
+                        )
+                    }
+                } else {
+                    // DisplayMode: 読み取り専用表示
+                    Text(
+                        text = "収穫期間: ${entry.harvest_start}月${entry.harvest_start_stage} ～ ${entry.harvest_end}月${entry.harvest_end_stage}",
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.padding(vertical = 8.dp)
                     )
                 }
             }
