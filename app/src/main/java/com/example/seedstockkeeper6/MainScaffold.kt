@@ -66,10 +66,10 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun MainScaffoldTopAppBar(
+fun MainScaffoldTopAppBar(
     currentRoute: String?,
     navController: NavHostController,
-    user: FirebaseUser
+    user: FirebaseUser?
 ) {
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -90,15 +90,17 @@ private fun MainScaffoldTopAppBar(
                     }
                 }
                 else -> {
-                    Box(
-                        modifier = Modifier.padding(horizontal = 12.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        AccountMenuButton(
-                            user = user,
-                            size = 32.dp,
-                            onSignOut = { signOut(ctx, scope) }
-                        )
+                    if (user != null) {
+                        Box(
+                            modifier = Modifier.padding(horizontal = 12.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            AccountMenuButton(
+                                user = user,
+                                size = 32.dp,
+                                onSignOut = { signOut(ctx, scope) }
+                            )
+                        }
                     }
                 }
             }
@@ -142,7 +144,7 @@ private fun MainScaffoldTopAppBar(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun MainScaffoldNavigationBar(
+fun MainScaffoldNavigationBar(
     currentRoute: String?,
     navController: NavHostController,
     selectedIds: List<String>,
