@@ -4,8 +4,10 @@ import android.content.res.Configuration
 import android.graphics.Paint
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,10 +15,16 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -129,6 +137,11 @@ fun SeedCalendarGrouped(
         }
         .filter { it.items.isNotEmpty() }
 
+    // アイコンの位置を計算
+    LaunchedEffect(entries, groupedBands) {
+        // アイコンの位置計算は後で実装
+    }
+
     SeedCalendarGroupedInternal(
         bands = groupedBands,
         modifier = modifier,
@@ -184,7 +197,102 @@ fun SeedCalendarGroupedInternal(
     val dash = remember { PathEffect.dashPathEffect(floatArrayOf(14f, 10f), 0f) }
 
 
-    Box(modifier = modifier) {
+    // アイコンの位置を計算するためのデータ
+    val iconPositions = remember { mutableStateListOf<Pair<Offset, Int>>() }
+    
+    Column(modifier = modifier) {
+        // 地域ラベルを栽培カレンダーの上に配置
+        if (bands.isNotEmpty()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                bands.forEach { band ->
+                    val regionColor = when {
+                        "冷" in band.groupLabel -> Color(0xFF80DEEA)
+                        "寒" in band.groupLabel -> Color(0xFF1565C0)
+                        "涼" in band.groupLabel -> Color(0xFF039BE5)
+                        "中" in band.groupLabel -> Color(0xFF388E3C)
+                        "温" in band.groupLabel -> Color(0xFFFB8C00)
+                        "暖" in band.groupLabel -> Color(0xFFD32F2F)
+                        else -> Color.Gray
+                    }
+                    
+                    // 農園情報と同じDisplayModeスタイル
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        color = regionColor.copy(alpha = 0.1f),
+                        shape = MaterialTheme.shapes.medium
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(12.dp)
+                                    .background(
+                                        color = regionColor,
+                                        shape = androidx.compose.foundation.shape.CircleShape
+                                    )
+                            )
+                            Text(
+                                text = band.groupLabel,
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = if (band.groupLabel.isEmpty()) 
+                                    MaterialTheme.colorScheme.onSurfaceVariant 
+                                else 
+                                    MaterialTheme.colorScheme.onSurface,
+                                fontWeight = androidx.compose.ui.text.font.FontWeight.Medium
+                            )
+                        }
+                    }
+                }
+            }
+        }
+        
+        Box {
+        
+        // まき時、収穫の文字を栽培カレンダー全体の上に配置
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 8.dp),
+            horizontalArrangement = Arrangement.End
+        ) {
+            // まき時アイコン
+            Image(
+                painter = painterResource(id = R.drawable.seeds),
+                contentDescription = "まき時",
+                modifier = Modifier.size(16.dp),
+                contentScale = ContentScale.Fit
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = "まき時",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Spacer(modifier = Modifier.width(16.dp))
+            
+            // 収穫アイコン
+            Image(
+                painter = painterResource(id = R.drawable.harvest),
+                contentDescription = "収穫",
+                modifier = Modifier.size(16.dp),
+                contentScale = ContentScale.Fit
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = "収穫",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        }
+        
         Canvas(
             modifier = Modifier
                 .fillMaxWidth()
@@ -204,7 +312,7 @@ fun SeedCalendarGroupedInternal(
         val gridW = gridRight - gridLeft
         val gridH = gridBottom - gridTop
         val colW = gridW / 12f
-        val rowH = 40.dp.toPx() // まき時、収穫の行の高さを固定値に設定
+        val rowH = 24.dp.toPx() // 棒グラフの幅に合わせて24dpに設定
 
         // 月ラベルの背景色を描画 (tertiaryContainerLight)
         for (m in 0 until 12) {
@@ -214,7 +322,29 @@ fun SeedCalendarGroupedInternal(
                 topLeft = Offset(x, 0f),
                 size = Size(colW, headerH)
             )
+            // 月ラベル行の縦線
+            drawLine(
+                color = actualOutlineColor,
+                start = Offset(x, 0f),
+                end = Offset(x, headerH),
+                strokeWidth = 1f
+            )
         }
+        
+        // 月ラベル行の横線
+        drawLine(
+            color = actualOutlineColor,
+            start = Offset(gridLeft, 0f),
+            end = Offset(gridRight, 0f),
+            strokeWidth = 1f
+        )
+        drawLine(
+            color = actualOutlineColor,
+            start = Offset(gridLeft, headerH),
+            end = Offset(gridRight, headerH),
+            strokeWidth = 1f
+        )
+        
         
         // 月ヘッダと月の背景色描画 (ここは月ごとに有効期限判定している)
         for (m in 0 until 12) {
@@ -299,7 +429,7 @@ fun SeedCalendarGroupedInternal(
 
         bands.forEachIndexed { row, groupedBand ->
             val top = gridTop + rowH * row
-            val centerY = top + rowH / 2f
+            val centerY = top + rowH / 2f + 8.dp.toPx() // 上下に8dpの余白を追加
 
             val expirationDate = try {
                 YearMonth.of(groupedBand.expirationYear, groupedBand.expirationMonth)
@@ -386,8 +516,7 @@ fun SeedCalendarGroupedInternal(
                             )
                             
                             // 棒グラフの先頭にアイコンを表示
-                            val iconSize = 12f
-                            val iconY = centerY - iconSize / 2
+                            val iconSize = 24.dp.toPx() // 24dpに変更
                             
                             // 播種期間の場合はseedsアイコン、収穫期間の場合はharvestアイコン
                             val iconResource = if (item.color == primaryColor) {
@@ -396,68 +525,35 @@ fun SeedCalendarGroupedInternal(
                                 R.drawable.harvest
                             }
                             
-                            // アイコンの背景（白い円）
-                            drawCircle(
-                                color = androidx.compose.ui.graphics.Color.White,
-                                radius = iconSize / 2 + 2f,
-                                center = Offset(startX, centerY)
-                            )
+                            // アイコンの位置を棒グラフの左端に合わせる
+                            val iconX = startX - iconSize / 2 // 棒グラフの左端に合わせる
+                            val iconPosition = Offset(iconX, centerY)
                             
-                            // アイコンの描画（簡易的な円で表現）
-                            drawCircle(
-                                color = actualColor,
-                                radius = iconSize / 2,
-                                center = Offset(startX, centerY)
-                            )
+                            // アイコンの位置とリソースは後でLaunchedEffectで計算
                         }
                     }
                 }
             }
-            // 行の区切り線
-            drawLine(
-                color = actualOutlineColor,// 行の区切り線
-                start = Offset(gridLeft, top + rowH),
-                end = Offset(gridRight, top + rowH),
-                strokeWidth = 1f
-            )
+            // 地域が一つの場合は行の区切り線を削除
         }
         }
         
-        // アイコンを表示（月の上の行に配置）
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 4.dp, end = 8.dp),
-            horizontalArrangement = Arrangement.End
-        ) {
-            // まき時アイコン
+        // 棒グラフのアイコンを表示（一時的にコメントアウト）
+        /*
+        iconPositions.forEach { (position, resourceId) ->
             Image(
-                painter = painterResource(id = R.drawable.seeds),
-                contentDescription = "まき時",
-                modifier = Modifier.size(16.dp),
+                painter = painterResource(id = resourceId),
+                contentDescription = if (resourceId == R.drawable.seeds) "まき時" else "収穫",
+                modifier = Modifier
+                    .offset(
+                        x = with(density) { position.x.toDp() },
+                        y = with(density) { position.y.toDp() }
+                    )
+                    .size(24.dp),
                 contentScale = ContentScale.Fit
             )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = "まき時",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Spacer(modifier = Modifier.width(16.dp))
-            
-            // 収穫アイコン
-            Image(
-                painter = painterResource(id = R.drawable.harvest),
-                contentDescription = "収穫",
-                modifier = Modifier.size(16.dp),
-                contentScale = ContentScale.Fit
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = "収穫",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurface
-            )
+        }
+        */
         }
     }
 }
@@ -492,69 +588,14 @@ fun SeedCalendarGroupedPreview() {
             )
         )
         
-        // プレビュー用：システム日付を3月に設定
-        val previewToday = LocalDate.of(2024, 3, 15) // 2024年3月15日
-        val baseSowingColor = MaterialTheme.colorScheme.primary
-        val baseHarvestColor = MaterialTheme.colorScheme.tertiary
+        // プレビュー用のデータ
 
-        val groupedBands = sampleEntries
-            .groupBy { it.region }
-            .map { (region, regionEntries) ->
-                val items = regionEntries.flatMap { entry ->
-                    val sowingItem = if (entry.sowing_start != 0 && entry.sowing_end != 0) {
-                        listOf(
-                            RangeItem(
-                                ranges = listOf(
-                                    MonthRange(
-                                        entry.sowing_start,
-                                        entry.sowing_end,
-                                        entry.sowing_start_stage,
-                                        entry.sowing_end_stage
-                                    )
-                                ),
-                                style = BandStyle.Solid,
-                                color = baseSowingColor,
-                                itemLabel = "播種"
-                            )
-                        )
-                    } else emptyList()
-
-                    val harvestItem = if (entry.harvest_start != 0 && entry.harvest_end != 0) {
-                        listOf(
-                            RangeItem(
-                                ranges = listOf(
-                                    MonthRange(
-                                        entry.harvest_start,
-                                        entry.harvest_end,
-                                        entry.harvest_start_stage,
-                                        entry.harvest_end_stage
-                                    )
-                                ),
-                                style = BandStyle.Solid,
-                                color = baseHarvestColor,
-                                itemLabel = "収穫"
-                            )
-                        )
-                    } else emptyList()
-
-                    sowingItem + harvestItem
-                }
-
-                GroupedCalendarBand(
-                    groupLabel = region,
-                    expirationYear = 2026,
-                    expirationMonth = 3,
-                    items = items
-                )
-            }
-            .filter { it.items.isNotEmpty() }
-
-        SeedCalendarGroupedInternal(
-            bands = groupedBands,
+        SeedCalendarGrouped(
+            entries = sampleEntries,
+            packetExpirationYear = 2026,
+            packetExpirationMonth = 3,
             modifier = Modifier.fillMaxWidth(),
-            heightDp = 120,
-            currentMonth = previewToday.monthValue, // 3月
-            currentYear = previewToday.year // 2024年
+            heightDp = 140
         )
     }
 }

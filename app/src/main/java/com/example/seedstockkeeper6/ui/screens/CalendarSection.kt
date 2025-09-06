@@ -62,42 +62,7 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
                 viewModel.packet.calendar ?: emptyList()
             }
             
-            // ---- 地域表示 ----
-            if (calendarEntries.isNotEmpty()) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    calendarEntries.forEach { entry ->
-                        val regionColor = when {
-                            "冷" in (entry.region ?: "") -> Color(0xFF80DEEA)
-                            "寒" in (entry.region ?: "") -> Color(0xFF1565C0)
-                            "涼" in (entry.region ?: "") -> Color(0xFF039BE5)
-                            "中" in (entry.region ?: "") -> Color(0xFF388E3C)
-                            "温" in (entry.region ?: "") -> Color(0xFFFB8C00)
-                            "暖" in (entry.region ?: "") -> Color(0xFFD32F2F)
-                            else -> Color.Gray
-                        }
-                        
-                        Box(
-                            modifier = Modifier
-                                .background(
-                                    color = regionColor,
-                                    shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
-                                )
-                                .padding(horizontal = 12.dp, vertical = 6.dp)
-                        ) {
-                            Text(
-                                text = entry.region ?: "未設定",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = Color.White,
-                                fontWeight = FontWeight.Medium
-                            )
-                        }
-                    }
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-            }
+            // 地域表示は栽培カレンダー内で行うため削除
             
             // ---- まきどき / 収穫カレンダー ----
             SeedCalendarGrouped(
@@ -105,7 +70,7 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
                 packetExpirationYear = viewModel.packet.expirationYear,    // ★ 追加
                 packetExpirationMonth = viewModel.packet.expirationMonth,  // ★ 追加
                 modifier = Modifier.fillMaxWidth(),
-                heightDp = 120 // DisplayModeと編集モードの高さを統一
+                heightDp = 140 // 地域ラベル分の高さを追加
             )
 
             Spacer(modifier = Modifier.height(16.dp))

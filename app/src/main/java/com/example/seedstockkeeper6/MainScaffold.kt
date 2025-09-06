@@ -149,7 +149,7 @@ fun MainScaffoldTopAppBar(
                         Image(
                             painter = painterResource(id = com.example.seedstockkeeper6.R.drawable.packet),
                             contentDescription = "種情報",
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(32.dp)
                         )
                         Text(
                             text = if (seedInputViewModel?.isEditMode == true) "種情報編集" else "種情報",
@@ -167,7 +167,7 @@ fun MainScaffoldTopAppBar(
                             Image(
                                 painter = painterResource(id = com.example.seedstockkeeper6.R.drawable.packet),
                                 contentDescription = "種情報",
-                                modifier = Modifier.size(24.dp)
+                                modifier = Modifier.size(32.dp)
                             )
                             Text(
                                 text = if (seedInputViewModel?.isEditMode == true) "種情報編集" else "種情報",

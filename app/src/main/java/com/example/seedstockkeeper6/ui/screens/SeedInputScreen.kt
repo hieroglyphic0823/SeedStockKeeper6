@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.navigation.NavController
@@ -60,7 +61,12 @@ fun SeedInputScreen(
             Column(
                 modifier = Modifier
                     .verticalScroll(scroll)
-                    .padding(paddingValues)
+                    .padding(
+                        top = 0.dp,  // 上パディングのみ0に
+                        start = paddingValues.calculateLeftPadding(LocalLayoutDirection.current),
+                        end = paddingValues.calculateRightPadding(LocalLayoutDirection.current),
+                        bottom = paddingValues.calculateBottomPadding()
+                    )
                     .padding(16.dp)
                     .fillMaxWidth()
             ) {
