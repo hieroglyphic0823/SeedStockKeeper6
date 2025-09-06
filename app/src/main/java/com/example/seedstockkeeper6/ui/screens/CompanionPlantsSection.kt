@@ -5,6 +5,8 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Eco
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -23,11 +25,22 @@ fun CompanionPlantsSection(viewModel: SeedInputViewModel) {
             .padding(vertical = 8.dp)
     ) {
         // --- コンパニオンプランツ表示＆追加部 ---
-        Text(
-            "コンパニオンプランツと効果", 
-            style = MaterialTheme.typography.titleMedium,
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier.padding(bottom = 16.dp)
-        )
+        ) {
+            Icon(
+                Icons.Filled.Eco,
+                contentDescription = "コンパニオンプランツと効果",
+                tint = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.size(24.dp)
+            )
+            Text(
+                "コンパニオンプランツと効果", 
+                style = MaterialTheme.typography.titleMedium
+            )
+        }
         
         viewModel.packet.companionPlants.forEachIndexed { i, companion ->
             Row(

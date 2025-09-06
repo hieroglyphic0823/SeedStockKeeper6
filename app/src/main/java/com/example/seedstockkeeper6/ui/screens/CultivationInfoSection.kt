@@ -2,6 +2,8 @@ package com.example.seedstockkeeper6.ui.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.LocalFlorist
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -16,11 +18,22 @@ fun CultivationInfoSection(viewModel: SeedInputViewModel) {
             .fillMaxWidth()
             .padding(vertical = 8.dp)
     ) {
-        Text(
-            "栽培情報",
-            style = MaterialTheme.typography.titleMedium,
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier.padding(bottom = 16.dp)
-        )
+        ) {
+            Icon(
+                Icons.Filled.LocalFlorist,
+                contentDescription = "栽培情報",
+                tint = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.size(24.dp)
+            )
+            Text(
+                "栽培情報",
+                style = MaterialTheme.typography.titleMedium
+            )
+        }
         
         // 商品番号
         if (viewModel.isEditMode || !viewModel.hasExistingData) {

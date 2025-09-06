@@ -4,33 +4,95 @@ import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Public
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.Alignment
 import com.example.seedstockkeeper6.ui.components.SeedCalendarGrouped
 import com.example.seedstockkeeper6.viewmodel.SeedInputViewModel
+import com.example.seedstockkeeper6.model.CalendarEntry
 
 @Composable
 fun CalendarSection(viewModel: SeedInputViewModel) {
-    var showRegionBottomSheet by remember { mutableStateOf(false) }
     
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp)
     ) {
-        Text(
-            "栽培カレンダー",
-            style = MaterialTheme.typography.titleMedium,
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier.padding(bottom = 16.dp)
-        )
+        ) {
+            Icon(
+                Icons.Filled.CalendarMonth,
+                contentDescription = "栽培カレンダー",
+                tint = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.size(24.dp)
+            )
+            Text(
+                "栽培カレンダー",
+                style = MaterialTheme.typography.titleMedium
+            )
+        }
+        
+        // 地域設定（栽培カレンダーのタイトルとカレンダー図の間）
+        val currentRegion = viewModel.packet.calendar?.firstOrNull()?.region ?: ""
+        if (currentRegion.isNotEmpty() || viewModel.isEditMode || !viewModel.hasExistingData) {
+            if (viewModel.isEditMode || !viewModel.hasExistingData) {
+                // 編集モード: 地域選択ボタン
+                RegionSelectionButton(
+                    selectedRegion = currentRegion,
+                    onRegionSelected = { region ->
+                        if (viewModel.packet.calendar?.isNotEmpty() == true) {
+                            viewModel.updateCalendarRegion(0, region)
+                        } else {
+                            viewModel.addCalendarEntryWithRegion(region)
+                        }
+                    }
+                )
+            } else {
+                // DisplayMode: 色付きSurface
+                val regionColor = getRegionColor(currentRegion)
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    color = regionColor.copy(alpha = 0.1f),
+                    shape = MaterialTheme.shapes.medium
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(12.dp)
+                                .background(
+                                    color = regionColor,
+                                    shape = androidx.compose.foundation.shape.CircleShape
+                                )
+                        )
+                        Text(
+                            text = currentRegion,
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+        }
         
         // 編集モードの場合は編集画面を表示
         val isEditMode = viewModel.isCalendarEditMode
@@ -62,7 +124,6 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
                 viewModel.packet.calendar ?: emptyList()
             }
             
-            // 地域表示は栽培カレンダー内で行うため削除
             
             // ---- まきどき / 収穫カレンダー ----
             SeedCalendarGrouped(
@@ -70,41 +131,16 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
                 packetExpirationYear = viewModel.packet.expirationYear,    // ★ 追加
                 packetExpirationMonth = viewModel.packet.expirationMonth,  // ★ 追加
                 modifier = Modifier.fillMaxWidth(),
-                heightDp = 140 // 地域ラベル分の高さを追加
+                heightDp = 70 // 地域が一つなので半分の高さに調整
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             CalendarDetailSection(viewModel)
 
-            // DisplayModeの時は地域追加ボタンを非表示
-            if (viewModel.isEditMode || !viewModel.hasExistingData) {
-                Spacer(modifier = Modifier.height(16.dp))
-                Button(
-                    onClick = { showRegionBottomSheet = true }, 
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary
-                    )
-                ) {
-                    Text("地域を追加")
-                }
-            }
         }
     }
     
-    // 地域選択ボトムシート
-    if (showRegionBottomSheet) {
-        RegionSelectionBottomSheet(
-            selectedRegion = viewModel.selectedRegion,
-            onRegionSelected = { 
-                viewModel.addCalendarEntryWithRegion(it)
-                showRegionBottomSheet = false
-            },
-            onDismiss = { showRegionBottomSheet = false }
-        )
-    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -495,17 +531,6 @@ private fun updateCalendarEntry(viewModel: SeedInputViewModel, updatedEntry: com
     )
 }
 
-// 地域ごとの色定義
-private fun getRegionColor(region: String): Color {
-    return when (region) {
-        "寒地" -> Color(0xFF1A237E) // 紺
-        "寒冷地" -> Color(0xFF1976D2) // 青
-        "温暖地" -> Color(0xFFFF9800) // オレンジ
-        "暖地" -> Color(0xFFE91E63) // ピンク
-        else -> Color(0xFF9E9E9E) // グレー（未設定時）
-    }
-}
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun RegionSelectionBottomSheet(
@@ -575,5 +600,54 @@ private fun RegionSelectionBottomSheet(
             
             Spacer(modifier = Modifier.height(16.dp))
         }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun RegionSelectionButton(
+    selectedRegion: String,
+    onRegionSelected: (String) -> Unit
+) {
+    var showRegionBottomSheet by remember { mutableStateOf(false) }
+    
+    Button(
+        onClick = { showRegionBottomSheet = true },
+        modifier = Modifier.fillMaxWidth(),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = getRegionColor(selectedRegion),
+            contentColor = Color.White
+        ),
+        shape = MaterialTheme.shapes.large,
+        elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp)
+    ) {
+        Text(
+            text = selectedRegion.ifEmpty { "地域を選択" },
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.Medium
+        )
+    }
+    
+    // 地域選択ボトムシート
+    if (showRegionBottomSheet) {
+        RegionSelectionBottomSheet(
+            selectedRegion = selectedRegion,
+            onRegionSelected = { region ->
+                onRegionSelected(region)
+                showRegionBottomSheet = false
+            },
+            onDismiss = { showRegionBottomSheet = false }
+        )
+    }
+}
+
+// 地域ごとの色定義
+private fun getRegionColor(region: String): Color {
+    return when (region) {
+        "寒地" -> Color(0xFF1A237E) // 紺
+        "寒冷地" -> Color(0xFF1976D2) // 青
+        "温暖地" -> Color(0xFFFF9800) // オレンジ
+        "暖地" -> Color(0xFFE91E63) // ピンク
+        else -> Color(0xFF9E9E9E) // グレー（未設定時）
     }
 }

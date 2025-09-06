@@ -26,10 +26,13 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.LocalFlorist
 import androidx.compose.material.icons.filled.Public
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -291,34 +294,34 @@ fun createPreviewSeedInputViewModel(isEditMode: Boolean, hasExistingData: Boolea
         val demoPacket = com.example.seedstockkeeper6.model.SeedPacket(
             id = "demo-seed-id", // DisplayModeの判定用にIDを設定
             documentId = "demo-document-id", // DisplayModeの判定用にdocumentIdを設定
-            productName = "落花生",
-            variety = "ラッカセイ",
-            family = "マメ科",
+            productName = "恋むすめ",
+            variety = "ニンジン",
+            family = "せり科",
             expirationYear = 2026,
-            expirationMonth = 3,
-            productNumber = "PK-2024-001",
+            expirationMonth = 10,
+            productNumber = "CR-2024-001",
             company = "タキイ種苗株式会社",
-            contents = "甘みが強く、香り高い落花生です。暖地での栽培に適しています。",
+            contents = "甘みが強く、香り高いニンジンです。暖地での栽培に適しています。",
             cultivation = com.example.seedstockkeeper6.model.Cultivation(
                 notes = "日当たりの良い場所で栽培し、水はけの良い土壌を選んでください。",
-                spacing_cm_row_min = 60,
-                spacing_cm_row_max = 80,
-                spacing_cm_plant_min = 20,
-                spacing_cm_plant_max = 30,
-                germinationTemp_c = "20-25",
-                growingTemp_c = "18-28",
-                harvesting = "莢が茶色くなったら収穫適期です。"
+                spacing_cm_row_min = 30,
+                spacing_cm_row_max = 40,
+                spacing_cm_plant_min = 5,
+                spacing_cm_plant_max = 10,
+                germinationTemp_c = "15-20",
+                growingTemp_c = "15-25",
+                harvesting = "根が太くなったら収穫適期です。"
             ),
             calendar = listOf(
-                                com.example.seedstockkeeper6.model.CalendarEntry(
+                com.example.seedstockkeeper6.model.CalendarEntry(
                     region = "暖地",
-                    sowing_start = 4,
-                    sowing_start_stage = "下旬",
-                    sowing_end = 6,
-                    sowing_end_stage = "上旬",
-                    harvest_start = 10,
-                    harvest_start_stage = "中旬",
-                    harvest_end = 11,
+                    sowing_start = 11,
+                    sowing_start_stage = "上旬",
+                    sowing_end = 3,
+                    sowing_end_stage = "下旬",
+                    harvest_start = 4,
+                    harvest_start_stage = "上旬",
+                    harvest_end = 7,
                     harvest_end_stage = "中旬"
                 )
             ),
@@ -328,7 +331,7 @@ fun createPreviewSeedInputViewModel(isEditMode: Boolean, hasExistingData: Boolea
                     effects = listOf("01", "06") // 害虫予防、土壌改善
                 ),
                 com.example.seedstockkeeper6.model.CompanionPlant(
-                    plant = "バジル",
+                    plant = "ネギ",
                     effects = listOf("01", "05") // 害虫予防、風味向上
                 )
             )
@@ -365,11 +368,22 @@ fun PreviewImageManagementSection(viewModel: com.example.seedstockkeeper6.viewmo
             .fillMaxWidth()
             .padding(bottom = 8.dp)
     ) {
-        Text(
-            text = "画像管理",
-            style = MaterialTheme.typography.titleMedium,
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier.padding(bottom = 8.dp)
-        )
+        ) {
+            Icon(
+                Icons.Filled.CameraAlt,
+                contentDescription = "画像管理",
+                tint = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.size(24.dp)
+            )
+            Text(
+                text = "画像管理",
+                style = MaterialTheme.typography.titleMedium
+            )
+        }
         
         LazyRow(
             horizontalArrangement = Arrangement.spacedBy(2.dp),
@@ -605,5 +619,33 @@ private fun getRegionColor(region: String): Color {
         "温暖地" -> Color(0xFFFF9800) // オレンジ
         "暖地" -> Color(0xFFE91E63) // ピンク
         else -> Color(0xFF9E9E9E) // グレー（未設定時）
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Preview(showBackground = true, name = "地域選択ダイアログ", heightDp = 800)
+@Composable
+fun RegionSelectionDialogPreview() {
+    SeedStockKeeper6Theme(darkTheme = false, dynamicColor = false) {
+        val showDialog = remember { mutableStateOf(true) }
+        
+        if (showDialog.value) {
+            com.example.seedstockkeeper6.ui.components.RegionSelectionDialog(
+                showDialog = showDialog.value,
+                regionList = listOf("寒地", "寒冷地", "温暖地", "暖地"),
+                ocrResult = null,
+                croppedCalendarBitmap = null,
+                editingCalendarEntry = null,
+                defaultRegion = "暖地", // 農園情報の地域を初期値として使用
+                onRegionSelected = { 
+                    showDialog.value = false
+                },
+                onStartEditing = { },
+                onUpdateEditing = { },
+                onSaveEditing = { },
+                onCancelEditing = { },
+                onDismiss = { showDialog.value = false }
+            )
+        }
     }
 }

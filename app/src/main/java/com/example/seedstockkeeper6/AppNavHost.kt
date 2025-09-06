@@ -46,7 +46,8 @@ fun AppNavHost(
             }
             SeedInputScreen(
                 navController = navController,
-                viewModel = currentInputViewModel
+                viewModel = currentInputViewModel,
+                settingsViewModel = settingsViewModel
             )
         }
         

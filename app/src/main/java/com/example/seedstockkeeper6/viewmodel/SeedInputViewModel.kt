@@ -85,6 +85,9 @@ class SeedInputViewModel : ViewModel() {
     // 既存データがあるかどうか
     var hasExistingData by mutableStateOf(false)
         private set
+    
+    // 農園情報の地域（地域選択ダイアログの初期値として使用）
+    var farmDefaultRegion by mutableStateOf("")
 
     fun setSeed(seed: SeedPacket?) {
         packet = seed ?: SeedPacket()

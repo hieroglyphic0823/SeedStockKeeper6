@@ -71,7 +71,7 @@ fun FullScreenSaveAnimation() {
     ) {
         // 種袋（中央）
         Icon(
-            painter = painterResource(id = com.example.seedstockkeeper6.R.drawable.seeds),
+            painter = painterResource(id = com.example.seedstockkeeper6.R.drawable.grain),
             contentDescription = "種袋",
             modifier = Modifier
                 .graphicsLayer(

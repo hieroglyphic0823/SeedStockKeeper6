@@ -10,6 +10,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -30,10 +31,18 @@ import com.example.seedstockkeeper6.ui.screens.*
 @Composable
 fun SeedInputScreen(
     navController: NavController,
-    viewModel: SeedInputViewModel
+    viewModel: SeedInputViewModel,
+    settingsViewModel: com.example.seedstockkeeper6.viewmodel.SettingsViewModel? = null
 ) {
     val scroll = rememberScrollState()
     val context = LocalContext.current
+    
+    // 農園情報の地域を設定
+    LaunchedEffect(settingsViewModel?.defaultRegion) {
+        settingsViewModel?.defaultRegion?.let { region ->
+            viewModel.farmDefaultRegion = region
+        }
+    }
 
     Scaffold(
         floatingActionButton = {
@@ -145,6 +154,7 @@ fun SeedInputScreen(
         ocrResult = viewModel.ocrResult,
         croppedCalendarBitmap = viewModel.croppedCalendarBitmap,
         editingCalendarEntry = viewModel.editingCalendarEntry,
+        defaultRegion = viewModel.farmDefaultRegion, // 農園情報の地域を初期値として使用
         onRegionSelected = { viewModel.onRegionSelected(it) },
         onStartEditing = { viewModel.startEditingCalendarEntry(it) },
         onUpdateEditing = { viewModel.updateEditingCalendarEntry(it) },

@@ -37,6 +37,7 @@ fun RegionSelectionDialog(
     ocrResult: com.example.seedstockkeeper6.model.SeedPacket?,
     croppedCalendarBitmap: android.graphics.Bitmap?,
     editingCalendarEntry: com.example.seedstockkeeper6.model.CalendarEntry?,
+    defaultRegion: String = "", // 農園情報の地域を初期値として使用
     onRegionSelected: (String) -> Unit,
     onStartEditing: (com.example.seedstockkeeper6.model.CalendarEntry) -> Unit,
     onUpdateEditing: (com.example.seedstockkeeper6.model.CalendarEntry) -> Unit,
@@ -47,7 +48,7 @@ fun RegionSelectionDialog(
     android.util.Log.d("RegionSelectionDialog", "RegionSelectionDialog開始: showDialog=$showDialog, regionList=$regionList")
     
     if (showDialog) {
-        var selectedRegion by remember { mutableStateOf("") }
+        var selectedRegion by remember { mutableStateOf(defaultRegion) }
         var expanded by remember { mutableStateOf(false) }
         var editedEntry by remember { mutableStateOf<com.example.seedstockkeeper6.model.CalendarEntry?>(null) }
 

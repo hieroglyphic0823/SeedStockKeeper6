@@ -1,14 +1,17 @@
 package com.example.seedstockkeeper6.ui.screens
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import com.example.seedstockkeeper6.R
 import com.example.seedstockkeeper6.viewmodel.SeedInputViewModel
 import com.example.seedstockkeeper6.ui.screens.StageSelector
 
@@ -17,54 +20,29 @@ fun CalendarDetailSection(viewModel: SeedInputViewModel) {
     viewModel.packet.calendar.forEachIndexed { index, entry ->
         key(entry.id) {
             Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-                // --- 地域情報 ---
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    // 左側: 地域名テキストと入力フィールド
-                    Row(
-                        modifier = Modifier.weight(1f),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        if (viewModel.isEditMode || !viewModel.hasExistingData) {
-                            OutlinedTextField(
-                                value = entry.region ?: "",
-                                onValueChange = { viewModel.updateCalendarRegion(index, it) },
-                                label = { Text("地域名") },
-                                modifier = Modifier.weight(2f), // 横幅を2倍に変更
-                            )
-                        } else {
-                            Text(
-                                text = entry.region ?: "未設定",
-                                style = MaterialTheme.typography.bodyLarge,
-                                modifier = Modifier.weight(1f)
-                            )
-                        }
-                    }
-
-                    // DisplayModeの時は削除ボタンを非表示
-                    if (viewModel.isEditMode || !viewModel.hasExistingData) {
-                        IconButton(
-                            onClick = {
-                                viewModel.removeCalendarEntryAtIndex(index)
-                            },
-                            modifier = Modifier.padding(start = 8.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Filled.Delete,
-                                contentDescription = "地域情報を削除",
-                                tint = MaterialTheme.colorScheme.error
-                            )
-                        }
-                    }
-                }
-                Spacer(modifier = Modifier.height(16.dp))
                 
                 // --- 播種期間 ---
-                Text("播種期間", style = MaterialTheme.typography.titleMedium)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(24.dp)
+                            .background(
+                                color = MaterialTheme.colorScheme.primary,
+                                shape = androidx.compose.foundation.shape.CircleShape
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.grain),
+                            contentDescription = "播種期間",
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                    Text("播種期間", style = MaterialTheme.typography.titleMedium)
+                }
                 Spacer(modifier = Modifier.height(8.dp))
 
                 // 1行目: 播種開始月、開始旬、終了月、終了旬 (4項目)
@@ -125,7 +103,27 @@ fun CalendarDetailSection(viewModel: SeedInputViewModel) {
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // --- 収穫期間 ---
-                Text("収穫期間", style = MaterialTheme.typography.titleMedium)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(24.dp)
+                            .background(
+                                color = MaterialTheme.colorScheme.tertiary,
+                                shape = androidx.compose.foundation.shape.CircleShape
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.harvest),
+                            contentDescription = "収穫期間",
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                    Text("収穫期間", style = MaterialTheme.typography.titleMedium)
+                }
                 Spacer(modifier = Modifier.height(8.dp))
 
                 // 1行目: 収穫開始月、開始旬、終了月、終了旬 (4項目)
@@ -184,12 +182,7 @@ fun CalendarDetailSection(viewModel: SeedInputViewModel) {
                     )
                 }
             }
-            // DisplayModeの時は仕切り線を削除
-            if (viewModel.isEditMode || !viewModel.hasExistingData) {
-                Spacer(modifier = Modifier.height(24.dp))
-                Divider()
-                Spacer(modifier = Modifier.height(24.dp))
-            }
         }
     }
 }
+

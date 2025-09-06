@@ -13,6 +13,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddAPhoto
 import androidx.compose.material.icons.filled.AutoFixHigh
+import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
@@ -57,11 +58,22 @@ fun ImageManagementSection(viewModel: SeedInputViewModel) {
         modifier = Modifier.fillMaxWidth()
     ) {
         // 画像管理タイトル
-        Text(
-            "画像管理",
-            style = MaterialTheme.typography.titleMedium,
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier.padding(bottom = 8.dp)
-        )
+        ) {
+            Icon(
+                Icons.Filled.CameraAlt,
+                contentDescription = "画像管理",
+                tint = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.size(24.dp)
+            )
+            Text(
+                "画像管理",
+                style = MaterialTheme.typography.titleMedium
+            )
+        }
         
         LazyRow(
             verticalAlignment = Alignment.CenterVertically,
