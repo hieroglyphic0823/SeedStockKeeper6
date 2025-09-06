@@ -34,7 +34,7 @@ fun CalendarDetailSection(viewModel: SeedInputViewModel) {
                                 value = entry.region ?: "",
                                 onValueChange = { viewModel.updateCalendarRegion(index, it) },
                                 label = { Text("地域名") },
-                                modifier = Modifier.weight(1f),
+                                modifier = Modifier.weight(2f), // 横幅を2倍に変更
                             )
                         } else {
                             Text(

@@ -94,7 +94,7 @@ fun SeedInputScreenPreview_DisplayMode() {
                 ImageManagementSection(seedInputViewModel)
                 
                 // 区切り線
-                HorizontalDivider(
+                        HorizontalDivider(
                     thickness = 1.dp,
                     modifier = Modifier.padding(vertical = 16.dp)
                 )
@@ -121,7 +121,7 @@ fun SeedInputScreenPreview_DisplayMode() {
                 CultivationInfoSection(seedInputViewModel)
                 
                 // 区切り線
-                HorizontalDivider(
+                        HorizontalDivider(
                     thickness = 1.dp,
                     modifier = Modifier.padding(vertical = 16.dp)
                 )
@@ -268,8 +268,21 @@ fun createPreviewSeedInputViewModel(isEditMode: Boolean, hasExistingData: Boolea
             family = "マメ科",
             expirationYear = 2026,
             expirationMonth = 3,
+            productNumber = "PK-2024-001",
+            company = "タキイ種苗株式会社",
+            contents = "甘みが強く、香り高い落花生です。暖地での栽培に適しています。",
+            cultivation = com.example.seedstockkeeper6.model.Cultivation(
+                notes = "日当たりの良い場所で栽培し、水はけの良い土壌を選んでください。",
+                spacing_cm_row_min = 60,
+                spacing_cm_row_max = 80,
+                spacing_cm_plant_min = 20,
+                spacing_cm_plant_max = 30,
+                germinationTemp_c = "20-25",
+                growingTemp_c = "18-28",
+                harvesting = "莢が茶色くなったら収穫適期です。"
+            ),
             calendar = listOf(
-                com.example.seedstockkeeper6.model.CalendarEntry(
+                                com.example.seedstockkeeper6.model.CalendarEntry(
                     region = "暖地",
                     sowing_start = 4,
                     sowing_start_stage = "下旬",
@@ -280,6 +293,16 @@ fun createPreviewSeedInputViewModel(isEditMode: Boolean, hasExistingData: Boolea
                     harvest_end = 11,
                     harvest_end_stage = "中旬"
                 )
+            ),
+            companionPlants = listOf(
+                com.example.seedstockkeeper6.model.CompanionPlant(
+                    plant = "マリーゴールド",
+                    effects = listOf("01", "06") // 害虫予防、土壌改善
+                ),
+                com.example.seedstockkeeper6.model.CompanionPlant(
+                    plant = "バジル",
+                    effects = listOf("01", "05") // 害虫予防、風味向上
+                )
             )
         )
         
@@ -289,10 +312,8 @@ fun createPreviewSeedInputViewModel(isEditMode: Boolean, hasExistingData: Boolea
         // 編集モードの設定
         if (isEditMode) {
             viewModel.enterEditMode()
-        } else {
-            // DisplayModeの場合は編集モードを終了
-            viewModel.exitEditMode()
         }
+        // setSeed()で既にisEditMode = falseが設定されているので、DisplayModeの場合は追加の処理は不要
     }
     
     return viewModel

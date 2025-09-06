@@ -105,7 +105,7 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
                 packetExpirationYear = viewModel.packet.expirationYear,    // ★ 追加
                 packetExpirationMonth = viewModel.packet.expirationMonth,  // ★ 追加
                 modifier = Modifier.fillMaxWidth(),
-                heightDp = if (viewModel.isEditMode || !viewModel.hasExistingData) 120 else 60 // DisplayModeの時は高さを調整
+                heightDp = 120 // DisplayModeと編集モードの高さを統一
             )
 
             Spacer(modifier = Modifier.height(16.dp))

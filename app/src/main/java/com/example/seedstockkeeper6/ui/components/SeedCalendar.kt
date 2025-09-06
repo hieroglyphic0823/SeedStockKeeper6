@@ -160,7 +160,7 @@ fun SeedCalendarGroupedInternal(
     val primaryColor = MaterialTheme.colorScheme.primary
     val tertiaryColor = MaterialTheme.colorScheme.tertiary
     // カレンダーの月背景色
-    val calendarMonthBackgroundWithinExpiration= tertiaryContainerColor // tertiaryContainerLight
+    val calendarMonthBackgroundWithinExpiration= tertiaryContainerColor // 月の数字が入っている枠の背景色（tertiaryContainerLight）
     val calendarMonthBackgroundExpired= errorContainerColor // errorContainerLight
     val calendarMonthBackground=tertiaryContainerColor  // デフォルト背景（tertiaryContainerLight）
 
@@ -190,9 +190,9 @@ fun SeedCalendarGroupedInternal(
                 .fillMaxWidth()
                 .height(heightDp.dp)
         ) {
-            // 栽培カレンダー全体の背景色
+            // 栽培カレンダー全体の背景色（月ラベルの背景色）
             drawRect(
-                color = surfaceContainerLowColor,
+                color = surfaceContainerLowColor, // surfaceContainerLowLight
                 size = size
             )
 
@@ -204,8 +204,18 @@ fun SeedCalendarGroupedInternal(
         val gridW = gridRight - gridLeft
         val gridH = gridBottom - gridTop
         val colW = gridW / 12f
-        val rowH = gridH / max(1, bands.size)
+        val rowH = 40.dp.toPx() // まき時、収穫の行の高さを固定値に設定
 
+        // 月ラベルの背景色を描画 (tertiaryContainerLight)
+        for (m in 0 until 12) {
+            val x = gridLeft + colW * m
+            drawRect(
+                color = tertiaryContainerColor, // tertiaryContainerLight
+                topLeft = Offset(x, 0f),
+                size = Size(colW, headerH)
+            )
+        }
+        
         // 月ヘッダと月の背景色描画 (ここは月ごとに有効期限判定している)
         for (m in 0 until 12) {
             val logicalMonth = ((currentMonth - 1 + m) % 12) + 1
@@ -214,7 +224,7 @@ fun SeedCalendarGroupedInternal(
                 if (logicalMonth < currentMonth && bands.isNotEmpty()) 1 else 0 // bandsが空の場合のエラーを避ける
             val logicalYear = currentYear + yearOffset
 
-            // 月の背景色 (有効期限を考慮)
+            // 栽培期間行の背景色 (有効期限を考慮)
             if (bands.isNotEmpty()) { // groupedBand がないと expirationYear/Month にアクセスできない
                 val expirationForMonthBg = YearMonth.of(
                     bands.first().expirationYear,
@@ -223,7 +233,7 @@ fun SeedCalendarGroupedInternal(
                 val targetMonthForBg = YearMonth.of(logicalYear, logicalMonth)
                 if (targetMonthForBg <= expirationForMonthBg) {
                     drawRect(
-                        color = calendarMonthBackgroundWithinExpiration, // AppColors から
+                        color = surfaceContainerLowColor, // surfaceContainerLowLight
                         topLeft = Offset(x, gridTop),
                         size = Size(colW, gridH)
                     )
@@ -236,12 +246,11 @@ fun SeedCalendarGroupedInternal(
                 }
             } else { // バンドがない場合はデフォルトの背景
                 drawRect(
-                    color = calendarMonthBackground, // デフォルト背景
+                    color = surfaceContainerLowColor, // surfaceContainerLowLight
                     topLeft = Offset(x, gridTop),
                     size = Size(colW, gridH)
                 )
             }
-
 
             drawLine(
                 color = actualOutlineColor, // グリッド線の色
@@ -252,7 +261,7 @@ fun SeedCalendarGroupedInternal(
             drawContext.canvas.nativeCanvas.drawText(
                 logicalMonth.toString(),
                 x + colW / 2,
-                headerH - 4.dp.toPx(),
+                headerH - 4.dp.toPx(), // 月ラベルの位置
                 textPaint
             )
         }
