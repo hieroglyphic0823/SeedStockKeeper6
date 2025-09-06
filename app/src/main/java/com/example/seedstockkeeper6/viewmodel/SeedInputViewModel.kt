@@ -1071,6 +1071,22 @@ class SeedInputViewModel : ViewModel() {
         packet = packet.copy(calendar = list)
     }
 
+    fun addCalendarEntryWithRegion(region: String) {
+        val newEntry = com.example.seedstockkeeper6.model.CalendarEntry(
+            region = region,
+            sowing_start = 0,
+            sowing_start_stage = "",
+            sowing_end = 0,
+            sowing_end_stage = "",
+            harvest_start = 0,
+            harvest_start_stage = "",
+            harvest_end = 0,
+            harvest_end_stage = ""
+        )
+        val list = (packet.calendar ?: emptyList()) + newEntry
+        packet = packet.copy(calendar = list)
+    }
+
     fun updateCalendarEntry(
         index: Int,
         region: String? = null,

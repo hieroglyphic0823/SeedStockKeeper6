@@ -53,11 +53,21 @@ fun ImageManagementSection(viewModel: SeedInputViewModel) {
     val spacing = 0.dp               // 各アイテムの間隔（3枚だと2箇所）
     val imageSize = (screenWidth - sidePadding * 2 - spacing * 2) / 3
 
-    LazyRow(
-        verticalAlignment = Alignment.CenterVertically,
-        contentPadding = PaddingValues(horizontal = sidePadding),
-        horizontalArrangement = Arrangement.spacedBy(spacing)
+    Column(
+        modifier = Modifier.fillMaxWidth()
     ) {
+        // 画像管理タイトル
+        Text(
+            "画像管理",
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+        
+        LazyRow(
+            verticalAlignment = Alignment.CenterVertically,
+            contentPadding = PaddingValues(horizontal = sidePadding),
+            horizontalArrangement = Arrangement.spacedBy(spacing)
+        ) {
         itemsIndexed(viewModel.imageUris) { index, uri ->
             var downloadUrl by remember { mutableStateOf<String?>(null) }
 
@@ -182,19 +192,14 @@ fun ImageManagementSection(viewModel: SeedInputViewModel) {
                 }
             }
         }
-    }
-
-    // 操作ボタンセクション
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp)
-    ) {
-        Text(
-            "画像管理",
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.padding(bottom = 16.dp)
-        )
+        }
+        
+        // 操作ボタンセクション
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp)
+        ) {
         
         // DisplayModeの時は操作ボタンを非表示
         if (viewModel.isEditMode || !viewModel.hasExistingData) {
@@ -232,6 +237,7 @@ fun ImageManagementSection(viewModel: SeedInputViewModel) {
                     Icon(Icons.Outlined.ContentCut, contentDescription = "外側を切り抜く")
                 }
             }
+        }
         }
     }
 }

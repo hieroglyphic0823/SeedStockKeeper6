@@ -14,8 +14,6 @@ import com.example.seedstockkeeper6.ui.screens.StageSelector
 
 @Composable
 fun CalendarDetailSection(viewModel: SeedInputViewModel) {
-    Text("栽培カレンダー詳細", style = MaterialTheme.typography.titleSmall)
-
     viewModel.packet.calendar.forEachIndexed { index, entry ->
         key(entry.id) {
             Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
@@ -31,11 +29,6 @@ fun CalendarDetailSection(viewModel: SeedInputViewModel) {
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text(
-                            "地域 ${index + 1}",
-                            style = MaterialTheme.typography.bodyLarge,
-                            modifier = Modifier.align(Alignment.CenterVertically)
-                        )
                         if (viewModel.isEditMode || !viewModel.hasExistingData) {
                             OutlinedTextField(
                                 value = entry.region ?: "",
@@ -191,9 +184,12 @@ fun CalendarDetailSection(viewModel: SeedInputViewModel) {
                     )
                 }
             }
-            Spacer(modifier = Modifier.height(24.dp))
-            Divider()
-            Spacer(modifier = Modifier.height(24.dp))
+            // DisplayModeの時は仕切り線を削除
+            if (viewModel.isEditMode || !viewModel.hasExistingData) {
+                Spacer(modifier = Modifier.height(24.dp))
+                Divider()
+                Spacer(modifier = Modifier.height(24.dp))
+            }
         }
     }
 }

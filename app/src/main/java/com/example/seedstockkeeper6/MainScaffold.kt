@@ -152,7 +152,7 @@ fun MainScaffoldTopAppBar(
                             modifier = Modifier.size(24.dp)
                         )
                         Text(
-                            text = "種情報",
+                            text = if (seedInputViewModel?.isEditMode == true) "種情報編集" else "種情報",
                             modifier = Modifier.fillMaxWidth(),
                             textAlign = TextAlign.Start
                         )
@@ -170,7 +170,7 @@ fun MainScaffoldTopAppBar(
                                 modifier = Modifier.size(24.dp)
                             )
                             Text(
-                                text = "種情報",
+                                text = if (seedInputViewModel?.isEditMode == true) "種情報編集" else "種情報",
                                 modifier = Modifier.fillMaxWidth(),
                                 textAlign = TextAlign.Start
                             )

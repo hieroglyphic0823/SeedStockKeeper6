@@ -1,9 +1,12 @@
 package com.example.seedstockkeeper6.ui.screens
 
 import android.util.Log
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Public
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -16,6 +19,8 @@ import com.example.seedstockkeeper6.viewmodel.SeedInputViewModel
 
 @Composable
 fun CalendarSection(viewModel: SeedInputViewModel) {
+    var showRegionBottomSheet by remember { mutableStateOf(false) }
+    
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -100,19 +105,18 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
                 packetExpirationYear = viewModel.packet.expirationYear,    // ★ 追加
                 packetExpirationMonth = viewModel.packet.expirationMonth,  // ★ 追加
                 modifier = Modifier.fillMaxWidth(),
-                heightDp = if (viewModel.isEditMode || !viewModel.hasExistingData) 140 else 80 // DisplayModeの時は高さを調整
+                heightDp = if (viewModel.isEditMode || !viewModel.hasExistingData) 120 else 60 // DisplayModeの時は高さを調整
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             CalendarDetailSection(viewModel)
 
-            Spacer(modifier = Modifier.height(16.dp))
-
             // DisplayModeの時は地域追加ボタンを非表示
             if (viewModel.isEditMode || !viewModel.hasExistingData) {
+                Spacer(modifier = Modifier.height(16.dp))
                 Button(
-                    onClick = { viewModel.addCalendarEntry() }, 
+                    onClick = { showRegionBottomSheet = true }, 
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.primary,
@@ -123,6 +127,18 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
                 }
             }
         }
+    }
+    
+    // 地域選択ボトムシート
+    if (showRegionBottomSheet) {
+        RegionSelectionBottomSheet(
+            selectedRegion = viewModel.selectedRegion,
+            onRegionSelected = { 
+                viewModel.addCalendarEntryWithRegion(it)
+                showRegionBottomSheet = false
+            },
+            onDismiss = { showRegionBottomSheet = false }
+        )
     }
 }
 
@@ -512,4 +528,87 @@ private fun updateCalendarEntry(viewModel: SeedInputViewModel, updatedEntry: com
         harvest_end = updatedEntry.harvest_end,
         harvest_end_stage = updatedEntry.harvest_end_stage
     )
+}
+
+// 地域ごとの色定義
+private fun getRegionColor(region: String): Color {
+    return when (region) {
+        "寒地" -> Color(0xFF1A237E) // 紺
+        "寒冷地" -> Color(0xFF1976D2) // 青
+        "温暖地" -> Color(0xFFFF9800) // オレンジ
+        "暖地" -> Color(0xFFE91E63) // ピンク
+        else -> Color(0xFF9E9E9E) // グレー（未設定時）
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun RegionSelectionBottomSheet(
+    selectedRegion: String,
+    onRegionSelected: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val regions = listOf(
+        "寒地", "寒冷地", "温暖地", "暖地"
+    )
+    
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = rememberModalBottomSheetState(),
+        containerColor = MaterialTheme.colorScheme.surface,
+        contentColor = MaterialTheme.colorScheme.onSurface
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(24.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.padding(bottom = 20.dp)
+            ) {
+                Icon(
+                    Icons.Filled.Public,
+                    contentDescription = "地域選択",
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(24.dp)
+                )
+                Text(
+                    text = "地域を選択",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+            
+            regions.forEach { region ->
+                Button(
+                    onClick = { onRegionSelected(region) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 6.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = getRegionColor(region),
+                        contentColor = Color.White
+                    ),
+                    shape = MaterialTheme.shapes.large,
+                    elevation = ButtonDefaults.buttonElevation(
+                        defaultElevation = if (region == selectedRegion) 4.dp else 2.dp
+                    ),
+                    border = if (region == selectedRegion) {
+                        BorderStroke(2.dp, MaterialTheme.colorScheme.outline)
+                    } else null
+                ) {
+                    Text(
+                        text = region,
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = if (region == selectedRegion) FontWeight.Bold else FontWeight.Medium
+                    )
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+    }
 }

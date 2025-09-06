@@ -3,9 +3,18 @@ package com.example.seedstockkeeper6.ui.components
 import android.content.res.Configuration
 import android.graphics.Paint
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -16,11 +25,16 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import com.example.seedstockkeeper6.R
 import com.example.seedstockkeeper6.model.CalendarEntry
+import com.example.seedstockkeeper6.ui.theme.SeedStockKeeper6Theme
 import java.time.LocalDate
 import java.time.YearMonth
 import kotlin.math.max
@@ -61,7 +75,7 @@ fun SeedCalendarGrouped(
     val today = LocalDate.now()
     // MaterialTheme から直接取得
     val baseSowingColor = MaterialTheme.colorScheme.primary
-    val baseHarvestColor = MaterialTheme.colorScheme.secondary
+    val baseHarvestColor = MaterialTheme.colorScheme.tertiary
 
     val groupedBands = entries
         .groupBy { it.region }
@@ -78,7 +92,7 @@ fun SeedCalendarGrouped(
                                     entry.sowing_end_stage
                                 )
                             ),
-                            style = BandStyle.Dotted,
+                            style = BandStyle.Solid, // 点線から棒線に変更
                             color = baseSowingColor, // 基本色
                             itemLabel = "播種"
                         )
@@ -140,10 +154,15 @@ fun SeedCalendarGroupedInternal(
     val actualTextPaintColor = MaterialTheme.colorScheme.onSurface
     val actualOutlineColor = MaterialTheme.colorScheme.outline
     val expiredColor = MaterialTheme.colorScheme.error
+    val surfaceContainerLowColor = MaterialTheme.colorScheme.surfaceContainerLow
+    val errorContainerColor = MaterialTheme.colorScheme.errorContainer
+    val tertiaryContainerColor = MaterialTheme.colorScheme.tertiaryContainer
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val tertiaryColor = MaterialTheme.colorScheme.tertiary
     // カレンダーの月背景色
-    val calendarMonthBackgroundWithinExpiration= MaterialTheme.colorScheme.surfaceVariant
-    val calendarMonthBackgroundExpired= MaterialTheme.colorScheme.errorContainer
-    val calendarMonthBackground=MaterialTheme.colorScheme.surfaceVariant  // デフォルト背景
+    val calendarMonthBackgroundWithinExpiration= tertiaryContainerColor // tertiaryContainerLight
+    val calendarMonthBackgroundExpired= errorContainerColor // errorContainerLight
+    val calendarMonthBackground=tertiaryContainerColor  // デフォルト背景（tertiaryContainerLight）
 
     val textPaintFontSize: TextUnit = MaterialTheme.typography.bodyMedium.fontSize // ← fontSizeをここで取得
     val configuration = LocalConfiguration.current // ← トップレベルで取得
@@ -165,18 +184,20 @@ fun SeedCalendarGroupedInternal(
     val dash = remember { PathEffect.dashPathEffect(floatArrayOf(14f, 10f), 0f) }
 
 
-    Canvas(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(heightDp.dp)
-    ) {
+    Box(modifier = modifier) {
+        Canvas(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(heightDp.dp)
+        ) {
+            // 栽培カレンダー全体の背景色
+            drawRect(
+                color = surfaceContainerLowColor,
+                size = size
+            )
 
-        val labelColWidth = screenWidth.toPx() / (if (currentOrientation == Configuration.ORIENTATION_LANDSCAPE) 13 else 14)
-        val labelColWidthInPx = with(density) { screenWidth.toPx() } / (if (currentOrientation == Configuration.ORIENTATION_LANDSCAPE) 13 else 14)
-        // labelColWidthInPx は既に Float (ピクセル値) なので、toPx() は不要
-        val labelW = labelColWidthInPx
         val headerH = 22.dp.toPx()
-        val gridLeft = labelW
+        val gridLeft = 0f // 左端を他の文字と合わせる
         val gridTop = headerH
         val gridRight = size.width
         val gridBottom = size.height
@@ -235,7 +256,30 @@ fun SeedCalendarGroupedInternal(
                 textPaint
             )
         }
-        // ... (右端の線)
+        
+        // 右端の線
+        drawLine(
+            color = actualOutlineColor,
+            start = Offset(gridRight, gridTop),
+            end = Offset(gridRight, gridBottom),
+            strokeWidth = 1f
+        )
+        
+        // 上端の線
+        drawLine(
+            color = actualOutlineColor,
+            start = Offset(gridLeft, gridTop),
+            end = Offset(gridRight, gridTop),
+            strokeWidth = 1f
+        )
+        
+        // 下端の線
+        drawLine(
+            color = actualOutlineColor,
+            start = Offset(gridLeft, gridBottom),
+            end = Offset(gridRight, gridBottom),
+            strokeWidth = 1f
+        )
 
         fun getStageOffset(stage: String?): Float = when (stage) {
             "上旬" -> 0.05f
@@ -300,6 +344,12 @@ fun SeedCalendarGroupedInternal(
 
                     when (item.style) {
                         BandStyle.Dotted -> {
+                            // 点線の背景
+                            drawRect(
+                                color = surfaceContainerLowColor,
+                                topLeft = Offset(startX - 2f, centerY - 12f),
+                                size = Size(endX - startX + 4f, 24f)
+                            )
                             drawLine(
                                 color = actualColor,
                                 start = Offset(startX, centerY),
@@ -312,12 +362,43 @@ fun SeedCalendarGroupedInternal(
                         }
 
                         BandStyle.Solid -> {
+                            // 棒線の背景
+                            drawRect(
+                                color = surfaceContainerLowColor,
+                                topLeft = Offset(startX - 2f, centerY - 12f),
+                                size = Size(endX - startX + 4f, 24f)
+                            )
                             drawLine(
                                 color = actualColor,
                                 start = Offset(startX, centerY),
                                 end = Offset(endX, centerY),
-                                strokeWidth = 14f,
+                                strokeWidth = 24.dp.toPx(), // 棒線の太さを24dpに変更
                                 cap = Stroke.DefaultCap
+                            )
+                            
+                            // 棒グラフの先頭にアイコンを表示
+                            val iconSize = 12f
+                            val iconY = centerY - iconSize / 2
+                            
+                            // 播種期間の場合はseedsアイコン、収穫期間の場合はharvestアイコン
+                            val iconResource = if (item.color == primaryColor) {
+                                R.drawable.seeds
+                            } else {
+                                R.drawable.harvest
+                            }
+                            
+                            // アイコンの背景（白い円）
+                            drawCircle(
+                                color = androidx.compose.ui.graphics.Color.White,
+                                radius = iconSize / 2 + 2f,
+                                center = Offset(startX, centerY)
+                            )
+                            
+                            // アイコンの描画（簡易的な円で表現）
+                            drawCircle(
+                                color = actualColor,
+                                radius = iconSize / 2,
+                                center = Offset(startX, centerY)
                             )
                         }
                     }
@@ -329,6 +410,44 @@ fun SeedCalendarGroupedInternal(
                 start = Offset(gridLeft, top + rowH),
                 end = Offset(gridRight, top + rowH),
                 strokeWidth = 1f
+            )
+        }
+        }
+        
+        // アイコンを表示（月の上の行に配置）
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 4.dp, end = 8.dp),
+            horizontalArrangement = Arrangement.End
+        ) {
+            // まき時アイコン
+            Image(
+                painter = painterResource(id = R.drawable.seeds),
+                contentDescription = "まき時",
+                modifier = Modifier.size(16.dp),
+                contentScale = ContentScale.Fit
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = "まき時",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Spacer(modifier = Modifier.width(16.dp))
+            
+            // 収穫アイコン
+            Image(
+                painter = painterResource(id = R.drawable.harvest),
+                contentDescription = "収穫",
+                modifier = Modifier.size(16.dp),
+                contentScale = ContentScale.Fit
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = "収穫",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
     }
@@ -343,5 +462,90 @@ fun resolveLabelColor(label: String): Color {
         "温" in label -> Color(0xFFFB8C00)
         "暖" in label -> Color(0xFFD32F2F)
         else -> Color.Gray
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun SeedCalendarGroupedPreview() {
+    SeedStockKeeper6Theme {
+        val sampleEntries = listOf(
+            CalendarEntry(
+                region = "暖地",
+                sowing_start = 4,
+                sowing_start_stage = "下旬",
+                sowing_end = 6,
+                sowing_end_stage = "上旬",
+                harvest_start = 10,
+                harvest_start_stage = "中旬",
+                harvest_end = 11,
+                harvest_end_stage = "中旬"
+            )
+        )
+        
+        // プレビュー用：システム日付を3月に設定
+        val previewToday = LocalDate.of(2024, 3, 15) // 2024年3月15日
+        val baseSowingColor = MaterialTheme.colorScheme.primary
+        val baseHarvestColor = MaterialTheme.colorScheme.tertiary
+
+        val groupedBands = sampleEntries
+            .groupBy { it.region }
+            .map { (region, regionEntries) ->
+                val items = regionEntries.flatMap { entry ->
+                    val sowingItem = if (entry.sowing_start != 0 && entry.sowing_end != 0) {
+                        listOf(
+                            RangeItem(
+                                ranges = listOf(
+                                    MonthRange(
+                                        entry.sowing_start,
+                                        entry.sowing_end,
+                                        entry.sowing_start_stage,
+                                        entry.sowing_end_stage
+                                    )
+                                ),
+                                style = BandStyle.Solid,
+                                color = baseSowingColor,
+                                itemLabel = "播種"
+                            )
+                        )
+                    } else emptyList()
+
+                    val harvestItem = if (entry.harvest_start != 0 && entry.harvest_end != 0) {
+                        listOf(
+                            RangeItem(
+                                ranges = listOf(
+                                    MonthRange(
+                                        entry.harvest_start,
+                                        entry.harvest_end,
+                                        entry.harvest_start_stage,
+                                        entry.harvest_end_stage
+                                    )
+                                ),
+                                style = BandStyle.Solid,
+                                color = baseHarvestColor,
+                                itemLabel = "収穫"
+                            )
+                        )
+                    } else emptyList()
+
+                    sowingItem + harvestItem
+                }
+
+                GroupedCalendarBand(
+                    groupLabel = region,
+                    expirationYear = 2026,
+                    expirationMonth = 3,
+                    items = items
+                )
+            }
+            .filter { it.items.isNotEmpty() }
+
+        SeedCalendarGroupedInternal(
+            bands = groupedBands,
+            modifier = Modifier.fillMaxWidth(),
+            heightDp = 120,
+            currentMonth = previewToday.monthValue, // 3月
+            currentYear = previewToday.year // 2024年
+        )
     }
 }
