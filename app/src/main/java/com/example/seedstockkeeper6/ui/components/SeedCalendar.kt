@@ -90,10 +90,10 @@ fun SeedCalendarGrouped(
     modifier: Modifier = Modifier.fillMaxWidth(),
     heightDp: Int = 140
 ) {
-    val today = LocalDate.now()
+    val today = LocalDate.of(2025, 9, 1) // 9月始まりに固定
     // MaterialTheme から直接取得
-    val baseSowingColor = MaterialTheme.colorScheme.primary
-    val baseHarvestColor = MaterialTheme.colorScheme.tertiary
+    val baseSowingColor = MaterialTheme.colorScheme.primaryContainer
+    val baseHarvestColor = MaterialTheme.colorScheme.primary
 
     val groupedBands = entries
         .groupBy { it.region }
@@ -276,7 +276,7 @@ fun SeedCalendarGroupedInternal(
         val gridW = gridRight - gridLeft
         val gridH = gridBottom - gridTop
         val colW = gridW / 12f
-        val rowH = with(density) { 24.dp.toPx() } // 棒グラフの幅に合わせて24dpに設定
+        val rowH = with(density) { 118.dp.toPx() } // 栽培カレンダーの縦幅を118dpに設定（140dp - 22dp = 118dp）
 
         // 月ラベルの背景色を描画 (secondaryContainerLight)
         for (m in 0 until 12) {
@@ -422,7 +422,7 @@ fun SeedCalendarGroupedInternal(
 
         bands.forEachIndexed { row, groupedBand ->
             val top = gridTop + rowH * row
-            val centerY = top + rowH / 2f + with(density) { 8.dp.toPx() } // 上下に8dpの余白を追加
+            val baseCenterY = top + rowH / 2f + with(density) { 8.dp.toPx() } // 上下に8dpの余白を追加
 
             val expirationDate = try {
                 YearMonth.of(groupedBand.expirationYear, groupedBand.expirationMonth)
@@ -453,24 +453,11 @@ fun SeedCalendarGroupedInternal(
                     var endX =
                         gridLeft + colW * (endMonthIndexInCalendar + getStageEndOffset(r.endStage))
 
-                    // 年をまたぐ帯の場合のX座標補正 (例: 11月～2月で、カレンダーが1月始まり)
-                    // この補正は非常に複雑で、現在の計算では不十分な場合があります。
-                    // 簡略化のため、帯が12ヶ月を超えるような極端なケースは考慮しない前提。
-                    if (r.start > r.end) { // 年をまたいでいる (例: 11月(start) から 2月(end))
-                        if (endX < startX) { // 描画順が逆転している場合 (例: カレンダー上で2月が11月より左に来る)
-                            // このケースでは、帯を2つに分割して描画するか、
-                            // もしくはstartX, endXのロジックをより精緻にする必要があります。
-                            // ここでは、単純にカレンダーの右端/左端を使うなど、割り切りが必要かもしれません。
-                            // 今回は、年またぎでも連続した一つの線として描画できるケースを想定。
-                            // もし表示がおかしい場合、この部分のロジック見直しが必要です。
-                            // 例: 11月～2月の帯で、カレンダーが1月始まりの場合、
-                            // 11月～12月と、翌年の1月～2月を分けて考える必要がある。
-                            // ただし、現在のstartX/endXの計算では、これを1本の線として扱おうとする。
-                            // ここでは、年を跨いだ帯は、12ヶ月分の幅を上限として、
-                            // (r.end - currentMonth + 12) と (r.start - currentMonth) の差から長さを出す方が
-                            // 安定するかもしれない。
-                            // ひとまず、現状の計算で進めます。
-                        }
+                    // 年をまたぐ帯の場合のX座標補正
+                    if (r.start > r.end) { // 年をまたいでいる (例: 11月(start) から 3月(end))
+                        // 年をまたぐ場合は、実際の終了月まで表示
+                        val actualEndMonthIndex = (r.end - currentMonth + 12) % 12
+                        endX = gridLeft + colW * (actualEndMonthIndex + getStageEndOffset(r.endStage))
                     }
 
 
@@ -479,26 +466,28 @@ fun SeedCalendarGroupedInternal(
                             // 点線の背景
                             drawRect(
                                 color = surfaceContainerLowColor,
-                                topLeft = Offset(startX - 2f, centerY - 12f),
-                                size = Size(endX - startX + 4f, 24f)
+                                topLeft = Offset(startX - 2f, baseCenterY - 6f),
+                                size = Size(endX - startX + 4f, 12f)
                             )
                             drawLine(
                                 color = actualColor,
-                                start = Offset(startX, centerY),
-                                end = Offset(endX, centerY),
+                                start = Offset(startX, baseCenterY),
+                                end = Offset(endX, baseCenterY),
                                 strokeWidth = 6f,
                                 pathEffect = dash
                             )
-                            drawCircle(actualColor, 6f, Offset(startX, centerY))
-                            drawCircle(actualColor, 6f, Offset(endX, centerY))
+                            drawCircle(actualColor, 6f, Offset(startX, baseCenterY))
+                            drawCircle(actualColor, 6f, Offset(endX, baseCenterY))
                         }
 
                         BandStyle.Solid -> {
-                            // 収穫期間の場合は12dp下げて表示
+                            // 播種期間は上、収穫期間は下に配置
                             val adjustedCenterY = if (item.itemLabel == "収穫") {
-                                centerY + with(density) { 12.dp.toPx() }
+                                // 収穫期間は118dpの位置に配置（上余白16dp + 播種棒グラフ22dp + 中間余白16dp + 収穫棒グラフの半分11dp）
+                                top + with(density) { 65.dp.toPx() } // 16dp + 22dp + 16dp + 11dp = 65dp
                             } else {
-                                centerY
+                                // 播種期間は118dpの位置に配置（上余白16dp + 播種棒グラフの半分11dp）
+                                top + with(density) { 27.dp.toPx() } // 16dp + 11dp = 27dp
                             }
                             
                             // 棒線の背景
@@ -511,14 +500,14 @@ fun SeedCalendarGroupedInternal(
                             }
                             drawRect(
                                 color = backgroundColor,
-                                topLeft = Offset(startX - 2f, adjustedCenterY - 12f),
-                                size = Size(endX - startX + 4f, 24f)
+                                topLeft = Offset(startX - 2f, adjustedCenterY - with(density) { 11.dp.toPx() }),
+                                size = Size(endX - startX + 4f, with(density) { 22.dp.toPx() })
                             )
                             drawLine(
                                 color = actualColor,
                                 start = Offset(startX, adjustedCenterY),
                                 end = Offset(endX, adjustedCenterY),
-                                strokeWidth = with(density) { 24.dp.toPx() }, // 棒線の太さを24dpに変更
+                                strokeWidth = with(density) { 22.dp.toPx() }, // 棒線の太さを22dpに変更
                                 cap = Stroke.DefaultCap
                             )
                             
@@ -526,7 +515,7 @@ fun SeedCalendarGroupedInternal(
                             val iconSize = if (item.itemLabel == "収穫") {
                                 with(density) { 20.dp.toPx() } // 収穫アイコンは20dp
                             } else {
-                                with(density) { 16.dp.toPx() } // 播種アイコンは16dp
+                                with(density) { 24.dp.toPx() } // 播種アイコンは24dp
                             }
                             
                             // 播種期間の場合はgrainアイコン、収穫期間の場合はharvestアイコン
@@ -598,11 +587,11 @@ fun SeedCalendarGroupedInternal(
                                     
                                     // アイコンの位置を計算
                                     val iconY = if (item.itemLabel == "収穫") {
-                                        // 収穫アイコンは棒グラフの上辺より6dp上
-                                        adjustedCenterY - with(density) { 6.dp.toPx() } - iconSize / 2
+                                        // 収穫アイコンのTOPは棒グラフのTOPと同じ位置
+                                        adjustedCenterY - with(density) { 11.dp.toPx() } - iconSize / 2
                                     } else {
-                                        // 播種アイコンは棒グラフの上辺より3dp上
-                                        adjustedCenterY - with(density) { 3.dp.toPx() } - iconSize / 2
+                                        // 播種アイコンの上端が播種棒グラフの上端より3dp上
+                                        adjustedCenterY - with(density) { 11.dp.toPx() } - with(density) { 3.dp.toPx() } - iconSize / 2
                                     }
                                     
                                     drawImage(
@@ -683,68 +672,68 @@ private fun PreviewSeedCalendarGrouped(
     modifier: Modifier = Modifier.fillMaxWidth(),
     heightDp: Int = 140
 ) {
-    // プレビュー用に2025年3月を固定
-    val previewToday = LocalDate.of(2025, 3, 1)
-    val baseSowingColor = MaterialTheme.colorScheme.primary
-    val baseHarvestColor = MaterialTheme.colorScheme.tertiary
+    // プレビュー用に2025年9月を固定
+    val previewToday = LocalDate.of(2025, 9, 1)
+    val baseSowingColor = MaterialTheme.colorScheme.primaryContainer
+    val baseHarvestColor = MaterialTheme.colorScheme.primary
 
     val groupedBands = entries
-        .groupBy { it.region }
-        .map { (region, regionEntries) ->
-            val items = regionEntries.flatMap { entry ->
-                val sowingItem = if (entry.sowing_start != 0 && entry.sowing_end != 0) {
-                    listOf(
-                        RangeItem(
-                            ranges = listOf(
-                                MonthRange(
-                                    entry.sowing_start,
-                                    entry.sowing_end,
-                                    entry.sowing_start_stage,
-                                    entry.sowing_end_stage
-                                )
-                            ),
-                            style = BandStyle.Solid,
-                            color = baseSowingColor,
-                            itemLabel = "播種"
+            .groupBy { it.region }
+            .map { (region, regionEntries) ->
+                val items = regionEntries.flatMap { entry ->
+                    val sowingItem = if (entry.sowing_start != 0 && entry.sowing_end != 0) {
+                        listOf(
+                            RangeItem(
+                                ranges = listOf(
+                                    MonthRange(
+                                        entry.sowing_start,
+                                        entry.sowing_end,
+                                        entry.sowing_start_stage,
+                                        entry.sowing_end_stage
+                                    )
+                                ),
+                                style = BandStyle.Solid,
+                                color = baseSowingColor,
+                                itemLabel = "播種"
+                            )
                         )
-                    )
-                } else emptyList()
+                    } else emptyList()
 
-                val harvestItem = if (entry.harvest_start != 0 && entry.harvest_end != 0) {
-                    listOf(
-                        RangeItem(
-                            ranges = listOf(
-                                MonthRange(
-                                    entry.harvest_start,
-                                    entry.harvest_end,
-                                    entry.harvest_start_stage,
-                                    entry.harvest_end_stage
-                                )
-                            ),
-                            style = BandStyle.Solid,
-                            color = baseHarvestColor,
-                            itemLabel = "収穫"
+                    val harvestItem = if (entry.harvest_start != 0 && entry.harvest_end != 0) {
+                        listOf(
+                            RangeItem(
+                                ranges = listOf(
+                                    MonthRange(
+                                        entry.harvest_start,
+                                        entry.harvest_end,
+                                        entry.harvest_start_stage,
+                                        entry.harvest_end_stage
+                                    )
+                                ),
+                                style = BandStyle.Solid,
+                                color = baseHarvestColor,
+                                itemLabel = "収穫"
+                            )
                         )
-                    )
-                } else emptyList()
+                    } else emptyList()
 
-                sowingItem + harvestItem
-            }
+                    sowingItem + harvestItem
+                }
 
-            GroupedCalendarBand(
-                groupLabel = region,
+                GroupedCalendarBand(
+                    groupLabel = region,
                 expirationYear = packetExpirationYear,
                 expirationMonth = packetExpirationMonth,
-                items = items
-            )
-        }
-        .filter { it.items.isNotEmpty() }
+                    items = items
+                )
+            }
+            .filter { it.items.isNotEmpty() }
 
     // プレビュー用のデバッグログ
     android.util.Log.d("SeedCalendar", "プレビュー: groupedBands=${groupedBands.size}, 播種期間データ=${groupedBands.flatMap { it.items }.filter { it.itemLabel == "播種" }.size}")
-    
-    SeedCalendarGroupedInternal(
-        bands = groupedBands,
+
+        SeedCalendarGroupedInternal(
+            bands = groupedBands,
         modifier = modifier,
         heightDp = heightDp,
         currentMonth = previewToday.monthValue, // 2025年3月

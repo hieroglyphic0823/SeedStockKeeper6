@@ -131,7 +131,7 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
                 packetExpirationYear = viewModel.packet.expirationYear,    // ★ 追加
                 packetExpirationMonth = viewModel.packet.expirationMonth,  // ★ 追加
                 modifier = Modifier.fillMaxWidth(),
-                heightDp = 70 // 地域が一つなので半分の高さに調整
+                heightDp = 140 // DisplayModeと同じ高さに調整
             )
 
             Spacer(modifier = Modifier.height(16.dp))
