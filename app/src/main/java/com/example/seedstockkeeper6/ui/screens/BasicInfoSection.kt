@@ -106,22 +106,11 @@ fun BasicInfoSection(viewModel: SeedInputViewModel) {
                     // 地域を更新
                     val currentCalendar = viewModel.packet.calendar?.firstOrNull()
                     if (currentCalendar != null) {
-                        val updatedCalendar = currentCalendar.copy(region = region)
-                        viewModel.updateCalendarEntry(0, updatedCalendar)
+                        // 既存のカレンダーエントリの地域を更新
+                        viewModel.updateCalendarRegion(0, region)
                     } else {
                         // カレンダーエントリがない場合は新規作成
-                        val newCalendar = com.example.seedstockkeeper6.model.CalendarEntry(
-                            region = region,
-                            sowing_start = 0,
-                            sowing_start_stage = "",
-                            sowing_end = 0,
-                            sowing_end_stage = "",
-                            harvest_start = 0,
-                            harvest_start_stage = "",
-                            harvest_end = 0,
-                            harvest_end_stage = ""
-                        )
-                        viewModel.updateCalendarEntry(0, newCalendar)
+                        viewModel.addCalendarEntryWithRegion(region)
                     }
                 }
             )
