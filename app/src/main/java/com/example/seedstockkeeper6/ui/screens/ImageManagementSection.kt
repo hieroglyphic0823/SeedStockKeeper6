@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
@@ -101,6 +102,17 @@ fun ImageManagementSection(viewModel: SeedInputViewModel) {
                 modifier = Modifier
                     .size(imageSize) // ← 3枚表示に合わせる
                     .padding(end = 2.dp) // ← 隙間は最小限
+                    .then(
+                        if (viewModel.ocrTargetIndex == index) {
+                            Modifier.border(
+                                width = 3.dp,
+                                color = MaterialTheme.colorScheme.primaryContainer,
+                                shape = RoundedCornerShape(4.dp)
+                            )
+                        } else {
+                            Modifier
+                        }
+                    )
             ) {
                 downloadUrl?.let {
                     AsyncImage(
@@ -110,15 +122,6 @@ fun ImageManagementSection(viewModel: SeedInputViewModel) {
                             .fillMaxSize() // ← Box全体にフィット
                             .clickable { viewModel.setOcrTarget(index) },
                         contentScale = ContentScale.Crop
-                    )
-                }
-                // OCR対象マーク
-                if (viewModel.ocrTargetIndex == index) {
-                    Icon(
-                        Icons.Default.CheckCircle,
-                        contentDescription = "OCR対象",
-                        tint = Color.Green,
-                        modifier = Modifier.align(Alignment.TopStart)
                     )
                 }
                 // DisplayModeの時は操作ボタンを非表示
@@ -231,15 +234,15 @@ fun ImageManagementSection(viewModel: SeedInputViewModel) {
                     enabled = viewModel.imageUris.isNotEmpty(),
                     modifier = Modifier.wrapContentWidth(), // 横幅を詰める
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.secondary,
-                        contentColor = MaterialTheme.colorScheme.onSecondary,
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
                         disabledContainerColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
                         disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
                     )
                 ) {
-                    Icon(Icons.Default.AutoFixHigh, contentDescription = "OCR")
-                    Spacer(Modifier.width(8.dp))
                     Text("AIで解析")
+                    Spacer(Modifier.width(8.dp))
+                    Icon(Icons.Default.AutoFixHigh, contentDescription = "OCR")
                 }
 
                 IconButton(

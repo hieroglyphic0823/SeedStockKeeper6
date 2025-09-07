@@ -51,8 +51,8 @@ fun FamilyIcon(
     Box(modifier = Modifier.size(size)) {
         // 本体（四角いタイル）
         Surface(
-            color = MaterialTheme.colorScheme.primaryContainer,
-            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+            color = MaterialTheme.colorScheme.surfaceContainerLow,
+            contentColor = MaterialTheme.colorScheme.onSurface,
             shape = RoundedCornerShape(cornerRadius),
             tonalElevation = 0.dp,
             shadowElevation = 0.dp,
@@ -76,8 +76,8 @@ fun FamilyIcon(
         val labelText = rotationLabel?.trim().orEmpty()
         if (labelText.isNotEmpty()) {
             Surface(
-                color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.95f),
-                contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                color = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
                 shape = RoundedCornerShape(6.dp),
                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
                 tonalElevation = 0.dp,

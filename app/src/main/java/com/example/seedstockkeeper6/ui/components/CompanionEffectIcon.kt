@@ -110,7 +110,7 @@ fun SingleEffectIcon(effectCode: CompanionEffectCode) {
             modifier = Modifier
                 .size(40.dp)
                 .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.onPrimary), // テーマ色で背景、border無し
+                .background(MaterialTheme.colorScheme.tertiaryContainer), // tertiaryContainerLight
             contentAlignment = Alignment.Center
         ) {
             Image(

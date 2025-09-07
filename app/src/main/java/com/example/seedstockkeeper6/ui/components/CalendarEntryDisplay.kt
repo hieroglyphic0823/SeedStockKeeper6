@@ -1,5 +1,6 @@
 package com.example.seedstockkeeper6.ui.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -14,7 +15,13 @@ fun CalendarEntryDisplay(entry: com.example.seedstockkeeper6.model.CalendarEntry
             Text(
                 "播種期間: ${entry.sowing_start}月${if (entry.sowing_start_stage.isNotEmpty()) "(${entry.sowing_start_stage})" else ""} ～ ${entry.sowing_end}月${if (entry.sowing_end_stage.isNotEmpty()) "(${entry.sowing_end_stage})" else ""}",
                 style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.padding(top = 8.dp)
+                modifier = Modifier
+                    .padding(top = 8.dp)
+                    .background(
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(4.dp)
+                    )
+                    .padding(8.dp)
             )
         }
         
@@ -23,7 +30,13 @@ fun CalendarEntryDisplay(entry: com.example.seedstockkeeper6.model.CalendarEntry
             Text(
                 "収穫期間: ${entry.harvest_start}月${if (entry.harvest_start_stage.isNotEmpty()) "(${entry.harvest_start_stage})" else ""} ～ ${entry.harvest_end}月${if (entry.harvest_end_stage.isNotEmpty()) "(${entry.harvest_end_stage})" else ""}",
                 style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.padding(top = 4.dp)
+                modifier = Modifier
+                    .padding(top = 4.dp)
+                    .background(
+                        color = MaterialTheme.colorScheme.primary,
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(4.dp)
+                    )
+                    .padding(8.dp)
             )
         }
         

@@ -6,17 +6,22 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.layout.ContentScale
@@ -114,7 +119,7 @@ fun SeedInputScreenPreview_DisplayMode() {
                     .verticalScroll(rememberScrollState())
             ) {
                 // 画像管理セクション
-                PreviewImageManagementSection(seedInputViewModel)
+                ImageManagementSection(seedInputViewModel)
                 
                 // 区切り線
                         HorizontalDivider(
@@ -145,6 +150,107 @@ fun SeedInputScreenPreview_DisplayMode() {
                 
                 // 区切り線
                         HorizontalDivider(
+                    thickness = 1.dp,
+                    modifier = Modifier.padding(vertical = 16.dp)
+                )
+                
+                // コンパニオンプランツセクション
+                CompanionPlantsSection(seedInputViewModel)
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Preview(showBackground = true, name = "種情報新規作成画面", heightDp = 1200)
+@Composable
+fun SeedInputScreenPreview_NewCreation() {
+    SeedStockKeeper6Theme(darkTheme = false, dynamicColor = false) {
+        val navController = rememberNavController()
+        val mockUser = createMockFirebaseUser()
+        val seedInputViewModel = createPreviewSeedInputViewModel(isEditMode = false, hasExistingData = false)
+        
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    modifier = Modifier.statusBarsPadding(),
+                    title = { 
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Image(
+                                painter = painterResource(id = com.example.seedstockkeeper6.R.drawable.packet),
+                                contentDescription = "種情報",
+                                modifier = Modifier.size(32.dp)
+                            )
+                            Text(
+                                text = "種情報新規作成",
+                                modifier = Modifier.fillMaxWidth(),
+                                textAlign = TextAlign.Start
+                            )
+                        }
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = { }) {
+                            Icon(Icons.Filled.ArrowBack, contentDescription = "戻る")
+                        }
+                    }
+                )
+            },
+            floatingActionButton = {
+                FloatingActionButton(
+                    onClick = { },
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Save,
+                        contentDescription = "保存",
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
+            }
+        ) { paddingValues ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .padding(horizontal = 16.dp)
+                    .verticalScroll(rememberScrollState())
+            ) {
+                // 画像管理セクション
+                ImageManagementSection(seedInputViewModel)
+                
+                // 区切り線
+                HorizontalDivider(
+                    thickness = 1.dp,
+                    modifier = Modifier.padding(vertical = 16.dp)
+                )
+                
+                // 基本情報セクション
+                BasicInfoSection(seedInputViewModel)
+                
+                // 区切り線
+                HorizontalDivider(
+                    thickness = 1.dp,
+                    modifier = Modifier.padding(vertical = 16.dp)
+                )
+                
+                // カレンダーセクション
+                CalendarSection(seedInputViewModel)
+                
+                // 区切り線
+                HorizontalDivider(
+                    thickness = 1.dp,
+                    modifier = Modifier.padding(vertical = 16.dp)
+                )
+                
+                // 栽培情報セクション
+                CultivationInfoSection(seedInputViewModel)
+                
+                // 区切り線
+                HorizontalDivider(
                     thickness = 1.dp,
                     modifier = Modifier.padding(vertical = 16.dp)
                 )
@@ -219,7 +325,8 @@ fun SeedInputScreenPreview_EditMode() {
                         ) {
                             Icon(
                         imageVector = Icons.Filled.Save,
-                        contentDescription = "保存"
+                        contentDescription = "保存",
+                        modifier = Modifier.size(28.dp)
                     )
                 }
             }
@@ -237,7 +344,7 @@ fun SeedInputScreenPreview_EditMode() {
                     .verticalScroll(rememberScrollState())
             ) {
                 // 画像管理セクション
-                PreviewImageManagementSection(seedInputViewModel)
+                ImageManagementSection(seedInputViewModel)
                 
                 // 区切り線
                 HorizontalDivider(
@@ -345,6 +452,9 @@ fun createPreviewSeedInputViewModel(isEditMode: Boolean, hasExistingData: Boolea
             android.net.Uri.parse("https://example.com/seed1.jpg"),
             android.net.Uri.parse("https://example.com/seed2.jpg")
         )
+        
+        // OCR対象画像を最初の画像に設定（プレビューで枠を表示するため）
+        viewModel.setOcrTarget(0)
         
         // 編集モードの設定
         if (isEditMode) {
@@ -623,29 +733,316 @@ private fun getRegionColor(region: String): Color {
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Preview(showBackground = true, name = "地域選択ダイアログ", heightDp = 800)
+@Preview(showBackground = true, name = "地域選択ダイアログ（実際のDialog）", heightDp = 800)
 @Composable
 fun RegionSelectionDialogPreview() {
     SeedStockKeeper6Theme(darkTheme = false, dynamicColor = false) {
-        val showDialog = remember { mutableStateOf(true) }
-        
-        if (showDialog.value) {
-            com.example.seedstockkeeper6.ui.components.RegionSelectionDialog(
-                showDialog = showDialog.value,
-                regionList = listOf("寒地", "寒冷地", "温暖地", "暖地"),
-                ocrResult = null,
-                croppedCalendarBitmap = null,
-                editingCalendarEntry = null,
-                defaultRegion = "暖地", // 農園情報の地域を初期値として使用
-                onRegionSelected = { 
-                    showDialog.value = false
-                },
-                onStartEditing = { },
-                onUpdateEditing = { },
-                onSaveEditing = { },
-                onCancelEditing = { },
-                onDismiss = { showDialog.value = false }
+        // プレビュー用のデモデータ（extractRegionsFromOcrResultで検出される地域）
+        val demoOcrResult = com.example.seedstockkeeper6.model.SeedPacket(
+            id = "demo-ocr-result",
+            productName = "恋むすめ",
+            variety = "ニンジン",
+            family = "せり科",
+            expirationYear = 2026,
+            expirationMonth = 10,
+            calendar = listOf(
+                com.example.seedstockkeeper6.model.CalendarEntry(
+                    region = "暖地",
+                    sowing_start = 11,
+                    sowing_start_stage = "上旬",
+                    sowing_end = 3,
+                    sowing_end_stage = "下旬",
+                    harvest_start = 4,
+                    harvest_start_stage = "上旬",
+                    harvest_end = 7,
+                    harvest_end_stage = "中旬"
+                ),
+                com.example.seedstockkeeper6.model.CalendarEntry(
+                    region = "温暖地",
+                    sowing_start = 10,
+                    sowing_start_stage = "下旬",
+                    sowing_end = 4,
+                    sowing_end_stage = "上旬",
+                    harvest_start = 5,
+                    harvest_start_stage = "上旬",
+                    harvest_end = 8,
+                    harvest_end_stage = "下旬"
+                )
             )
+        )
+        
+        // 実際のRegionSelectionDialogを使用（プレビュー用にshowDialog=trueで固定）
+        com.example.seedstockkeeper6.ui.components.RegionSelectionDialog(
+            showDialog = true,
+            regionList = listOf("暖地", "温暖地"), // extractRegionsFromOcrResultで検出される地域
+            ocrResult = demoOcrResult,
+            croppedCalendarBitmap = null,
+            editingCalendarEntry = null,
+            defaultRegion = "暖地",
+            onRegionSelected = { },
+            onStartEditing = { },
+            onUpdateEditing = { },
+            onSaveEditing = { },
+            onCancelEditing = { },
+            onDismiss = { }
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Preview(showBackground = true, name = "地域選択ダイアログ（内容表示）", heightDp = 800)
+@Composable
+fun RegionSelectionDialogContentPreview() {
+    SeedStockKeeper6Theme(darkTheme = false, dynamicColor = false) {
+        // プレビュー用のデモデータ
+        val demoOcrResult = com.example.seedstockkeeper6.model.SeedPacket(
+            id = "demo-ocr-result",
+            productName = "恋むすめ",
+            variety = "ニンジン",
+            family = "せり科",
+            expirationYear = 2026,
+            expirationMonth = 10,
+            calendar = listOf(
+                com.example.seedstockkeeper6.model.CalendarEntry(
+                    region = "暖地",
+                    sowing_start = 11,
+                    sowing_start_stage = "上旬",
+                    sowing_end = 3,
+                    sowing_end_stage = "下旬",
+                    harvest_start = 4,
+                    harvest_start_stage = "上旬",
+                    harvest_end = 7,
+                    harvest_end_stage = "中旬"
+                ),
+                com.example.seedstockkeeper6.model.CalendarEntry(
+                    region = "温暖地",
+                    sowing_start = 10,
+                    sowing_start_stage = "下旬",
+                    sowing_end = 4,
+                    sowing_end_stage = "上旬",
+                    harvest_start = 5,
+                    harvest_start_stage = "上旬",
+                    harvest_end = 8,
+                    harvest_end_stage = "下旬"
+                )
+            )
+        )
+        
+        // Dialogの内容を直接表示（プレビュー用）
+        androidx.compose.ui.window.Dialog(onDismissRequest = { }) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(20.dp)
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    Text(
+                        text = "地域区分を選択してください",
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+
+                    // 地域選択ボタン
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        listOf("暖地", "温暖地").forEach { region ->
+                            Button(
+                                onClick = { },
+                                modifier = Modifier.weight(1f),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = if (region == "暖地") 
+                                        MaterialTheme.colorScheme.primary 
+                                    else 
+                                        MaterialTheme.colorScheme.surface
+                                )
+                            ) {
+                                Text(
+                                    text = region,
+                                    color = if (region == "暖地") 
+                                        MaterialTheme.colorScheme.onPrimary 
+                                    else 
+                                        MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    // 選択された地域の栽培期間表示
+                    val selectedRegionEntry = demoOcrResult.calendar?.find { it.region == "暖地" }
+                    selectedRegionEntry?.let { entry ->
+                        Card(
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                                contentColor = MaterialTheme.colorScheme.onSurface
+                            ),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(16.dp)
+                            ) {
+                                Text(
+                                    text = "暖地の栽培期間",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    modifier = Modifier.padding(bottom = 8.dp)
+                                )
+                                
+                                // 播種期間と収穫期間の表示（色変更が反映される）
+                                com.example.seedstockkeeper6.ui.components.CalendarEntryDisplay(entry)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Preview(showBackground = true, name = "種一覧画面", heightDp = 800)
+@Composable
+fun SeedListScreenPreview() {
+    SeedStockKeeper6Theme(darkTheme = false, dynamicColor = false) {
+        // プレビュー用のデモデータ
+        val demoSeeds = listOf(
+            com.example.seedstockkeeper6.model.SeedPacket(
+                id = "demo-seed-1",
+                productName = "恋むすめ",
+                variety = "ニンジン",
+                family = "せり科",
+                expirationYear = 2026,
+                expirationMonth = 10,
+                companionPlants = listOf(
+                    com.example.seedstockkeeper6.model.CompanionPlant(
+                        plant = "ネギ",
+                        effects = listOf("01", "02") // 害虫予防、病気予防
+                    ),
+                    com.example.seedstockkeeper6.model.CompanionPlant(
+                        plant = "レタス",
+                        effects = listOf("03", "04") // 生育促進、空間活用
+                    ),
+                    com.example.seedstockkeeper6.model.CompanionPlant(
+                        plant = "ラディッシュ",
+                        effects = listOf("05") // 風味向上
+                    )
+                )
+            ),
+            com.example.seedstockkeeper6.model.SeedPacket(
+                id = "demo-seed-2",
+                productName = "サラダ菜",
+                variety = "レタス",
+                family = "キク科",
+                expirationYear = 2025,
+                expirationMonth = 12,
+                companionPlants = listOf(
+                    com.example.seedstockkeeper6.model.CompanionPlant(
+                        plant = "ニンジン",
+                        effects = listOf("01", "03") // 害虫予防、生育促進
+                    ),
+                    com.example.seedstockkeeper6.model.CompanionPlant(
+                        plant = "ラディッシュ",
+                        effects = listOf("04") // 空間活用
+                    )
+                )
+            ),
+            com.example.seedstockkeeper6.model.SeedPacket(
+                id = "demo-seed-3",
+                productName = "二十日大根",
+                variety = "ラディッシュ",
+                family = "アブラナ科",
+                expirationYear = 2026,
+                expirationMonth = 3,
+                companionPlants = listOf(
+                    com.example.seedstockkeeper6.model.CompanionPlant(
+                        plant = "レタス",
+                        effects = listOf("03", "06") // 生育促進、土壌改善
+                    ),
+                    com.example.seedstockkeeper6.model.CompanionPlant(
+                        plant = "ニンジン",
+                        effects = listOf("01", "05") // 害虫予防、風味向上
+                    )
+                )
+            )
+        )
+        
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp)
+        ) {
+            item {
+                Text(
+                    text = "種一覧",
+                    style = MaterialTheme.typography.headlineMedium,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+            }
+            
+            // 種一覧のアイテム
+            items(demoSeeds) { seed ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
+                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                ) {
+                    // FamilyIcon（色変更が反映される）
+                    com.example.seedstockkeeper6.ui.components.FamilyIcon(
+                        family = seed.family,
+                        size = 50.dp,
+                        cornerRadius = 8.dp,
+                        rotationLabel = "3年", // 連作バッジのデモ
+                        badgeProtrusion = 4.dp
+                    )
+                    
+                    Spacer(modifier = Modifier.width(16.dp))
+                    
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            "${seed.productName} (${seed.variety})", 
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            "有効期限: ${seed.expirationYear}年 ${seed.expirationMonth}月", 
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                        
+                        // コンパニオンプランツの表示（色変更が反映される）
+                        if (seed.companionPlants.isNotEmpty()) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Row(
+                                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    "コンパニオンプランツ: ",
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                                com.example.seedstockkeeper6.ui.components.CompanionEffectIcon(
+                                    effects = listOf("PEST_PREVENTION", "GROWTH_PROMOTION", "FLAVOR_ENHANCEMENT")
+                                )
+                            }
+                        }
+                    }
+                }
+                
+                // 区切り線（最後のアイテム以外）
+                if (demoSeeds.indexOf(seed) < demoSeeds.size - 1) {
+                    androidx.compose.material3.HorizontalDivider(
+                        thickness = 1.dp,
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
+                }
+            }
         }
     }
 }

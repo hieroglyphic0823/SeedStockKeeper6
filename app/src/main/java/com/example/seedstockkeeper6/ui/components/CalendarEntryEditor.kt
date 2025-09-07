@@ -1,5 +1,6 @@
 package com.example.seedstockkeeper6.ui.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -44,7 +45,13 @@ fun CalendarEntryEditor(
         Text(
             "播種期間",
             style = MaterialTheme.typography.titleSmall,
-            modifier = Modifier.padding(bottom = 4.dp)
+            modifier = Modifier
+                .padding(bottom = 4.dp)
+                .background(
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(4.dp)
+                )
+                .padding(8.dp)
         )
         
         // 開始期間
@@ -457,7 +464,13 @@ fun CalendarEntryEditor(
         Text(
             "収穫期間",
             style = MaterialTheme.typography.titleSmall,
-            modifier = Modifier.padding(bottom = 4.dp)
+            modifier = Modifier
+                .padding(bottom = 4.dp)
+                .background(
+                    color = MaterialTheme.colorScheme.primary,
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(4.dp)
+                )
+                .padding(8.dp)
         )
         
         // 収穫開始期間

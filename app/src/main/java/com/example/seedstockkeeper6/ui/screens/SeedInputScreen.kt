@@ -46,7 +46,7 @@ fun SeedInputScreen(
 
     Scaffold(
         floatingActionButton = {
-            if (viewModel.isEditMode) {
+            if (viewModel.isEditMode || !viewModel.hasExistingData) {
                 FloatingActionButton(
                     onClick = {
                         viewModel.saveSeedData(context) { result ->
@@ -55,12 +55,13 @@ fun SeedInputScreen(
                             }
                         }
                     },
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                 ) {
                     Icon(
                         imageVector = Icons.Filled.Save,
-                        contentDescription = "保存"
+                        contentDescription = "保存",
+                        modifier = Modifier.size(28.dp)
                     )
                 }
             }
