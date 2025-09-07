@@ -17,6 +17,19 @@ class SeedListViewModel : ViewModel() {
         Log.d("BootTrace", "SeedListViewModel init")
     }
 
+    fun deleteSeed(documentId: String) {
+        viewModelScope.launch {
+            try {
+                val result = deleteSeedPacketWithImagesInternal(documentId)
+                if (result.isFailure) {
+                    Log.e("SeedListVM", "Failed to delete seed: ${result.exceptionOrNull()}")
+                }
+            } catch (e: Exception) {
+                Log.e("SeedListVM", "Error deleting seed: $documentId", e)
+            }
+        }
+    }
+
     fun deleteSeedPacketWithImages(documentId: String, onComplete: (Result<Unit>) -> Unit) {
         viewModelScope.launch {
             val result = deleteSeedPacketWithImagesInternal(documentId)

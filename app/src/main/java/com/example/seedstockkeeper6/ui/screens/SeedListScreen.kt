@@ -21,11 +21,16 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
+import androidx.compose.material3.rememberSwipeToDismissBoxState
+import androidx.compose.material3.Icon
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.runtime.DisposableEffect
@@ -33,7 +38,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.seedstockkeeper6.model.SeedPacket
@@ -104,20 +111,56 @@ fun SeedListScreen(
             .padding(16.dp)
     ) {
         items(seeds) { (id, seed) ->
-            val checked = selectedIds.contains(id)
             val encodedSeed = URLEncoder.encode(Gson().toJson(seed), StandardCharsets.UTF_8.toString())
+            val dismissState = rememberSwipeToDismissBoxState(
+                confirmValueChange = { dismissValue ->
+                    when (dismissValue) {
+                        SwipeToDismissBoxValue.StartToEnd -> {
+                            // 左から右へのスワイプ（削除）
+                            viewModel.deleteSeed(id)
+                            true
+                        }
+                        SwipeToDismissBoxValue.EndToStart -> {
+                            // 右から左へのスワイプ（何もしない）
+                            false
+                        }
+                        SwipeToDismissBoxValue.Settled -> false
+                    }
+                }
+            )
             
-            // リストアイテム
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp)
-                    .clickable {
-                        navController.navigate("input/$encodedSeed")
-                    },
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+            SwipeToDismissBox(
+                state = dismissState,
+                backgroundContent = {
+                    // 削除背景（赤い背景）
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(MaterialTheme.colorScheme.error)
+                            .padding(16.dp),
+                        contentAlignment = Alignment.CenterEnd
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "削除",
+                            tint = MaterialTheme.colorScheme.onError,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                },
+                modifier = Modifier.fillMaxWidth()
             ) {
+                // メインコンテンツ
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp)
+                        .clickable {
+                            navController.navigate("input/$encodedSeed")
+                        },
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                 val rotation = familyRotationMinYearsLabel(seed.family) ?: ""
                 FamilyIcon(
                     family = seed.family,
@@ -178,17 +221,8 @@ fun SeedListScreen(
                         }
                     }
                 }
-                Checkbox(
-                    checked = checked,
-                    onCheckedChange = {
-                        if (it) selectedIds.add(id) else selectedIds.remove(id)
-                    },
-                    colors = androidx.compose.material3.CheckboxDefaults.colors(
-                        checkedColor = MaterialTheme.colorScheme.primary,
-                        uncheckedColor = MaterialTheme.colorScheme.outline,
-                        checkmarkColor = MaterialTheme.colorScheme.onPrimary
-                    )
-                )
+                // チェックボックスを削除
+            }
             }
             
             // 区切り線（最後のアイテム以外）
