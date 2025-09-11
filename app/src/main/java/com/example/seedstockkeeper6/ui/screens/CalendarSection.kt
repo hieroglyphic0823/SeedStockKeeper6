@@ -72,7 +72,7 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
                 packetExpirationYear = viewModel.packet.expirationYear,
                 packetExpirationMonth = viewModel.packet.expirationMonth,
                 modifier = Modifier.fillMaxWidth(),
-                heightDp = 140
+                heightDp = 100
             )
             
             // 有効期限表示
