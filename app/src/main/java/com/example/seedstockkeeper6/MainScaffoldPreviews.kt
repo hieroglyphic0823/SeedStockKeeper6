@@ -422,14 +422,10 @@ fun createPreviewSeedInputViewModel(isEditMode: Boolean, hasExistingData: Boolea
             calendar = listOf(
                 com.example.seedstockkeeper6.model.CalendarEntry(
                     region = "暖地",
-                    sowing_start = 11,
-                    sowing_start_stage = "上旬",
-                    sowing_end = 3,
-                    sowing_end_stage = "下旬",
-                    harvest_start = 4,
-                    harvest_start_stage = "上旬",
-                    harvest_end = 7,
-                    harvest_end_stage = "中旬"
+                    sowing_start_date = "2025-11-01",
+                    sowing_end_date = "2025-03-31",
+                    harvest_start_date = "2025-04-01",
+                    harvest_end_date = "2025-07-20"
                 )
             ),
             companionPlants = listOf(
@@ -748,25 +744,17 @@ fun RegionSelectionDialogPreview() {
             calendar = listOf(
                 com.example.seedstockkeeper6.model.CalendarEntry(
                     region = "暖地",
-                    sowing_start = 11,
-                    sowing_start_stage = "上旬",
-                    sowing_end = 3,
-                    sowing_end_stage = "下旬",
-                    harvest_start = 4,
-                    harvest_start_stage = "上旬",
-                    harvest_end = 7,
-                    harvest_end_stage = "中旬"
+                    sowing_start_date = "2025-11-01",
+                    sowing_end_date = "2025-03-31",
+                    harvest_start_date = "2025-04-01",
+                    harvest_end_date = "2025-07-20"
                 ),
                 com.example.seedstockkeeper6.model.CalendarEntry(
                     region = "温暖地",
-                    sowing_start = 10,
-                    sowing_start_stage = "下旬",
-                    sowing_end = 4,
-                    sowing_end_stage = "上旬",
-                    harvest_start = 5,
-                    harvest_start_stage = "上旬",
-                    harvest_end = 8,
-                    harvest_end_stage = "下旬"
+                    sowing_start_date = "2025-10-21",
+                    sowing_end_date = "2025-04-10",
+                    harvest_start_date = "2025-05-01",
+                    harvest_end_date = "2025-08-31"
                 )
             )
         )
@@ -805,25 +793,17 @@ fun RegionSelectionDialogContentPreview() {
             calendar = listOf(
                 com.example.seedstockkeeper6.model.CalendarEntry(
                     region = "暖地",
-                    sowing_start = 11,
-                    sowing_start_stage = "上旬",
-                    sowing_end = 3,
-                    sowing_end_stage = "下旬",
-                    harvest_start = 4,
-                    harvest_start_stage = "上旬",
-                    harvest_end = 7,
-                    harvest_end_stage = "中旬"
+                    sowing_start_date = "2025-11-01",
+                    sowing_end_date = "2025-03-31",
+                    harvest_start_date = "2025-04-01",
+                    harvest_end_date = "2025-07-20"
                 ),
                 com.example.seedstockkeeper6.model.CalendarEntry(
                     region = "温暖地",
-                    sowing_start = 10,
-                    sowing_start_stage = "下旬",
-                    sowing_end = 4,
-                    sowing_end_stage = "上旬",
-                    harvest_start = 5,
-                    harvest_start_stage = "上旬",
-                    harvest_end = 8,
-                    harvest_end_stage = "下旬"
+                    sowing_start_date = "2025-10-21",
+                    sowing_end_date = "2025-04-10",
+                    harvest_start_date = "2025-05-01",
+                    harvest_end_date = "2025-08-31"
                 )
             )
         )

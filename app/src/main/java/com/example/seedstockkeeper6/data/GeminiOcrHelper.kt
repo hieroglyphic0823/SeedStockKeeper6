@@ -74,16 +74,12 @@ companionPlants 配列について：
   - "99": その他
   
   calendar 配列について：
-  - 各 calendar オブジェクトに、以下の8つのフィールドを含めてください：
+  - 各 calendar オブジェクトに、以下の5つのフィールドを含めてください：
     - "region": 地域名（寒地、寒冷地、温暖地、暖地、冷涼地、中間地、暖地など）
-    - "sowing_start": 種まき開始月（1〜12の数値）
-    - "sowing_start_stage": "上旬" または "中旬" または "下旬"
-    - "sowing_end": 種まき終了月（1〜12の数値）
-    - "sowing_end_stage": "上旬" または "中旬" または "下旬"
-    - "harvest_start": 収穫開始月（1〜12の数値）
-    - "harvest_start_stage": "上旬" または "中旬" または "下旬"
-    - "harvest_end": 収穫終了月（1〜12の数値）
-    - "harvest_end_stage": "上旬" または "中旬" または "下旬"
+    - "sowing_start_date": 種まき開始日（"2025-03-01"形式）
+    - "sowing_end_date": 種まき終了日（"2025-03-20"形式）
+    - "harvest_start_date": 収穫開始日（"2025-06-01"形式）
+    - "harvest_end_date": 収穫終了日（"2025-06-30"形式）
   - いずれのフィールドも、パッケージに明記されていない場合は、推定または一般的な情報をもとに埋めてください。
 
         {
@@ -118,14 +114,10 @@ companionPlants 配列について：
           },
           "calendar": [
             {
-              "sowing_start": 0,
-              "sowing_start_stage": "",
-              "sowing_end": 0,
-              "sowing_end_stage": "",
-              "harvest_start": 0,
-              "harvest_start_stage": "",
-              "harvest_end": 0,
-              "harvest_end_stage": ""
+              "sowing_start_date": "",
+              "sowing_end_date": "",
+              "harvest_start_date": "",
+              "harvest_end_date": ""
             }
           ],
           "companionPlants": [

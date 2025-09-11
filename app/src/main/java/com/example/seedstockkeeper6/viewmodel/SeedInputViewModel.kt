@@ -1244,18 +1244,10 @@ class SeedInputViewModel : ViewModel() {
             // OCR結果に該当地域がない場合は空のエントリを作成
             val newCalendarEntry = CalendarEntry(
                 region = region,
-                sowing_start_year = 0,
-                sowing_start = 0,
-                sowing_start_stage = "",
-                sowing_end_year = 0,
-                sowing_end = 0,
-                sowing_end_stage = "",
-                harvest_start_year = 0,
-                harvest_start = 0,
-                harvest_start_stage = "",
-                harvest_end_year = 0,
-                harvest_end = 0,
-                harvest_end_stage = ""
+                sowing_start_date = "",
+                sowing_end_date = "",
+                harvest_start_date = "",
+                harvest_end_date = ""
             )
             packet = packet.copy(calendar = listOf(newCalendarEntry))
             Log.d("RegionSelection", "新規カレンダーエントリを作成: $region")
@@ -1317,6 +1309,10 @@ class SeedInputViewModel : ViewModel() {
         editingCalendarEntry = null
     }
 
+    fun enterCalendarEditMode() {
+        isCalendarEditMode = true
+    }
+    
     fun exitCalendarEditMode() {
         isCalendarEditMode = false
     }

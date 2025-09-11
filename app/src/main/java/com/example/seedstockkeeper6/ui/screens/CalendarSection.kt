@@ -1,33 +1,23 @@
 package com.example.seedstockkeeper6.ui.screens
 
-import android.util.Log
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
-import androidx.compose.material.icons.filled.Public
-import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.tooling.preview.Preview
 import com.example.seedstockkeeper6.ui.components.SeedCalendarGrouped
+import com.example.seedstockkeeper6.ui.components.CalendarEntryEditor
 import com.example.seedstockkeeper6.viewmodel.SeedInputViewModel
 import com.example.seedstockkeeper6.model.CalendarEntry
-import com.example.seedstockkeeper6.model.SeedPacket
-import com.example.seedstockkeeper6.ui.theme.SeedStockKeeper6Theme
 
 @Composable
 fun CalendarSection(viewModel: SeedInputViewModel) {
-    
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -52,59 +42,9 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
         
         // 地域設定（栽培カレンダーのタイトルとカレンダー図の間）
         val currentRegion = viewModel.packet.calendar?.firstOrNull()?.region ?: ""
-        if (currentRegion.isNotEmpty() || viewModel.isEditMode || !viewModel.hasExistingData) {
-            if (viewModel.isEditMode || !viewModel.hasExistingData) {
-                // 編集モード: 地域選択ボタン
-                RegionSelectionButton(
-                    selectedRegion = currentRegion,
-                    onRegionSelected = { region ->
-                        if (viewModel.packet.calendar?.isNotEmpty() == true) {
-                            viewModel.updateCalendarRegion(0, region)
-                        } else {
-                            viewModel.addCalendarEntryWithRegion(region)
-                        }
-                    }
-                )
-            } else {
-                // DisplayMode: 色付きSurface
-                val regionColor = getRegionColor(currentRegion)
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    color = regionColor.copy(alpha = 0.1f),
-                    shape = MaterialTheme.shapes.medium
-                ) {
-                    Row(
-                        modifier = Modifier.padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(12.dp)
-                                .background(
-                                    color = regionColor,
-                                    shape = androidx.compose.foundation.shape.CircleShape
-                                )
-                        )
-                        Text(
-                            text = currentRegion,
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-                }
-            }
-            Spacer(modifier = Modifier.height(16.dp))
-        }
         
-        // 編集モードの場合は編集画面を表示
-        val isEditMode = viewModel.isCalendarEditMode
-        val hasCalendar = viewModel.packet.calendar?.isNotEmpty() == true
-        val selectedRegion = viewModel.selectedRegion
-        Log.d("CalendarSection", "編集モード: $isEditMode, カレンダーあり: $hasCalendar, 選択地域: '$selectedRegion'")
-        
-        if (isEditMode && hasCalendar) {
+        if (viewModel.isCalendarEditMode) {
+            // 編集モード
             CalendarEditMode(viewModel)
         } else {
             // 通常の表示モード
@@ -112,46 +52,41 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
             val calendarEntries = if (viewModel.selectedRegion.isEmpty() && (viewModel.packet.calendar?.isEmpty() != false)) {
                 // 地域が選択されていない場合は空のカレンダーエントリを作成
                 listOf(
-                    com.example.seedstockkeeper6.model.CalendarEntry(
+                    CalendarEntry(
                         region = "",
-                        sowing_start_year = 0,
-                        sowing_start = 0,
-                        sowing_start_stage = "",
-                        sowing_end_year = 0,
-                        sowing_end = 0,
-                        sowing_end_stage = "",
-                        harvest_start_year = 0,
-                        harvest_start = 0,
-                        harvest_start_stage = "",
-                        harvest_end_year = 0,
-                        harvest_end = 0,
-                        harvest_end_stage = ""
+                        sowing_start_date = "",
+                        sowing_end_date = "",
+                        harvest_start_date = "",
+                        harvest_end_date = ""
                     )
                 )
             } else {
                 viewModel.packet.calendar ?: emptyList()
             }
             
-            
-            // ---- まきどき / 収穫カレンダー ----
+            // カレンダー表示
+            if (calendarEntries.isNotEmpty()) {
             SeedCalendarGrouped(
                 entries = calendarEntries,
-                packetExpirationYear = viewModel.packet.expirationYear,    // ★ 追加
-                packetExpirationMonth = viewModel.packet.expirationMonth,  // ★ 追加
+                    packetExpirationYear = viewModel.packet.expirationYear,
+                    packetExpirationMonth = viewModel.packet.expirationMonth,
                 modifier = Modifier.fillMaxWidth(),
-                heightDp = 140 // DisplayModeと同じ高さに調整
+                    heightDp = 140
             )
+            }
 
+            // 編集ボタン
+            if (currentRegion.isNotEmpty()) {
             Spacer(modifier = Modifier.height(16.dp))
-
-            CalendarDetailSection(viewModel)
-
+                Button(
+                    onClick = { viewModel.enterCalendarEditMode() },
+        modifier = Modifier.fillMaxWidth()
+    ) {
+                    Text("栽培期間を編集")
+                }
+            }
         }
-        
-        // 有効期限セクション
-        ExpirationDateSection(viewModel)
     }
-    
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -159,667 +94,25 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
 fun CalendarEditMode(viewModel: SeedInputViewModel) {
     val currentEntry = viewModel.packet.calendar.firstOrNull() ?: return
     
-    var sowingStartYear by remember { mutableStateOf(currentEntry.sowing_start_year.toString()) }
-    var sowingStart by remember { mutableStateOf(currentEntry.sowing_start.toString()) }
-    var sowingStartStage by remember { mutableStateOf(currentEntry.sowing_start_stage) }
-    var sowingEndYear by remember { mutableStateOf(currentEntry.sowing_end_year.toString()) }
-    var sowingEnd by remember { mutableStateOf(currentEntry.sowing_end.toString()) }
-    var sowingEndStage by remember { mutableStateOf(currentEntry.sowing_end_stage) }
-    var harvestStartYear by remember { mutableStateOf(currentEntry.harvest_start_year.toString()) }
-    var harvestStart by remember { mutableStateOf(currentEntry.harvest_start.toString()) }
-    var harvestStartStage by remember { mutableStateOf(currentEntry.harvest_start_stage) }
-    var harvestEndYear by remember { mutableStateOf(currentEntry.harvest_end_year.toString()) }
-    var harvestEnd by remember { mutableStateOf(currentEntry.harvest_end.toString()) }
-    var harvestEndStage by remember { mutableStateOf(currentEntry.harvest_end_stage) }
-
-    // ドロップダウンの展開状態
-    var sowingStartYearExpanded by remember { mutableStateOf(false) }
-    var sowingStartExpanded by remember { mutableStateOf(false) }
-    var sowingStartStageExpanded by remember { mutableStateOf(false) }
-    var sowingEndYearExpanded by remember { mutableStateOf(false) }
-    var sowingEndExpanded by remember { mutableStateOf(false) }
-    var sowingEndStageExpanded by remember { mutableStateOf(false) }
-    var harvestStartYearExpanded by remember { mutableStateOf(false) }
-    var harvestStartExpanded by remember { mutableStateOf(false) }
-    var harvestStartStageExpanded by remember { mutableStateOf(false) }
-    var harvestEndYearExpanded by remember { mutableStateOf(false) }
-    var harvestEndExpanded by remember { mutableStateOf(false) }
-    var harvestEndStageExpanded by remember { mutableStateOf(false) }
-
-    val currentYear = java.time.LocalDate.now().year
-    val yearOptions = (currentYear - 1..currentYear + 2).map { it.toString() }
-    val monthOptions = (1..12).map { it.toString() }
-    val stageOptions = listOf("", "初旬", "中旬", "下旬")
-
-    Card(
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer,
-            contentColor = MaterialTheme.colorScheme.onSurface
-        ),
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    "編集: ${currentEntry.region}",
-                    style = MaterialTheme.typography.titleSmall
-                )
-                
-                TextButton(
-                    onClick = { viewModel.exitCalendarEditMode() }
-                ) {
-                    Text("完了")
-                }
-            }
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            Text(
-                "播種期間",
-                style = MaterialTheme.typography.titleSmall,
-                modifier = Modifier.padding(bottom = 8.dp)
+    CalendarEntryEditor(
+        entry = currentEntry,
+        onUpdate = { updatedEntry ->
+            viewModel.updateCalendarEntry(
+                index = 0,
+                region = updatedEntry.region,
+                sowing_start_date = updatedEntry.sowing_start_date,
+                sowing_end_date = updatedEntry.sowing_end_date,
+                harvest_start_date = updatedEntry.harvest_start_date,
+                harvest_end_date = updatedEntry.harvest_end_date
             )
-            
-            // 播種開始期間（年・月・段階）
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                // 播種開始年
-                ExposedDropdownMenuBox(
-                    expanded = sowingStartYearExpanded,
-                    onExpandedChange = { sowingStartYearExpanded = it },
-                    modifier = Modifier.weight(1f)
-                ) {
-                    OutlinedTextField(
-                        value = if (sowingStartYear == "0") "" else sowingStartYear,
-                        onValueChange = { },
-                        label = { Text("開始年") },
-                        readOnly = true,
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = sowingStartYearExpanded) },
-                        modifier = Modifier.menuAnchor()
-                    )
-                    
-                    ExposedDropdownMenu(
-                        expanded = sowingStartYearExpanded,
-                        onDismissRequest = { sowingStartYearExpanded = false }
-                    ) {
-                        yearOptions.forEach { year ->
-                            DropdownMenuItem(
-                                text = { Text("${year}年") },
-                                onClick = {
-                                    sowingStartYear = year
-                                    sowingStartYearExpanded = false
-                                    updateCalendarEntry(viewModel, currentEntry.copy(
-                                        sowing_start_year = year.toIntOrNull() ?: 0,
-                                        sowing_start = sowingStart.toIntOrNull() ?: 0,
-                                        sowing_start_stage = sowingStartStage
-                                    ))
-                                }
-                            )
-                        }
-                    }
-                }
-                
-                // 播種開始月
-                ExposedDropdownMenuBox(
-                    expanded = sowingStartExpanded,
-                    onExpandedChange = { sowingStartExpanded = it },
-                    modifier = Modifier.weight(1f)
-                ) {
-                    OutlinedTextField(
-                        value = if (sowingStart == "0") "" else sowingStart,
-                        onValueChange = { },
-                        label = { Text("開始月") },
-                        readOnly = true,
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = sowingStartExpanded) },
-                        modifier = Modifier.menuAnchor()
-                    )
-                    
-                    ExposedDropdownMenu(
-                        expanded = sowingStartExpanded,
-                        onDismissRequest = { sowingStartExpanded = false }
-                    ) {
-                        monthOptions.forEach { month ->
-                            DropdownMenuItem(
-                                text = { Text("${month}月") },
-                                onClick = {
-                                    sowingStart = month
-                                    sowingStartExpanded = false
-                                    updateCalendarEntry(viewModel, currentEntry.copy(
-                                        sowing_start_year = sowingStartYear.toIntOrNull() ?: 0,
-                                        sowing_start = month.toIntOrNull() ?: 0,
-                                        sowing_start_stage = sowingStartStage
-                                    ))
-                                }
-                            )
-                        }
-                    }
-                }
-                
-                // 播種開始段階
-                ExposedDropdownMenuBox(
-                    expanded = sowingStartStageExpanded,
-                    onExpandedChange = { sowingStartStageExpanded = it },
-                    modifier = Modifier.weight(1f)
-                ) {
-                    OutlinedTextField(
-                        value = sowingStartStage,
-                        onValueChange = { },
-                        label = { Text("開始段階") },
-                        readOnly = true,
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = sowingStartStageExpanded) },
-                        modifier = Modifier.menuAnchor()
-                    )
-                    
-                    ExposedDropdownMenu(
-                        expanded = sowingStartStageExpanded,
-                        onDismissRequest = { sowingStartStageExpanded = false }
-                    ) {
-                        stageOptions.forEach { stage ->
-                            DropdownMenuItem(
-                                text = { Text(if (stage.isEmpty()) "なし" else stage) },
-                                onClick = {
-                                    sowingStartStage = stage
-                                    sowingStartStageExpanded = false
-                                    updateCalendarEntry(viewModel, currentEntry.copy(
-                                        sowing_start_year = sowingStartYear.toIntOrNull() ?: 0,
-                                        sowing_start = sowingStart.toIntOrNull() ?: 0,
-                                        sowing_start_stage = stage
-                                    ))
-                                }
-                            )
-                        }
-                    }
-                }
-            }
-            
-            // 播種終了期間（年・月・段階）
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                // 播種終了年
-                ExposedDropdownMenuBox(
-                    expanded = sowingEndYearExpanded,
-                    onExpandedChange = { sowingEndYearExpanded = it },
-                    modifier = Modifier.weight(1f)
-                ) {
-                    OutlinedTextField(
-                        value = if (sowingEndYear == "0") "" else sowingEndYear,
-                        onValueChange = { },
-                        label = { Text("終了年") },
-                        readOnly = true,
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = sowingEndYearExpanded) },
-                        modifier = Modifier.menuAnchor()
-                    )
-                    
-                    ExposedDropdownMenu(
-                        expanded = sowingEndYearExpanded,
-                        onDismissRequest = { sowingEndYearExpanded = false }
-                    ) {
-                        yearOptions.forEach { year ->
-                            DropdownMenuItem(
-                                text = { Text("${year}年") },
-                                onClick = {
-                                    sowingEndYear = year
-                                    sowingEndYearExpanded = false
-                                    updateCalendarEntry(viewModel, currentEntry.copy(
-                                        sowing_end_year = year.toIntOrNull() ?: 0,
-                                        sowing_end = sowingEnd.toIntOrNull() ?: 0,
-                                        sowing_end_stage = sowingEndStage
-                                    ))
-                                }
-                            )
-                        }
-                    }
-                }
-                
-                // 播種終了月
-                ExposedDropdownMenuBox(
-                    expanded = sowingEndExpanded,
-                    onExpandedChange = { sowingEndExpanded = it },
-                    modifier = Modifier.weight(1f)
-                ) {
-                    OutlinedTextField(
-                        value = if (sowingEnd == "0") "" else sowingEnd,
-                        onValueChange = { },
-                        label = { Text("終了月") },
-                        readOnly = true,
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = sowingEndExpanded) },
-                        modifier = Modifier.menuAnchor()
-                    )
-                    
-                    ExposedDropdownMenu(
-                        expanded = sowingEndExpanded,
-                        onDismissRequest = { sowingEndExpanded = false }
-                    ) {
-                        monthOptions.forEach { month ->
-                            DropdownMenuItem(
-                                text = { Text("${month}月") },
-                                onClick = {
-                                    sowingEnd = month
-                                    sowingEndExpanded = false
-                                    updateCalendarEntry(viewModel, currentEntry.copy(
-                                        sowing_end_year = sowingEndYear.toIntOrNull() ?: 0,
-                                        sowing_end = month.toIntOrNull() ?: 0,
-                                        sowing_end_stage = sowingEndStage
-                                    ))
-                                }
-                            )
-                        }
-                    }
-                }
-                
-                // 播種終了段階
-                ExposedDropdownMenuBox(
-                    expanded = sowingEndStageExpanded,
-                    onExpandedChange = { sowingEndStageExpanded = it },
-                    modifier = Modifier.weight(1f)
-                ) {
-                    OutlinedTextField(
-                        value = sowingEndStage,
-                        onValueChange = { },
-                        label = { Text("終了段階") },
-                        readOnly = true,
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = sowingEndStageExpanded) },
-                        modifier = Modifier.menuAnchor()
-                    )
-                    
-                    ExposedDropdownMenu(
-                        expanded = sowingEndStageExpanded,
-                        onDismissRequest = { sowingEndStageExpanded = false }
-                    ) {
-                        stageOptions.forEach { stage ->
-                            DropdownMenuItem(
-                                text = { Text(if (stage.isEmpty()) "なし" else stage) },
-                                onClick = {
-                                    sowingEndStage = stage
-                                    sowingEndStageExpanded = false
-                                    updateCalendarEntry(viewModel, currentEntry.copy(
-                                        sowing_end_year = sowingEndYear.toIntOrNull() ?: 0,
-                                        sowing_end = sowingEnd.toIntOrNull() ?: 0,
-                                        sowing_end_stage = stage
-                                    ))
-                                }
-                            )
-                        }
-                    }
-                }
-            }
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            Text(
-                "収穫期間",
-                style = MaterialTheme.typography.titleSmall,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
-            
-            // 収穫開始期間（年・月・段階）
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                // 収穫開始年
-                ExposedDropdownMenuBox(
-                    expanded = harvestStartYearExpanded,
-                    onExpandedChange = { harvestStartYearExpanded = it },
-                    modifier = Modifier.weight(1f)
-                ) {
-                    OutlinedTextField(
-                        value = if (harvestStartYear == "0") "" else harvestStartYear,
-                        onValueChange = { },
-                        label = { Text("開始年") },
-                        readOnly = true,
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = harvestStartYearExpanded) },
-                        modifier = Modifier.menuAnchor()
-                    )
-                    
-                    ExposedDropdownMenu(
-                        expanded = harvestStartYearExpanded,
-                        onDismissRequest = { harvestStartYearExpanded = false }
-                    ) {
-                        yearOptions.forEach { year ->
-                            DropdownMenuItem(
-                                text = { Text("${year}年") },
-                                onClick = {
-                                    harvestStartYear = year
-                                    harvestStartYearExpanded = false
-                                    updateCalendarEntry(viewModel, currentEntry.copy(
-                                        harvest_start_year = year.toIntOrNull() ?: 0,
-                                        harvest_start = harvestStart.toIntOrNull() ?: 0,
-                                        harvest_start_stage = harvestStartStage
-                                    ))
-                                }
-                            )
-                        }
-                    }
-                }
-                
-                // 収穫開始月
-                ExposedDropdownMenuBox(
-                    expanded = harvestStartExpanded,
-                    onExpandedChange = { harvestStartExpanded = it },
-                    modifier = Modifier.weight(1f)
-                ) {
-                    OutlinedTextField(
-                        value = if (harvestStart == "0") "" else harvestStart,
-                        onValueChange = { },
-                        label = { Text("開始月") },
-                        readOnly = true,
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = harvestStartExpanded) },
-                        modifier = Modifier.menuAnchor()
-                    )
-                    
-                    ExposedDropdownMenu(
-                        expanded = harvestStartExpanded,
-                        onDismissRequest = { harvestStartExpanded = false }
-                    ) {
-                        monthOptions.forEach { month ->
-                            DropdownMenuItem(
-                                text = { Text("${month}月") },
-                                onClick = {
-                                    harvestStart = month
-                                    harvestStartExpanded = false
-                                    updateCalendarEntry(viewModel, currentEntry.copy(
-                                        harvest_start_year = harvestStartYear.toIntOrNull() ?: 0,
-                                        harvest_start = month.toIntOrNull() ?: 0,
-                                        harvest_start_stage = harvestStartStage
-                                    ))
-                                }
-                            )
-                        }
-                    }
-                }
-                
-                // 収穫開始段階
-                ExposedDropdownMenuBox(
-                    expanded = harvestStartStageExpanded,
-                    onExpandedChange = { harvestStartStageExpanded = it },
-                    modifier = Modifier.weight(1f)
-                ) {
-                    OutlinedTextField(
-                        value = harvestStartStage,
-                        onValueChange = { },
-                        label = { Text("開始段階") },
-                        readOnly = true,
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = harvestStartStageExpanded) },
-                        modifier = Modifier.menuAnchor()
-                    )
-                    
-                    ExposedDropdownMenu(
-                        expanded = harvestStartStageExpanded,
-                        onDismissRequest = { harvestStartStageExpanded = false }
-                    ) {
-                        stageOptions.forEach { stage ->
-                            DropdownMenuItem(
-                                text = { Text(if (stage.isEmpty()) "なし" else stage) },
-                                onClick = {
-                                    harvestStartStage = stage
-                                    harvestStartStageExpanded = false
-                                    updateCalendarEntry(viewModel, currentEntry.copy(
-                                        harvest_start_year = harvestStartYear.toIntOrNull() ?: 0,
-                                        harvest_start = harvestStart.toIntOrNull() ?: 0,
-                                        harvest_start_stage = stage
-                                    ))
-                                }
-                            )
-                        }
-                    }
-                }
-            }
-            
-            // 収穫終了期間（年・月・段階）
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                // 収穫終了年
-                ExposedDropdownMenuBox(
-                    expanded = harvestEndYearExpanded,
-                    onExpandedChange = { harvestEndYearExpanded = it },
-                    modifier = Modifier.weight(1f)
-                ) {
-                    OutlinedTextField(
-                        value = if (harvestEndYear == "0") "" else harvestEndYear,
-                        onValueChange = { },
-                        label = { Text("終了年") },
-                        readOnly = true,
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = harvestEndYearExpanded) },
-                        modifier = Modifier.menuAnchor()
-                    )
-                    
-                    ExposedDropdownMenu(
-                        expanded = harvestEndYearExpanded,
-                        onDismissRequest = { harvestEndYearExpanded = false }
-                    ) {
-                        yearOptions.forEach { year ->
-                            DropdownMenuItem(
-                                text = { Text("${year}年") },
-                                onClick = {
-                                    harvestEndYear = year
-                                    harvestEndYearExpanded = false
-                                    updateCalendarEntry(viewModel, currentEntry.copy(
-                                        harvest_end_year = year.toIntOrNull() ?: 0,
-                                        harvest_end = harvestEnd.toIntOrNull() ?: 0,
-                                        harvest_end_stage = harvestEndStage
-                                    ))
-                                }
-                            )
-                        }
-                    }
-                }
-                
-                // 収穫終了月
-                ExposedDropdownMenuBox(
-                    expanded = harvestEndExpanded,
-                    onExpandedChange = { harvestEndExpanded = it },
-                    modifier = Modifier.weight(1f)
-                ) {
-                    OutlinedTextField(
-                        value = if (harvestEnd == "0") "" else harvestEnd,
-                        onValueChange = { },
-                        label = { Text("終了月") },
-                        readOnly = true,
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = harvestEndExpanded) },
-                        modifier = Modifier.menuAnchor()
-                    )
-                    
-                    ExposedDropdownMenu(
-                        expanded = harvestEndExpanded,
-                        onDismissRequest = { harvestEndExpanded = false }
-                    ) {
-                        monthOptions.forEach { month ->
-                            DropdownMenuItem(
-                                text = { Text("${month}月") },
-                                onClick = {
-                                    harvestEnd = month
-                                    harvestEndExpanded = false
-                                    updateCalendarEntry(viewModel, currentEntry.copy(
-                                        harvest_end_year = harvestEndYear.toIntOrNull() ?: 0,
-                                        harvest_end = month.toIntOrNull() ?: 0,
-                                        harvest_end_stage = harvestEndStage
-                                    ))
-                                }
-                            )
-                        }
-                    }
-                }
-                
-                // 収穫終了段階
-                ExposedDropdownMenuBox(
-                    expanded = harvestEndStageExpanded,
-                    onExpandedChange = { harvestEndStageExpanded = it },
-                    modifier = Modifier.weight(1f)
-                ) {
-                    OutlinedTextField(
-                        value = harvestEndStage,
-                        onValueChange = { },
-                        label = { Text("終了段階") },
-                        readOnly = true,
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = harvestEndStageExpanded) },
-                        modifier = Modifier.menuAnchor()
-                    )
-                    
-                    ExposedDropdownMenu(
-                        expanded = harvestEndStageExpanded,
-                        onDismissRequest = { harvestEndStageExpanded = false }
-                    ) {
-                        stageOptions.forEach { stage ->
-                            DropdownMenuItem(
-                                text = { Text(if (stage.isEmpty()) "なし" else stage) },
-                                onClick = {
-                                    harvestEndStage = stage
-                                    harvestEndStageExpanded = false
-                                    updateCalendarEntry(viewModel, currentEntry.copy(
-                                        harvest_end_year = harvestEndYear.toIntOrNull() ?: 0,
-                                        harvest_end = harvestEnd.toIntOrNull() ?: 0,
-                                        harvest_end_stage = stage
-                                    ))
-                                }
-                            )
-                        }
-                    }
-                }
-            }
+        },
+        onSave = {
+            viewModel.exitCalendarEditMode()
+        },
+        onCancel = {
+            viewModel.exitCalendarEditMode()
         }
-    }
-}
-
-private fun updateCalendarEntry(viewModel: SeedInputViewModel, updatedEntry: com.example.seedstockkeeper6.model.CalendarEntry) {
-    // ViewModelのpacketプロパティを直接更新する代わりに、適切なメソッドを使用
-    viewModel.updateCalendarEntry(
-        index = 0,
-        sowing_start_year = updatedEntry.sowing_start_year,
-        sowing_start = updatedEntry.sowing_start,
-        sowing_start_stage = updatedEntry.sowing_start_stage,
-        sowing_end_year = updatedEntry.sowing_end_year,
-        sowing_end = updatedEntry.sowing_end,
-        sowing_end_stage = updatedEntry.sowing_end_stage,
-        harvest_start_year = updatedEntry.harvest_start_year,
-        harvest_start = updatedEntry.harvest_start,
-        harvest_start_stage = updatedEntry.harvest_start_stage,
-        harvest_end_year = updatedEntry.harvest_end_year,
-        harvest_end = updatedEntry.harvest_end,
-        harvest_end_stage = updatedEntry.harvest_end_stage
     )
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun RegionSelectionBottomSheet(
-    selectedRegion: String,
-    onRegionSelected: (String) -> Unit,
-    onDismiss: () -> Unit
-) {
-    val regions = listOf(
-        "寒地", "寒冷地", "温暖地", "暖地"
-    )
-    
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = rememberModalBottomSheetState(),
-        containerColor = MaterialTheme.colorScheme.surface,
-        contentColor = MaterialTheme.colorScheme.onSurface
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(24.dp)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.padding(bottom = 20.dp)
-            ) {
-                Icon(
-                    Icons.Filled.Public,
-                    contentDescription = "地域選択",
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(24.dp)
-                )
-                Text(
-                    text = "地域を選択",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-            }
-            
-            regions.forEach { region ->
-                Button(
-                    onClick = { onRegionSelected(region) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 6.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = getRegionColor(region),
-                        contentColor = Color.White
-                    ),
-                    shape = MaterialTheme.shapes.large,
-                    elevation = ButtonDefaults.buttonElevation(
-                        defaultElevation = if (region == selectedRegion) 4.dp else 2.dp
-                    ),
-                    border = if (region == selectedRegion) {
-                        BorderStroke(2.dp, MaterialTheme.colorScheme.outline)
-                    } else null
-                ) {
-                    Text(
-                        text = region,
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = if (region == selectedRegion) FontWeight.Bold else FontWeight.Medium
-                    )
-                }
-            }
-            
-            Spacer(modifier = Modifier.height(16.dp))
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun RegionSelectionButton(
-    selectedRegion: String,
-    onRegionSelected: (String) -> Unit
-) {
-    var showRegionBottomSheet by remember { mutableStateOf(false) }
-    
-    Button(
-        onClick = { showRegionBottomSheet = true },
-        modifier = Modifier.fillMaxWidth(),
-        colors = ButtonDefaults.buttonColors(
-            containerColor = getRegionColor(selectedRegion),
-            contentColor = Color.White
-        ),
-        shape = MaterialTheme.shapes.large,
-        elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp)
-    ) {
-        Text(
-            text = selectedRegion.ifEmpty { "地域を選択" },
-            style = MaterialTheme.typography.bodyLarge,
-            fontWeight = FontWeight.Medium
-        )
-    }
-    
-    // 地域選択ボトムシート
-    if (showRegionBottomSheet) {
-        RegionSelectionBottomSheet(
-            selectedRegion = selectedRegion,
-            onRegionSelected = { region ->
-                onRegionSelected(region)
-                showRegionBottomSheet = false
-            },
-            onDismiss = { showRegionBottomSheet = false }
-        )
-    }
 }
 
 // 地域ごとの色定義
@@ -830,108 +123,5 @@ private fun getRegionColor(region: String): Color {
         "温暖地" -> Color(0xFFFF9800) // オレンジ
         "暖地" -> Color(0xFFE91E63) // ピンク
         else -> Color(0xFF9E9E9E) // グレー（未設定時）
-    }
-}
-
-@Composable
-fun ExpirationDateSection(viewModel: SeedInputViewModel) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp)
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier.padding(bottom = 16.dp)
-        ) {
-            Icon(
-                Icons.Filled.Schedule,
-                contentDescription = "有効期限",
-                tint = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.size(24.dp)
-            )
-            Text(
-                "有効期限",
-                style = MaterialTheme.typography.titleMedium
-            )
-        }
-        
-        if (viewModel.isEditMode || !viewModel.hasExistingData) {
-            // EditMode: 年・月の入力フィールド
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                OutlinedTextField(
-                    value = viewModel.packet.expirationYear.toString(),
-                    onValueChange = viewModel::onExpirationYearChange,
-                    label = { Text("年") },
-                    modifier = Modifier.weight(1f),
-                    singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.outline,
-                        focusedLabelColor = MaterialTheme.colorScheme.primary,
-                        unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                )
-                OutlinedTextField(
-                    value = viewModel.packet.expirationMonth.toString(),
-                    onValueChange = viewModel::onExpirationMonthChange,
-                    label = { Text("月") },
-                    modifier = Modifier.weight(1f),
-                    singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.outline,
-                        focusedLabelColor = MaterialTheme.colorScheme.primary,
-                        unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                )
-            }
-        } else {
-            // DisplayMode: 読み取り専用表示
-            Text(
-                text = "有効期限: ${viewModel.packet.expirationYear}年 ${viewModel.packet.expirationMonth}月",
-                style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.padding(vertical = 8.dp)
-            )
-        }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun CalendarSectionPreview() {
-    SeedStockKeeper6Theme {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            // 有効期限セクションのプレビュー
-            ExpirationDateSection(
-                viewModel = object : SeedInputViewModel() {
-                    override val packet = SeedPacket(
-                        expirationYear = 2025,
-                        expirationMonth = 12
-                    )
-                    override val isEditMode = false
-                    override val hasExistingData = true
-                }
-            )
-            
-            // 編集モードの有効期限セクション
-            ExpirationDateSection(
-                viewModel = object : SeedInputViewModel() {
-                    override val packet = SeedPacket(
-                        expirationYear = 2026,
-                        expirationMonth = 3
-                    )
-                    override val isEditMode = true
-                    override val hasExistingData = false
-                }
-            )
-        }
     }
 }

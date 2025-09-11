@@ -137,14 +137,10 @@ fun RegionSelectionDialog(
                                             // 新しい地域の場合は空のエントリを作成
                                             editedEntry = com.example.seedstockkeeper6.model.CalendarEntry(
                                                 region = region,
-                                                sowing_start = 0,
-                                                sowing_start_stage = "",
-                                                sowing_end = 0,
-                                                sowing_end_stage = "",
-                                                harvest_start = 0,
-                                                harvest_start_stage = "",
-                                                harvest_end = 0,
-                                                harvest_end_stage = ""
+                                                sowing_start_date = "",
+                                                sowing_end_date = "",
+                                                harvest_start_date = "",
+                                                harvest_end_date = ""
                                             )
                                         }
                                     }
@@ -160,14 +156,10 @@ fun RegionSelectionDialog(
                         val selectedRegionEntry = ocrResult?.calendar?.find { it.region == selectedRegion }
                         val entryToShow = selectedRegionEntry ?: com.example.seedstockkeeper6.model.CalendarEntry(
                             region = selectedRegion,
-                            sowing_start = 0,
-                            sowing_start_stage = "",
-                            sowing_end = 0,
-                            sowing_end_stage = "",
-                            harvest_start = 0,
-                            harvest_start_stage = "",
-                            harvest_end = 0,
-                            harvest_end_stage = ""
+                            sowing_start_date = "",
+                            sowing_end_date = "",
+                            harvest_start_date = "",
+                            harvest_end_date = ""
                         )
                         
                         Card(

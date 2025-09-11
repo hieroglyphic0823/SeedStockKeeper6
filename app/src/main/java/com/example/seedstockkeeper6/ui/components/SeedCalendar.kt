@@ -655,14 +655,10 @@ fun SeedCalendarGroupedPreview() {
         val sampleEntries = listOf(
             CalendarEntry(
                 region = "暖地",
-                sowing_start = 11,
-                sowing_start_stage = "上旬",
-                sowing_end = 3,
-                sowing_end_stage = "下旬",
-                harvest_start = 4,
-                harvest_start_stage = "上旬",
-                harvest_end = 7,
-                harvest_end_stage = "中旬"
+                sowing_start_date = "2025-11-01",
+                sowing_end_date = "2025-03-31",
+                harvest_start_date = "2025-04-01",
+                harvest_end_date = "2025-07-20"
             )
         )
         
@@ -694,17 +690,13 @@ private fun PreviewSeedCalendarGrouped(
             .groupBy { it.region }
             .map { (region, regionEntries) ->
                 val items = regionEntries.flatMap { entry ->
-                    val sowingItem = if (entry.sowing_start != 0 && entry.sowing_end != 0) {
+                    val sowingItem = if (entry.sowing_start_date.isNotEmpty() && entry.sowing_end_date.isNotEmpty()) {
                         listOf(
                             RangeItem(
                                 ranges = listOf(
                                     MonthRange(
-                                        entry.sowing_start_year,
-                                        entry.sowing_start,
-                                        entry.sowing_end_year,
-                                        entry.sowing_end,
-                                        entry.sowing_start_stage,
-                                        entry.sowing_end_stage
+                                        entry.sowing_start_date,
+                                        entry.sowing_end_date
                                     )
                                 ),
                                 style = BandStyle.Solid,
@@ -714,17 +706,13 @@ private fun PreviewSeedCalendarGrouped(
                         )
                     } else emptyList()
 
-                    val harvestItem = if (entry.harvest_start != 0 && entry.harvest_end != 0) {
+                    val harvestItem = if (entry.harvest_start_date.isNotEmpty() && entry.harvest_end_date.isNotEmpty()) {
                         listOf(
                             RangeItem(
                                 ranges = listOf(
                                     MonthRange(
-                                        entry.harvest_start_year,
-                                        entry.harvest_start,
-                                        entry.harvest_end_year,
-                                        entry.harvest_end,
-                                        entry.harvest_start_stage,
-                                        entry.harvest_end_stage
+                                        entry.harvest_start_date,
+                                        entry.harvest_end_date
                                     )
                                 ),
                                 style = BandStyle.Solid,
