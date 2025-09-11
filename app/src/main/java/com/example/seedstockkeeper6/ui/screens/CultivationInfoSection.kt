@@ -332,3 +332,4 @@ fun CultivationInfoSection(viewModel: SeedInputViewModel) {
         }
     }
 }
+

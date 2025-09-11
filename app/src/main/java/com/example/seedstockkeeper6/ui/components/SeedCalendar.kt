@@ -86,7 +86,7 @@ fun SeedCalendarGrouped(
     packetExpirationYear: Int,
     packetExpirationMonth: Int,
     modifier: Modifier = Modifier.fillMaxWidth(),
-    heightDp: Int = 140
+    heightDp: Int = 100
 ) {
     val today = LocalDate.of(2025, 9, 1) // 9月始まりに固定
     // MaterialTheme から直接取得
@@ -161,7 +161,7 @@ fun SeedCalendarGrouped(
 fun SeedCalendarGroupedInternal(
     bands: List<GroupedCalendarBand>,
     modifier: Modifier = Modifier.fillMaxWidth(),
-    heightDp: Int = 140,
+    heightDp: Int = 100,
     currentMonth: Int,
     currentYear: Int
 ) {
@@ -496,7 +496,7 @@ fun SeedCalendarGroupedInternal(
                         BandStyle.Solid -> {
                             // 播種期間は上、収穫期間は下に配置
                             val adjustedCenterY = if (item.itemLabel == "収穫") {
-                                // 収穫期間は118dpの位置に配置（上余白16dp + 播種棒グラフ22dp + 中間余白16dp + 収穫棒グラフの半分11dp）
+                                // 収穫期間は元の位置に配置（上余白16dp + 播種棒グラフ22dp + 中間余白16dp + 収穫棒グラフの半分11dp）
                                 top + with(density) { 65.dp.toPx() } // 16dp + 22dp + 16dp + 11dp = 65dp
                             } else {
                                 // 播種期間は118dpの位置に配置（上余白16dp + 播種棒グラフの半分11dp）
@@ -600,11 +600,11 @@ fun SeedCalendarGroupedInternal(
                                     
                                     // アイコンの位置を計算
                                     val iconY = if (item.itemLabel == "収穫") {
-                                        // 収穫アイコンのTOPは棒グラフのTOPと同じ位置
-                                        adjustedCenterY - with(density) { 11.dp.toPx() } - iconSize / 2
+                                        // 収穫アイコンの上端が棒グラフの上端より4dp上
+                                        adjustedCenterY - with(density) { 11.dp.toPx() } - with(density) { 4.dp.toPx() }
                                     } else {
-                                        // 播種アイコンの上端が播種棒グラフの上端より3dp上
-                                        adjustedCenterY - with(density) { 11.dp.toPx() } - with(density) { 3.dp.toPx() } - iconSize / 2
+                                        // 播種アイコンの上端が播種棒グラフの上端より10dp上
+                                        adjustedCenterY - with(density) { 11.dp.toPx() } - with(density) { 10.dp.toPx() }
                                     }
                                     
                                     drawImage(
@@ -668,7 +668,7 @@ fun SeedCalendarGroupedPreview() {
             packetExpirationYear = 2026, // 有効期限2026年10月
             packetExpirationMonth = 10,
             modifier = Modifier.fillMaxWidth(),
-            heightDp = 140
+            heightDp = 86
         )
     }
 }
@@ -679,7 +679,7 @@ private fun PreviewSeedCalendarGrouped(
     packetExpirationYear: Int,
     packetExpirationMonth: Int,
     modifier: Modifier = Modifier.fillMaxWidth(),
-    heightDp: Int = 140
+    heightDp: Int = 100
 ) {
     // プレビュー用に2025年9月を固定
     val previewToday = LocalDate.of(2025, 9, 1)

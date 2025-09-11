@@ -106,7 +106,7 @@ fun ImageManagementSection(viewModel: SeedInputViewModel) {
                         if (viewModel.ocrTargetIndex == index) {
                             Modifier.border(
                                 width = 3.dp,
-                                color = MaterialTheme.colorScheme.primaryContainer,
+                                color = MaterialTheme.colorScheme.tertiary,
                                 shape = RoundedCornerShape(4.dp)
                             )
                         } else {

@@ -2,6 +2,7 @@ package com.example.seedstockkeeper6
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -146,7 +147,7 @@ fun SeedInputScreenPreview_DisplayMode() {
                 )
                 
                 // 栽培情報セクション
-                CultivationInfoSection(seedInputViewModel)
+                PreviewCultivationInfoSection(seedInputViewModel)
                 
                 // 区切り線
                         HorizontalDivider(
@@ -247,7 +248,7 @@ fun SeedInputScreenPreview_NewCreation() {
                 )
                 
                 // 栽培情報セクション
-                CultivationInfoSection(seedInputViewModel)
+                PreviewCultivationInfoSection(seedInputViewModel)
                 
                 // 区切り線
                 HorizontalDivider(
@@ -371,7 +372,7 @@ fun SeedInputScreenPreview_EditMode() {
                 )
                 
                 // 栽培情報セクション
-                CultivationInfoSection(seedInputViewModel)
+                PreviewCultivationInfoSection(seedInputViewModel)
                 
                 // 区切り線
                 HorizontalDivider(
@@ -422,9 +423,9 @@ fun createPreviewSeedInputViewModel(isEditMode: Boolean, hasExistingData: Boolea
             calendar = listOf(
                 com.example.seedstockkeeper6.model.CalendarEntry(
                     region = "暖地",
-                    sowing_start_date = "2025-11-01",
+                    sowing_start_date = "2025-03-01",
                     sowing_end_date = "2025-03-31",
-                    harvest_start_date = "2025-04-01",
+                    harvest_start_date = "2025-06-01",
                     harvest_end_date = "2025-07-20"
                 )
             ),
@@ -499,9 +500,17 @@ fun PreviewImageManagementSection(viewModel: com.example.seedstockkeeper6.viewmo
                 Box(
                     modifier = Modifier
                         .size(imageSize)
-                        .background(
-                            color = MaterialTheme.colorScheme.surfaceContainerLow,
-                            shape = RoundedCornerShape(8.dp)
+                        .padding(end = 2.dp)
+                        .then(
+                            if (viewModel.ocrTargetIndex == index) {
+                                Modifier.border(
+                                    width = 3.dp,
+                                    color = MaterialTheme.colorScheme.tertiary,
+                                    shape = RoundedCornerShape(4.dp)
+                                )
+                            } else {
+                                Modifier
+                            }
                         )
                 ) {
                     AsyncImage(
@@ -1024,5 +1033,225 @@ fun SeedListScreenPreview() {
                 }
             }
         }
+    }
+}
+
+// プレビュー専用の栽培情報セクション（播種期間・収穫期間を確実に表示）
+@Composable
+fun PreviewCultivationInfoSection(viewModel: com.example.seedstockkeeper6.viewmodel.SeedInputViewModel) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier.padding(bottom = 16.dp)
+        ) {
+            Icon(
+                Icons.Filled.LocalFlorist,
+                contentDescription = "栽培情報",
+                tint = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.size(24.dp)
+            )
+            Text(
+                "栽培情報",
+                style = MaterialTheme.typography.titleMedium
+            )
+        }
+        
+        // 商品番号
+        Text(
+            text = "商品番号: ${viewModel.packet.productNumber.ifEmpty { "未設定" }}",
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.padding(vertical = 8.dp)
+        )
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        // 会社
+        Text(
+            text = "会社: ${viewModel.packet.company.ifEmpty { "未設定" }}",
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.padding(vertical = 8.dp)
+        )
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        // 原産国
+        Text(
+            text = "原産国: ${viewModel.packet.originCountry.ifEmpty { "未設定" }}",
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.padding(vertical = 8.dp)
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // 内容量
+        Text(
+            text = "内容量: ${viewModel.packet.contents.ifEmpty { "未設定" }}",
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.padding(vertical = 8.dp)
+        )
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        // 発芽率
+        Text(
+            text = "発芽率: ${viewModel.packet.germinationRate.ifEmpty { "未設定" }}",
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.padding(vertical = 8.dp)
+        )
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        // 種子処理
+        Text(
+            text = "種子処理: ${viewModel.packet.seedTreatment.ifEmpty { "未設定" }}",
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.padding(vertical = 8.dp)
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // 条間
+        Text(
+            text = "条間: ${viewModel.packet.cultivation.spacing_cm_row_min}～${viewModel.packet.cultivation.spacing_cm_row_max}cm",
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.padding(vertical = 8.dp)
+        )
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        // 株間
+        Text(
+            text = "株間: ${viewModel.packet.cultivation.spacing_cm_plant_min}～${viewModel.packet.cultivation.spacing_cm_plant_max}cm",
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.padding(vertical = 8.dp)
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // 発芽温度
+        Text(
+            text = "発芽温度: ${viewModel.packet.cultivation.germinationTemp_c.ifEmpty { "未設定" }}",
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.padding(vertical = 8.dp)
+        )
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        // 生育温度
+        Text(
+            text = "生育温度: ${viewModel.packet.cultivation.growingTemp_c.ifEmpty { "未設定" }}",
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.padding(vertical = 8.dp)
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // 堆肥
+        Text(
+            text = "堆肥: ${viewModel.packet.cultivation.soilPrep_per_sqm.compost_kg}kg/㎡",
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.padding(vertical = 8.dp)
+        )
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        // 苦土石灰
+        Text(
+            text = "苦土石灰: ${viewModel.packet.cultivation.soilPrep_per_sqm.dolomite_lime_g}g/㎡",
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.padding(vertical = 8.dp)
+        )
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        // 化成肥料
+        Text(
+            text = "化成肥料: ${viewModel.packet.cultivation.soilPrep_per_sqm.chemical_fertilizer_g}g/㎡",
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.padding(vertical = 8.dp)
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // 栽培メモ
+        Text(
+            text = "栽培メモ: ${viewModel.packet.cultivation.notes.ifEmpty { "未設定" }}",
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.padding(vertical = 8.dp)
+        )
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        // 播種期間
+        val calendarEntry = viewModel.packet.calendar?.firstOrNull()
+        val sowingPeriod = if (calendarEntry != null) {
+            formatDateRange(calendarEntry.sowing_start_date, calendarEntry.sowing_end_date)
+        } else {
+            "未設定"
+        }
+        Text(
+            text = "播種期間: $sowingPeriod",
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.padding(vertical = 8.dp)
+        )
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        // 収穫期間
+        val harvestPeriod = if (calendarEntry != null) {
+            formatDateRange(calendarEntry.harvest_start_date, calendarEntry.harvest_end_date)
+        } else {
+            "未設定"
+        }
+        Text(
+            text = "収穫期間: $harvestPeriod",
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.padding(vertical = 8.dp)
+        )
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        // 収穫方法
+        Text(
+            text = "収穫: ${viewModel.packet.cultivation.harvesting.ifEmpty { "未設定" }}",
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.padding(vertical = 8.dp)
+        )
+    }
+}
+
+// 日付範囲を旬形式でフォーマットするヘルパー関数
+private fun formatDateRange(startDate: String, endDate: String): String {
+    if (startDate.isEmpty() && endDate.isEmpty()) {
+        return "未設定"
+    }
+    
+    val startFormatted = if (startDate.isNotEmpty()) {
+        val year = com.example.seedstockkeeper6.utils.DateConversionUtils.getYearFromDate(startDate)
+        val month = com.example.seedstockkeeper6.utils.DateConversionUtils.getMonthFromDate(startDate)
+        val stage = com.example.seedstockkeeper6.utils.DateConversionUtils.convertDateToStage(startDate)
+        "${year}年${month}月(${stage})"
+    } else {
+        "未設定"
+    }
+    
+    val endFormatted = if (endDate.isNotEmpty()) {
+        val year = com.example.seedstockkeeper6.utils.DateConversionUtils.getYearFromDate(endDate)
+        val month = com.example.seedstockkeeper6.utils.DateConversionUtils.getMonthFromDate(endDate)
+        val stage = com.example.seedstockkeeper6.utils.DateConversionUtils.convertDateToStage(endDate)
+        "${year}年${month}月(${stage})"
+    } else {
+        "未設定"
+    }
+    
+    return if (startDate.isEmpty() || endDate.isEmpty()) {
+        if (startDate.isEmpty()) endFormatted else startFormatted
+    } else {
+        "$startFormatted ～ $endFormatted"
     }
 }
