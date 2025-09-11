@@ -105,46 +105,5 @@ fun BasicInfoSection(viewModel: SeedInputViewModel) {
         
         Spacer(modifier = Modifier.height(16.dp))
         
-        // 有効期限
-        if (viewModel.isEditMode || !viewModel.hasExistingData) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp) // 2つの間隔
-            ) {
-                OutlinedTextField(
-                    value = viewModel.packet.expirationYear.toString(),
-                    onValueChange = viewModel::onExpirationYearChange,
-                    label = { Text("有効期限(年)") },
-                    modifier = Modifier.weight(1f),
-                    singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.outline,
-                        focusedLabelColor = MaterialTheme.colorScheme.primary,
-                        unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                )
-                OutlinedTextField(
-                    value = viewModel.packet.expirationMonth.toString(),
-                    onValueChange = viewModel::onExpirationMonthChange,
-                    label = { Text("有効期限(月)") },
-                    modifier = Modifier.weight(1f),
-                    singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.outline,
-                        focusedLabelColor = MaterialTheme.colorScheme.primary,
-                        unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                )
-            }
-        } else {
-            // DisplayMode: 読み取り専用表示
-            Text(
-                text = "有効期限: ${viewModel.packet.expirationYear}年 ${viewModel.packet.expirationMonth}月",
-                style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.padding(vertical = 8.dp)
-            )
-        }
     }
 }

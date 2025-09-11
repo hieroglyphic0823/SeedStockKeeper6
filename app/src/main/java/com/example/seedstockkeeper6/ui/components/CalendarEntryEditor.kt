@@ -21,12 +21,16 @@ fun CalendarEntryEditor(
     onCancel: () -> Unit
 ) {
     // ローカル状態変数
+    var sowingStartYear by remember(entry) { mutableStateOf(entry.sowing_start_year.toString()) }
     var sowingStart by remember(entry) { mutableStateOf(entry.sowing_start.toString()) }
     var sowingStartStage by remember(entry) { mutableStateOf(entry.sowing_start_stage) }
+    var sowingEndYear by remember(entry) { mutableStateOf(entry.sowing_end_year.toString()) }
     var sowingEnd by remember(entry) { mutableStateOf(entry.sowing_end.toString()) }
     var sowingEndStage by remember(entry) { mutableStateOf(entry.sowing_end_stage) }
+    var harvestStartYear by remember(entry) { mutableStateOf(entry.harvest_start_year.toString()) }
     var harvestStart by remember(entry) { mutableStateOf(entry.harvest_start.toString()) }
     var harvestStartStage by remember(entry) { mutableStateOf(entry.harvest_start_stage) }
+    var harvestEndYear by remember(entry) { mutableStateOf(entry.harvest_end_year.toString()) }
     var harvestEnd by remember(entry) { mutableStateOf(entry.harvest_end.toString()) }
     var harvestEndStage by remember(entry) { mutableStateOf(entry.harvest_end_stage) }
     
@@ -38,6 +42,10 @@ fun CalendarEntryEditor(
     var harvestStartStageExpanded by remember { mutableStateOf(false) }
     var harvestEndExpanded by remember { mutableStateOf(false) }
     var harvestEndStageExpanded by remember { mutableStateOf(false) }
+    
+    // 年選択オプション
+    val currentYear = java.time.LocalDate.now().year
+    val yearOptions = (currentYear - 1..currentYear + 2).map { it.toString() }
 
     Column(
         modifier = Modifier.padding(top = 8.dp)
@@ -66,10 +74,10 @@ fun CalendarEntryEditor(
                 modifier = Modifier.width(200.dp)
             ) {
                 Text(
-                    text = if (sowingStart == "0" && sowingStartStage.isEmpty()) {
+                    text = if (sowingStart == "0" && sowingStartStage.isEmpty() && sowingStartYear == "0") {
                         "播種開始期間を選択"
                     } else {
-                        "${if (sowingStart == "0") "不明" else sowingStart}月${if (sowingStartStage.isEmpty()) "" else "(${sowingStartStage})"}"
+                        "${if (sowingStartYear == "0") "" else "${sowingStartYear}年"}${if (sowingStart == "0") "不明" else sowingStart}月${if (sowingStartStage.isEmpty()) "" else "(${sowingStartStage})"}"
                     }
                 )
             }
@@ -92,6 +100,47 @@ fun CalendarEntryEditor(
                         modifier = Modifier.padding(bottom = 16.dp)
                     )
                     
+                    // 年選択
+                    Text("年", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(bottom = 8.dp))
+                    LazyColumn(
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    ) {
+                        item {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                yearOptions.forEach { year ->
+                                    Button(
+                                        onClick = {
+                                            sowingStartYear = year
+                                            onUpdate(entry.copy(
+                                                sowing_start_year = year.toIntOrNull() ?: 0,
+                                                sowing_start = sowingStart.toIntOrNull() ?: 0,
+                                                sowing_start_stage = sowingStartStage
+                                            ))
+                                        },
+                                        modifier = Modifier.weight(1f),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = if (sowingStartYear == year) 
+                                                MaterialTheme.colorScheme.primaryContainer 
+                                            else 
+                                                MaterialTheme.colorScheme.surface
+                                        )
+                                    ) {
+                                        Text(
+                                            text = year,
+                                            color = if (sowingStartYear == year) 
+                                                MaterialTheme.colorScheme.onPrimaryContainer 
+                                            else 
+                                                MaterialTheme.colorScheme.onSurface
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
                     // 月選択
                     Text("月", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(bottom = 8.dp))
                     LazyColumn(
@@ -112,6 +161,7 @@ fun CalendarEntryEditor(
                                             onClick = {
                                                 sowingStart = month
                                                 onUpdate(entry.copy(
+                                                    sowing_start_year = sowingStartYear.toIntOrNull() ?: 0,
                                                     sowing_start = month.toIntOrNull() ?: 0,
                                                     sowing_start_stage = sowingStartStage
                                                 ))
@@ -145,6 +195,7 @@ fun CalendarEntryEditor(
                                             onClick = {
                                                 sowingStart = month
                                                 onUpdate(entry.copy(
+                                                    sowing_start_year = sowingStartYear.toIntOrNull() ?: 0,
                                                     sowing_start = month.toIntOrNull() ?: 0,
                                                     sowing_start_stage = sowingStartStage
                                                 ))
@@ -178,6 +229,7 @@ fun CalendarEntryEditor(
                                             onClick = {
                                                 sowingStart = if (month == "不明") "0" else month
                                                 onUpdate(entry.copy(
+                                                    sowing_start_year = sowingStartYear.toIntOrNull() ?: 0,
                                                     sowing_start = month.toIntOrNull() ?: 0,
                                                     sowing_start_stage = sowingStartStage
                                                 ))
@@ -220,6 +272,7 @@ fun CalendarEntryEditor(
                                         onClick = {
                                             sowingStartStage = if (stage == "不明") "" else stage
                                             onUpdate(entry.copy(
+                                                sowing_start_year = sowingStartYear.toIntOrNull() ?: 0,
                                                 sowing_start = sowingStart.toIntOrNull() ?: 0,
                                                 sowing_start_stage = sowingStartStage
                                             ))

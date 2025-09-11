@@ -1077,12 +1077,16 @@ class SeedInputViewModel : ViewModel() {
     fun addCalendarEntryWithRegion(region: String) {
         val newEntry = com.example.seedstockkeeper6.model.CalendarEntry(
             region = region,
+            sowing_start_year = 0,
             sowing_start = 0,
             sowing_start_stage = "",
+            sowing_end_year = 0,
             sowing_end = 0,
             sowing_end_stage = "",
+            harvest_start_year = 0,
             harvest_start = 0,
             harvest_start_stage = "",
+            harvest_end_year = 0,
             harvest_end = 0,
             harvest_end_stage = ""
         )
@@ -1093,12 +1097,16 @@ class SeedInputViewModel : ViewModel() {
     fun updateCalendarEntry(
         index: Int,
         region: String? = null,
+        sowing_start_year: Int? = null,
         sowing_start: Int? = null,
         sowing_start_stage: String? = null,
+        sowing_end_year: Int? = null,
         sowing_end: Int? = null,
         sowing_end_stage: String? = null,
+        harvest_start_year: Int? = null,
         harvest_start: Int? = null,
         harvest_start_stage: String? = null,
+        harvest_end_year: Int? = null,
         harvest_end: Int? = null,
         harvest_end_stage: String? = null
     ) {
@@ -1107,12 +1115,16 @@ class SeedInputViewModel : ViewModel() {
         val old = cur[index]
         val newItem = old.copy(
             region = region ?: old.region,
+            sowing_start_year = sowing_start_year ?: old.sowing_start_year,
             sowing_start = sowing_start ?: old.sowing_start,
             sowing_start_stage = sowing_start_stage ?: old.sowing_start_stage,
+            sowing_end_year = sowing_end_year ?: old.sowing_end_year,
             sowing_end = sowing_end ?: old.sowing_end,
             sowing_end_stage = sowing_end_stage ?: old.sowing_end_stage,
+            harvest_start_year = harvest_start_year ?: old.harvest_start_year,
             harvest_start = harvest_start ?: old.harvest_start,
             harvest_start_stage = harvest_start_stage ?: old.harvest_start_stage,
+            harvest_end_year = harvest_end_year ?: old.harvest_end_year,
             harvest_end = harvest_end ?: old.harvest_end,
             harvest_end_stage = harvest_end_stage ?: old.harvest_end_stage
         )
@@ -1286,12 +1298,16 @@ class SeedInputViewModel : ViewModel() {
             // OCR結果に該当地域がない場合は空のエントリを作成
             val newCalendarEntry = CalendarEntry(
                 region = region,
+                sowing_start_year = 0,
                 sowing_start = 0,
                 sowing_start_stage = "",
+                sowing_end_year = 0,
                 sowing_end = 0,
                 sowing_end_stage = "",
+                harvest_start_year = 0,
                 harvest_start = 0,
                 harvest_start_stage = "",
+                harvest_end_year = 0,
                 harvest_end = 0,
                 harvest_end_stage = ""
             )

@@ -110,12 +110,16 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
                 listOf(
                     com.example.seedstockkeeper6.model.CalendarEntry(
                         region = "",
+                        sowing_start_year = 0,
                         sowing_start = 0,
                         sowing_start_stage = "",
+                        sowing_end_year = 0,
                         sowing_end = 0,
                         sowing_end_stage = "",
+                        harvest_start_year = 0,
                         harvest_start = 0,
                         harvest_start_stage = "",
+                        harvest_end_year = 0,
                         harvest_end = 0,
                         harvest_end_stage = ""
                     )
@@ -148,25 +152,35 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
 fun CalendarEditMode(viewModel: SeedInputViewModel) {
     val currentEntry = viewModel.packet.calendar.firstOrNull() ?: return
     
+    var sowingStartYear by remember { mutableStateOf(currentEntry.sowing_start_year.toString()) }
     var sowingStart by remember { mutableStateOf(currentEntry.sowing_start.toString()) }
     var sowingStartStage by remember { mutableStateOf(currentEntry.sowing_start_stage) }
+    var sowingEndYear by remember { mutableStateOf(currentEntry.sowing_end_year.toString()) }
     var sowingEnd by remember { mutableStateOf(currentEntry.sowing_end.toString()) }
     var sowingEndStage by remember { mutableStateOf(currentEntry.sowing_end_stage) }
+    var harvestStartYear by remember { mutableStateOf(currentEntry.harvest_start_year.toString()) }
     var harvestStart by remember { mutableStateOf(currentEntry.harvest_start.toString()) }
     var harvestStartStage by remember { mutableStateOf(currentEntry.harvest_start_stage) }
+    var harvestEndYear by remember { mutableStateOf(currentEntry.harvest_end_year.toString()) }
     var harvestEnd by remember { mutableStateOf(currentEntry.harvest_end.toString()) }
     var harvestEndStage by remember { mutableStateOf(currentEntry.harvest_end_stage) }
 
     // ドロップダウンの展開状態
+    var sowingStartYearExpanded by remember { mutableStateOf(false) }
     var sowingStartExpanded by remember { mutableStateOf(false) }
     var sowingStartStageExpanded by remember { mutableStateOf(false) }
+    var sowingEndYearExpanded by remember { mutableStateOf(false) }
     var sowingEndExpanded by remember { mutableStateOf(false) }
     var sowingEndStageExpanded by remember { mutableStateOf(false) }
+    var harvestStartYearExpanded by remember { mutableStateOf(false) }
     var harvestStartExpanded by remember { mutableStateOf(false) }
     var harvestStartStageExpanded by remember { mutableStateOf(false) }
+    var harvestEndYearExpanded by remember { mutableStateOf(false) }
     var harvestEndExpanded by remember { mutableStateOf(false) }
     var harvestEndStageExpanded by remember { mutableStateOf(false) }
 
+    val currentYear = java.time.LocalDate.now().year
+    val yearOptions = (currentYear - 1..currentYear + 2).map { it.toString() }
     val monthOptions = (1..12).map { it.toString() }
     val stageOptions = listOf("", "初旬", "中旬", "下旬")
 
@@ -205,10 +219,47 @@ fun CalendarEditMode(viewModel: SeedInputViewModel) {
                 modifier = Modifier.padding(bottom = 8.dp)
             )
             
+            // 播種開始期間（年・月・段階）
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                // 播種開始年
+                ExposedDropdownMenuBox(
+                    expanded = sowingStartYearExpanded,
+                    onExpandedChange = { sowingStartYearExpanded = it },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    OutlinedTextField(
+                        value = if (sowingStartYear == "0") "" else sowingStartYear,
+                        onValueChange = { },
+                        label = { Text("開始年") },
+                        readOnly = true,
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = sowingStartYearExpanded) },
+                        modifier = Modifier.menuAnchor()
+                    )
+                    
+                    ExposedDropdownMenu(
+                        expanded = sowingStartYearExpanded,
+                        onDismissRequest = { sowingStartYearExpanded = false }
+                    ) {
+                        yearOptions.forEach { year ->
+                            DropdownMenuItem(
+                                text = { Text("${year}年") },
+                                onClick = {
+                                    sowingStartYear = year
+                                    sowingStartYearExpanded = false
+                                    updateCalendarEntry(viewModel, currentEntry.copy(
+                                        sowing_start_year = year.toIntOrNull() ?: 0,
+                                        sowing_start = sowingStart.toIntOrNull() ?: 0,
+                                        sowing_start_stage = sowingStartStage
+                                    ))
+                                }
+                            )
+                        }
+                    }
+                }
+                
                 // 播種開始月
                 ExposedDropdownMenuBox(
                     expanded = sowingStartExpanded,
@@ -235,6 +286,7 @@ fun CalendarEditMode(viewModel: SeedInputViewModel) {
                                     sowingStart = month
                                     sowingStartExpanded = false
                                     updateCalendarEntry(viewModel, currentEntry.copy(
+                                        sowing_start_year = sowingStartYear.toIntOrNull() ?: 0,
                                         sowing_start = month.toIntOrNull() ?: 0,
                                         sowing_start_stage = sowingStartStage
                                     ))
@@ -270,6 +322,7 @@ fun CalendarEditMode(viewModel: SeedInputViewModel) {
                                     sowingStartStage = stage
                                     sowingStartStageExpanded = false
                                     updateCalendarEntry(viewModel, currentEntry.copy(
+                                        sowing_start_year = sowingStartYear.toIntOrNull() ?: 0,
                                         sowing_start = sowingStart.toIntOrNull() ?: 0,
                                         sowing_start_stage = stage
                                     ))
@@ -280,10 +333,47 @@ fun CalendarEditMode(viewModel: SeedInputViewModel) {
                 }
             }
             
+            // 播種終了期間（年・月・段階）
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                // 播種終了年
+                ExposedDropdownMenuBox(
+                    expanded = sowingEndYearExpanded,
+                    onExpandedChange = { sowingEndYearExpanded = it },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    OutlinedTextField(
+                        value = if (sowingEndYear == "0") "" else sowingEndYear,
+                        onValueChange = { },
+                        label = { Text("終了年") },
+                        readOnly = true,
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = sowingEndYearExpanded) },
+                        modifier = Modifier.menuAnchor()
+                    )
+                    
+                    ExposedDropdownMenu(
+                        expanded = sowingEndYearExpanded,
+                        onDismissRequest = { sowingEndYearExpanded = false }
+                    ) {
+                        yearOptions.forEach { year ->
+                            DropdownMenuItem(
+                                text = { Text("${year}年") },
+                                onClick = {
+                                    sowingEndYear = year
+                                    sowingEndYearExpanded = false
+                                    updateCalendarEntry(viewModel, currentEntry.copy(
+                                        sowing_end_year = year.toIntOrNull() ?: 0,
+                                        sowing_end = sowingEnd.toIntOrNull() ?: 0,
+                                        sowing_end_stage = sowingEndStage
+                                    ))
+                                }
+                            )
+                        }
+                    }
+                }
+                
                 // 播種終了月
                 ExposedDropdownMenuBox(
                     expanded = sowingEndExpanded,
@@ -310,6 +400,7 @@ fun CalendarEditMode(viewModel: SeedInputViewModel) {
                                     sowingEnd = month
                                     sowingEndExpanded = false
                                     updateCalendarEntry(viewModel, currentEntry.copy(
+                                        sowing_end_year = sowingEndYear.toIntOrNull() ?: 0,
                                         sowing_end = month.toIntOrNull() ?: 0,
                                         sowing_end_stage = sowingEndStage
                                     ))
@@ -345,6 +436,7 @@ fun CalendarEditMode(viewModel: SeedInputViewModel) {
                                     sowingEndStage = stage
                                     sowingEndStageExpanded = false
                                     updateCalendarEntry(viewModel, currentEntry.copy(
+                                        sowing_end_year = sowingEndYear.toIntOrNull() ?: 0,
                                         sowing_end = sowingEnd.toIntOrNull() ?: 0,
                                         sowing_end_stage = stage
                                     ))
@@ -363,10 +455,47 @@ fun CalendarEditMode(viewModel: SeedInputViewModel) {
                 modifier = Modifier.padding(bottom = 8.dp)
             )
             
+            // 収穫開始期間（年・月・段階）
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                // 収穫開始年
+                ExposedDropdownMenuBox(
+                    expanded = harvestStartYearExpanded,
+                    onExpandedChange = { harvestStartYearExpanded = it },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    OutlinedTextField(
+                        value = if (harvestStartYear == "0") "" else harvestStartYear,
+                        onValueChange = { },
+                        label = { Text("開始年") },
+                        readOnly = true,
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = harvestStartYearExpanded) },
+                        modifier = Modifier.menuAnchor()
+                    )
+                    
+                    ExposedDropdownMenu(
+                        expanded = harvestStartYearExpanded,
+                        onDismissRequest = { harvestStartYearExpanded = false }
+                    ) {
+                        yearOptions.forEach { year ->
+                            DropdownMenuItem(
+                                text = { Text("${year}年") },
+                                onClick = {
+                                    harvestStartYear = year
+                                    harvestStartYearExpanded = false
+                                    updateCalendarEntry(viewModel, currentEntry.copy(
+                                        harvest_start_year = year.toIntOrNull() ?: 0,
+                                        harvest_start = harvestStart.toIntOrNull() ?: 0,
+                                        harvest_start_stage = harvestStartStage
+                                    ))
+                                }
+                            )
+                        }
+                    }
+                }
+                
                 // 収穫開始月
                 ExposedDropdownMenuBox(
                     expanded = harvestStartExpanded,
@@ -393,6 +522,7 @@ fun CalendarEditMode(viewModel: SeedInputViewModel) {
                                     harvestStart = month
                                     harvestStartExpanded = false
                                     updateCalendarEntry(viewModel, currentEntry.copy(
+                                        harvest_start_year = harvestStartYear.toIntOrNull() ?: 0,
                                         harvest_start = month.toIntOrNull() ?: 0,
                                         harvest_start_stage = harvestStartStage
                                     ))
@@ -428,6 +558,7 @@ fun CalendarEditMode(viewModel: SeedInputViewModel) {
                                     harvestStartStage = stage
                                     harvestStartStageExpanded = false
                                     updateCalendarEntry(viewModel, currentEntry.copy(
+                                        harvest_start_year = harvestStartYear.toIntOrNull() ?: 0,
                                         harvest_start = harvestStart.toIntOrNull() ?: 0,
                                         harvest_start_stage = stage
                                     ))
@@ -438,10 +569,47 @@ fun CalendarEditMode(viewModel: SeedInputViewModel) {
                 }
             }
             
+            // 収穫終了期間（年・月・段階）
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                // 収穫終了年
+                ExposedDropdownMenuBox(
+                    expanded = harvestEndYearExpanded,
+                    onExpandedChange = { harvestEndYearExpanded = it },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    OutlinedTextField(
+                        value = if (harvestEndYear == "0") "" else harvestEndYear,
+                        onValueChange = { },
+                        label = { Text("終了年") },
+                        readOnly = true,
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = harvestEndYearExpanded) },
+                        modifier = Modifier.menuAnchor()
+                    )
+                    
+                    ExposedDropdownMenu(
+                        expanded = harvestEndYearExpanded,
+                        onDismissRequest = { harvestEndYearExpanded = false }
+                    ) {
+                        yearOptions.forEach { year ->
+                            DropdownMenuItem(
+                                text = { Text("${year}年") },
+                                onClick = {
+                                    harvestEndYear = year
+                                    harvestEndYearExpanded = false
+                                    updateCalendarEntry(viewModel, currentEntry.copy(
+                                        harvest_end_year = year.toIntOrNull() ?: 0,
+                                        harvest_end = harvestEnd.toIntOrNull() ?: 0,
+                                        harvest_end_stage = harvestEndStage
+                                    ))
+                                }
+                            )
+                        }
+                    }
+                }
+                
                 // 収穫終了月
                 ExposedDropdownMenuBox(
                     expanded = harvestEndExpanded,
@@ -468,6 +636,7 @@ fun CalendarEditMode(viewModel: SeedInputViewModel) {
                                     harvestEnd = month
                                     harvestEndExpanded = false
                                     updateCalendarEntry(viewModel, currentEntry.copy(
+                                        harvest_end_year = harvestEndYear.toIntOrNull() ?: 0,
                                         harvest_end = month.toIntOrNull() ?: 0,
                                         harvest_end_stage = harvestEndStage
                                     ))
@@ -503,6 +672,7 @@ fun CalendarEditMode(viewModel: SeedInputViewModel) {
                                     harvestEndStage = stage
                                     harvestEndStageExpanded = false
                                     updateCalendarEntry(viewModel, currentEntry.copy(
+                                        harvest_end_year = harvestEndYear.toIntOrNull() ?: 0,
                                         harvest_end = harvestEnd.toIntOrNull() ?: 0,
                                         harvest_end_stage = stage
                                     ))
@@ -520,12 +690,16 @@ private fun updateCalendarEntry(viewModel: SeedInputViewModel, updatedEntry: com
     // ViewModelのpacketプロパティを直接更新する代わりに、適切なメソッドを使用
     viewModel.updateCalendarEntry(
         index = 0,
+        sowing_start_year = updatedEntry.sowing_start_year,
         sowing_start = updatedEntry.sowing_start,
         sowing_start_stage = updatedEntry.sowing_start_stage,
+        sowing_end_year = updatedEntry.sowing_end_year,
         sowing_end = updatedEntry.sowing_end,
         sowing_end_stage = updatedEntry.sowing_end_stage,
+        harvest_start_year = updatedEntry.harvest_start_year,
         harvest_start = updatedEntry.harvest_start,
         harvest_start_stage = updatedEntry.harvest_start_stage,
+        harvest_end_year = updatedEntry.harvest_end_year,
         harvest_end = updatedEntry.harvest_end,
         harvest_end_stage = updatedEntry.harvest_end_stage
     )

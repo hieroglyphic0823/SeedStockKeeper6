@@ -59,7 +59,9 @@ import kotlin.math.max
 import kotlin.math.min
 
 data class MonthRange(
+    val startYear: Int, // 開始年
     val start: Int, // 月 (1-12)
+    val endYear: Int,   // 終了年
     val end: Int,   // 月 (1-12)
     val startStage: String? = null, // 例: "上旬", "中旬", "下旬", または null
     val endStage: String? = null     // 例: "上旬", "中旬", "下旬", または null
@@ -104,7 +106,9 @@ fun SeedCalendarGrouped(
                         RangeItem(
                             ranges = listOf(
                                 MonthRange(
+                                    entry.sowing_start_year,
                                     entry.sowing_start,
+                                    entry.sowing_end_year,
                                     entry.sowing_end,
                                     entry.sowing_start_stage,
                                     entry.sowing_end_stage
@@ -122,7 +126,9 @@ fun SeedCalendarGrouped(
                         RangeItem(
                             ranges = listOf(
                                 MonthRange(
+                                    entry.harvest_start_year,
                                     entry.harvest_start,
+                                    entry.harvest_end_year,
                                     entry.harvest_end,
                                     entry.harvest_start_stage,
                                     entry.harvest_end_stage
@@ -432,8 +438,8 @@ fun SeedCalendarGroupedInternal(
 
             groupedBand.items.forEach { item ->
                 item.ranges.forEach { r ->
-                    // 帯の開始月が属する年を計算
-                    val bandStartActualYear =
+                    // 帯の開始月が属する年を計算（年情報を使用）
+                    val bandStartActualYear = if (r.startYear > 0) r.startYear else 
                         currentYear + if (r.start < currentMonth && currentMonth - r.start >= 0) 1 else 0
                     val bandStartMonthForCheck = YearMonth.of(bandStartActualYear, r.start)
 
@@ -686,7 +692,9 @@ private fun PreviewSeedCalendarGrouped(
                             RangeItem(
                                 ranges = listOf(
                                     MonthRange(
+                                        entry.sowing_start_year,
                                         entry.sowing_start,
+                                        entry.sowing_end_year,
                                         entry.sowing_end,
                                         entry.sowing_start_stage,
                                         entry.sowing_end_stage
@@ -704,7 +712,9 @@ private fun PreviewSeedCalendarGrouped(
                             RangeItem(
                                 ranges = listOf(
                                     MonthRange(
+                                        entry.harvest_start_year,
                                         entry.harvest_start,
+                                        entry.harvest_end_year,
                                         entry.harvest_end,
                                         entry.harvest_start_stage,
                                         entry.harvest_end_stage

@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.dp
 import com.example.seedstockkeeper6.R
 import com.example.seedstockkeeper6.viewmodel.SeedInputViewModel
 import com.example.seedstockkeeper6.ui.screens.StageSelector
+import com.example.seedstockkeeper6.ui.components.CalendarEntryDisplay
 
 @Composable
 fun CalendarDetailSection(viewModel: SeedInputViewModel) {
@@ -94,11 +95,7 @@ fun CalendarDetailSection(viewModel: SeedInputViewModel) {
                     }
                 } else {
                     // DisplayMode: 読み取り専用表示
-                    Text(
-                        text = "播種期間: ${entry.sowing_start}月${entry.sowing_start_stage} ～ ${entry.sowing_end}月${entry.sowing_end_stage}",
-                        style = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier.padding(vertical = 8.dp)
-                    )
+                    CalendarEntryDisplay(entry = entry)
                 }
                 Spacer(modifier = Modifier.height(16.dp))
 
@@ -174,12 +171,7 @@ fun CalendarDetailSection(viewModel: SeedInputViewModel) {
                         )
                     }
                 } else {
-                    // DisplayMode: 読み取り専用表示
-                    Text(
-                        text = "収穫期間: ${entry.harvest_start}月${entry.harvest_start_stage} ～ ${entry.harvest_end}月${entry.harvest_end_stage}",
-                        style = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier.padding(vertical = 8.dp)
-                    )
+                    // DisplayMode: 読み取り専用表示（CalendarEntryDisplayで既に表示済み）
                 }
             }
         }

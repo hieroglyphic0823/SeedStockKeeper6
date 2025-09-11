@@ -81,12 +81,16 @@ data class SoilPrep(
 data class CalendarEntry(
     val id: String = UUID.randomUUID().toString(),
     val region: String = "",
+    val sowing_start_year: Int = 0,
     val sowing_start: Int = 0,
     val sowing_start_stage: String = "",
+    val sowing_end_year: Int = 0,
     val sowing_end: Int = 0,
     val sowing_end_stage: String = "",
+    val harvest_start_year: Int = 0,
     val harvest_start: Int = 0,
     val harvest_start_stage: String = "",
+    val harvest_end_year: Int = 0,
     val harvest_end: Int = 0,
     val harvest_end_stage: String = ""
 )
