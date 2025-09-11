@@ -1077,18 +1077,10 @@ class SeedInputViewModel : ViewModel() {
     fun addCalendarEntryWithRegion(region: String) {
         val newEntry = com.example.seedstockkeeper6.model.CalendarEntry(
             region = region,
-            sowing_start_year = 0,
-            sowing_start = 0,
-            sowing_start_stage = "",
-            sowing_end_year = 0,
-            sowing_end = 0,
-            sowing_end_stage = "",
-            harvest_start_year = 0,
-            harvest_start = 0,
-            harvest_start_stage = "",
-            harvest_end_year = 0,
-            harvest_end = 0,
-            harvest_end_stage = ""
+            sowing_start_date = "",
+            sowing_end_date = "",
+            harvest_start_date = "",
+            harvest_end_date = ""
         )
         val list = (packet.calendar ?: emptyList()) + newEntry
         packet = packet.copy(calendar = list)
@@ -1097,36 +1089,20 @@ class SeedInputViewModel : ViewModel() {
     fun updateCalendarEntry(
         index: Int,
         region: String? = null,
-        sowing_start_year: Int? = null,
-        sowing_start: Int? = null,
-        sowing_start_stage: String? = null,
-        sowing_end_year: Int? = null,
-        sowing_end: Int? = null,
-        sowing_end_stage: String? = null,
-        harvest_start_year: Int? = null,
-        harvest_start: Int? = null,
-        harvest_start_stage: String? = null,
-        harvest_end_year: Int? = null,
-        harvest_end: Int? = null,
-        harvest_end_stage: String? = null
+        sowing_start_date: String? = null,
+        sowing_end_date: String? = null,
+        harvest_start_date: String? = null,
+        harvest_end_date: String? = null
     ) {
         val cur = packet.calendar ?: return
         if (index !in cur.indices) return
         val old = cur[index]
         val newItem = old.copy(
             region = region ?: old.region,
-            sowing_start_year = sowing_start_year ?: old.sowing_start_year,
-            sowing_start = sowing_start ?: old.sowing_start,
-            sowing_start_stage = sowing_start_stage ?: old.sowing_start_stage,
-            sowing_end_year = sowing_end_year ?: old.sowing_end_year,
-            sowing_end = sowing_end ?: old.sowing_end,
-            sowing_end_stage = sowing_end_stage ?: old.sowing_end_stage,
-            harvest_start_year = harvest_start_year ?: old.harvest_start_year,
-            harvest_start = harvest_start ?: old.harvest_start,
-            harvest_start_stage = harvest_start_stage ?: old.harvest_start_stage,
-            harvest_end_year = harvest_end_year ?: old.harvest_end_year,
-            harvest_end = harvest_end ?: old.harvest_end,
-            harvest_end_stage = harvest_end_stage ?: old.harvest_end_stage
+            sowing_start_date = sowing_start_date ?: old.sowing_start_date,
+            sowing_end_date = sowing_end_date ?: old.sowing_end_date,
+            harvest_start_date = harvest_start_date ?: old.harvest_start_date,
+            harvest_end_date = harvest_end_date ?: old.harvest_end_date
         )
         val next = cur.toMutableList().apply { set(index, newItem) }
         packet = packet.copy(calendar = next)
@@ -1149,69 +1125,39 @@ class SeedInputViewModel : ViewModel() {
         val next = cur.toMutableList().apply { set(index, updated) }
         packet = packet.copy(calendar = next)
     }
-    fun updateCalendarSowingStart(index: Int, month: Int) {
+    // 日付ベースの更新関数
+    fun updateCalendarSowingStartDate(index: Int, date: String) {
         val cur = packet.calendar ?: return
         if (index !in cur.indices) return
         val old = cur[index]
-        val updated = old.copy(sowing_start = month)
+        val updated = old.copy(sowing_start_date = date)
         val next = cur.toMutableList().apply { set(index, updated) }
         packet = packet.copy(calendar = next)
     }
 
-    fun updateCalendarSowingStartStage(index: Int, stage: String) {
+    fun updateCalendarSowingEndDate(index: Int, date: String) {
         val cur = packet.calendar ?: return
         if (index !in cur.indices) return
         val old = cur[index]
-        val updated = old.copy(sowing_start_stage = stage)
-        val next = cur.toMutableList().apply { set(index, updated) }
-        packet = packet.copy(calendar = next)
-    }
-    fun updateCalendarSowingEnd(index: Int, month: Int) {
-        val cur = packet.calendar ?: return
-        if (index !in cur.indices) return
-        val old = cur[index]
-        val updated = old.copy(sowing_end = month)
-        val next = cur.toMutableList().apply { set(index, updated) }
-        packet = packet.copy(calendar = next)
-    }
-    fun updateCalendarSowingEndStage(index: Int, stage: String) {
-        val cur = packet.calendar ?: return
-        if (index !in cur.indices) return
-        val old = cur[index]
-        val updated = old.copy(sowing_end_stage = stage)
-        val next = cur.toMutableList().apply { set(index, updated) }
-        packet = packet.copy(calendar = next)
-    }
-    fun updateCalendarHarvestStart(index: Int, month: Int) {
-        val cur = packet.calendar ?: return
-        if (index !in cur.indices) return
-        val old = cur[index]
-        val updated = old.copy(harvest_start = month)
-        val next = cur.toMutableList().apply { set(index, updated) }
-        packet = packet.copy(calendar = next)
-    }
-    fun updateCalendarHarvestStartStage(index: Int, stage: String) {
-        val cur = packet.calendar ?: return
-        if (index !in cur.indices) return
-        val old = cur[index]
-        val updated = old.copy(harvest_start_stage = stage)
+        val updated = old.copy(sowing_end_date = date)
         val next = cur.toMutableList().apply { set(index, updated) }
         packet = packet.copy(calendar = next)
     }
 
-    fun updateCalendarHarvestEnd(index: Int, month: Int) {
+    fun updateCalendarHarvestStartDate(index: Int, date: String) {
         val cur = packet.calendar ?: return
         if (index !in cur.indices) return
         val old = cur[index]
-        val updated = old.copy(harvest_end = month)
+        val updated = old.copy(harvest_start_date = date)
         val next = cur.toMutableList().apply { set(index, updated) }
         packet = packet.copy(calendar = next)
     }
-    fun updateCalendarHarvestEndStage(index: Int, stage: String) {
+
+    fun updateCalendarHarvestEndDate(index: Int, date: String) {
         val cur = packet.calendar ?: return
         if (index !in cur.indices) return
         val old = cur[index]
-        val updated = old.copy(harvest_end_stage = stage)
+        val updated = old.copy(harvest_end_date = date)
         val next = cur.toMutableList().apply { set(index, updated) }
         packet = packet.copy(calendar = next)
     }

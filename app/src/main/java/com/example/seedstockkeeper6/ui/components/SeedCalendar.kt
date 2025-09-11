@@ -59,12 +59,8 @@ import kotlin.math.max
 import kotlin.math.min
 
 data class MonthRange(
-    val startYear: Int, // 開始年
-    val start: Int, // 月 (1-12)
-    val endYear: Int,   // 終了年
-    val end: Int,   // 月 (1-12)
-    val startStage: String? = null, // 例: "上旬", "中旬", "下旬", または null
-    val endStage: String? = null     // 例: "上旬", "中旬", "下旬", または null
+    val startDate: String, // "2025-03-01" 形式の開始日
+    val endDate: String    // "2025-03-20" 形式の終了日
 )
 enum class BandStyle { Dotted, Solid }
 data class RangeItem(
@@ -101,17 +97,13 @@ fun SeedCalendarGrouped(
         .groupBy { it.region }
         .map { (region, regionEntries) ->
             val items = regionEntries.flatMap { entry ->
-                val sowingItem = if (entry.sowing_start != 0 && entry.sowing_end != 0) {
+                val sowingItem = if (entry.sowing_start_date.isNotEmpty() && entry.sowing_end_date.isNotEmpty()) {
                     listOf(
                         RangeItem(
                             ranges = listOf(
                                 MonthRange(
-                                    entry.sowing_start_year,
-                                    entry.sowing_start,
-                                    entry.sowing_end_year,
-                                    entry.sowing_end,
-                                    entry.sowing_start_stage,
-                                    entry.sowing_end_stage
+                                    entry.sowing_start_date,
+                                    entry.sowing_end_date
                                 )
                             ),
                             style = BandStyle.Solid, // 点線から棒線に変更
@@ -121,17 +113,13 @@ fun SeedCalendarGrouped(
                     )
                 } else emptyList()
 
-                val harvestItem = if (entry.harvest_start != 0 && entry.harvest_end != 0) {
+                val harvestItem = if (entry.harvest_start_date.isNotEmpty() && entry.harvest_end_date.isNotEmpty()) {
                     listOf(
                         RangeItem(
                             ranges = listOf(
                                 MonthRange(
-                                    entry.harvest_start_year,
-                                    entry.harvest_start,
-                                    entry.harvest_end_year,
-                                    entry.harvest_end,
-                                    entry.harvest_start_stage,
-                                    entry.harvest_end_stage
+                                    entry.harvest_start_date,
+                                    entry.harvest_end_date
                                 )
                             ),
                             style = BandStyle.Solid,
@@ -412,18 +400,37 @@ fun SeedCalendarGroupedInternal(
             strokeWidth = 1f
         )
 
-        fun getStageOffset(stage: String?): Float = when (stage) {
-            "上旬" -> 0.0f      // 月の開始位置
-            "中旬" -> 1.0f/3.0f // 月の1/3の位置（中旬の開始）
-            "下旬" -> 2.0f/3.0f // 月の2/3の位置（下旬の開始）
-            else -> 0.0f
+        // 日付から月内での位置を計算する関数
+        fun getDateOffsetInMonth(dateString: String): Float {
+            if (dateString.isEmpty()) return 0.0f
+            try {
+                val day = dateString.substring(8, 10).toInt()
+                val month = dateString.substring(5, 7).toInt()
+                val year = dateString.substring(0, 4).toInt()
+                val lastDayOfMonth = YearMonth.of(year, month).lengthOfMonth()
+                return (day - 1).toFloat() / lastDayOfMonth.toFloat()
+            } catch (e: Exception) {
+                return 0.0f
+            }
         }
         
-        fun getStageEndOffset(stage: String?): Float = when (stage) {
-            "上旬" -> 1.0f/3.0f // 上旬の終了位置（中旬の開始）
-            "中旬" -> 2.0f/3.0f // 中旬の終了位置（下旬の開始）
-            "下旬" -> 1.0f      // 下旬の終了位置（次の月の開始）
-            else -> 1.0f/3.0f
+        // 日付から月と年を取得
+        fun getMonthFromDate(dateString: String): Int {
+            if (dateString.isEmpty()) return 0
+            return try {
+                dateString.substring(5, 7).toInt()
+            } catch (e: Exception) {
+                0
+            }
+        }
+        
+        fun getYearFromDate(dateString: String): Int {
+            if (dateString.isEmpty()) return 0
+            return try {
+                dateString.substring(0, 4).toInt()
+            } catch (e: Exception) {
+                0
+            }
         }
 
         bands.forEachIndexed { row, groupedBand ->
@@ -438,12 +445,14 @@ fun SeedCalendarGroupedInternal(
 
             groupedBand.items.forEach { item ->
                 item.ranges.forEach { r ->
-                    // 帯の開始月が属する年を計算（年情報を使用）
-                    val bandStartActualYear = if (r.startYear > 0) r.startYear else 
-                        currentYear + if (r.start < currentMonth && currentMonth - r.start >= 0) 1 else 0
-                    val bandStartMonthForCheck = YearMonth.of(bandStartActualYear, r.start)
-
+                    // 日付から月と年を取得
+                    val startMonth = getMonthFromDate(r.startDate)
+                    val startYear = getYearFromDate(r.startDate)
+                    val endMonth = getMonthFromDate(r.endDate)
+                    val endYear = getYearFromDate(r.endDate)
+                    
                     // 帯の開始月が有効期限内かで色を決定
+                    val bandStartMonthForCheck = YearMonth.of(startYear, startMonth)
                     val actualColor = if (!bandStartMonthForCheck.isAfter(expirationDate)) {
                         item.color // 基本色 (有効期限内)
                     } else {
@@ -451,19 +460,17 @@ fun SeedCalendarGroupedInternal(
                     }
 
                     // 帯のX座標計算 (カレンダー表示上の相対位置)
-                    val startMonthIndexInCalendar = (r.start - currentMonth + 12) % 12
-                    val endMonthIndexInCalendar = (r.end - currentMonth + 12) % 12
+                    val startMonthIndexInCalendar = (startMonth - currentMonth + 12) % 12
+                    val endMonthIndexInCalendar = (endMonth - currentMonth + 12) % 12
 
-                    var startX =
-                        gridLeft + colW * (startMonthIndexInCalendar + getStageOffset(r.startStage))
-                    var endX =
-                        gridLeft + colW * (endMonthIndexInCalendar + getStageEndOffset(r.endStage))
+                    var startX = gridLeft + colW * (startMonthIndexInCalendar + getDateOffsetInMonth(r.startDate))
+                    var endX = gridLeft + colW * (endMonthIndexInCalendar + getDateOffsetInMonth(r.endDate))
 
                     // 年をまたぐ帯の場合のX座標補正
-                    if (r.start > r.end) { // 年をまたいでいる (例: 11月(start) から 3月(end))
+                    if (startMonth > endMonth) { // 年をまたいでいる (例: 11月(start) から 3月(end))
                         // 年をまたぐ場合は、実際の終了月まで表示
-                        val actualEndMonthIndex = (r.end - currentMonth + 12) % 12
-                        endX = gridLeft + colW * (actualEndMonthIndex + getStageEndOffset(r.endStage))
+                        val actualEndMonthIndex = (endMonth - currentMonth + 12) % 12
+                        endX = gridLeft + colW * (actualEndMonthIndex + getDateOffsetInMonth(r.endDate))
                     }
 
 

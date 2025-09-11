@@ -81,17 +81,13 @@ data class SoilPrep(
 data class CalendarEntry(
     val id: String = UUID.randomUUID().toString(),
     val region: String = "",
-    val sowing_start_year: Int = 0,
-    val sowing_start: Int = 0,
-    val sowing_start_stage: String = "",
-    val sowing_end_year: Int = 0,
-    val sowing_end: Int = 0,
-    val sowing_end_stage: String = "",
-    val harvest_start_year: Int = 0,
-    val harvest_start: Int = 0,
-    val harvest_start_stage: String = "",
-    val harvest_end_year: Int = 0,
-    val harvest_end: Int = 0,
-    val harvest_end_stage: String = ""
+    
+    // 播種期間（具体的な日付で保存）
+    val sowing_start_date: String = "", // "2025-03-01" 形式
+    val sowing_end_date: String = "",   // "2025-03-20" 形式
+    
+    // 収穫期間（具体的な日付で保存）
+    val harvest_start_date: String = "", // "2025-06-11" 形式
+    val harvest_end_date: String = ""    // "2025-06-30" 形式
 )
 

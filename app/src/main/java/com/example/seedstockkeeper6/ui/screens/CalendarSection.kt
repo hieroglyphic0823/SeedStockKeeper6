@@ -9,6 +9,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Public
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -17,9 +18,12 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.tooling.preview.Preview
 import com.example.seedstockkeeper6.ui.components.SeedCalendarGrouped
 import com.example.seedstockkeeper6.viewmodel.SeedInputViewModel
 import com.example.seedstockkeeper6.model.CalendarEntry
+import com.example.seedstockkeeper6.model.SeedPacket
+import com.example.seedstockkeeper6.ui.theme.SeedStockKeeper6Theme
 
 @Composable
 fun CalendarSection(viewModel: SeedInputViewModel) {
@@ -143,6 +147,9 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
             CalendarDetailSection(viewModel)
 
         }
+        
+        // 有効期限セクション
+        ExpirationDateSection(viewModel)
     }
     
 }
@@ -823,5 +830,108 @@ private fun getRegionColor(region: String): Color {
         "温暖地" -> Color(0xFFFF9800) // オレンジ
         "暖地" -> Color(0xFFE91E63) // ピンク
         else -> Color(0xFF9E9E9E) // グレー（未設定時）
+    }
+}
+
+@Composable
+fun ExpirationDateSection(viewModel: SeedInputViewModel) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier.padding(bottom = 16.dp)
+        ) {
+            Icon(
+                Icons.Filled.Schedule,
+                contentDescription = "有効期限",
+                tint = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.size(24.dp)
+            )
+            Text(
+                "有効期限",
+                style = MaterialTheme.typography.titleMedium
+            )
+        }
+        
+        if (viewModel.isEditMode || !viewModel.hasExistingData) {
+            // EditMode: 年・月の入力フィールド
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                OutlinedTextField(
+                    value = viewModel.packet.expirationYear.toString(),
+                    onValueChange = viewModel::onExpirationYearChange,
+                    label = { Text("年") },
+                    modifier = Modifier.weight(1f),
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                        focusedLabelColor = MaterialTheme.colorScheme.primary,
+                        unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                )
+                OutlinedTextField(
+                    value = viewModel.packet.expirationMonth.toString(),
+                    onValueChange = viewModel::onExpirationMonthChange,
+                    label = { Text("月") },
+                    modifier = Modifier.weight(1f),
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                        focusedLabelColor = MaterialTheme.colorScheme.primary,
+                        unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                )
+            }
+        } else {
+            // DisplayMode: 読み取り専用表示
+            Text(
+                text = "有効期限: ${viewModel.packet.expirationYear}年 ${viewModel.packet.expirationMonth}月",
+                style = MaterialTheme.typography.bodyLarge,
+                modifier = Modifier.padding(vertical = 8.dp)
+            )
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun CalendarSectionPreview() {
+    SeedStockKeeper6Theme {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            // 有効期限セクションのプレビュー
+            ExpirationDateSection(
+                viewModel = object : SeedInputViewModel() {
+                    override val packet = SeedPacket(
+                        expirationYear = 2025,
+                        expirationMonth = 12
+                    )
+                    override val isEditMode = false
+                    override val hasExistingData = true
+                }
+            )
+            
+            // 編集モードの有効期限セクション
+            ExpirationDateSection(
+                viewModel = object : SeedInputViewModel() {
+                    override val packet = SeedPacket(
+                        expirationYear = 2026,
+                        expirationMonth = 3
+                    )
+                    override val isEditMode = true
+                    override val hasExistingData = false
+                }
+            )
+        }
     }
 }
