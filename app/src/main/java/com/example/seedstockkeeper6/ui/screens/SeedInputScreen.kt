@@ -107,6 +107,9 @@ fun SeedInputScreen(
                 modifier = Modifier.padding(vertical = 16.dp)
             )
             
+            // メモ・コンパニオンプランツカード（DisplayModeのみ）
+            NotesCardSection(viewModel)
+            
             // 栽培情報セクション
             CultivationInfoSection(viewModel)
             
@@ -116,8 +119,10 @@ fun SeedInputScreen(
                 modifier = Modifier.padding(vertical = 16.dp)
             )
             
-            // コンパニオンプランツセクション
-            CompanionPlantsSection(viewModel)
+            // コンパニオンプランツセクション（編集モードのみ）
+            if (viewModel.isEditMode || !viewModel.hasExistingData) {
+                CompanionPlantsSection(viewModel)
+            }
             }
             
             // ダイアログ類

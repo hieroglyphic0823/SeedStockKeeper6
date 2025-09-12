@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.LocalFlorist
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -96,13 +97,29 @@ fun BasicInfoSection(viewModel: SeedInputViewModel) {
                 onValueChange = viewModel::onFamilyChange
             )
         } else {
-            // DisplayMode: 読み取り専用表示
-            Text(
-                text = "科名: ${viewModel.packet.family.ifEmpty { "未設定" }}",
-                modifier = Modifier.padding(vertical = 4.dp),
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface
-            )
+            // DisplayMode: 読み取り専用表示（アイコン付き）
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.padding(vertical = 4.dp)
+            ) {
+                Text(
+                    text = "科名: ",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Icon(
+                    Icons.Filled.LocalFlorist,
+                    contentDescription = "科名",
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(18.dp)
+                )
+                Text(
+                    text = viewModel.packet.family.ifEmpty { "未設定" },
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
         }
         
         

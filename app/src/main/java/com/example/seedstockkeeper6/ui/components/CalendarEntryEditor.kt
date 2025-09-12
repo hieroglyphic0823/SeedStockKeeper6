@@ -4,13 +4,21 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import com.example.seedstockkeeper6.R
 import com.example.seedstockkeeper6.model.CalendarEntry
 import com.example.seedstockkeeper6.utils.DateConversionUtils
 
@@ -111,17 +119,32 @@ fun CalendarEntryEditor(
     Column(
         modifier = Modifier.padding(top = 8.dp)
     ) {
-        Text(
-            "播種期間",
-            style = MaterialTheme.typography.titleSmall,
-            modifier = Modifier
-                .padding(bottom = 4.dp)
-                .background(
-                    color = MaterialTheme.colorScheme.primaryContainer,
-                    shape = androidx.compose.foundation.shape.RoundedCornerShape(4.dp)
+        // 播種期間ラベル（アイコン付き）
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.padding(bottom = 8.dp)
+        ) {
+            // 播種期間アイコン（背景付き）
+            Box(
+                modifier = Modifier
+                    .size(24.dp)
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(MaterialTheme.colorScheme.primaryContainer),
+                contentAlignment = Alignment.Center
+            ) {
+                androidx.compose.foundation.Image(
+                    painter = painterResource(id = R.drawable.grain),
+                    contentDescription = "播種期間",
+                    modifier = Modifier.size(18.dp),
+                    contentScale = ContentScale.Fit
                 )
-                .padding(8.dp)
-        )
+            }
+            Text(
+                "播種期間",
+                style = MaterialTheme.typography.titleSmall
+            )
+        }
         
         // 播種開始期間
         Row(
@@ -213,17 +236,32 @@ fun CalendarEntryEditor(
         
         Spacer(modifier = Modifier.height(16.dp))
         
-        Text(
-            "収穫期間",
-            style = MaterialTheme.typography.titleSmall,
-            modifier = Modifier
-                .padding(bottom = 4.dp)
-                .background(
-                    color = MaterialTheme.colorScheme.tertiaryContainer,
-                    shape = androidx.compose.foundation.shape.RoundedCornerShape(4.dp)
+        // 収穫期間ラベル（アイコン付き）
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.padding(bottom = 8.dp)
+        ) {
+            // 収穫期間アイコン（背景付き）
+            Box(
+                modifier = Modifier
+                    .size(24.dp)
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(MaterialTheme.colorScheme.primary),
+                contentAlignment = Alignment.Center
+            ) {
+                androidx.compose.foundation.Image(
+                    painter = painterResource(id = R.drawable.harvest),
+                    contentDescription = "収穫期間",
+                    modifier = Modifier.size(18.dp),
+                    contentScale = ContentScale.Fit
                 )
-                .padding(8.dp)
-        )
+            }
+            Text(
+                "収穫期間",
+                style = MaterialTheme.typography.titleSmall
+            )
+        }
         
         // 収穫開始期間
         Row(
@@ -361,44 +399,60 @@ fun ExpirationSelectionBottomSheet(
                         modifier = Modifier.padding(bottom = 16.dp)
                     )
                     
-        // 年選択
+        // 年選択（NumberPicker風）
         Text("年", style = MaterialTheme.typography.bodyMedium)
         LazyRow(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier.padding(vertical = 8.dp)
         ) {
             items(yearOptions) { year ->
-                                        Button(
+                Button(
                     onClick = { onYearChange(year) },
-                                            colors = ButtonDefaults.buttonColors(
+                    colors = ButtonDefaults.buttonColors(
                         containerColor = if (selectedYear == year) 
                             MaterialTheme.colorScheme.primary 
-                                                else 
-                                                    MaterialTheme.colorScheme.surface
-                                            )
-                                        ) {
-                    Text(year)
+                        else 
+                            MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
+                    )
+                ) {
+                    Text(
+                        year,
+                        color = if (selectedYear == year) 
+                            MaterialTheme.colorScheme.onPrimary 
+                        else 
+                            MaterialTheme.colorScheme.onSurface
+                    )
                 }
             }
         }
         
-        // 月選択
+        // 月選択（12カ月分表示）
         Text("月", style = MaterialTheme.typography.bodyMedium)
-        LazyRow(
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(4),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.padding(vertical = 8.dp)
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier
+                .padding(vertical = 8.dp)
+                .height(120.dp)
         ) {
             items(monthOptions) { month ->
-                                        Button(
+                Button(
                     onClick = { onMonthChange(month) },
-                                            colors = ButtonDefaults.buttonColors(
+                    colors = ButtonDefaults.buttonColors(
                         containerColor = if (selectedMonth == month) 
                             MaterialTheme.colorScheme.primary 
-                                                else 
-                                                    MaterialTheme.colorScheme.surface
-                                            )
-                                        ) {
-                    Text("${month}月")
+                        else 
+                            MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
+                    )
+                ) {
+                    Text(
+                        "${month}月",
+                        color = if (selectedMonth == month) 
+                            MaterialTheme.colorScheme.onPrimary 
+                        else 
+                            MaterialTheme.colorScheme.onSurface
+                    )
                 }
             }
         }
@@ -455,44 +509,60 @@ fun PeriodSelectionBottomSheet(
                         modifier = Modifier.padding(bottom = 16.dp)
                     )
                     
-        // 年選択
+        // 年選択（NumberPicker風）
         Text("年", style = MaterialTheme.typography.bodyMedium)
         LazyRow(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier.padding(vertical = 8.dp)
         ) {
             items(yearOptions) { year ->
-                                        Button(
+                Button(
                     onClick = { onYearChange(year) },
-                                            colors = ButtonDefaults.buttonColors(
+                    colors = ButtonDefaults.buttonColors(
                         containerColor = if (selectedYear == year) 
                             MaterialTheme.colorScheme.primary 
-                                                else 
-                                                    MaterialTheme.colorScheme.surface
-                                            )
-                                        ) {
-                    Text(year)
+                        else 
+                            MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
+                    )
+                ) {
+                    Text(
+                        year,
+                        color = if (selectedYear == year) 
+                            MaterialTheme.colorScheme.onPrimary 
+                        else 
+                            MaterialTheme.colorScheme.onSurface
+                    )
                 }
             }
         }
         
-        // 月選択
+        // 月選択（12カ月分表示）
         Text("月", style = MaterialTheme.typography.bodyMedium)
-        LazyRow(
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(4),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.padding(vertical = 8.dp)
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier
+                .padding(vertical = 8.dp)
+                .height(120.dp)
         ) {
             items(monthOptions) { month ->
-                                        Button(
+                Button(
                     onClick = { onMonthChange(month) },
-                                            colors = ButtonDefaults.buttonColors(
+                    colors = ButtonDefaults.buttonColors(
                         containerColor = if (selectedMonth == month) 
                             MaterialTheme.colorScheme.primary 
-                                                else 
-                                                    MaterialTheme.colorScheme.surface
-                                            )
-                                        ) {
-                    Text("${month}月")
+                        else 
+                            MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
+                    )
+                ) {
+                    Text(
+                        "${month}月",
+                        color = if (selectedMonth == month) 
+                            MaterialTheme.colorScheme.onPrimary 
+                        else 
+                            MaterialTheme.colorScheme.onSurface
+                    )
                 }
             }
         }
@@ -504,16 +574,22 @@ fun PeriodSelectionBottomSheet(
             modifier = Modifier.padding(vertical = 8.dp)
         ) {
             items(stageOptions) { stage ->
-                                    Button(
+                Button(
                     onClick = { onStageChange(stage) },
-                                        colors = ButtonDefaults.buttonColors(
+                    colors = ButtonDefaults.buttonColors(
                         containerColor = if (selectedStage == stage) 
                             MaterialTheme.colorScheme.primary 
-                                            else 
-                                                MaterialTheme.colorScheme.surface
-                                        )
-                                    ) {
-                    Text(stage)
+                        else 
+                            MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
+                    )
+                ) {
+                    Text(
+                        stage,
+                        color = if (selectedStage == stage) 
+                            MaterialTheme.colorScheme.onPrimary 
+                        else 
+                            MaterialTheme.colorScheme.onSurface
+                    )
                 }
             }
         }

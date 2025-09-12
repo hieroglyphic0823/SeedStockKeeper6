@@ -308,48 +308,31 @@ fun CultivationInfoSection(viewModel: SeedInputViewModel) {
             )
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
-
-        // 栽培メモ
+        // 編集モードの時のみ栽培メモ、収穫方法、有効期限を表示
         if (viewModel.isEditMode || !viewModel.hasExistingData) {
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            // 栽培メモ
             OutlinedTextField(
                 value = viewModel.packet.cultivation.notes,
                 onValueChange = viewModel::onNotesChange,
                 label = { Text("栽培メモ") },
                 modifier = Modifier.fillMaxWidth()
             )
-        } else {
-            Text(
-                text = "栽培メモ: ${viewModel.packet.cultivation.notes.ifEmpty { "未設定" }}",
-                modifier = Modifier.padding(vertical = 4.dp),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-        }
-        
-        Spacer(modifier = Modifier.height(12.dp))
-        
-        // 収穫方法
-        if (viewModel.isEditMode || !viewModel.hasExistingData) {
+            
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            // 収穫方法
             OutlinedTextField(
                 value = viewModel.packet.cultivation.harvesting,
                 onValueChange = viewModel::onHarvestingChange,
                 label = { Text("収穫") },
                 modifier = Modifier.fillMaxWidth()
             )
-        } else {
-            Text(
-                text = "収穫: ${viewModel.packet.cultivation.harvesting.ifEmpty { "未設定" }}",
-                modifier = Modifier.padding(vertical = 4.dp),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-        }
-        
-        Spacer(modifier = Modifier.height(12.dp))
-        
-        // 有効期限
-        if (viewModel.isEditMode || !viewModel.hasExistingData) {
+            
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            // 有効期限
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -370,13 +353,6 @@ fun CultivationInfoSection(viewModel: SeedInputViewModel) {
                 )
                 Text("月", style = MaterialTheme.typography.bodyMedium)
             }
-        } else {
-            Text(
-                text = "有効期限: ${if (viewModel.packet.expirationYear > 0 && viewModel.packet.expirationMonth > 0) "${viewModel.packet.expirationYear}年${viewModel.packet.expirationMonth}月" else "未設定"}",
-                modifier = Modifier.padding(vertical = 4.dp),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
         }
     }
 }

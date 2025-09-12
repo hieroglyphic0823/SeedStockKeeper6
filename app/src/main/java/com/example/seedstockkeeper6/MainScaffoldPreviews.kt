@@ -146,6 +146,9 @@ fun SeedInputScreenPreview_DisplayMode() {
                     modifier = Modifier.padding(vertical = 16.dp)
                 )
                 
+                // メモ・コンパニオンプランツカード（DisplayModeのみ）
+                NotesCardSection(seedInputViewModel)
+                
                 // 栽培情報セクション
                 PreviewCultivationInfoSection(seedInputViewModel)
                 
@@ -155,8 +158,10 @@ fun SeedInputScreenPreview_DisplayMode() {
                     modifier = Modifier.padding(vertical = 16.dp)
                 )
                 
-                // コンパニオンプランツセクション
-                CompanionPlantsSection(seedInputViewModel)
+                // コンパニオンプランツセクション（編集モードのみ）
+                if (seedInputViewModel.isEditMode || !seedInputViewModel.hasExistingData) {
+                    CompanionPlantsSection(seedInputViewModel)
+                }
             }
         }
     }
@@ -247,6 +252,9 @@ fun SeedInputScreenPreview_NewCreation() {
                     modifier = Modifier.padding(vertical = 16.dp)
                 )
                 
+                // メモ・コンパニオンプランツカード（DisplayModeのみ）
+                NotesCardSection(seedInputViewModel)
+                
                 // 栽培情報セクション
                 PreviewCultivationInfoSection(seedInputViewModel)
                 
@@ -256,8 +264,10 @@ fun SeedInputScreenPreview_NewCreation() {
                     modifier = Modifier.padding(vertical = 16.dp)
                 )
                 
-                // コンパニオンプランツセクション
-                CompanionPlantsSection(seedInputViewModel)
+                // コンパニオンプランツセクション（編集モードのみ）
+                if (seedInputViewModel.isEditMode || !seedInputViewModel.hasExistingData) {
+                    CompanionPlantsSection(seedInputViewModel)
+                }
             }
         }
     }
@@ -371,6 +381,9 @@ fun SeedInputScreenPreview_EditMode() {
                     modifier = Modifier.padding(vertical = 16.dp)
                 )
                 
+                // メモ・コンパニオンプランツカード（DisplayModeのみ）
+                NotesCardSection(seedInputViewModel)
+                
                 // 栽培情報セクション
                 PreviewCultivationInfoSection(seedInputViewModel)
                 
@@ -380,8 +393,10 @@ fun SeedInputScreenPreview_EditMode() {
                     modifier = Modifier.padding(vertical = 16.dp)
                 )
                 
-                // コンパニオンプランツセクション
-                CompanionPlantsSection(seedInputViewModel)
+                // コンパニオンプランツセクション（編集モードのみ）
+                if (seedInputViewModel.isEditMode || !seedInputViewModel.hasExistingData) {
+                    CompanionPlantsSection(seedInputViewModel)
+                }
             }
         }
     }
@@ -423,10 +438,10 @@ fun createPreviewSeedInputViewModel(isEditMode: Boolean, hasExistingData: Boolea
             calendar = listOf(
                 com.example.seedstockkeeper6.model.CalendarEntry(
                     region = "暖地",
-                    sowing_start_date = "2025-03-01",
-                    sowing_end_date = "2025-03-31",
-                    harvest_start_date = "2025-06-01",
-                    harvest_end_date = "2025-07-20"
+                    sowing_start_date = "2025-08-15",
+                    sowing_end_date = "2025-09-31",
+                    harvest_start_date = "2025-10-01",
+                    harvest_end_date = "2025-12-31"
                 )
             ),
             companionPlants = listOf(
@@ -753,17 +768,17 @@ fun RegionSelectionDialogPreview() {
             calendar = listOf(
                 com.example.seedstockkeeper6.model.CalendarEntry(
                     region = "暖地",
-                    sowing_start_date = "2025-11-01",
-                    sowing_end_date = "2025-03-31",
-                    harvest_start_date = "2025-04-01",
-                    harvest_end_date = "2025-07-20"
+                    sowing_start_date = "2025-08-15",
+                    sowing_end_date = "2025-09-31",
+                    harvest_start_date = "2025-10-01",
+                    harvest_end_date = "2025-12-31"
                 ),
                 com.example.seedstockkeeper6.model.CalendarEntry(
                     region = "温暖地",
-                    sowing_start_date = "2025-10-21",
-                    sowing_end_date = "2025-04-10",
-                    harvest_start_date = "2025-05-01",
-                    harvest_end_date = "2025-08-31"
+                    sowing_start_date = "2025-08-15",
+                    sowing_end_date = "2025-09-31",
+                    harvest_start_date = "2025-10-01",
+                    harvest_end_date = "2025-12-31"
                 )
             )
         )
@@ -802,17 +817,17 @@ fun RegionSelectionDialogContentPreview() {
             calendar = listOf(
                 com.example.seedstockkeeper6.model.CalendarEntry(
                     region = "暖地",
-                    sowing_start_date = "2025-11-01",
-                    sowing_end_date = "2025-03-31",
-                    harvest_start_date = "2025-04-01",
-                    harvest_end_date = "2025-07-20"
+                    sowing_start_date = "2025-08-15",
+                    sowing_end_date = "2025-09-31",
+                    harvest_start_date = "2025-10-01",
+                    harvest_end_date = "2025-12-31"
                 ),
                 com.example.seedstockkeeper6.model.CalendarEntry(
                     region = "温暖地",
-                    sowing_start_date = "2025-10-21",
-                    sowing_end_date = "2025-04-10",
-                    harvest_start_date = "2025-05-01",
-                    harvest_end_date = "2025-08-31"
+                    sowing_start_date = "2025-08-15",
+                    sowing_end_date = "2025-09-31",
+                    harvest_start_date = "2025-10-01",
+                    harvest_end_date = "2025-12-31"
                 )
             )
         )
@@ -1189,18 +1204,6 @@ fun PreviewCultivationInfoSection(viewModel: com.example.seedstockkeeper6.viewmo
             color = MaterialTheme.colorScheme.onSurface
         )
 
-        Spacer(modifier = Modifier.height(12.dp))
-
-        // 栽培メモ
-        Text(
-            text = "栽培メモ: ${viewModel.packet.cultivation.notes.ifEmpty { "未設定" }}",
-            modifier = Modifier.padding(vertical = 4.dp),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-        
-        Spacer(modifier = Modifier.height(12.dp))
-        
         // 播種期間
         val calendarEntry = viewModel.packet.calendar?.firstOrNull()
         val sowingPeriod = if (calendarEntry != null) {
@@ -1225,16 +1228,6 @@ fun PreviewCultivationInfoSection(viewModel: com.example.seedstockkeeper6.viewmo
         }
         Text(
             text = "収穫期間: $harvestPeriod",
-            modifier = Modifier.padding(vertical = 4.dp),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-        
-        Spacer(modifier = Modifier.height(12.dp))
-        
-        // 収穫方法
-        Text(
-            text = "収穫: ${viewModel.packet.cultivation.harvesting.ifEmpty { "未設定" }}",
             modifier = Modifier.padding(vertical = 4.dp),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface

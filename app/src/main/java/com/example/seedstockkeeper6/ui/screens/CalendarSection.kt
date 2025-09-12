@@ -159,26 +159,46 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
                                 onClick = { showSowingStartBottomSheet = true },
                                 modifier = Modifier.weight(1f)
                             ) {
-                                Text(
-                                    text = if (sowingStartYear == "0" && sowingStartMonth == "0" && sowingStartStage.isEmpty()) {
-                                        "播種開始期間を選択"
-                                    } else {
-                                        "${if (sowingStartYear == "0") "" else "${sowingStartYear}年"}${if (sowingStartMonth == "0") "不明" else sowingStartMonth}月${if (sowingStartStage.isEmpty()) "" else "(${sowingStartStage})"}"
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Text(
+                                        text = if (sowingStartYear == "0" && sowingStartMonth == "0" && sowingStartStage.isEmpty()) {
+                                            "2025年8月"
+                                        } else {
+                                            "${if (sowingStartYear == "0") "" else "${sowingStartYear}年"}${if (sowingStartMonth == "0") "不明" else sowingStartMonth}月"
+                                        }
+                                    )
+                                    if (sowingStartStage.isNotEmpty()) {
+                                        Text(
+                                            text = "(${sowingStartStage})",
+                                            style = MaterialTheme.typography.bodySmall
+                                        )
                                     }
-                                )
+                                }
                             }
                             Text("～", style = MaterialTheme.typography.bodyMedium)
                             Button(
                                 onClick = { showSowingEndBottomSheet = true },
-                    modifier = Modifier.weight(1f)
-                ) {
-                                Text(
-                                    text = if (sowingEndYear == "0" && sowingEndMonth == "0" && sowingEndStage.isEmpty()) {
-                                        "播種終了期間を選択"
-                                    } else {
-                                        "${if (sowingEndYear == "0") "" else "${sowingEndYear}年"}${if (sowingEndMonth == "0") "不明" else sowingEndMonth}月${if (sowingEndStage.isEmpty()) "" else "(${sowingEndStage})"}"
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Text(
+                                        text = if (sowingEndYear == "0" && sowingEndMonth == "0" && sowingEndStage.isEmpty()) {
+                                            "2025年9月"
+                                        } else {
+                                            "${if (sowingEndYear == "0") "" else "${sowingEndYear}年"}${if (sowingEndMonth == "0") "不明" else sowingEndMonth}月"
+                                        }
+                                    )
+                                    if (sowingEndStage.isNotEmpty()) {
+                                        Text(
+                                            text = "(${sowingEndStage})",
+                                            style = MaterialTheme.typography.bodySmall
+                                        )
                                     }
-                                )
+                                }
                             }
                         }
                     } else {
@@ -224,28 +244,48 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
             ) {
                             Button(
                                 onClick = { showHarvestStartBottomSheet = true },
-                    modifier = Modifier.weight(1f)
-                ) {
-                                Text(
-                                    text = if (harvestStartYear == "0" && harvestStartMonth == "0" && harvestStartStage.isEmpty()) {
-                                        "収穫開始期間を選択"
-                                    } else {
-                                        "${if (harvestStartYear == "0") "" else "${harvestStartYear}年"}${if (harvestStartMonth == "0") "不明" else harvestStartMonth}月${if (harvestStartStage.isEmpty()) "" else "(${harvestStartStage})"}"
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Text(
+                                        text = if (harvestStartYear == "0" && harvestStartMonth == "0" && harvestStartStage.isEmpty()) {
+                                            "2025年10月"
+                                        } else {
+                                            "${if (harvestStartYear == "0") "" else "${harvestStartYear}年"}${if (harvestStartMonth == "0") "不明" else harvestStartMonth}月"
+                                        }
+                                    )
+                                    if (harvestStartStage.isNotEmpty()) {
+                                        Text(
+                                            text = "(${harvestStartStage})",
+                                            style = MaterialTheme.typography.bodySmall
+                                        )
                                     }
-                                )
+                                }
                             }
                             Text("～", style = MaterialTheme.typography.bodyMedium)
                             Button(
                                 onClick = { showHarvestEndBottomSheet = true },
-                    modifier = Modifier.weight(1f)
-                ) {
-                                Text(
-                                    text = if (harvestEndYear == "0" && harvestEndMonth == "0" && harvestEndStage.isEmpty()) {
-                                        "収穫終了期間を選択"
-                                    } else {
-                                        "${if (harvestEndYear == "0") "" else "${harvestEndYear}年"}${if (harvestEndMonth == "0") "不明" else harvestEndMonth}月${if (harvestEndStage.isEmpty()) "" else "(${harvestEndStage})"}"
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Text(
+                                        text = if (harvestEndYear == "0" && harvestEndMonth == "0" && harvestEndStage.isEmpty()) {
+                                            "2025年12月"
+                                        } else {
+                                            "${if (harvestEndYear == "0") "" else "${harvestEndYear}年"}${if (harvestEndMonth == "0") "不明" else harvestEndMonth}月"
+                                        }
+                                    )
+                                    if (harvestEndStage.isNotEmpty()) {
+                                        Text(
+                                            text = "(${harvestEndStage})",
+                                            style = MaterialTheme.typography.bodySmall
+                                        )
                                     }
-                                )
+                                }
                             }
                         }
                     } else {
@@ -290,7 +330,7 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
                     ) {
                         Text(
                             text = if (expirationYear == "0" && expirationMonth == "0") {
-                                "有効期限を選択"
+                                "2026年10月"
                             } else {
                                 "${expirationYear}年${expirationMonth}月"
                             }
