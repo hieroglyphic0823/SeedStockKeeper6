@@ -54,12 +54,13 @@ fun BasicInfoSection(viewModel: SeedInputViewModel) {
             // DisplayMode: 読み取り専用表示
             Text(
                 text = "商品名: ${viewModel.packet.productName.ifEmpty { "未設定" }}",
+                modifier = Modifier.padding(vertical = 4.dp),
                 style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.padding(vertical = 8.dp)
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
         
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
         
         // 品種
         if (viewModel.isEditMode || !viewModel.hasExistingData) {
@@ -80,12 +81,13 @@ fun BasicInfoSection(viewModel: SeedInputViewModel) {
             // DisplayMode: 読み取り専用表示
             Text(
                 text = "品種: ${viewModel.packet.variety.ifEmpty { "未設定" }}",
+                modifier = Modifier.padding(vertical = 4.dp),
                 style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.padding(vertical = 8.dp)
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
         
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
         
         // 科名
         if (viewModel.isEditMode || !viewModel.hasExistingData) {
@@ -97,13 +99,14 @@ fun BasicInfoSection(viewModel: SeedInputViewModel) {
             // DisplayMode: 読み取り専用表示
             Text(
                 text = "科名: ${viewModel.packet.family.ifEmpty { "未設定" }}",
+                modifier = Modifier.padding(vertical = 4.dp),
                 style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.padding(vertical = 8.dp)
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
         
         
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
         
     }
 }

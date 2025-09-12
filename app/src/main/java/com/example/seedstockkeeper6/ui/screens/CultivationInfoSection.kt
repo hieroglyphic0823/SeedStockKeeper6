@@ -46,12 +46,13 @@ fun CultivationInfoSection(viewModel: SeedInputViewModel) {
         } else {
             Text(
                 text = "商品番号: ${viewModel.packet.productNumber.ifEmpty { "未設定" }}",
-                style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.padding(vertical = 8.dp)
+                modifier = Modifier.padding(vertical = 8.dp),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
         
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
         
         // 会社
         if (viewModel.isEditMode || !viewModel.hasExistingData) {
@@ -64,12 +65,13 @@ fun CultivationInfoSection(viewModel: SeedInputViewModel) {
         } else {
             Text(
                 text = "会社: ${viewModel.packet.company.ifEmpty { "未設定" }}",
-                style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.padding(vertical = 8.dp)
+                modifier = Modifier.padding(vertical = 4.dp),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
         
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
         
         // 原産国
         if (viewModel.isEditMode || !viewModel.hasExistingData) {
@@ -82,12 +84,13 @@ fun CultivationInfoSection(viewModel: SeedInputViewModel) {
         } else {
             Text(
                 text = "原産国: ${viewModel.packet.originCountry.ifEmpty { "未設定" }}",
-                style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.padding(vertical = 8.dp)
+                modifier = Modifier.padding(vertical = 4.dp),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
         // 内容量
         if (viewModel.isEditMode || !viewModel.hasExistingData) {
@@ -100,12 +103,13 @@ fun CultivationInfoSection(viewModel: SeedInputViewModel) {
         } else {
             Text(
                 text = "内容量: ${viewModel.packet.contents.ifEmpty { "未設定" }}",
-                style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.padding(vertical = 8.dp)
+                modifier = Modifier.padding(vertical = 4.dp),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
         
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
         
         // 発芽率
         if (viewModel.isEditMode || !viewModel.hasExistingData) {
@@ -118,12 +122,13 @@ fun CultivationInfoSection(viewModel: SeedInputViewModel) {
         } else {
             Text(
                 text = "発芽率: ${viewModel.packet.germinationRate.ifEmpty { "未設定" }}",
-                style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.padding(vertical = 8.dp)
+                modifier = Modifier.padding(vertical = 4.dp),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
         
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
         
         // 種子処理
         if (viewModel.isEditMode || !viewModel.hasExistingData) {
@@ -136,12 +141,13 @@ fun CultivationInfoSection(viewModel: SeedInputViewModel) {
         } else {
             Text(
                 text = "種子処理: ${viewModel.packet.seedTreatment.ifEmpty { "未設定" }}",
-                style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.padding(vertical = 8.dp)
+                modifier = Modifier.padding(vertical = 4.dp),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
         // 条間
         if (viewModel.isEditMode || !viewModel.hasExistingData) {
@@ -168,12 +174,13 @@ fun CultivationInfoSection(viewModel: SeedInputViewModel) {
         } else {
             Text(
                 text = "条間: ${viewModel.packet.cultivation.spacing_cm_row_min}～${viewModel.packet.cultivation.spacing_cm_row_max}cm",
-                style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.padding(vertical = 8.dp)
+                modifier = Modifier.padding(vertical = 4.dp),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
         
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
         
         // 株間
         if (viewModel.isEditMode || !viewModel.hasExistingData) {
@@ -200,12 +207,13 @@ fun CultivationInfoSection(viewModel: SeedInputViewModel) {
         } else {
             Text(
                 text = "株間: ${viewModel.packet.cultivation.spacing_cm_plant_min}～${viewModel.packet.cultivation.spacing_cm_plant_max}cm",
-                style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.padding(vertical = 8.dp)
+                modifier = Modifier.padding(vertical = 4.dp),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
         // 発芽温度
         if (viewModel.isEditMode || !viewModel.hasExistingData) {
@@ -218,12 +226,13 @@ fun CultivationInfoSection(viewModel: SeedInputViewModel) {
         } else {
             Text(
                 text = "発芽温度: ${viewModel.packet.cultivation.germinationTemp_c.ifEmpty { "未設定" }}",
-                style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.padding(vertical = 8.dp)
+                modifier = Modifier.padding(vertical = 8.dp),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
         
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
         
         // 生育温度
         if (viewModel.isEditMode || !viewModel.hasExistingData) {
@@ -236,12 +245,13 @@ fun CultivationInfoSection(viewModel: SeedInputViewModel) {
         } else {
             Text(
                 text = "生育温度: ${viewModel.packet.cultivation.growingTemp_c.ifEmpty { "未設定" }}",
-                style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.padding(vertical = 8.dp)
+                modifier = Modifier.padding(vertical = 4.dp),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
         // 堆肥
         if (viewModel.isEditMode || !viewModel.hasExistingData) {
@@ -254,12 +264,13 @@ fun CultivationInfoSection(viewModel: SeedInputViewModel) {
         } else {
             Text(
                 text = "堆肥: ${viewModel.packet.cultivation.soilPrep_per_sqm.compost_kg}kg/㎡",
-                style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.padding(vertical = 8.dp)
+                modifier = Modifier.padding(vertical = 4.dp),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
         
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
         
         // 苦土石灰
         if (viewModel.isEditMode || !viewModel.hasExistingData) {
@@ -272,12 +283,13 @@ fun CultivationInfoSection(viewModel: SeedInputViewModel) {
         } else {
             Text(
                 text = "苦土石灰: ${viewModel.packet.cultivation.soilPrep_per_sqm.dolomite_lime_g}g/㎡",
-                style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.padding(vertical = 8.dp)
+                modifier = Modifier.padding(vertical = 4.dp),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
         
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
         
         // 化成肥料
         if (viewModel.isEditMode || !viewModel.hasExistingData) {
@@ -290,12 +302,13 @@ fun CultivationInfoSection(viewModel: SeedInputViewModel) {
         } else {
             Text(
                 text = "化成肥料: ${viewModel.packet.cultivation.soilPrep_per_sqm.chemical_fertilizer_g}g/㎡",
-                style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.padding(vertical = 8.dp)
+                modifier = Modifier.padding(vertical = 4.dp),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
         // 栽培メモ
         if (viewModel.isEditMode || !viewModel.hasExistingData) {
@@ -308,12 +321,13 @@ fun CultivationInfoSection(viewModel: SeedInputViewModel) {
         } else {
             Text(
                 text = "栽培メモ: ${viewModel.packet.cultivation.notes.ifEmpty { "未設定" }}",
-                style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.padding(vertical = 8.dp)
+                modifier = Modifier.padding(vertical = 4.dp),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
         
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
         
         // 収穫方法
         if (viewModel.isEditMode || !viewModel.hasExistingData) {
@@ -326,8 +340,42 @@ fun CultivationInfoSection(viewModel: SeedInputViewModel) {
         } else {
             Text(
                 text = "収穫: ${viewModel.packet.cultivation.harvesting.ifEmpty { "未設定" }}",
-                style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.padding(vertical = 8.dp)
+                modifier = Modifier.padding(vertical = 4.dp),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        }
+        
+        Spacer(modifier = Modifier.height(12.dp))
+        
+        // 有効期限
+        if (viewModel.isEditMode || !viewModel.hasExistingData) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                OutlinedTextField(
+                    value = if (viewModel.packet.expirationYear > 0) viewModel.packet.expirationYear.toString() else "",
+                    onValueChange = viewModel::onExpirationYearChange,
+                    label = { Text("有効期限年") },
+                    modifier = Modifier.width(100.dp)
+                )
+                Text("年", style = MaterialTheme.typography.bodyMedium)
+                OutlinedTextField(
+                    value = if (viewModel.packet.expirationMonth > 0) viewModel.packet.expirationMonth.toString() else "",
+                    onValueChange = viewModel::onExpirationMonthChange,
+                    label = { Text("月") },
+                    modifier = Modifier.width(80.dp)
+                )
+                Text("月", style = MaterialTheme.typography.bodyMedium)
+            }
+        } else {
+            Text(
+                text = "有効期限: ${if (viewModel.packet.expirationYear > 0 && viewModel.packet.expirationMonth > 0) "${viewModel.packet.expirationYear}年${viewModel.packet.expirationMonth}月" else "未設定"}",
+                modifier = Modifier.padding(vertical = 4.dp),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }

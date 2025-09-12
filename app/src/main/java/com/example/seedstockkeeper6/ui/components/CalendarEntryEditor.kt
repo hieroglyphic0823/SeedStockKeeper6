@@ -337,6 +337,97 @@ fun CalendarEntryEditor(
 }
 
 @Composable
+fun ExpirationSelectionBottomSheet(
+    title: String,
+    selectedYear: String,
+    selectedMonth: String,
+    onYearChange: (String) -> Unit,
+    onMonthChange: (String) -> Unit,
+    onConfirm: () -> Unit,
+    onCancel: () -> Unit
+) {
+    val currentYear = java.time.LocalDate.now().year
+    val yearOptions = (currentYear..currentYear + 5).map { it.toString() }
+    val monthOptions = (1..12).map { it.toString() }
+    
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                ) {
+                    Text(
+            title,
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+                    
+        // 年選択
+        Text("年", style = MaterialTheme.typography.bodyMedium)
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.padding(vertical = 8.dp)
+        ) {
+            items(yearOptions) { year ->
+                                        Button(
+                    onClick = { onYearChange(year) },
+                                            colors = ButtonDefaults.buttonColors(
+                        containerColor = if (selectedYear == year) 
+                            MaterialTheme.colorScheme.primary 
+                                                else 
+                                                    MaterialTheme.colorScheme.surface
+                                            )
+                                        ) {
+                    Text(year)
+                }
+            }
+        }
+        
+        // 月選択
+        Text("月", style = MaterialTheme.typography.bodyMedium)
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.padding(vertical = 8.dp)
+        ) {
+            items(monthOptions) { month ->
+                                        Button(
+                    onClick = { onMonthChange(month) },
+                                            colors = ButtonDefaults.buttonColors(
+                        containerColor = if (selectedMonth == month) 
+                            MaterialTheme.colorScheme.primary 
+                                                else 
+                                                    MaterialTheme.colorScheme.surface
+                                            )
+                                        ) {
+                    Text("${month}月")
+                }
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        // 確認・キャンセルボタン
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                        Button(
+                onClick = onConfirm,
+                                            modifier = Modifier.weight(1f),
+                enabled = selectedYear != "0" && selectedMonth != "0"
+            ) {
+                Text("確認")
+            }
+            Button(
+                onClick = onCancel,
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("キャンセル")
+            }
+        }
+    }
+}
+
+@Composable
 fun PeriodSelectionBottomSheet(
     title: String,
     selectedYear: String,
@@ -413,15 +504,15 @@ fun PeriodSelectionBottomSheet(
             modifier = Modifier.padding(vertical = 8.dp)
         ) {
             items(stageOptions) { stage ->
-                                        Button(
+                                    Button(
                     onClick = { onStageChange(stage) },
-                                            colors = ButtonDefaults.buttonColors(
+                                        colors = ButtonDefaults.buttonColors(
                         containerColor = if (selectedStage == stage) 
                             MaterialTheme.colorScheme.primary 
-                                                else 
-                                                    MaterialTheme.colorScheme.surface
-                                            )
-                                        ) {
+                                            else 
+                                                MaterialTheme.colorScheme.surface
+                                        )
+                                    ) {
                     Text(stage)
                 }
             }

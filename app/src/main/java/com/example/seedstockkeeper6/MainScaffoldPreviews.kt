@@ -638,7 +638,7 @@ fun SettingsScreenPreview_DisplayMode() {
                             ) {
                                 Text(
                                     text = settingsViewModel.farmName.ifEmpty { "未設定" },
-                                    style = MaterialTheme.typography.bodyLarge,
+                                    style = MaterialTheme.typography.bodyMedium,
                                     color = if (settingsViewModel.farmName.isEmpty()) 
                                         MaterialTheme.colorScheme.onSurfaceVariant 
                                     else 
@@ -691,7 +691,7 @@ fun SettingsScreenPreview_DisplayMode() {
                                     )
                                     Text(
                                         text = settingsViewModel.defaultRegion.ifEmpty { "未設定" },
-                                        style = MaterialTheme.typography.bodyLarge,
+                                        style = MaterialTheme.typography.bodyMedium,
                                         color = if (settingsViewModel.defaultRegion.isEmpty()) 
                                             MaterialTheme.colorScheme.onSurfaceVariant 
                                         else 
@@ -864,7 +864,7 @@ fun RegionSelectionDialogContentPreview() {
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
                     
                     // 選択された地域の栽培期間表示
                     val selectedRegionEntry = demoOcrResult.calendar?.find { it.region == "暖地" }
@@ -1064,128 +1064,142 @@ fun PreviewCultivationInfoSection(viewModel: com.example.seedstockkeeper6.viewmo
         // 商品番号
         Text(
             text = "商品番号: ${viewModel.packet.productNumber.ifEmpty { "未設定" }}",
-            style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.padding(vertical = 8.dp)
+            modifier = Modifier.padding(vertical = 4.dp),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface
         )
         
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
         
         // 会社
         Text(
             text = "会社: ${viewModel.packet.company.ifEmpty { "未設定" }}",
-            style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.padding(vertical = 8.dp)
+            modifier = Modifier.padding(vertical = 4.dp),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface
         )
         
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
         
         // 原産国
         Text(
             text = "原産国: ${viewModel.packet.originCountry.ifEmpty { "未設定" }}",
-            style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.padding(vertical = 8.dp)
+            modifier = Modifier.padding(vertical = 4.dp),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
         // 内容量
         Text(
             text = "内容量: ${viewModel.packet.contents.ifEmpty { "未設定" }}",
-            style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.padding(vertical = 8.dp)
+            modifier = Modifier.padding(vertical = 4.dp),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface
         )
         
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
         
         // 発芽率
         Text(
             text = "発芽率: ${viewModel.packet.germinationRate.ifEmpty { "未設定" }}",
-            style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.padding(vertical = 8.dp)
+            modifier = Modifier.padding(vertical = 4.dp),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface
         )
         
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
         
         // 種子処理
         Text(
             text = "種子処理: ${viewModel.packet.seedTreatment.ifEmpty { "未設定" }}",
-            style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.padding(vertical = 8.dp)
+            modifier = Modifier.padding(vertical = 4.dp),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
         // 条間
         Text(
             text = "条間: ${viewModel.packet.cultivation.spacing_cm_row_min}～${viewModel.packet.cultivation.spacing_cm_row_max}cm",
-            style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.padding(vertical = 8.dp)
+            modifier = Modifier.padding(vertical = 4.dp),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface
         )
         
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
         
         // 株間
         Text(
             text = "株間: ${viewModel.packet.cultivation.spacing_cm_plant_min}～${viewModel.packet.cultivation.spacing_cm_plant_max}cm",
-            style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.padding(vertical = 8.dp)
+            modifier = Modifier.padding(vertical = 4.dp),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
         // 発芽温度
         Text(
             text = "発芽温度: ${viewModel.packet.cultivation.germinationTemp_c.ifEmpty { "未設定" }}",
-            style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.padding(vertical = 8.dp)
+            modifier = Modifier.padding(vertical = 4.dp),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface
         )
         
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
         
         // 生育温度
         Text(
             text = "生育温度: ${viewModel.packet.cultivation.growingTemp_c.ifEmpty { "未設定" }}",
-            style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.padding(vertical = 8.dp)
+            modifier = Modifier.padding(vertical = 4.dp),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
         // 堆肥
         Text(
             text = "堆肥: ${viewModel.packet.cultivation.soilPrep_per_sqm.compost_kg}kg/㎡",
-            style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.padding(vertical = 8.dp)
+            modifier = Modifier.padding(vertical = 4.dp),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface
         )
         
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
         
         // 苦土石灰
         Text(
             text = "苦土石灰: ${viewModel.packet.cultivation.soilPrep_per_sqm.dolomite_lime_g}g/㎡",
-            style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.padding(vertical = 8.dp)
+            modifier = Modifier.padding(vertical = 4.dp),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface
         )
         
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
         
         // 化成肥料
         Text(
             text = "化成肥料: ${viewModel.packet.cultivation.soilPrep_per_sqm.chemical_fertilizer_g}g/㎡",
-            style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.padding(vertical = 8.dp)
+            modifier = Modifier.padding(vertical = 4.dp),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
         // 栽培メモ
         Text(
             text = "栽培メモ: ${viewModel.packet.cultivation.notes.ifEmpty { "未設定" }}",
-            style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.padding(vertical = 8.dp)
+            modifier = Modifier.padding(vertical = 4.dp),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface
         )
         
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
         
         // 播種期間
         val calendarEntry = viewModel.packet.calendar?.firstOrNull()
@@ -1196,11 +1210,12 @@ fun PreviewCultivationInfoSection(viewModel: com.example.seedstockkeeper6.viewmo
         }
         Text(
             text = "播種期間: $sowingPeriod",
-            style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.padding(vertical = 8.dp)
+            modifier = Modifier.padding(vertical = 4.dp),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface
         )
         
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
         
         // 収穫期間
         val harvestPeriod = if (calendarEntry != null) {
@@ -1210,17 +1225,19 @@ fun PreviewCultivationInfoSection(viewModel: com.example.seedstockkeeper6.viewmo
         }
         Text(
             text = "収穫期間: $harvestPeriod",
-            style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.padding(vertical = 8.dp)
+            modifier = Modifier.padding(vertical = 4.dp),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface
         )
         
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
         
         // 収穫方法
         Text(
             text = "収穫: ${viewModel.packet.cultivation.harvesting.ifEmpty { "未設定" }}",
-            style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.padding(vertical = 8.dp)
+            modifier = Modifier.padding(vertical = 4.dp),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface
         )
     }
 }

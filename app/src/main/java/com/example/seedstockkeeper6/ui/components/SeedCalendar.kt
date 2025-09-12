@@ -86,7 +86,7 @@ fun SeedCalendarGrouped(
     packetExpirationYear: Int,
     packetExpirationMonth: Int,
     modifier: Modifier = Modifier.fillMaxWidth(),
-    heightDp: Int = 100
+    heightDp: Int = 114
 ) {
     val today = LocalDate.of(2025, 9, 1) // 9月始まりに固定
     // MaterialTheme から直接取得
@@ -679,7 +679,7 @@ private fun PreviewSeedCalendarGrouped(
     packetExpirationYear: Int,
     packetExpirationMonth: Int,
     modifier: Modifier = Modifier.fillMaxWidth(),
-    heightDp: Int = 100
+    heightDp: Int = 114
 ) {
     // プレビュー用に2025年9月を固定
     val previewToday = LocalDate.of(2025, 9, 1)
