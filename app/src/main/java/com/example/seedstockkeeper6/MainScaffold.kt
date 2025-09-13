@@ -154,7 +154,11 @@ fun MainScaffoldTopAppBar(
                                     size = 24.dp
                                 )
                                 Text(
-                                    text = seedInputViewModel.packet.productName.ifEmpty { "種情報" },
+                                    text = if (seedInputViewModel.packet.productName.isNotEmpty() && seedInputViewModel.packet.variety.isNotEmpty()) {
+                                        "${seedInputViewModel.packet.productName}（${seedInputViewModel.packet.variety}）"
+                                    } else {
+                                        seedInputViewModel.packet.productName.ifEmpty { "種情報" }
+                                    },
                                     modifier = Modifier.fillMaxWidth(),
                                     textAlign = TextAlign.Start
                                 )
@@ -179,7 +183,11 @@ fun MainScaffoldTopAppBar(
                                     size = 24.dp
                                 )
                                 Text(
-                                    text = "${seedInputViewModel.packet.productName.ifEmpty { "種情報" }}（編集）",
+                                    text = if (seedInputViewModel.packet.productName.isNotEmpty() && seedInputViewModel.packet.variety.isNotEmpty()) {
+                                        "${seedInputViewModel.packet.productName}（${seedInputViewModel.packet.variety}）（編集）"
+                                    } else {
+                                        "${seedInputViewModel.packet.productName.ifEmpty { "種情報" }}（編集）"
+                                    },
                                     modifier = Modifier.fillMaxWidth(),
                                     textAlign = TextAlign.Start
                                 )

@@ -25,7 +25,7 @@ fun NotesCardSection(viewModel: SeedInputViewModel) {
     // DisplayModeの時のみ表示
     if (!viewModel.isEditMode && viewModel.hasExistingData) {
         Column(
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // 栽培メモカード
             if (viewModel.packet.cultivation.notes.isNotEmpty()) {
@@ -187,5 +187,11 @@ fun NotesCardSection(viewModel: SeedInputViewModel) {
                 }
             }
         }
+        
+        // 区切り線
+        HorizontalDivider(
+            thickness = 1.dp,
+            modifier = Modifier.padding(vertical = 16.dp)
+        )
     }
 }

@@ -29,7 +29,7 @@ fun BasicInfoSection(viewModel: SeedInputViewModel) {
             modifier = Modifier.padding(bottom = 16.dp)
         ) {
             Image(
-                painter = painterResource(id = R.drawable.seedsbag),
+                painter = painterResource(id = R.drawable.germination),
                 contentDescription = "基本情報",
                 modifier = Modifier.size(24.dp)
             )

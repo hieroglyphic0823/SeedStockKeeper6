@@ -43,21 +43,20 @@ fun CompanionPlantsSection(viewModel: SeedInputViewModel) {
         }
         
         viewModel.packet.companionPlants.forEachIndexed { i, companion ->
-            Row(
-                Modifier
+            Column(
+                modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                CompanionEffectIcon(companion.effects)
+                Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     companion.plant,
-                    Modifier.weight(1f),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Normal)
+                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Normal)
                 )
-                Spacer(modifier = Modifier.size(8.dp))
-                CompanionEffectIcon(companion.effects)
             }
         }
         
