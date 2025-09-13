@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.Image
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddAPhoto
 import androidx.compose.material.icons.filled.AutoFixHigh
@@ -20,7 +21,10 @@ import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.ZoomIn
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.ContentCut
+import androidx.compose.ui.res.painterResource
+import com.example.seedstockkeeper6.R
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -30,6 +34,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import coil.compose.AsyncImage
 import com.example.seedstockkeeper6.viewmodel.SeedInputViewModel
 import com.google.firebase.ktx.Firebase
@@ -64,10 +70,9 @@ fun ImageManagementSection(viewModel: SeedInputViewModel) {
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier.padding(bottom = 8.dp)
         ) {
-            Icon(
-                Icons.Filled.CameraAlt,
+            Image(
+                painter = painterResource(id = R.drawable.image),
                 contentDescription = "画像管理",
-                tint = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.size(24.dp)
             )
             Text(
@@ -184,10 +189,9 @@ fun ImageManagementSection(viewModel: SeedInputViewModel) {
                         .align(Alignment.BottomCenter)
                         .padding(4.dp)
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.ZoomIn,
+                    Image(
+                        painter = painterResource(id = R.drawable.predictive_analysis),
                         contentDescription = "拡大表示",
-                        tint = Color.White,
                         modifier = Modifier
                             .size(24.dp)
                             .background(
@@ -253,6 +257,52 @@ fun ImageManagementSection(viewModel: SeedInputViewModel) {
                 }
             }
         }
+        }
+    }
+    
+    // 拡大表示のモーダルダイアログ
+    viewModel.selectedImageUri?.let { uri ->
+        Dialog(
+            onDismissRequest = { viewModel.clearSelectedImage() },
+            properties = DialogProperties(
+                dismissOnBackPress = true,
+                dismissOnClickOutside = true
+            )
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.9f))
+            ) {
+                // 拡大表示する画像
+                AsyncImage(
+                    model = uri.toString(),
+                    contentDescription = "拡大表示",
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp),
+                    contentScale = ContentScale.Fit
+                )
+                
+                // ×ボタン（右上）
+                IconButton(
+                    onClick = { viewModel.clearSelectedImage() },
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(16.dp)
+                        .background(
+                            color = Color.Black.copy(alpha = 0.5f),
+                            shape = RoundedCornerShape(20.dp)
+                        )
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Close,
+                        contentDescription = "閉じる",
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+            }
         }
     }
 }

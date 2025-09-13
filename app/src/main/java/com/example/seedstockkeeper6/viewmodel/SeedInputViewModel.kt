@@ -148,9 +148,9 @@ class SeedInputViewModel : ViewModel() {
             }
         }
     }
-
-
+    
     fun clearSelectedImage() {
+        selectedImageUri = null
         selectedImageUrl = null
         selectedImageBitmap = null
     }

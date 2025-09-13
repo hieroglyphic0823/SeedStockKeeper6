@@ -1,5 +1,6 @@
 package com.example.seedstockkeeper6.ui.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -8,7 +9,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import com.example.seedstockkeeper6.R
 import com.example.seedstockkeeper6.viewmodel.SeedInputViewModel
 
 @Composable
@@ -23,10 +26,9 @@ fun CultivationInfoSection(viewModel: SeedInputViewModel) {
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier.padding(bottom = 16.dp)
         ) {
-            Icon(
-                Icons.Filled.LocalFlorist,
+            Image(
+                painter = painterResource(id = R.drawable.monitoring),
                 contentDescription = "栽培情報",
-                tint = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.size(24.dp)
             )
             Text(

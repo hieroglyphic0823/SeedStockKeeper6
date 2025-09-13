@@ -81,10 +81,9 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier.padding(bottom = 16.dp)
         ) {
-            Icon(
-                Icons.Filled.CalendarMonth,
+            Image(
+                painter = painterResource(id = R.drawable.calendar),
                 contentDescription = "栽培カレンダー",
-                tint = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.size(24.dp)
             )
             Text(
@@ -157,7 +156,10 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
                         ) {
                             Button(
                                 onClick = { showSowingStartBottomSheet = true },
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier.weight(1f),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                                )
                             ) {
                                 Column(
                                     horizontalAlignment = Alignment.CenterHorizontally
@@ -167,20 +169,30 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
                                             "2025年8月"
                                         } else {
                                             "${if (sowingStartYear == "0") "" else "${sowingStartYear}年"}${if (sowingStartMonth == "0") "不明" else sowingStartMonth}月"
-                                        }
+                                        },
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer
                                     )
-                                    if (sowingStartStage.isNotEmpty()) {
-                                        Text(
-                                            text = "(${sowingStartStage})",
-                                            style = MaterialTheme.typography.bodySmall
-                                        )
-                                    }
+                                    Text(
+                                        text = if (sowingStartStage.isNotEmpty()) {
+                                            "(${sowingStartStage})"
+                                        } else if (sowingStartYear == "0" && sowingStartMonth == "0" && sowingStartStage.isEmpty()) {
+                                            "(上旬)"
+                                        } else {
+                                            "(${sowingStartStage.ifEmpty { "上旬" }})"
+                                        },
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                                    )
                                 }
                             }
                             Text("～", style = MaterialTheme.typography.bodyMedium)
                             Button(
                                 onClick = { showSowingEndBottomSheet = true },
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier.weight(1f),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                                )
                             ) {
                                 Column(
                                     horizontalAlignment = Alignment.CenterHorizontally
@@ -190,14 +202,21 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
                                             "2025年9月"
                                         } else {
                                             "${if (sowingEndYear == "0") "" else "${sowingEndYear}年"}${if (sowingEndMonth == "0") "不明" else sowingEndMonth}月"
-                                        }
+                                        },
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer
                                     )
-                                    if (sowingEndStage.isNotEmpty()) {
-                                        Text(
-                                            text = "(${sowingEndStage})",
-                                            style = MaterialTheme.typography.bodySmall
-                                        )
-                                    }
+                                    Text(
+                                        text = if (sowingEndStage.isNotEmpty()) {
+                                            "(${sowingEndStage})"
+                                        } else if (sowingEndYear == "0" && sowingEndMonth == "0" && sowingEndStage.isEmpty()) {
+                                            "(下旬)"
+                                        } else {
+                                            "(${sowingEndStage.ifEmpty { "下旬" }})"
+                                        },
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                                    )
                                 }
                             }
                         }
@@ -244,7 +263,10 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
             ) {
                             Button(
                                 onClick = { showHarvestStartBottomSheet = true },
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier.weight(1f),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.primary
+                                )
                             ) {
                                 Column(
                                     horizontalAlignment = Alignment.CenterHorizontally
@@ -254,20 +276,30 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
                                             "2025年10月"
                                         } else {
                                             "${if (harvestStartYear == "0") "" else "${harvestStartYear}年"}${if (harvestStartMonth == "0") "不明" else harvestStartMonth}月"
-                                        }
+                                        },
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onPrimary
                                     )
-                                    if (harvestStartStage.isNotEmpty()) {
-                                        Text(
-                                            text = "(${harvestStartStage})",
-                                            style = MaterialTheme.typography.bodySmall
-                                        )
-                                    }
+                                    Text(
+                                        text = if (harvestStartStage.isNotEmpty()) {
+                                            "(${harvestStartStage})"
+                                        } else if (harvestStartYear == "0" && harvestStartMonth == "0" && harvestStartStage.isEmpty()) {
+                                            "(上旬)"
+                                        } else {
+                                            "(${harvestStartStage.ifEmpty { "上旬" }})"
+                                        },
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onPrimary
+                                    )
                                 }
                             }
                             Text("～", style = MaterialTheme.typography.bodyMedium)
                             Button(
                                 onClick = { showHarvestEndBottomSheet = true },
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier.weight(1f),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.primary
+                                )
                             ) {
                                 Column(
                                     horizontalAlignment = Alignment.CenterHorizontally
@@ -277,14 +309,21 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
                                             "2025年12月"
                                         } else {
                                             "${if (harvestEndYear == "0") "" else "${harvestEndYear}年"}${if (harvestEndMonth == "0") "不明" else harvestEndMonth}月"
-                                        }
+                                        },
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onPrimary
                                     )
-                                    if (harvestEndStage.isNotEmpty()) {
-                                        Text(
-                                            text = "(${harvestEndStage})",
-                                            style = MaterialTheme.typography.bodySmall
-                                        )
-                                    }
+                                    Text(
+                                        text = if (harvestEndStage.isNotEmpty()) {
+                                            "(${harvestEndStage})"
+                                        } else if (harvestEndYear == "0" && harvestEndMonth == "0" && harvestEndStage.isEmpty()) {
+                                            "(下旬)"
+                                        } else {
+                                            "(${harvestEndStage.ifEmpty { "下旬" }})"
+                                        },
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onPrimary
+                                    )
                                 }
                             }
                         }
@@ -326,14 +365,19 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
                 if (viewModel.isEditMode || !viewModel.hasExistingData) {
                     // 編集モード: ボタン表示
                     Button(
-                        onClick = { showExpirationBottomSheet = true }
+                        onClick = { showExpirationBottomSheet = true },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.error
+                        )
                     ) {
                         Text(
                             text = if (expirationYear == "0" && expirationMonth == "0") {
                                 "2026年10月"
                             } else {
                                 "${expirationYear}年${expirationMonth}月"
-                            }
+                            },
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onError
                         )
                     }
                 } else {

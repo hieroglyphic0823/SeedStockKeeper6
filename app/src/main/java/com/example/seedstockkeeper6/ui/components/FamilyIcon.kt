@@ -2,11 +2,13 @@ package com.example.seedstockkeeper6.ui.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -14,6 +16,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
@@ -51,9 +54,9 @@ fun FamilyIcon(
     Box(modifier = Modifier.size(size)) {
         // 本体（四角いタイル）
         Surface(
-            color = MaterialTheme.colorScheme.surfaceContainerLow,
+            color = MaterialTheme.colorScheme.surface, // surfaceに変更
             contentColor = MaterialTheme.colorScheme.onSurface,
-            shape = RoundedCornerShape(cornerRadius),
+            shape = RoundedCornerShape(4.dp), // 4.dpに固定
             tonalElevation = 0.dp,
             shadowElevation = 0.dp,
             modifier = Modifier.fillMaxSize()
@@ -66,7 +69,7 @@ fun FamilyIcon(
                     Image(
                         painter = painterResource(id = iconRes),
                         contentDescription = "$normalized のアイコン",
-                        modifier = Modifier.size((size.value * 0.6f).dp) // 元の 24dp 相当を自動スケール
+                        modifier = Modifier.size(32.dp) // 32.dpに統一（コンパニオンプランツと同じ）
                     )
                 }
             }
@@ -94,6 +97,49 @@ fun FamilyIcon(
                     modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                 )
             }
+        }
+    }
+}
+
+/**
+ * コンパニオンプランツと同じスタイルの丸い科名アイコン
+ */
+@Composable
+fun FamilyIconCircle(
+    family: String?
+) {
+    val normalized = normalizeFamilyName(family)
+
+    val iconRes: Int? = when (normalized) {
+        "イネ科" -> R.drawable.corn
+        "ナス科" -> R.drawable.eggplant
+        "ヒルガオ科" -> R.drawable.sweet_potato
+        "アブラナ科" -> R.drawable.broccoli
+        "ウリ科" -> R.drawable.cucumber
+        "マメ科" -> R.drawable.bean
+        "キク科" -> R.drawable.lettuce
+        "セリ科" -> R.drawable.carrot
+        "ネギ科" -> R.drawable.onion2
+        "アマランサス科" -> R.drawable.spinach
+        "バラ科" -> R.drawable.strawberry
+        "ミカン科" -> R.drawable.orange
+        else -> R.drawable.vegetables
+    }
+
+    // コンパニオンプランツと同じスタイルの丸いアイコン
+    if (iconRes != null) {
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.surface),
+            contentAlignment = Alignment.Center
+        ) {
+            Image(
+                painter = painterResource(id = iconRes),
+                contentDescription = "$normalized のアイコン",
+                modifier = Modifier.size(32.dp)
+            )
         }
     }
 }

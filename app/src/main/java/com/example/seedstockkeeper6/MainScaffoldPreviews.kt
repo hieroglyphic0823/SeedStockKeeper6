@@ -52,7 +52,7 @@ import com.example.seedstockkeeper6.ui.theme.SeedStockKeeper6Theme
 import com.example.seedstockkeeper6.ui.screens.*
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Preview(showBackground = true, name = "種情報表示画面 - 表示モード", heightDp = 1200)
+@Preview(showBackground = true, name = "種情報表示画面 - 表示モード", heightDp = 1400)
 @Composable
 fun SeedInputScreenPreview_DisplayMode() {
     SeedStockKeeper6Theme(darkTheme = false, dynamicColor = false) {
@@ -168,7 +168,7 @@ fun SeedInputScreenPreview_DisplayMode() {
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Preview(showBackground = true, name = "種情報新規作成画面", heightDp = 1200)
+@Preview(showBackground = true, name = "種情報新規作成画面", heightDp = 1400)
 @Composable
 fun SeedInputScreenPreview_NewCreation() {
     SeedStockKeeper6Theme(darkTheme = false, dynamicColor = false) {
@@ -274,7 +274,7 @@ fun SeedInputScreenPreview_NewCreation() {
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Preview(showBackground = true, name = "種情報登録画面 - 編集モード", heightDp = 1200)
+@Preview(showBackground = true, name = "種情報登録画面 - 編集モード", heightDp = 1400)
 @Composable
 fun SeedInputScreenPreview_EditMode() {
     SeedStockKeeper6Theme(darkTheme = false, dynamicColor = false) {
@@ -495,10 +495,9 @@ fun PreviewImageManagementSection(viewModel: com.example.seedstockkeeper6.viewmo
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier.padding(bottom = 8.dp)
         ) {
-            Icon(
-                Icons.Filled.CameraAlt,
+            Image(
+                painter = painterResource(id = R.drawable.image),
                 contentDescription = "画像管理",
-                tint = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.size(24.dp)
             )
             Text(
@@ -986,7 +985,7 @@ fun SeedListScreenPreview() {
             item {
                 Text(
                     text = "種一覧",
-                    style = MaterialTheme.typography.headlineMedium,
+                    style = MaterialTheme.typography.headlineLarge,
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
             }
@@ -1013,12 +1012,12 @@ fun SeedListScreenPreview() {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             "${seed.productName} (${seed.variety})", 
-                            style = MaterialTheme.typography.titleMedium
+                            style = MaterialTheme.typography.titleLarge
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             "有効期限: ${seed.expirationYear}年 ${seed.expirationMonth}月", 
-                            style = MaterialTheme.typography.bodySmall
+                            style = MaterialTheme.typography.bodyLarge
                         )
                         
                         // コンパニオンプランツの表示（色変更が反映される）
@@ -1029,7 +1028,7 @@ fun SeedListScreenPreview() {
                             ) {
                                 Text(
                                     "コンパニオンプランツ: ",
-                                    style = MaterialTheme.typography.bodySmall
+                                    style = MaterialTheme.typography.bodyLarge
                                 )
                                 com.example.seedstockkeeper6.ui.components.CompanionEffectIcon(
                                     effects = listOf("PEST_PREVENTION", "GROWTH_PROMOTION", "FLAVOR_ENHANCEMENT")
@@ -1064,10 +1063,9 @@ fun PreviewCultivationInfoSection(viewModel: com.example.seedstockkeeper6.viewmo
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier.padding(bottom = 16.dp)
         ) {
-            Icon(
-                Icons.Filled.LocalFlorist,
+            Image(
+                painter = painterResource(id = R.drawable.monitoring),
                 contentDescription = "栽培情報",
-                tint = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.size(24.dp)
             )
             Text(

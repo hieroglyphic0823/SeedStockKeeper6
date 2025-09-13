@@ -1,15 +1,19 @@
 package com.example.seedstockkeeper6.ui.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.LocalFlorist
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import com.example.seedstockkeeper6.R
+import com.example.seedstockkeeper6.ui.components.FamilyIcon
+import com.example.seedstockkeeper6.ui.components.FamilyIconCircle
 import com.example.seedstockkeeper6.viewmodel.SeedInputViewModel
 
 @Composable
@@ -24,10 +28,9 @@ fun BasicInfoSection(viewModel: SeedInputViewModel) {
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier.padding(bottom = 16.dp)
         ) {
-            Icon(
-                Icons.Filled.Info,
+            Image(
+                painter = painterResource(id = R.drawable.seedsbag),
                 contentDescription = "基本情報",
-                tint = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.size(24.dp)
             )
             Text(
@@ -108,11 +111,9 @@ fun BasicInfoSection(viewModel: SeedInputViewModel) {
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface
                 )
-                Icon(
-                    Icons.Filled.LocalFlorist,
-                    contentDescription = "科名",
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(18.dp)
+                // コンパニオンプランツと同じスタイルの丸いアイコン
+                FamilyIconCircle(
+                    family = viewModel.packet.family
                 )
                 Text(
                     text = viewModel.packet.family.ifEmpty { "未設定" },
