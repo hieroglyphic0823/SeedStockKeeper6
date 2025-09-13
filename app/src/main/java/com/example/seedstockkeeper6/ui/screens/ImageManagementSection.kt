@@ -77,7 +77,7 @@ fun ImageManagementSection(viewModel: SeedInputViewModel) {
             )
             Text(
                 "画像管理",
-                style = MaterialTheme.typography.titleMedium
+                style = MaterialTheme.typography.titleLarge
             )
         }
         
@@ -195,7 +195,7 @@ fun ImageManagementSection(viewModel: SeedInputViewModel) {
                         modifier = Modifier
                             .size(24.dp)
                             .background(
-                                color = Color.Black.copy(alpha = 0.5f),
+                                color = MaterialTheme.colorScheme.primaryContainer,
                                 shape = RoundedCornerShape(12.dp)
                             )
                             .padding(4.dp)

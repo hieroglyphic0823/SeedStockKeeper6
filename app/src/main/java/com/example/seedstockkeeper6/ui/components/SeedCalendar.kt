@@ -590,7 +590,6 @@ fun SeedCalendarGroupedInternal(
                                 
                                 val iconImage = iconBitmap.asImageBitmap()
                                 val iconDisplaySizeInt = iconSize.toInt()
-                                val colorFilter = ColorFilter.tint(actualColor)
                                 
                                 // 複数のアイコンを描画
                                 for (i in 0 until iconCount) {
@@ -611,8 +610,7 @@ fun SeedCalendarGroupedInternal(
                                             x = currentIconX.toInt(),
                                             y = iconY.toInt()
                                         ),
-                                        dstSize = IntSize(iconDisplaySizeInt, iconDisplaySizeInt),
-                                        colorFilter = colorFilter
+                                        dstSize = IntSize(iconDisplaySizeInt, iconDisplaySizeInt)
                                     )
                                 }
                                 

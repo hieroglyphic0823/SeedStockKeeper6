@@ -88,7 +88,7 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
             )
             Text(
                 "栽培カレンダー",
-                style = MaterialTheme.typography.titleMedium
+                style = MaterialTheme.typography.titleLarge
             )
         }
         
@@ -225,7 +225,7 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
                         Text(
                             text = "播種期間: $sowingPeriod",
                             modifier = Modifier.padding(vertical = 4.dp),
-                            style = MaterialTheme.typography.bodyMedium,
+                            style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                     }
@@ -332,7 +332,7 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
                         Text(
                             text = "収穫期間: $harvestPeriod",
                             modifier = Modifier.padding(vertical = 4.dp),
-                            style = MaterialTheme.typography.bodyMedium,
+                            style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                     }
@@ -385,7 +385,7 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
                     Text(
                         text = "有効期限: ${if (viewModel.packet.expirationYear > 0 && viewModel.packet.expirationMonth > 0) "${viewModel.packet.expirationYear}年${viewModel.packet.expirationMonth}月" else "未設定"}",
                         modifier = Modifier.padding(vertical = 4.dp),
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }

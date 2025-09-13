@@ -502,7 +502,7 @@ fun PreviewImageManagementSection(viewModel: com.example.seedstockkeeper6.viewmo
             )
             Text(
                 text = "画像管理",
-                style = MaterialTheme.typography.titleMedium
+                style = MaterialTheme.typography.titleLarge
             )
         }
         
@@ -1070,7 +1070,7 @@ fun PreviewCultivationInfoSection(viewModel: com.example.seedstockkeeper6.viewmo
             )
             Text(
                 "栽培情報",
-                style = MaterialTheme.typography.titleMedium
+                style = MaterialTheme.typography.titleLarge
             )
         }
         
@@ -1078,7 +1078,7 @@ fun PreviewCultivationInfoSection(viewModel: com.example.seedstockkeeper6.viewmo
         Text(
             text = "商品番号: ${viewModel.packet.productNumber.ifEmpty { "未設定" }}",
             modifier = Modifier.padding(vertical = 4.dp),
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurface
         )
         
@@ -1088,7 +1088,7 @@ fun PreviewCultivationInfoSection(viewModel: com.example.seedstockkeeper6.viewmo
         Text(
             text = "会社: ${viewModel.packet.company.ifEmpty { "未設定" }}",
             modifier = Modifier.padding(vertical = 4.dp),
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurface
         )
         
@@ -1098,7 +1098,7 @@ fun PreviewCultivationInfoSection(viewModel: com.example.seedstockkeeper6.viewmo
         Text(
             text = "原産国: ${viewModel.packet.originCountry.ifEmpty { "未設定" }}",
             modifier = Modifier.padding(vertical = 4.dp),
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurface
         )
 
@@ -1108,7 +1108,7 @@ fun PreviewCultivationInfoSection(viewModel: com.example.seedstockkeeper6.viewmo
         Text(
             text = "内容量: ${viewModel.packet.contents.ifEmpty { "未設定" }}",
             modifier = Modifier.padding(vertical = 4.dp),
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurface
         )
         
@@ -1118,7 +1118,7 @@ fun PreviewCultivationInfoSection(viewModel: com.example.seedstockkeeper6.viewmo
         Text(
             text = "発芽率: ${viewModel.packet.germinationRate.ifEmpty { "未設定" }}",
             modifier = Modifier.padding(vertical = 4.dp),
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurface
         )
         
@@ -1128,7 +1128,7 @@ fun PreviewCultivationInfoSection(viewModel: com.example.seedstockkeeper6.viewmo
         Text(
             text = "種子処理: ${viewModel.packet.seedTreatment.ifEmpty { "未設定" }}",
             modifier = Modifier.padding(vertical = 4.dp),
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurface
         )
 
@@ -1138,7 +1138,7 @@ fun PreviewCultivationInfoSection(viewModel: com.example.seedstockkeeper6.viewmo
         Text(
             text = "条間: ${viewModel.packet.cultivation.spacing_cm_row_min}～${viewModel.packet.cultivation.spacing_cm_row_max}cm",
             modifier = Modifier.padding(vertical = 4.dp),
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurface
         )
         
@@ -1148,7 +1148,7 @@ fun PreviewCultivationInfoSection(viewModel: com.example.seedstockkeeper6.viewmo
         Text(
             text = "株間: ${viewModel.packet.cultivation.spacing_cm_plant_min}～${viewModel.packet.cultivation.spacing_cm_plant_max}cm",
             modifier = Modifier.padding(vertical = 4.dp),
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurface
         )
 
@@ -1158,7 +1158,7 @@ fun PreviewCultivationInfoSection(viewModel: com.example.seedstockkeeper6.viewmo
         Text(
             text = "発芽温度: ${viewModel.packet.cultivation.germinationTemp_c.ifEmpty { "未設定" }}",
             modifier = Modifier.padding(vertical = 4.dp),
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurface
         )
         
@@ -1168,7 +1168,7 @@ fun PreviewCultivationInfoSection(viewModel: com.example.seedstockkeeper6.viewmo
         Text(
             text = "生育温度: ${viewModel.packet.cultivation.growingTemp_c.ifEmpty { "未設定" }}",
             modifier = Modifier.padding(vertical = 4.dp),
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurface
         )
 
@@ -1178,7 +1178,7 @@ fun PreviewCultivationInfoSection(viewModel: com.example.seedstockkeeper6.viewmo
         Text(
             text = "堆肥: ${viewModel.packet.cultivation.soilPrep_per_sqm.compost_kg}kg/㎡",
             modifier = Modifier.padding(vertical = 4.dp),
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurface
         )
         
@@ -1188,7 +1188,7 @@ fun PreviewCultivationInfoSection(viewModel: com.example.seedstockkeeper6.viewmo
         Text(
             text = "苦土石灰: ${viewModel.packet.cultivation.soilPrep_per_sqm.dolomite_lime_g}g/㎡",
             modifier = Modifier.padding(vertical = 4.dp),
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurface
         )
         
@@ -1198,7 +1198,7 @@ fun PreviewCultivationInfoSection(viewModel: com.example.seedstockkeeper6.viewmo
         Text(
             text = "化成肥料: ${viewModel.packet.cultivation.soilPrep_per_sqm.chemical_fertilizer_g}g/㎡",
             modifier = Modifier.padding(vertical = 4.dp),
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurface
         )
 

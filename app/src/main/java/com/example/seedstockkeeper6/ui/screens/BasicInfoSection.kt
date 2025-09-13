@@ -35,7 +35,7 @@ fun BasicInfoSection(viewModel: SeedInputViewModel) {
             )
             Text(
                 "基本情報",
-                style = MaterialTheme.typography.titleMedium
+                style = MaterialTheme.typography.titleLarge
             )
         }
         
@@ -108,7 +108,7 @@ fun BasicInfoSection(viewModel: SeedInputViewModel) {
             ) {
                 Text(
                     text = "科名: ",
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 // コンパニオンプランツと同じスタイルの丸いアイコン
@@ -117,7 +117,7 @@ fun BasicInfoSection(viewModel: SeedInputViewModel) {
                 )
                 Text(
                     text = viewModel.packet.family.ifEmpty { "未設定" },
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurface
                 )
             }
