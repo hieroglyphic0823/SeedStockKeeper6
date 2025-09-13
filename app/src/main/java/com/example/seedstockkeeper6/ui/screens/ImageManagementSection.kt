@@ -22,8 +22,8 @@ import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.ZoomIn
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.outlined.ContentCut
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.graphics.ColorFilter
 import com.example.seedstockkeeper6.R
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -71,7 +71,7 @@ fun ImageManagementSection(viewModel: SeedInputViewModel) {
             modifier = Modifier.padding(bottom = 8.dp)
         ) {
             Image(
-                painter = painterResource(id = R.drawable.image),
+                painter = painterResource(id = R.drawable.gallery),
                 contentDescription = "画像管理",
                 modifier = Modifier.size(24.dp)
             )
@@ -110,7 +110,7 @@ fun ImageManagementSection(viewModel: SeedInputViewModel) {
                     .then(
                         if (viewModel.ocrTargetIndex == index) {
                             Modifier.border(
-                                width = 3.dp,
+                                width = 4.dp,
                                 color = MaterialTheme.colorScheme.tertiary,
                                 shape = RoundedCornerShape(4.dp)
                             )
@@ -145,7 +145,11 @@ fun ImageManagementSection(viewModel: SeedInputViewModel) {
                             viewModel.removeImage(index)
                         }
                     }, modifier = Modifier.align(Alignment.TopEnd)) {
-                        Icon(Icons.Default.Delete, contentDescription = "削除")
+                        Image(
+                            painter = painterResource(id = R.drawable.delete),
+                            contentDescription = "削除",
+                            modifier = Modifier.size(24.dp)
+                        )
                     }
                     // 左右移動ボタン追加
                     if (viewModel.imageUris.size > 1) {
@@ -195,7 +199,7 @@ fun ImageManagementSection(viewModel: SeedInputViewModel) {
                         modifier = Modifier
                             .size(24.dp)
                             .background(
-                                color = MaterialTheme.colorScheme.primaryContainer,
+                                color = MaterialTheme.colorScheme.tertiaryContainer,
                                 shape = RoundedCornerShape(12.dp)
                             )
                             .padding(4.dp)
@@ -207,7 +211,11 @@ fun ImageManagementSection(viewModel: SeedInputViewModel) {
         if (viewModel.isEditMode || !viewModel.hasExistingData) {
             item {
                 IconButton(onClick = { pickImagesLauncher.launch("image/*") }) {
-                    Icon(Icons.Default.AddAPhoto, contentDescription = "追加")
+                    Image(
+                        painter = painterResource(id = R.drawable.plus),
+                        contentDescription = "追加",
+                        modifier = Modifier.size(24.dp)
+                    )
                 }
             }
         }
@@ -238,22 +246,37 @@ fun ImageManagementSection(viewModel: SeedInputViewModel) {
                     enabled = viewModel.imageUris.isNotEmpty(),
                     modifier = Modifier.wrapContentWidth(), // 横幅を詰める
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                        containerColor = MaterialTheme.colorScheme.tertiary,
+                        contentColor = MaterialTheme.colorScheme.onTertiary,
                         disabledContainerColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
                         disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
                     )
                 ) {
                     Text("AIで解析")
                     Spacer(Modifier.width(8.dp))
-                    Icon(Icons.Default.AutoFixHigh, contentDescription = "OCR")
+                    Image(
+                        painter = painterResource(id = R.drawable.star_w),
+                        contentDescription = "OCR",
+                        modifier = Modifier.size(24.dp)
+                    )
                 }
 
                 IconButton(
                     onClick = { viewModel.cropSeedOuterAtOcrTarget(context) },
                     enabled = viewModel.ocrTargetIndex in viewModel.imageUris.indices && !viewModel.isLoading
                 ) {
-                    Icon(Icons.Outlined.ContentCut, contentDescription = "外側を切り抜く")
+                    Image(
+                        painter = painterResource(id = R.drawable.crop),
+                        contentDescription = "外側を切り抜く",
+                        modifier = Modifier.size(24.dp),
+                        colorFilter = if (viewModel.ocrTargetIndex in viewModel.imageUris.indices && !viewModel.isLoading) {
+                            null
+                        } else {
+                            androidx.compose.ui.graphics.ColorFilter.tint(
+                                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                            )
+                        }
+                    )
                 }
             }
         }

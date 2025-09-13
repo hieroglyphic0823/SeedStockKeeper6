@@ -3,30 +3,6 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
     
     <font
-        android:font="@font/notosansjp_thin"
-        android:fontStyle="normal"
-        android:fontWeight="100"
-        app:font="@font/notosansjp_thin"
-        app:fontStyle="normal"
-        app:fontWeight="100" />
-
-    <font
-        android:font="@font/notosansjp_extralight"
-        android:fontStyle="normal"
-        android:fontWeight="200"
-        app:font="@font/notosansjp_extralight"
-        app:fontStyle="normal"
-        app:fontWeight="200" />
-
-    <font
-        android:font="@font/notosansjp_light"
-        android:fontStyle="normal"
-        android:fontWeight="300"
-        app:font="@font/notosansjp_light"
-        app:fontStyle="normal"
-        app:fontWeight="300" />
-
-    <font
         android:font="@font/notosansjp_regular"
         android:fontStyle="normal"
         android:fontWeight="400"
@@ -43,35 +19,11 @@
         app:fontWeight="500" />
 
     <font
-        android:font="@font/notosansjp_semibold"
-        android:fontStyle="normal"
-        android:fontWeight="600"
-        app:font="@font/notosansjp_semibold"
-        app:fontStyle="normal"
-        app:fontWeight="600" />
-
-    <font
         android:font="@font/notosansjp_bold"
         android:fontStyle="normal"
         android:fontWeight="700"
         app:font="@font/notosansjp_bold"
         app:fontStyle="normal"
         app:fontWeight="700" />
-
-    <font
-        android:font="@font/notosansjp_extrabold"
-        android:fontStyle="normal"
-        android:fontWeight="800"
-        app:font="@font/notosansjp_extrabold"
-        app:fontStyle="normal"
-        app:fontWeight="800" />
-
-    <font
-        android:font="@font/notosansjp_black"
-        android:fontStyle="normal"
-        android:fontWeight="900"
-        app:font="@font/notosansjp_black"
-        app:fontStyle="normal"
-        app:fontWeight="900" />
 
 </font-family>

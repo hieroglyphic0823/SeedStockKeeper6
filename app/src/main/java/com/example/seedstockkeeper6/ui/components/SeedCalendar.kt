@@ -239,6 +239,9 @@ fun SeedCalendarGroupedInternal(
     
     // 破線効果を定義
     val dash = PathEffect.dashPathEffect(floatArrayOf(10f, 5f), 0f)
+    
+    // Canvas内で使用する色変数
+    val secondaryColor = MaterialTheme.colorScheme.secondary
 
     Canvas(
         modifier = modifier.height(with(density) { heightDp.dp })
@@ -516,8 +519,8 @@ fun SeedCalendarGroupedInternal(
                                 // 播種期間の背景色はprimaryContainer
                                 primaryContainerColor
                             } else {
-                                // 収穫期間の背景色はtertiaryContainer
-                                tertiaryContainerColor
+                                // 収穫期間の背景色はsecondary
+                                secondaryColor
                             }
                             drawRect(
                                 color = backgroundColor,

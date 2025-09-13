@@ -69,16 +69,15 @@ fun SeedInputScreenPreview_DisplayMode() {
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            Image(
-                                painter = painterResource(id = com.example.seedstockkeeper6.R.drawable.packet),
-                                contentDescription = "種情報",
-                                modifier = Modifier.size(32.dp)
+                            com.example.seedstockkeeper6.ui.components.FamilyIcon(
+                                family = "せり科",
+                                size = 24.dp
                             )
-                        Text(
-                                text = "種情報",
-                            modifier = Modifier.fillMaxWidth(),
-                            textAlign = TextAlign.Start
-                        )
+                            Text(
+                                text = "恋むすめ",
+                                modifier = Modifier.fillMaxWidth(),
+                                textAlign = TextAlign.Start
+                            )
                         }
                     },
                     navigationIcon = {
@@ -93,13 +92,13 @@ fun SeedInputScreenPreview_DisplayMode() {
                     ) {
                             IconButton(
                             onClick = { },
-                                modifier = Modifier.size(32.dp)
+                                modifier = Modifier.size(24.dp)
                             ) {
                             Icon(
                                     imageVector = Icons.Filled.Edit,
                                     contentDescription = "編集",
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.size(32.dp)
+                                    modifier = Modifier.size(24.dp)
                                 )
                             }
                         }
@@ -188,10 +187,10 @@ fun SeedInputScreenPreview_NewCreation() {
                             Image(
                                 painter = painterResource(id = com.example.seedstockkeeper6.R.drawable.packet),
                                 contentDescription = "種情報",
-                                modifier = Modifier.size(32.dp)
+                                modifier = Modifier.size(24.dp)
                             )
                             Text(
-                                text = "種情報新規作成",
+                                text = "新規作成",
                                 modifier = Modifier.fillMaxWidth(),
                                 textAlign = TextAlign.Start
                             )
@@ -291,16 +290,15 @@ fun SeedInputScreenPreview_EditMode() {
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            Image(
-                                painter = painterResource(id = com.example.seedstockkeeper6.R.drawable.packet),
-                                contentDescription = "種情報",
-                                modifier = Modifier.size(32.dp)
+                            com.example.seedstockkeeper6.ui.components.FamilyIcon(
+                                family = "せり科",
+                                size = 24.dp
                             )
-                        Text(
-                                text = "種情報編集",
-                            modifier = Modifier.fillMaxWidth(),
-                            textAlign = TextAlign.Start
-                        )
+                            Text(
+                                text = "恋むすめ（編集）",
+                                modifier = Modifier.fillMaxWidth(),
+                                textAlign = TextAlign.Start
+                            )
                         }
                     },
                     navigationIcon = {
@@ -315,13 +313,13 @@ fun SeedInputScreenPreview_EditMode() {
                         ) {
                             IconButton(
                                 onClick = { },
-                                modifier = Modifier.size(32.dp)
+                                modifier = Modifier.size(24.dp)
                             ) {
                             Icon(
                                     imageVector = Icons.Filled.Close,
                                     contentDescription = "キャンセル",
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.size(32.dp)
+                                    modifier = Modifier.size(24.dp)
                                 )
                             }
                         }
@@ -331,8 +329,8 @@ fun SeedInputScreenPreview_EditMode() {
             floatingActionButton = {
                         FloatingActionButton(
                             onClick = { },
-                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                            containerColor = MaterialTheme.colorScheme.primaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                         ) {
                             Icon(
                         imageVector = Icons.Filled.Save,
@@ -518,7 +516,7 @@ fun PreviewImageManagementSection(viewModel: com.example.seedstockkeeper6.viewmo
                         .then(
                             if (viewModel.ocrTargetIndex == index) {
                                 Modifier.border(
-                                    width = 3.dp,
+                                    width = 4.dp,
                                     color = MaterialTheme.colorScheme.tertiary,
                                     shape = RoundedCornerShape(4.dp)
                                 )
@@ -533,7 +531,57 @@ fun PreviewImageManagementSection(viewModel: com.example.seedstockkeeper6.viewmo
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop
                     )
+                    
+                    // 削除ボタン
+                    IconButton(
+                        onClick = { },
+                        modifier = Modifier.align(Alignment.TopEnd)
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.delete),
+                            contentDescription = "削除",
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
                 }
+            }
+            
+            // 追加ボタン
+            if (viewModel.isEditMode || !viewModel.hasExistingData) {
+                item {
+                    IconButton(onClick = { }) {
+                        Image(
+                            painter = painterResource(id = R.drawable.plus),
+                            contentDescription = "追加",
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                }
+            }
+        }
+        
+        // AIで解析ボタン
+        if (viewModel.isEditMode || !viewModel.hasExistingData) {
+            Button(
+                onClick = { },
+                enabled = viewModel.imageUris.isNotEmpty() && !viewModel.isLoading,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.tertiary,
+                    contentColor = MaterialTheme.colorScheme.onTertiary,
+                    disabledContainerColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
+                    disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                )
+            ) {
+                Text("AIで解析")
+                Spacer(Modifier.width(8.dp))
+                Image(
+                    painter = painterResource(id = R.drawable.star_w),
+                    contentDescription = "OCR",
+                    modifier = Modifier.size(24.dp)
+                )
             }
         }
     }
@@ -561,7 +609,7 @@ fun SettingsScreenPreview_DisplayMode() {
                                 painter = painterResource(id = com.example.seedstockkeeper6.R.drawable.garden_cart),
                                 contentDescription = "農園設定",
                                 tint = MaterialTheme.colorScheme.onSurface,
-                                modifier = Modifier.size(32.dp)
+                                modifier = Modifier.size(24.dp)
                             )
                             Text(
                                 text = "農園設定",
@@ -582,13 +630,13 @@ fun SettingsScreenPreview_DisplayMode() {
                         ) {
                             IconButton(
                                 onClick = { },
-                                modifier = Modifier.size(32.dp)
+                                modifier = Modifier.size(24.dp)
                             ) {
                                 Icon(
                                     imageVector = Icons.Filled.Edit,
                                     contentDescription = "編集",
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.size(32.dp)
+                                    modifier = Modifier.size(24.dp)
                                 )
                             }
                         }
@@ -782,21 +830,82 @@ fun RegionSelectionDialogPreview() {
             )
         )
         
-        // 実際のRegionSelectionDialogを使用（プレビュー用にshowDialog=trueで固定）
-        com.example.seedstockkeeper6.ui.components.RegionSelectionDialog(
-            showDialog = true,
-            regionList = listOf("暖地", "温暖地"), // extractRegionsFromOcrResultで検出される地域
-            ocrResult = demoOcrResult,
-            croppedCalendarBitmap = null,
-            editingCalendarEntry = null,
-            defaultRegion = "暖地",
-            onRegionSelected = { },
-            onStartEditing = { },
-            onUpdateEditing = { },
-            onSaveEditing = { },
-            onCancelEditing = { },
-            onDismiss = { }
-        )
+        // Dialogの内容を直接表示（プレビュー用）
+        androidx.compose.ui.window.Dialog(onDismissRequest = { }) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(20.dp)
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    Text(
+                        text = "地域区分を選択してください",
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+
+                    // 地域選択ボタン
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        listOf("暖地", "温暖地").forEach { region ->
+                            Button(
+                                onClick = { },
+                                modifier = Modifier.weight(1f),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = if (region == "暖地") 
+                                        MaterialTheme.colorScheme.primary 
+                                    else 
+                                        MaterialTheme.colorScheme.surface
+                                )
+                            ) {
+                                Text(
+                                    text = region,
+                                    color = if (region == "暖地") 
+                                        MaterialTheme.colorScheme.onPrimary 
+                                    else 
+                                        MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+                    
+                    // 選択された地域の栽培期間表示
+                    val selectedRegionEntry = demoOcrResult.calendar?.find { it.region == "暖地" }
+                    selectedRegionEntry?.let { entry ->
+                        Card(
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                                contentColor = MaterialTheme.colorScheme.onSurface
+                            ),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(16.dp)
+                            ) {
+                                Text(
+                                    text = "暖地の栽培期間",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    modifier = Modifier.padding(bottom = 8.dp)
+                                )
+                                
+                                // 播種期間と収穫期間の表示
+                                com.example.seedstockkeeper6.ui.components.CalendarEntryDisplay(entry)
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -1210,9 +1319,9 @@ fun PreviewCultivationInfoSection(viewModel: com.example.seedstockkeeper6.viewmo
             "未設定"
         }
         Text(
-            text = "播種期間: $sowingPeriod",
+            text = sowingPeriod,
             modifier = Modifier.padding(vertical = 4.dp),
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurface
         )
         
@@ -1225,9 +1334,9 @@ fun PreviewCultivationInfoSection(viewModel: com.example.seedstockkeeper6.viewmo
             "未設定"
         }
         Text(
-            text = "収穫期間: $harvestPeriod",
+            text = harvestPeriod,
             modifier = Modifier.padding(vertical = 4.dp),
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurface
         )
     }

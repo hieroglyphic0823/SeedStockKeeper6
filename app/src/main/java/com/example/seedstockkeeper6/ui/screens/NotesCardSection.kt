@@ -69,7 +69,7 @@ fun NotesCardSection(viewModel: SeedInputViewModel) {
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
                             text = viewModel.packet.cultivation.notes,
-                            style = MaterialTheme.typography.bodyMedium,
+                            style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                     }
@@ -118,7 +118,7 @@ fun NotesCardSection(viewModel: SeedInputViewModel) {
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
                             text = viewModel.packet.cultivation.harvesting,
-                            style = MaterialTheme.typography.bodyMedium,
+                            style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSecondaryContainer
                         )
                     }
@@ -176,7 +176,7 @@ fun NotesCardSection(viewModel: SeedInputViewModel) {
                             ) {
                                 Text(
                                     text = companion.plant,
-                                    style = MaterialTheme.typography.bodyMedium,
+                                    style = MaterialTheme.typography.bodyLarge,
                                     color = MaterialTheme.colorScheme.onTertiaryContainer,
                                     modifier = Modifier.weight(1f)
                                 )

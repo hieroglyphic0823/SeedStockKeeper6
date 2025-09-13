@@ -69,7 +69,7 @@ fun FamilyIcon(
                     Image(
                         painter = painterResource(id = iconRes),
                         contentDescription = "$normalized のアイコン",
-                        modifier = Modifier.size(32.dp) // 32.dpに統一（コンパニオンプランツと同じ）
+                        modifier = Modifier.size(24.dp) // 24.dpに統一（デフォルト）
                     )
                 }
             }
@@ -138,7 +138,7 @@ fun FamilyIconCircle(
             Image(
                 painter = painterResource(id = iconRes),
                 contentDescription = "$normalized のアイコン",
-                modifier = Modifier.size(32.dp)
+                modifier = Modifier.size(24.dp)
             )
         }
     }

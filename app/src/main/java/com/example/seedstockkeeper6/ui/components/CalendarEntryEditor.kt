@@ -120,9 +120,8 @@ fun CalendarEntryEditor(
         modifier = Modifier.padding(top = 8.dp)
     ) {
         // 播種期間ラベル（アイコン付き）
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.padding(bottom = 8.dp)
         ) {
             // 播種期間アイコン（背景付き）
@@ -141,8 +140,10 @@ fun CalendarEntryEditor(
                 )
             }
             Text(
-                "播種期間",
-                style = MaterialTheme.typography.titleSmall
+                "播種",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 4.dp)
             )
         }
         
@@ -247,7 +248,7 @@ fun CalendarEntryEditor(
                 modifier = Modifier
                     .size(24.dp)
                     .clip(RoundedCornerShape(4.dp))
-                    .background(MaterialTheme.colorScheme.primary),
+                    .background(MaterialTheme.colorScheme.secondary),
                 contentAlignment = Alignment.Center
             ) {
                 androidx.compose.foundation.Image(
@@ -258,7 +259,7 @@ fun CalendarEntryEditor(
                 )
             }
             Text(
-                "収穫期間",
+                "収穫",
                 style = MaterialTheme.typography.titleSmall
             )
         }

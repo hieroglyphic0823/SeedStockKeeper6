@@ -130,7 +130,7 @@ fun SingleEffectIcon(effectCode: CompanionEffectCode) {
                 Image(
                     painter = painterResource(id = iconRes),
                     contentDescription = "${effectCode.displayName} のアイコン",
-                    modifier = Modifier.size(32.dp)
+                    modifier = Modifier.size(24.dp)
                 )
             }
         } else if (imageVector != null) {
@@ -144,7 +144,7 @@ fun SingleEffectIcon(effectCode: CompanionEffectCode) {
                 Icon(
                     imageVector = imageVector,
                     contentDescription = "${effectCode.displayName} のアイコン",
-                    modifier = Modifier.size(32.dp)
+                    modifier = Modifier.size(24.dp)
                 )
             }
         }

@@ -146,16 +146,58 @@ fun MainScaffoldTopAppBar(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Image(
-                            painter = painterResource(id = com.example.seedstockkeeper6.R.drawable.packet),
-                            contentDescription = "種情報",
-                            modifier = Modifier.size(32.dp)
-                        )
-                        Text(
-                            text = if (seedInputViewModel?.isEditMode == true) "編集" else "種情報",
-                            modifier = Modifier.fillMaxWidth(),
-                            textAlign = TextAlign.Start
-                        )
+                        when {
+                            // DisplayMode: Familyアイコンと商品名
+                            seedInputViewModel?.isEditMode == false && seedInputViewModel?.hasExistingData == true -> {
+                                com.example.seedstockkeeper6.ui.components.FamilyIcon(
+                                    family = seedInputViewModel.packet.family,
+                                    size = 24.dp
+                                )
+                                Text(
+                                    text = seedInputViewModel.packet.productName.ifEmpty { "種情報" },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    textAlign = TextAlign.Start
+                                )
+                            }
+                            // EditMode新規作成: 現行アイコン+「新規作成」
+                            seedInputViewModel?.isEditMode == true && seedInputViewModel?.hasExistingData == false -> {
+                                Image(
+                                    painter = painterResource(id = com.example.seedstockkeeper6.R.drawable.packet),
+                                    contentDescription = "種情報",
+                                    modifier = Modifier.size(24.dp)
+                                )
+                                Text(
+                                    text = "新規作成",
+                                    modifier = Modifier.fillMaxWidth(),
+                                    textAlign = TextAlign.Start
+                                )
+                            }
+                            // EditMode編集: Familyアイコンと商品名+「（編集）」
+                            seedInputViewModel?.isEditMode == true && seedInputViewModel?.hasExistingData == true -> {
+                                com.example.seedstockkeeper6.ui.components.FamilyIcon(
+                                    family = seedInputViewModel.packet.family,
+                                    size = 24.dp
+                                )
+                                Text(
+                                    text = "${seedInputViewModel.packet.productName.ifEmpty { "種情報" }}（編集）",
+                                    modifier = Modifier.fillMaxWidth(),
+                                    textAlign = TextAlign.Start
+                                )
+                            }
+                            // デフォルト: 現行アイコン+「種情報」
+                            else -> {
+                                Image(
+                                    painter = painterResource(id = com.example.seedstockkeeper6.R.drawable.packet),
+                                    contentDescription = "種情報",
+                                    modifier = Modifier.size(24.dp)
+                                )
+                                Text(
+                                    text = "種情報",
+                                    modifier = Modifier.fillMaxWidth(),
+                                    textAlign = TextAlign.Start
+                                )
+                            }
+                        }
                     }
                 }
                 else -> {
@@ -167,7 +209,7 @@ fun MainScaffoldTopAppBar(
                             Image(
                                 painter = painterResource(id = com.example.seedstockkeeper6.R.drawable.packet),
                                 contentDescription = "種情報",
-                                modifier = Modifier.size(32.dp)
+                                modifier = Modifier.size(24.dp)
                             )
                             Text(
                                 text = if (seedInputViewModel?.isEditMode == true) "編集" else "種情報",
@@ -198,13 +240,11 @@ fun MainScaffoldTopAppBar(
                                     }
                                 }
                             },
-                            modifier = Modifier.size(32.dp)
                         ) {
                                                     Icon(
                             imageVector = if (settingsViewModel?.isEditMode == true) Icons.Filled.Close else Icons.Filled.Edit,
                             contentDescription = if (settingsViewModel?.isEditMode == true) "キャンセル" else "編集",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(32.dp)
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         }
                     }
@@ -225,13 +265,11 @@ fun MainScaffoldTopAppBar(
                                     seedInputViewModel?.enterEditMode()
                                 }
                             },
-                            modifier = Modifier.size(32.dp)
                         ) {
                             Icon(
                                 imageVector = if (seedInputViewModel?.isEditMode == true) Icons.Filled.Close else Icons.Filled.Edit,
                                 contentDescription = if (seedInputViewModel?.isEditMode == true) "キャンセル" else "編集",
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.size(32.dp)
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
@@ -253,13 +291,11 @@ fun MainScaffoldTopAppBar(
                                         seedInputViewModel?.enterEditMode()
                                     }
                                 },
-                                modifier = Modifier.size(32.dp)
                             ) {
                                 Icon(
                                     imageVector = if (seedInputViewModel?.isEditMode == true) Icons.Filled.Close else Icons.Filled.Edit,
                                     contentDescription = if (seedInputViewModel?.isEditMode == true) "キャンセル" else "編集",
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.size(32.dp)
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
                         }
@@ -270,13 +306,11 @@ fun MainScaffoldTopAppBar(
                         ) {
                             IconButton(
                                 onClick = { navController.navigate("settings") },
-                                modifier = Modifier.size(32.dp)
                             ) {
                                 Icon(
                                     Icons.Filled.Settings,
                                     contentDescription = "設定",
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.size(32.dp)
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
                         }
@@ -356,8 +390,8 @@ fun MainScaffoldNavigationBar(
                 isInputScreen -> {
                     FloatingActionButton(
                         onClick = { /* 入力画面の保存処理は別途実装 */ },
-                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                     ) {
                         Icon(Icons.Filled.Save, contentDescription = "保存")
                     }
