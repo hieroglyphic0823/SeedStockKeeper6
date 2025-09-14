@@ -19,14 +19,24 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.ui.zIndex
 import androidx.compose.ui.unit.offset
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.viewinterop.AndroidView
 import android.widget.NumberPicker
+import androidx.compose.ui.graphics.Color
 
 // 分割したファイルから関数をインポート
 import com.example.seedstockkeeper6.ui.components.CalendarEntryDisplay
 import com.example.seedstockkeeper6.ui.components.CalendarEntryEditor
+
+// 地域ごとの色定義
+private fun getRegionColor(region: String): Color {
+    return when (region) {
+        "寒地" -> Color(0xFF1A237E) // 紺
+        "寒冷地" -> Color(0xFF1976D2) // 青
+        "温暖地" -> Color(0xFFFF9800) // オレンジ
+        "暖地" -> Color(0xFFE91E63) // ピンク
+        else -> Color(0xFF757575) // グレー（デフォルト）
+    }
+}
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -49,7 +59,6 @@ fun RegionSelectionDialog(
     
     if (showDialog) {
         var selectedRegion by remember { mutableStateOf(defaultRegion) }
-        var expanded by remember { mutableStateOf(false) }
         var editedEntry by remember { mutableStateOf<com.example.seedstockkeeper6.model.CalendarEntry?>(null) }
 
         Dialog(
@@ -65,7 +74,6 @@ fun RegionSelectionDialog(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(20.dp)
-                        .verticalScroll(rememberScrollState())
                 ) {
                     Text(
                         text = "地域区分",
@@ -93,57 +101,63 @@ fun RegionSelectionDialog(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .clip(RoundedCornerShape(8.dp)),
-                                    contentScale = ContentScale.Fit
+                                    contentScale = ContentScale.FillWidth
                                 )
                             }
                         }
                     }
 
-                    // 地域選択のコンボボックス
-                    ExposedDropdownMenuBox(
-                        expanded = expanded,
-                        onExpandedChange = { expanded = it },
-                        modifier = Modifier.fillMaxWidth()
+                    // 地域選択のボタン
+                    Text(
+                        text = "地域区分",
+                        style = MaterialTheme.typography.titleSmall,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                    
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(2),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = 200.dp)
                     ) {
-                        OutlinedTextField(
-                            value = selectedRegion,
-                            onValueChange = {},
-                            readOnly = true,
-                            label = { Text("地域") },
-                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .menuAnchor()
-                        )
-
-                        ExposedDropdownMenu(
-                            expanded = expanded,
-                            onDismissRequest = { expanded = false }
-                        ) {
-                            regionList.forEach { region ->
-                                DropdownMenuItem(
-                                    text = { Text(region) },
-                                    onClick = {
-                                        selectedRegion = region
-                                        expanded = false
-                                        android.util.Log.d("RegionSelectionDialog", "地域選択: $region")
-                                        
-                                        // 地域変更時にOCR結果で期間を上書き
-                                        val newRegionEntry = ocrResult?.calendar?.find { it.region == region }
-                                        if (newRegionEntry != null) {
-                                            onUpdateEditing(newRegionEntry)
-                                            editedEntry = newRegionEntry
-                                        } else {
-                                            // 新しい地域の場合は空のエントリを作成
-                                            editedEntry = com.example.seedstockkeeper6.model.CalendarEntry(
-                                                region = region,
-                                                sowing_start_date = "",
-                                                sowing_end_date = "",
-                                                harvest_start_date = "",
-                                                harvest_end_date = ""
-                                            )
-                                        }
+                        items(regionList.size) { index ->
+                            val region = regionList[index]
+                            Button(
+                                onClick = {
+                                    selectedRegion = region
+                                    android.util.Log.d("RegionSelectionDialog", "地域選択: $region")
+                                    
+                                    // 地域変更時にOCR結果で期間を上書き
+                                    val newRegionEntry = ocrResult?.calendar?.find { it.region == region }
+                                    if (newRegionEntry != null) {
+                                        onUpdateEditing(newRegionEntry)
+                                        editedEntry = newRegionEntry
+                                    } else {
+                                        // 新しい地域の場合は空のエントリを作成
+                                        editedEntry = com.example.seedstockkeeper6.model.CalendarEntry(
+                                            region = region,
+                                            sowing_start_date = "",
+                                            sowing_end_date = "",
+                                            harvest_start_date = "",
+                                            harvest_end_date = ""
+                                        )
                                     }
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                                ),
+                                shape = MaterialTheme.shapes.large,
+                                elevation = ButtonDefaults.buttonElevation(
+                                    defaultElevation = if (region == selectedRegion) 4.dp else 2.dp
+                                )
+                            ) {
+                                Text(
+                                    text = region,
+                                    style = MaterialTheme.typography.bodyMedium
                                 )
                             }
                         }
@@ -180,8 +194,8 @@ fun RegionSelectionDialog(
                                         modifier = Modifier.padding(bottom = 8.dp)
                                     )
                                     
-                                    // 表示モード
-                                    CalendarEntryDisplay(entry = selectedRegionEntry)
+                                    // 表示モード（OCR結果では年を表示しない）
+                                    CalendarEntryDisplay(entry = selectedRegionEntry, showYear = false)
                                     
                                     Spacer(modifier = Modifier.height(16.dp))
                                 }
@@ -196,12 +210,10 @@ fun RegionSelectionDialog(
                                         editedEntry = updatedEntry
                                     },
                                     onSave = {
-                                        // 保存処理
-                                        onSaveEditing()
+                                        // カード内の保存ボタンは削除（何もしない）
                                     },
                                     onCancel = {
-                                        // キャンセル処理
-                                        onCancelEditing()
+                                        // カード内のキャンセルボタンは削除（何もしない）
                                     },
                                     hideYearSelection = true
                                 )
@@ -226,7 +238,7 @@ fun RegionSelectionDialog(
                                 
                                 Button(
                                     onClick = {
-                                        android.util.Log.d("RegionSelectionDialog", "保存ボタンクリック: $selectedRegion")
+                                        android.util.Log.d("RegionSelectionDialog", "OKボタンクリック: $selectedRegion")
                                         // 編集された値がある場合は、それを含めて保存
                                         if (editedEntry != null) {
                                             onUpdateEditing(editedEntry!!)
@@ -235,9 +247,13 @@ fun RegionSelectionDialog(
                                         }
                                         onRegionSelected(selectedRegion)
                                         onDismiss()
-                                    }
+                                    },
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                                    )
                                 ) {
-                                    Text("保存")
+                                    Text("OK")
                                 }
                             }
                         }

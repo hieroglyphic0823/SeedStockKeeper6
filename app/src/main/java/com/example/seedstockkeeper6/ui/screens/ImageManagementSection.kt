@@ -245,7 +245,10 @@ fun ImageManagementSection(viewModel: SeedInputViewModel) {
                         disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
                     )
                 ) {
-                    Text("AIで解析")
+                    Text(
+                        text = "AIで解析",
+                        style = MaterialTheme.typography.bodyLarge
+                    )
                     Spacer(Modifier.width(8.dp))
                     Image(
                         painter = painterResource(id = R.drawable.star_opc),
@@ -297,24 +300,26 @@ fun ImageManagementSection(viewModel: SeedInputViewModel) {
                     .fillMaxSize()
                     .background(Color.Black.copy(alpha = 0.9f))
             ) {
-                // 拡大表示する画像
+                // 拡大表示する画像（横幅90%）
                 AsyncImage(
                     model = uri.toString(),
                     contentDescription = "拡大表示",
                     modifier = Modifier
-                        .fillMaxSize()
+                        .fillMaxHeight()
+                        .fillMaxWidth(0.9f)
+                        .align(Alignment.Center)
                         .padding(16.dp),
                     contentScale = ContentScale.Fit
                 )
                 
-                // ×ボタン（右上）
+                // ×ボタン（右上）- 常に表示
                 IconButton(
                     onClick = { viewModel.clearSelectedImage() },
                     modifier = Modifier
                         .align(Alignment.TopEnd)
                         .padding(16.dp)
                         .background(
-                            color = Color.Black.copy(alpha = 0.5f),
+                            color = Color.Black.copy(alpha = 0.8f),
                             shape = RoundedCornerShape(20.dp)
                         )
                 ) {

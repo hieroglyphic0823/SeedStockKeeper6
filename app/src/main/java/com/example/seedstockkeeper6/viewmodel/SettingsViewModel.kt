@@ -30,7 +30,6 @@ class SettingsViewModel : ViewModel() {
         private set
     
     var hasExistingData by mutableStateOf(false)
-        private set
     
     init {
         loadSettings()
@@ -43,6 +42,7 @@ class SettingsViewModel : ViewModel() {
     fun updateDefaultRegion(region: String) {
         defaultRegion = region
     }
+    
     
     private fun loadSettings() {
         viewModelScope.launch {

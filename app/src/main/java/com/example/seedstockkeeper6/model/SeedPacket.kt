@@ -13,10 +13,10 @@ enum class CompanionEffectCode(val code: String, val displayName: String) {
     POLLINATION_PROMOTION("07", "受粉促進"),
     WEED_SUPPRESSION("08", "雑草抑制"),
     LANDSCAPE_BEAUTIFICATION("09", "景観美化"),
-    MOISTURE_RETENTION("10", "水分保持の助け"),
-    SOIL_PH_ADJUSTMENT("11", "土壌pHの調整"),
-    WORKABILITY_IMPROVEMENT("12", "作業性向上"),
-    YIELD_STABILIZATION("13", "収量の安定化"),
+    MOISTURE_RETENTION("10", "水分保持"),
+    SOIL_PH_ADJUSTMENT("11", "pH調整"),
+    WORKABILITY_IMPROVEMENT("12", "効率UP"),
+    YIELD_STABILIZATION("13", "収量安定"),
     OTHER("99", "その他");
 
     companion object {

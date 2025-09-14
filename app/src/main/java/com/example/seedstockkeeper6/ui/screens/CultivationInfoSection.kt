@@ -162,14 +162,14 @@ fun CultivationInfoSection(viewModel: SeedInputViewModel) {
                     value = viewModel.packet.cultivation.spacing_cm_row_min.toString(),
                     onValueChange = viewModel::onSpacingRowMinChange,
                     label = { Text("条間最小") },
-                    modifier = Modifier.width(80.dp)
+                    modifier = Modifier.width(88.dp)
                 )
                 Text("～", style = MaterialTheme.typography.bodyLarge)
                 OutlinedTextField(
                     value = viewModel.packet.cultivation.spacing_cm_row_max.toString(),
                     onValueChange = viewModel::onSpacingRowMaxChange,
                     label = { Text("条間最大") },
-                    modifier = Modifier.width(80.dp)
+                    modifier = Modifier.width(88.dp)
                 )
                 Text("(cm)", style = MaterialTheme.typography.bodyLarge)
             }

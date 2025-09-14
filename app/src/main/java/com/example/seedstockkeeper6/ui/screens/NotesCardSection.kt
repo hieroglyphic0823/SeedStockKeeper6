@@ -22,13 +22,11 @@ import com.example.seedstockkeeper6.viewmodel.SeedInputViewModel
 
 @Composable
 fun NotesCardSection(viewModel: SeedInputViewModel) {
-    // DisplayModeの時のみ表示
-    if (!viewModel.isEditMode && viewModel.hasExistingData) {
-        Column(
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            // 栽培メモカード
-            if (viewModel.packet.cultivation.notes.isNotEmpty()) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        // 栽培メモカード（表示モードのみ）
+        if (!viewModel.isEditMode && viewModel.hasExistingData && viewModel.packet.cultivation.notes.isNotEmpty()) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
@@ -49,14 +47,14 @@ fun NotesCardSection(viewModel: SeedInputViewModel) {
                                 modifier = Modifier
                                     .size(24.dp)
                                     .clip(RoundedCornerShape(4.dp))
-                                    .background(MaterialTheme.colorScheme.surface),
+                                    .background(MaterialTheme.colorScheme.onPrimaryContainer),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Image(
-                                    painter = painterResource(id = R.drawable.sprout),
+                                Icon(
+                                    Icons.Filled.Note,
                                     contentDescription = "栽培メモ",
-                                    modifier = Modifier.size(18.dp),
-                                    contentScale = ContentScale.Fit
+                                    tint = MaterialTheme.colorScheme.primaryContainer,
+                                    modifier = Modifier.size(16.dp)
                                 )
                             }
                             Text(
@@ -76,8 +74,8 @@ fun NotesCardSection(viewModel: SeedInputViewModel) {
                 }
             }
             
-            // 収穫方法カード
-            if (viewModel.packet.cultivation.harvesting.isNotEmpty()) {
+            // 収穫方法カード（表示モードのみ）
+            if (!viewModel.isEditMode && viewModel.hasExistingData && viewModel.packet.cultivation.harvesting.isNotEmpty()) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
@@ -98,13 +96,13 @@ fun NotesCardSection(viewModel: SeedInputViewModel) {
                                 modifier = Modifier
                                     .size(24.dp)
                                     .clip(RoundedCornerShape(4.dp))
-                                    .background(MaterialTheme.colorScheme.secondary),
+                                    .background(MaterialTheme.colorScheme.onSecondaryContainer),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Image(
                                     painter = painterResource(id = R.drawable.harvest),
                                     contentDescription = "収穫方法",
-                                    modifier = Modifier.size(18.dp),
+                                    modifier = Modifier.size(16.dp),
                                     contentScale = ContentScale.Fit
                                 )
                             }
@@ -125,8 +123,8 @@ fun NotesCardSection(viewModel: SeedInputViewModel) {
                 }
             }
             
-            // コンパニオンプランツカード
-            if (viewModel.packet.companionPlants.isNotEmpty()) {
+            // コンパニオンプランツカード（表示モードのみ）
+            if (!viewModel.isEditMode && viewModel.hasExistingData && viewModel.packet.companionPlants.isNotEmpty()) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
@@ -147,14 +145,14 @@ fun NotesCardSection(viewModel: SeedInputViewModel) {
                                 modifier = Modifier
                                     .size(24.dp)
                                     .clip(RoundedCornerShape(4.dp))
-                                    .background(MaterialTheme.colorScheme.surface),
+                                    .background(MaterialTheme.colorScheme.onTertiaryContainer),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Image(
-                                    painter = painterResource(id = R.drawable.grass),
+                                Icon(
+                                    Icons.Filled.Note,
                                     contentDescription = "コンパニオンプランツ",
-                                    modifier = Modifier.size(18.dp),
-                                    contentScale = ContentScale.Fit
+                                    tint = MaterialTheme.colorScheme.tertiaryContainer,
+                                    modifier = Modifier.size(16.dp)
                                 )
                             }
                             Text(
@@ -166,19 +164,19 @@ fun NotesCardSection(viewModel: SeedInputViewModel) {
                         }
                         Spacer(modifier = Modifier.height(8.dp))
                         
+                        // コンパニオンプランツ一覧
                         viewModel.packet.companionPlants.forEach { companion ->
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(vertical = 2.dp),
+                                    .padding(vertical = 4.dp),
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Text(
-                                    text = companion.plant,
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    color = MaterialTheme.colorScheme.onTertiaryContainer,
-                                    modifier = Modifier.weight(1f)
+                                    companion.plant,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onTertiaryContainer
                                 )
                                 CompanionEffectIcon(companion.effects)
                             }
@@ -186,6 +184,10 @@ fun NotesCardSection(viewModel: SeedInputViewModel) {
                     }
                 }
             }
+        
+        // 編集モード用のコンパニオンプランツセクション
+        if (viewModel.isEditMode || !viewModel.hasExistingData) {
+            CompanionPlantsSection(viewModel)
         }
         
         // 区切り線

@@ -81,6 +81,7 @@ fun MainScaffoldTopAppBar(
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
     
+    
     TopAppBar(
         modifier = Modifier.statusBarsPadding(),
         colors = TopAppBarDefaults.topAppBarColors(
@@ -122,8 +123,8 @@ fun MainScaffoldTopAppBar(
             }
         },
         title = { 
-            when (currentRoute) {
-                "settings" -> {
+            when {
+                currentRoute == "settings" -> {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -141,7 +142,7 @@ fun MainScaffoldTopAppBar(
                         )
                     }
                 }
-                "input" -> {
+                currentRoute?.startsWith("input") == true -> {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -156,8 +157,10 @@ fun MainScaffoldTopAppBar(
                                 Text(
                                     text = if (seedInputViewModel.packet.productName.isNotEmpty() && seedInputViewModel.packet.variety.isNotEmpty()) {
                                         "${seedInputViewModel.packet.productName}（${seedInputViewModel.packet.variety}）"
+                                    } else if (seedInputViewModel.packet.productName.isNotEmpty()) {
+                                        seedInputViewModel.packet.productName
                                     } else {
-                                        seedInputViewModel.packet.productName.ifEmpty { "種情報" }
+                                        "種情報"
                                     },
                                     modifier = Modifier.fillMaxWidth(),
                                     textAlign = TextAlign.Start
@@ -227,23 +230,12 @@ fun MainScaffoldTopAppBar(
                     }
                 }
                 else -> {
-                    if (currentRoute?.startsWith("input") == true) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            Image(
-                                painter = painterResource(id = com.example.seedstockkeeper6.R.drawable.packet),
-                                contentDescription = "種情報",
-                                modifier = Modifier.size(24.dp)
-                            )
-                            Text(
-                                text = if (seedInputViewModel?.isEditMode == true) "編集" else "種情報",
-                                modifier = Modifier.fillMaxWidth(),
-                                textAlign = TextAlign.Start
-                            )
-                        }
-                    }
+                    // デフォルトのタイトル表示
+                    Text(
+                        text = "SeedStockKeeper",
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.Start
+                    )
                 }
             }
         },
@@ -437,7 +429,7 @@ fun MainScaffoldNavigationBar(
                         )
                     }
                 }
-                isInputScreen -> {
+                isInputScreen && !(inputViewModel?.isLoading ?: false) -> {
                     FloatingActionButton(
                         onClick = { /* 入力画面の保存処理は別途実装 */ },
                         containerColor = MaterialTheme.colorScheme.primaryContainer,
@@ -540,7 +532,7 @@ fun MainScaffold(
     }
     
     // 入力画面用のViewModel（条件付きで取得）
-    val inputViewModel: SeedInputViewModel? = if (isInputScreen && navBackStackEntry != null) {
+    val inputViewModel: com.example.seedstockkeeper6.viewmodel.SeedInputViewModel? = if (isInputScreen && navBackStackEntry != null) {
         viewModel(viewModelStoreOwner = navBackStackEntry!!)
     } else null
     

@@ -126,11 +126,6 @@ fun SeedInputScreen(
                 thickness = 1.dp,
                 modifier = Modifier.padding(vertical = 16.dp)
             )
-            
-            // コンパニオンプランツセクション（編集モードのみ）
-            if (viewModel.isEditMode || !viewModel.hasExistingData) {
-                CompanionPlantsSection(viewModel)
-            }
             }
             
             // ダイアログ類

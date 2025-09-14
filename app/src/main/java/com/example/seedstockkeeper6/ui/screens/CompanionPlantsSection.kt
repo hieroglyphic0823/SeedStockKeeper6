@@ -1,12 +1,14 @@
 package com.example.seedstockkeeper6.ui.screens
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Eco
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
+import com.example.seedstockkeeper6.R
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -15,6 +17,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.seedstockkeeper6.ui.components.CompanionEffectIcon
+import com.example.seedstockkeeper6.ui.components.CompanionEffectIconCompact
 import com.example.seedstockkeeper6.viewmodel.SeedInputViewModel
 
 @Composable
@@ -27,36 +30,45 @@ fun CompanionPlantsSection(viewModel: SeedInputViewModel) {
         // --- コンパニオンプランツ表示＆追加部 ---
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
             modifier = Modifier.padding(bottom = 16.dp)
         ) {
-            Icon(
-                Icons.Filled.Eco,
+            androidx.compose.foundation.Image(
+                painter = painterResource(id = R.drawable.grass),
                 contentDescription = "コンパニオンプランツと効果",
-                tint = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.size(24.dp)
             )
             Text(
-                "コンパニオンプランツと効果", 
-                style = MaterialTheme.typography.titleLarge
+                text = "コンパニオンプランツと効果",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
         
         viewModel.packet.companionPlants.forEachIndexed { i, companion ->
-            Column(
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 8.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                CompanionEffectIcon(companion.effects)
-                Spacer(modifier = Modifier.height(4.dp))
+                // 植物名（左側）
                 Text(
                     companion.plant,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Normal)
+                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Normal),
+                    modifier = Modifier.weight(1f)
                 )
+                
+                // 効果アイコン（右側、適度な余白を保って詰めて表示）
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    CompanionEffectIconCompact(companion.effects)
+                }
             }
         }
         
@@ -93,10 +105,10 @@ private fun CompanionPlantInputSection(viewModel: SeedInputViewModel) {
         
         // 効果の選択肢をグリッドで表示
         LazyVerticalGrid(
-            columns = GridCells.Fixed(3),
+            columns = GridCells.Fixed(4),
             horizontalArrangement = Arrangement.spacedBy(4.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp),
-            modifier = Modifier.height(120.dp)
+            modifier = Modifier.height(300.dp)
         ) {
             items(com.example.seedstockkeeper6.model.CompanionEffectCode.values()) { effectCode ->
                 val isSelected = selectedEffects.contains(effectCode)
@@ -109,18 +121,20 @@ private fun CompanionPlantInputSection(viewModel: SeedInputViewModel) {
                         }
                     },
                     label = { 
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.padding(start = 0.dp, top = 4.dp, end = 0.dp, bottom = 4.dp)
                         ) {
                             CompanionEffectIcon(listOf(effectCode.code))
-                            Text(effectCode.displayName, style = MaterialTheme.typography.labelSmall)
+//                            Text(effectCode.displayName, style = MaterialTheme.typography.labelSmall)
                         }
                     },
                     selected = isSelected,
                     colors = FilterChipDefaults.filterChipColors(
                         selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                        selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
+                        selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                        containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
+                        labelColor = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 )
             }

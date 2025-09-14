@@ -128,7 +128,10 @@ fun PreviewImageManagementSection(viewModel: com.example.seedstockkeeper6.viewmo
                         disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
                     )
                 ) {
-                    Text("AIで解析")
+                    Text(
+                        text = "AIで解析",
+                        style = MaterialTheme.typography.bodyLarge
+                    )
                     Spacer(Modifier.width(8.dp))
                     Image(
                         painter = painterResource(id = R.drawable.star_opc),
@@ -206,5 +209,14 @@ fun PreviewCultivationInfoSectionPreview() {
     SeedStockKeeper6Theme(darkTheme = false, dynamicColor = false) {
         val viewModel = com.example.seedstockkeeper6.preview.createPreviewSeedInputViewModel()
         PreviewCultivationInfoSection(viewModel)
+    }
+}
+
+@Preview(showBackground = true, name = "プレビュー用コンパニオンプランツセクション")
+@Composable
+fun PreviewCompanionPlantsSectionPreview() {
+    SeedStockKeeper6Theme(darkTheme = false, dynamicColor = false) {
+        val viewModel = com.example.seedstockkeeper6.preview.createPreviewSeedInputViewModel()
+        com.example.seedstockkeeper6.ui.screens.CompanionPlantsSection(viewModel)
     }
 }

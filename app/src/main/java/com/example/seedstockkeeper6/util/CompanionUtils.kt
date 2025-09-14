@@ -60,12 +60,12 @@ fun normalizeEffectName(rawEffect: String?): String {
         // 土壌pH調整
         normalized.contains("pH") || normalized.contains("酸度") || normalized.contains("アルカリ") || normalized.contains("中和") ||
                 normalized.contains("lime", true) || normalized.contains("balance", true)
-            -> "土壌pH調整"
+            -> "pH調整"
 
-        // 作業性向上
+        // 効率UP
         normalized.contains("作業") || normalized.contains("管理") || normalized.contains("効率") ||
                 normalized.contains("efficiency", true) || normalized.contains("easy", true)
-            -> "作業性向上"
+            -> "効率UP"
 
         // 収量安定化
         normalized.contains("収量") || normalized.contains("安定") || normalized.contains("収穫") ||

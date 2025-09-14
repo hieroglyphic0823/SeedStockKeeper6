@@ -90,7 +90,113 @@ fun createPreviewSettingsViewModel(
     hasExistingData: Boolean = true
 ): SettingsViewModel {
     val viewModel = SettingsViewModel()
-    // プレビュー用の状態設定は内部で行う
+    
+    // プレビュー用のデモデータを設定
+    if (hasExistingData) {
+        viewModel.updateFarmName("サンプル農園")
+        viewModel.updateDefaultRegion("温暖地")
+        // hasExistingDataをtrueに設定
+        viewModel.hasExistingData = true
+    }
+    
+    // 編集モードの設定
+    if (isEditMode) {
+        viewModel.enterEditMode()
+    }
+    
+    return viewModel
+}
+
+// プレビュー用のCalendarViewModel（SeedInputViewModelのラッパー）
+fun createPreviewCalendarViewModel(
+    isEditMode: Boolean = false,
+    hasExistingData: Boolean = true
+): SeedInputViewModel {
+    return createPreviewSeedInputViewModel(isEditMode, hasExistingData)
+}
+
+// プレビュー用のCompanionPlantsViewModel（SeedInputViewModelのラッパー）
+fun createPreviewCompanionPlantsViewModel(
+    isEditMode: Boolean = false,
+    hasExistingData: Boolean = true,
+    hasCompanionPlants: Boolean = true
+): SeedInputViewModel {
+    val viewModel = SeedInputViewModel()
+    
+    // デモデータを設定
+    val demoPacket = if (hasExistingData) {
+        SeedPacket(
+            id = "demo-seed-id",
+            documentId = "demo-document-id",
+            productName = "恋むすめ",
+            variety = "ニンジン",
+            family = "せり科",
+            expirationYear = 2026,
+            expirationMonth = 10,
+            productNumber = "CR-2024-001",
+            company = "サカタのタネ",
+            originCountry = "日本",
+            contents = "5ml",
+            germinationRate = "85",
+            seedTreatment = "無処理",
+            imageUrls = listOf(
+                "https://picsum.photos/300/400?random=1",
+                "https://picsum.photos/300/400?random=2"
+            ),
+            calendar = listOf(
+                com.example.seedstockkeeper6.model.CalendarEntry(
+                    region = "関東",
+                    sowing_start_date = "2025-08-15",
+                    sowing_end_date = "2025-09-15",
+                    harvest_start_date = "2025-10-01",
+                    harvest_end_date = "2025-12-31"
+                )
+            ),
+            cultivation = com.example.seedstockkeeper6.model.Cultivation(
+                notes = "種まきは深さ1cm程度に。発芽まで土を乾かさないよう注意。間引きは本葉2-3枚の頃に行う。",
+                harvesting = "根の直径が2-3cmになったら収穫。葉も食用可能。",
+                soilPrep_per_sqm = com.example.seedstockkeeper6.model.SoilPrep(
+                    chemical_fertilizer_g = 50
+                )
+            ),
+            companionPlants = if (hasCompanionPlants) {
+                listOf(
+                    com.example.seedstockkeeper6.model.CompanionPlant(
+                        plant = "ネギ",
+                        effects = listOf(
+                            com.example.seedstockkeeper6.model.CompanionEffectCode.PEST_PREVENTION.code,
+                            com.example.seedstockkeeper6.model.CompanionEffectCode.DISEASE_PREVENTION.code
+                        )
+                    ),
+                    com.example.seedstockkeeper6.model.CompanionPlant(
+                        plant = "レタス",
+                        effects = listOf(
+                            com.example.seedstockkeeper6.model.CompanionEffectCode.SPACE_UTILIZATION.code,
+                            com.example.seedstockkeeper6.model.CompanionEffectCode.WEED_SUPPRESSION.code
+                        )
+                    ),
+                    com.example.seedstockkeeper6.model.CompanionPlant(
+                        plant = "マリーゴールド",
+                        effects = listOf(
+                            com.example.seedstockkeeper6.model.CompanionEffectCode.PEST_PREVENTION.code,
+                            com.example.seedstockkeeper6.model.CompanionEffectCode.LANDSCAPE_BEAUTIFICATION.code
+                        )
+                    )
+                )
+            } else {
+                emptyList()
+            }
+        )
+    } else {
+        SeedPacket() // 新規作成の場合は空のパケット
+    }
+    
+    viewModel.setSeed(demoPacket)
+    
+    // 編集モードの場合は編集モードを有効にする
+    if (isEditMode) {
+        viewModel.enterEditMode()
+    }
     
     return viewModel
 }
