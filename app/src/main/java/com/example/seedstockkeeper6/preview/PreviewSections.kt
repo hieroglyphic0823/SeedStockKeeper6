@@ -110,26 +110,39 @@ fun PreviewImageManagementSection(viewModel: com.example.seedstockkeeper6.viewmo
         
         // AIで解析ボタン
         if (viewModel.isEditMode || !viewModel.hasExistingData) {
-            Button(
-                onClick = { },
-                enabled = viewModel.imageUris.isNotEmpty() && !viewModel.isLoading,
+            Row(
                 modifier = Modifier
-                    .wrapContentWidth()
+                    .fillMaxWidth()
                     .padding(top = 8.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.tertiary,
-                    contentColor = MaterialTheme.colorScheme.onTertiary,
-                    disabledContainerColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
-                    disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
-                )
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("AIで解析")
-                Spacer(Modifier.width(8.dp))
-                Image(
-                    painter = painterResource(id = R.drawable.star_w),
-                    contentDescription = "OCR",
-                    modifier = Modifier.size(24.dp)
-                )
+                Button(
+                    onClick = { },
+                    enabled = viewModel.imageUris.isNotEmpty() && !viewModel.isLoading,
+                    modifier = Modifier.wrapContentWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                        disabledContainerColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
+                        disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                    )
+                ) {
+                    Text("AIで解析")
+                    Spacer(Modifier.width(8.dp))
+                    Image(
+                        painter = painterResource(id = R.drawable.star_opc),
+                        contentDescription = "OCR",
+                        modifier = Modifier.size(24.dp),
+                        colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(
+                            if (viewModel.imageUris.isNotEmpty()) {
+                                MaterialTheme.colorScheme.onPrimaryContainer
+                            } else {
+                                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                            }
+                        )
+                    )
+                }
             }
         }
     }

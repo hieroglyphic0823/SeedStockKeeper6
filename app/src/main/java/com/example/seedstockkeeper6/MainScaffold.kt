@@ -176,34 +176,52 @@ fun MainScaffoldTopAppBar(
                                     textAlign = TextAlign.Start
                                 )
                             }
-                            // EditMode編集: Familyアイコンと商品名+「（編集）」
+                            // EditMode編集: Familyアイコンと商品名+（科名）
                             seedInputViewModel?.isEditMode == true && seedInputViewModel?.hasExistingData == true -> {
                                 com.example.seedstockkeeper6.ui.components.FamilyIcon(
                                     family = seedInputViewModel.packet.family,
                                     size = 24.dp
                                 )
                                 Text(
-                                    text = if (seedInputViewModel.packet.productName.isNotEmpty() && seedInputViewModel.packet.variety.isNotEmpty()) {
-                                        "${seedInputViewModel.packet.productName}（${seedInputViewModel.packet.variety}）（編集）"
+                                    text = if (seedInputViewModel.packet.productName.isNotEmpty() && seedInputViewModel.packet.family.isNotEmpty()) {
+                                        "${seedInputViewModel.packet.productName}（${seedInputViewModel.packet.family}）"
                                     } else {
-                                        "${seedInputViewModel.packet.productName.ifEmpty { "種情報" }}（編集）"
+                                        "${seedInputViewModel.packet.productName.ifEmpty { "種情報" }}"
                                     },
                                     modifier = Modifier.fillMaxWidth(),
                                     textAlign = TextAlign.Start
                                 )
                             }
-                            // デフォルト: 現行アイコン+「種情報」
+                            // デフォルト: 商品名がある場合は商品名、ない場合は「種情報」
                             else -> {
-                                Image(
-                                    painter = painterResource(id = com.example.seedstockkeeper6.R.drawable.packet),
-                                    contentDescription = "種情報",
-                                    modifier = Modifier.size(24.dp)
-                                )
-                                Text(
-                                    text = "種情報",
-                                    modifier = Modifier.fillMaxWidth(),
-                                    textAlign = TextAlign.Start
-                                )
+                                if (seedInputViewModel?.packet?.productName?.isNotEmpty() == true) {
+                                    // 商品名がある場合はFamilyアイコンと商品名を表示
+                                    com.example.seedstockkeeper6.ui.components.FamilyIcon(
+                                        family = seedInputViewModel.packet.family,
+                                        size = 24.dp
+                                    )
+                                    Text(
+                                        text = if (seedInputViewModel.packet.variety.isNotEmpty()) {
+                                            "${seedInputViewModel.packet.productName}（${seedInputViewModel.packet.variety}）"
+                                        } else {
+                                            seedInputViewModel.packet.productName
+                                        },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        textAlign = TextAlign.Start
+                                    )
+                                } else {
+                                    // 商品名がない場合は現行アイコン+「種情報」
+                                    Image(
+                                        painter = painterResource(id = com.example.seedstockkeeper6.R.drawable.packet),
+                                        contentDescription = "種情報",
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                    Text(
+                                        text = "種情報",
+                                        modifier = Modifier.fillMaxWidth(),
+                                        textAlign = TextAlign.Start
+                                    )
+                                }
                             }
                         }
                     }
@@ -259,7 +277,6 @@ fun MainScaffoldTopAppBar(
                             Icon(
                                 painter = painterResource(id = com.example.seedstockkeeper6.R.drawable.edit),
                                 contentDescription = "編集",
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.size(24.dp)
                             )
                         }
@@ -293,7 +310,6 @@ fun MainScaffoldTopAppBar(
                                 Icon(
                                     painter = painterResource(id = com.example.seedstockkeeper6.R.drawable.edit),
                                     contentDescription = "編集",
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                     modifier = Modifier.size(24.dp)
                                 )
                             }
@@ -328,7 +344,6 @@ fun MainScaffoldTopAppBar(
                                     Icon(
                                         painter = painterResource(id = com.example.seedstockkeeper6.R.drawable.edit),
                                         contentDescription = "編集",
-                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                         modifier = Modifier.size(24.dp)
                                     )
                                 }

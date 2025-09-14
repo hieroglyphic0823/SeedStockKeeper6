@@ -70,9 +70,10 @@ fun SeedInputScreenPreview_DisplayMode() {
                                 )
                             ) {
                             Icon(
-                                    painter = painterResource(id = com.example.seedstockkeeper6.R.drawable.edit),
+                                    painter = painterResource(id = com.example.seedstockkeeper6.R.drawable.pencil),
                                     contentDescription = "編集",
-                                    modifier = Modifier.size(24.dp)
+                                    modifier = Modifier.size(24.dp),
+                                    tint = Color.Unspecified
                                 )
                             }
                         }

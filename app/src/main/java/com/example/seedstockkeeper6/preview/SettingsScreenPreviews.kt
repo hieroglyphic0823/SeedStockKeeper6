@@ -12,6 +12,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -63,12 +64,14 @@ fun SettingsScreenPreview_DisplayMode() {
                         ) {
                             IconButton(
                                 onClick = { },
-                                modifier = Modifier.size(24.dp)
+                                modifier = Modifier.size(24.dp),
+                                colors = IconButtonDefaults.iconButtonColors(
+                                    contentColor = Color.Unspecified
+                                )
                             ) {
                                 Icon(
                                     painter = painterResource(id = com.example.seedstockkeeper6.R.drawable.edit),
                                     contentDescription = "編集",
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                     modifier = Modifier.size(24.dp)
                                 )
                             }

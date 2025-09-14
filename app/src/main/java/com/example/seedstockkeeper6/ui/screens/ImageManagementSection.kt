@@ -70,7 +70,7 @@ fun ImageManagementSection(viewModel: SeedInputViewModel) {
             modifier = Modifier.padding(bottom = 8.dp)
         ) {
             Image(
-                painter = painterResource(id = R.drawable.gallery),
+                painter = painterResource(id = R.drawable.album),
                 contentDescription = "画像管理",
                 modifier = Modifier.size(24.dp)
             )
@@ -110,7 +110,7 @@ fun ImageManagementSection(viewModel: SeedInputViewModel) {
                         if (viewModel.ocrTargetIndex == index) {
                             Modifier.border(
                                 width = 8.dp,
-                                color = MaterialTheme.colorScheme.tertiary,
+                                color = MaterialTheme.colorScheme.primaryContainer,
                                 shape = RoundedCornerShape(4.dp)
                             )
                         } else {
@@ -145,7 +145,7 @@ fun ImageManagementSection(viewModel: SeedInputViewModel) {
                         }
                     }, modifier = Modifier.align(Alignment.TopEnd)) {
                         Image(
-                            painter = painterResource(id = R.drawable.delete),
+                            painter = painterResource(id = R.drawable.delete_button),
                             contentDescription = "削除",
                             modifier = Modifier.size(24.dp)
                         )
@@ -193,15 +193,9 @@ fun ImageManagementSection(viewModel: SeedInputViewModel) {
                         .padding(4.dp)
                 ) {
                     Image(
-                        painter = painterResource(id = R.drawable.search),
+                        painter = painterResource(id = R.drawable.glass_pr),
                         contentDescription = "拡大表示",
-                        modifier = Modifier
-                            .size(24.dp)
-                            .background(
-                                color = MaterialTheme.colorScheme.tertiaryContainer,
-                                shape = RoundedCornerShape(12.dp)
-                            )
-                            .padding(4.dp)
+                        modifier = Modifier.size(24.dp)
                     )
                 }
             }
@@ -211,7 +205,7 @@ fun ImageManagementSection(viewModel: SeedInputViewModel) {
             item {
                 IconButton(onClick = { pickImagesLauncher.launch("image/*") }) {
                     Image(
-                        painter = painterResource(id = R.drawable.plus),
+                        painter = painterResource(id = R.drawable.add_pr),
                         contentDescription = "追加",
                         modifier = Modifier.size(24.dp)
                     )
@@ -231,7 +225,7 @@ fun ImageManagementSection(viewModel: SeedInputViewModel) {
         if (viewModel.isEditMode || !viewModel.hasExistingData) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Button(
@@ -245,8 +239,8 @@ fun ImageManagementSection(viewModel: SeedInputViewModel) {
                     enabled = viewModel.imageUris.isNotEmpty(),
                     modifier = Modifier.wrapContentWidth(), // 横幅を詰める
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.tertiary,
-                        contentColor = MaterialTheme.colorScheme.onTertiary,
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
                         disabledContainerColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
                         disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
                     )
@@ -254,9 +248,16 @@ fun ImageManagementSection(viewModel: SeedInputViewModel) {
                     Text("AIで解析")
                     Spacer(Modifier.width(8.dp))
                     Image(
-                        painter = painterResource(id = R.drawable.star_w),
+                        painter = painterResource(id = R.drawable.star_opc),
                         contentDescription = "OCR",
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(24.dp),
+                        colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(
+                            if (viewModel.imageUris.isNotEmpty()) {
+                                MaterialTheme.colorScheme.onPrimaryContainer
+                            } else {
+                                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                            }
+                        )
                     )
                 }
 
