@@ -50,10 +50,9 @@ fun NotesCardSection(viewModel: SeedInputViewModel) {
                                     .background(MaterialTheme.colorScheme.onPrimaryContainer),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Icon(
-                                    Icons.Filled.Note,
+                                androidx.compose.foundation.Image(
+                                    painter = painterResource(id = R.drawable.sprout),
                                     contentDescription = "栽培メモ",
-                                    tint = MaterialTheme.colorScheme.primaryContainer,
                                     modifier = Modifier.size(16.dp)
                                 )
                             }

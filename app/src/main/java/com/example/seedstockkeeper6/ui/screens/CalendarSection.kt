@@ -410,7 +410,7 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
                     // 編集モード: ボタン表示
                     Button(
                         onClick = { showExpirationBottomSheet = true },
-                        modifier = Modifier.width(133.dp),
+                        modifier = Modifier.width(160.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.tertiaryContainer
                         ),
@@ -424,7 +424,8 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
                             },
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onTertiaryContainer,
-                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                            maxLines = 1
                         )
                     }
                 } else {
