@@ -1287,22 +1287,53 @@ class SeedInputViewModel : ViewModel() {
         editingCalendarEntry?.let { entry ->
             Log.d("RegionSelection", "saveEditingCalendarEntry: $entry")
             
+            // 年を有効期限から計算して設定
+            val expirationYear = packet.expirationYear
+            val calculatedEntry = if (expirationYear > 0) {
+                // 有効期限の年を使用して日付を再構築
+                val updatedEntry = entry.copy(
+                    sowing_start_date = calculateDateWithYear(entry.sowing_start_date, expirationYear),
+                    sowing_end_date = calculateDateWithYear(entry.sowing_end_date, expirationYear),
+                    harvest_start_date = calculateDateWithYear(entry.harvest_start_date, expirationYear),
+                    harvest_end_date = calculateDateWithYear(entry.harvest_end_date, expirationYear)
+                )
+                Log.d("RegionSelection", "年計算完了: $updatedEntry")
+                updatedEntry
+            } else {
+                entry
+            }
+            
             // OCR結果を更新
             ocrResult?.let { result ->
                 val updatedCalendar = result.calendar.map { 
-                    if (it.region == entry.region) entry else it 
+                    if (it.region == calculatedEntry.region) calculatedEntry else it 
                 }
                 ocrResult = result.copy(calendar = updatedCalendar)
                 Log.d("RegionSelection", "OCR結果更新完了: $updatedCalendar")
             }
             
             // パケットのカレンダーも更新
-            packet = packet.copy(calendar = listOf(entry))
+            packet = packet.copy(calendar = listOf(calculatedEntry))
             Log.d("RegionSelection", "パケット更新完了: ${packet.calendar}")
             
             // 編集状態をクリア
             editingCalendarEntry = null
         }
+    }
+    
+    // 月と旬から年を設定して日付を構築するヘルパー関数
+    private fun calculateDateWithYear(dateString: String, year: Int): String {
+        if (dateString.isEmpty()) return ""
+        
+        // 既存の日付から月と日を抽出
+        val parts = dateString.split("-")
+        if (parts.size >= 2) {
+            val month = parts[1]
+            val day = if (parts.size >= 3) parts[2] else "01"
+            return "$year-$month-$day"
+        }
+        
+        return dateString
     }
 
     fun cancelEditingCalendarEntry() {

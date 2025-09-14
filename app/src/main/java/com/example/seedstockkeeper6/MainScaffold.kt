@@ -249,11 +249,20 @@ fun MainScaffoldTopAppBar(
                                 }
                             },
                         ) {
-                                                    Icon(
-                            imageVector = if (settingsViewModel?.isEditMode == true) Icons.Filled.Close else Icons.Filled.Edit,
-                            contentDescription = if (settingsViewModel?.isEditMode == true) "キャンセル" else "編集",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                                                    if (settingsViewModel?.isEditMode == true) {
+                            Icon(
+                                imageVector = Icons.Filled.Close,
+                                contentDescription = "キャンセル",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        } else {
+                            Icon(
+                                painter = painterResource(id = com.example.seedstockkeeper6.R.drawable.edit),
+                                contentDescription = "編集",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
                         }
                     }
                 }
@@ -274,11 +283,20 @@ fun MainScaffoldTopAppBar(
                                 }
                             },
                         ) {
-                            Icon(
-                                imageVector = if (seedInputViewModel?.isEditMode == true) Icons.Filled.Close else Icons.Filled.Edit,
-                                contentDescription = if (seedInputViewModel?.isEditMode == true) "キャンセル" else "編集",
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                            if (seedInputViewModel?.isEditMode == true) {
+                                Icon(
+                                    imageVector = Icons.Filled.Close,
+                                    contentDescription = "キャンセル",
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            } else {
+                                Icon(
+                                    painter = painterResource(id = com.example.seedstockkeeper6.R.drawable.edit),
+                                    contentDescription = "編集",
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
                         }
                     }
                 }
@@ -300,11 +318,20 @@ fun MainScaffoldTopAppBar(
                                     }
                                 },
                             ) {
-                                Icon(
-                                    imageVector = if (seedInputViewModel?.isEditMode == true) Icons.Filled.Close else Icons.Filled.Edit,
-                                    contentDescription = if (seedInputViewModel?.isEditMode == true) "キャンセル" else "編集",
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
+                                if (seedInputViewModel?.isEditMode == true) {
+                                    Icon(
+                                        imageVector = Icons.Filled.Close,
+                                        contentDescription = "キャンセル",
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                } else {
+                                    Icon(
+                                        painter = painterResource(id = com.example.seedstockkeeper6.R.drawable.edit),
+                                        contentDescription = "編集",
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                }
                             }
                         }
                     } else {

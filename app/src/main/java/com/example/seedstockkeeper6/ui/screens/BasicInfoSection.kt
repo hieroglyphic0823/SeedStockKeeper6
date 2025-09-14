@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.dp
 import com.example.seedstockkeeper6.R
 import com.example.seedstockkeeper6.ui.components.FamilyIcon
 import com.example.seedstockkeeper6.ui.components.FamilyIconCircle
+import com.example.seedstockkeeper6.util.familyRotationYearsRange
 import com.example.seedstockkeeper6.viewmodel.SeedInputViewModel
 
 @Composable
@@ -95,12 +96,24 @@ fun BasicInfoSection(viewModel: SeedInputViewModel) {
         
         // 科名
         if (viewModel.isEditMode || !viewModel.hasExistingData) {
-            FamilySelector(
-                value = viewModel.packet.family,
-                onValueChange = viewModel::onFamilyChange
-            )
+            // EditMode: 科名のOutlineTextと横並びで選択した科名に合ったFamilyアイコンを表示
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                FamilySelector(
+                    value = viewModel.packet.family,
+                    onValueChange = viewModel::onFamilyChange,
+                    modifier = Modifier.weight(1f)
+                )
+                // 選択した科名に合ったFamilyアイコン
+                com.example.seedstockkeeper6.ui.components.FamilyIcon(
+                    family = viewModel.packet.family,
+                    size = 24.dp
+                )
+            }
         } else {
-            // DisplayMode: 読み取り専用表示（アイコン付き）
+            // DisplayMode: 「科名: せり科（アイコン）」の順に表示
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -111,18 +124,30 @@ fun BasicInfoSection(viewModel: SeedInputViewModel) {
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurface
                 )
-                // コンパニオンプランツと同じスタイルの丸いアイコン
-                FamilyIconCircle(
-                    family = viewModel.packet.family
-                )
                 Text(
                     text = viewModel.packet.family.ifEmpty { "未設定" },
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurface
                 )
+                // コンパニオンプランツと同じスタイルの丸いアイコン
+                FamilyIconCircle(
+                    family = viewModel.packet.family
+                )
             }
         }
         
+        Spacer(modifier = Modifier.height(12.dp))
+        
+        // 連作障害年数
+        val rotationYears = familyRotationYearsRange(viewModel.packet.family)
+        if (rotationYears != null) {
+            Text(
+                text = "連作障害年数: $rotationYears",
+                modifier = Modifier.padding(vertical = 4.dp),
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        }
         
         Spacer(modifier = Modifier.height(12.dp))
         

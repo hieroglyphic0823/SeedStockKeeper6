@@ -66,7 +66,7 @@ fun SettingsScreenPreview_DisplayMode() {
                                 modifier = Modifier.size(24.dp)
                             ) {
                                 Icon(
-                                    imageVector = Icons.Filled.Edit,
+                                    painter = painterResource(id = com.example.seedstockkeeper6.R.drawable.edit),
                                     contentDescription = "編集",
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                     modifier = Modifier.size(24.dp)

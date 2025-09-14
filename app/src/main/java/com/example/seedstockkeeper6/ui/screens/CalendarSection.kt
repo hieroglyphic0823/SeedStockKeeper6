@@ -178,7 +178,7 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
                             ) {
                                 Text(
                                     text = if (sowingStartYear == "0" && sowingStartMonth == "0" && sowingStartStage.isEmpty()) {
-                                        "2025年8月(上旬)"
+                                        "播種開始期間を選択"
                                     } else {
                                         val year = if (sowingStartYear == "0") "" else "${sowingStartYear}年"
                                         val month = if (sowingStartMonth == "0") "不明" else "${sowingStartMonth}月"
@@ -209,7 +209,7 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
                             ) {
                                 Text(
                                     text = if (sowingEndYear == "0" && sowingEndMonth == "0" && sowingEndStage.isEmpty()) {
-                                        "2025年9月(下旬)"
+                                        "播種終了期間を選択"
                                     } else {
                                         val year = if (sowingEndYear == "0") "" else "${sowingEndYear}年"
                                         val month = if (sowingEndMonth == "0") "不明" else "${sowingEndMonth}月"
@@ -294,7 +294,7 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
                             ) {
                                 Text(
                                     text = if (harvestStartYear == "0" && harvestStartMonth == "0" && harvestStartStage.isEmpty()) {
-                                        "2025年10月(上旬)"
+                                        "収穫開始期間を選択"
                                     } else {
                                         val year = if (harvestStartYear == "0") "" else "${harvestStartYear}年"
                                         val month = if (harvestStartMonth == "0") "不明" else "${harvestStartMonth}月"
@@ -325,7 +325,7 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
                             ) {
                                 Text(
                                     text = if (harvestEndYear == "0" && harvestEndMonth == "0" && harvestEndStage.isEmpty()) {
-                                        "2025年12月(下旬)"
+                                        "収穫終了期間を選択"
                                     } else {
                                         val year = if (harvestEndYear == "0") "" else "${harvestEndYear}年"
                                         val month = if (harvestEndMonth == "0") "不明" else "${harvestEndMonth}月"
@@ -375,13 +375,13 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
                         modifier = Modifier
                             .size(24.dp)
                             .clip(RoundedCornerShape(4.dp))
-                            .background(MaterialTheme.colorScheme.error),
+                            .background(MaterialTheme.colorScheme.errorContainer),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             Icons.Filled.Schedule,
                             contentDescription = "有効期限",
-                            tint = MaterialTheme.colorScheme.onError,
+                            tint = MaterialTheme.colorScheme.onErrorContainer,
                             modifier = Modifier.size(18.dp)
                         )
                     }
@@ -401,18 +401,18 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
                     Button(
                         onClick = { showExpirationBottomSheet = true },
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.error
+                            containerColor = MaterialTheme.colorScheme.tertiaryContainer
                         ),
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         Text(
                             text = if (expirationYear == "0" && expirationMonth == "0") {
-                                "2026年10月"
+                                "有効期限を選択"
                             } else {
                                 "${expirationYear}年${expirationMonth}月"
                             },
                             style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onError
+                            color = MaterialTheme.colorScheme.onTertiaryContainer
                         )
                     }
                 } else {

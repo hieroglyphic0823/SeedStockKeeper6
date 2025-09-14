@@ -8,7 +8,7 @@ fun normalizeFamilyName(rawFamily: String?): String {
         normalized.contains("ヒルガオ") -> "ヒルガオ科"
         normalized.contains("ウリ") -> "ウリ科"
         normalized.contains("マメ") -> "マメ科"
-        normalized.contains("セリ") -> "セリ科"
+        normalized.contains("セリ") || normalized.contains("せり") -> "セリ科"
         normalized.contains("キク") -> "キク科"
         normalized.contains("ネギ") || normalized.contains("ヒガンバナ") || normalized.contains("アリウム") -> "ネギ科"
         normalized.contains("アマランサス") || normalized.contains("ヒユ") -> "アマランサス科"

@@ -21,6 +21,84 @@ import androidx.compose.ui.unit.dp
 import com.example.seedstockkeeper6.R
 import com.example.seedstockkeeper6.model.CalendarEntry
 import com.example.seedstockkeeper6.utils.DateConversionUtils
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
+import kotlin.math.roundToInt
+
+@Composable
+fun NumberPicker(
+    value: Int,
+    range: IntRange,
+    onValueChange: (Int) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val density = LocalDensity.current
+    var offsetY by remember { mutableStateOf(0f) }
+    val itemHeight = with(density) { 40.dp.toPx() }
+    
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(8.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .pointerInput(Unit) {
+                detectDragGestures(
+                    onDragEnd = {
+                        val index = (-offsetY / itemHeight).roundToInt()
+                        val newValue = (value + index).coerceIn(range.first, range.last)
+                        if (newValue != value) {
+                            onValueChange(newValue)
+                        }
+                        offsetY = 0f
+                    }
+                ) { _, dragAmount ->
+                    offsetY += dragAmount.y
+                }
+            }
+    ) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.Center
+        ) {
+            // 上側の項目
+            if (value > range.first) {
+                Text(
+                    text = (value - 1).toString(),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(40.dp)
+                        .wrapContentHeight(Alignment.CenterVertically)
+                )
+            }
+            
+            // 中央の選択項目
+            Text(
+                text = value.toString(),
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(40.dp)
+                    .wrapContentHeight(Alignment.CenterVertically)
+            )
+            
+            // 下側の項目
+            if (value < range.last) {
+                Text(
+                    text = (value + 1).toString(),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(40.dp)
+                        .wrapContentHeight(Alignment.CenterVertically)
+                )
+            }
+        }
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -28,7 +106,8 @@ fun CalendarEntryEditor(
     entry: CalendarEntry,
     onUpdate: (CalendarEntry) -> Unit,
     onSave: () -> Unit,
-    onCancel: () -> Unit
+    onCancel: () -> Unit,
+    hideYearSelection: Boolean = false
 ) {
     // ローカル状態変数（旬ベースの入力）
     var sowingStartYear by remember(entry) { 
@@ -80,38 +159,85 @@ fun CalendarEntryEditor(
 
     // 日付変換と更新処理
     fun updateSowingStart(year: String, month: String, stage: String) {
-        val yearInt = year.toIntOrNull() ?: 0
+        val yearInt = if (hideYearSelection) 0 else (year.toIntOrNull() ?: 0)
         val monthInt = month.toIntOrNull() ?: 0
-        if (yearInt > 0 && monthInt > 0 && stage.isNotEmpty()) {
-            val startDate = DateConversionUtils.convertStageToStartDate(yearInt, monthInt, stage)
-            val endDate = entry.sowing_end_date
+        if (monthInt > 0 && stage.isNotEmpty()) {
+            val startDate = if (hideYearSelection) {
+                // 年選択が無効の場合は月と旬のみで日付を構築（年は後で計算）
+                val monthStr = monthInt.toString().padStart(2, '0')
+                val dayStr = when (stage) {
+                    "上旬" -> "01"
+                    "中旬" -> "15"
+                    "下旬" -> "28"
+                    else -> "01"
+                }
+                "0000-$monthStr-$dayStr" // 年は後で計算される
+            } else {
+                DateConversionUtils.convertStageToStartDate(yearInt, monthInt, stage)
+            }
             onUpdate(entry.copy(sowing_start_date = startDate))
         }
     }
     
     fun updateSowingEnd(year: String, month: String, stage: String) {
-        val yearInt = year.toIntOrNull() ?: 0
+        val yearInt = if (hideYearSelection) 0 else (year.toIntOrNull() ?: 0)
         val monthInt = month.toIntOrNull() ?: 0
-        if (yearInt > 0 && monthInt > 0 && stage.isNotEmpty()) {
-            val endDate = DateConversionUtils.convertStageToEndDate(yearInt, monthInt, stage)
+        if (monthInt > 0 && stage.isNotEmpty()) {
+            val endDate = if (hideYearSelection) {
+                // 年選択が無効の場合は月と旬のみで日付を構築（年は後で計算）
+                val monthStr = monthInt.toString().padStart(2, '0')
+                val dayStr = when (stage) {
+                    "上旬" -> "10"
+                    "中旬" -> "20"
+                    "下旬" -> "31"
+                    else -> "10"
+                }
+                "0000-$monthStr-$dayStr" // 年は後で計算される
+            } else {
+                DateConversionUtils.convertStageToEndDate(yearInt, monthInt, stage)
+            }
             onUpdate(entry.copy(sowing_end_date = endDate))
         }
     }
     
     fun updateHarvestStart(year: String, month: String, stage: String) {
-        val yearInt = year.toIntOrNull() ?: 0
+        val yearInt = if (hideYearSelection) 0 else (year.toIntOrNull() ?: 0)
         val monthInt = month.toIntOrNull() ?: 0
-        if (yearInt > 0 && monthInt > 0 && stage.isNotEmpty()) {
-            val startDate = DateConversionUtils.convertStageToStartDate(yearInt, monthInt, stage)
+        if (monthInt > 0 && stage.isNotEmpty()) {
+            val startDate = if (hideYearSelection) {
+                // 年選択が無効の場合は月と旬のみで日付を構築（年は後で計算）
+                val monthStr = monthInt.toString().padStart(2, '0')
+                val dayStr = when (stage) {
+                    "上旬" -> "01"
+                    "中旬" -> "15"
+                    "下旬" -> "28"
+                    else -> "01"
+                }
+                "0000-$monthStr-$dayStr" // 年は後で計算される
+            } else {
+                DateConversionUtils.convertStageToStartDate(yearInt, monthInt, stage)
+            }
             onUpdate(entry.copy(harvest_start_date = startDate))
         }
     }
     
     fun updateHarvestEnd(year: String, month: String, stage: String) {
-        val yearInt = year.toIntOrNull() ?: 0
+        val yearInt = if (hideYearSelection) 0 else (year.toIntOrNull() ?: 0)
         val monthInt = month.toIntOrNull() ?: 0
-        if (yearInt > 0 && monthInt > 0 && stage.isNotEmpty()) {
-            val endDate = DateConversionUtils.convertStageToEndDate(yearInt, monthInt, stage)
+        if (monthInt > 0 && stage.isNotEmpty()) {
+            val endDate = if (hideYearSelection) {
+                // 年選択が無効の場合は月と旬のみで日付を構築（年は後で計算）
+                val monthStr = monthInt.toString().padStart(2, '0')
+                val dayStr = when (stage) {
+                    "上旬" -> "10"
+                    "中旬" -> "20"
+                    "下旬" -> "31"
+                    else -> "10"
+                }
+                "0000-$monthStr-$dayStr" // 年は後で計算される
+            } else {
+                DateConversionUtils.convertStageToEndDate(yearInt, monthInt, stage)
+            }
             onUpdate(entry.copy(harvest_end_date = endDate))
         }
     }
@@ -185,7 +311,8 @@ fun CalendarEntryEditor(
                         updateSowingStart(sowingStartYear, sowingStart, sowingStartStage)
                         sowingStartExpanded = false
                     },
-                    onCancel = { sowingStartExpanded = false }
+                    onCancel = { sowingStartExpanded = false },
+                    hideYearSelection = hideYearSelection
                 )
             }
         }
@@ -230,7 +357,8 @@ fun CalendarEntryEditor(
                         updateSowingEnd(sowingEndYear, sowingEnd, sowingEndStage)
                         sowingEndExpanded = false
                     },
-                    onCancel = { sowingEndExpanded = false }
+                    onCancel = { sowingEndExpanded = false },
+                    hideYearSelection = hideYearSelection
                 )
             }
         }
@@ -302,7 +430,8 @@ fun CalendarEntryEditor(
                         updateHarvestStart(harvestStartYear, harvestStart, harvestStartStage)
                         harvestStartExpanded = false
                     },
-                    onCancel = { harvestStartExpanded = false }
+                    onCancel = { harvestStartExpanded = false },
+                    hideYearSelection = hideYearSelection
                 )
             }
         }
@@ -347,7 +476,8 @@ fun CalendarEntryEditor(
                         updateHarvestEnd(harvestEndYear, harvestEnd, harvestEndStage)
                         harvestEndExpanded = false
                     },
-                    onCancel = { harvestEndExpanded = false }
+                    onCancel = { harvestEndExpanded = false },
+                    hideYearSelection = hideYearSelection
                 )
             }
         }
@@ -386,8 +516,6 @@ fun ExpirationSelectionBottomSheet(
     onCancel: () -> Unit
 ) {
     val currentYear = java.time.LocalDate.now().year
-    val yearOptions = (currentYear..currentYear + 5).map { it.toString() }
-    val monthOptions = (1..12).map { it.toString() }
     
                 Column(
                     modifier = Modifier
@@ -400,61 +528,39 @@ fun ExpirationSelectionBottomSheet(
                         modifier = Modifier.padding(bottom = 16.dp)
                     )
                     
-        // 年選択（NumberPicker風）
-        Text("年", style = MaterialTheme.typography.bodyMedium)
-        LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.padding(vertical = 8.dp)
+        // 年と月を横並びで表示
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            items(yearOptions) { year ->
-                Button(
-                    onClick = { onYearChange(year) },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = if (selectedYear == year) 
-                            MaterialTheme.colorScheme.primary 
-                        else 
-                            MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
-                    )
-                ) {
-                    Text(
-                        year,
-                        color = if (selectedYear == year) 
-                            MaterialTheme.colorScheme.onPrimary 
-                        else 
-                            MaterialTheme.colorScheme.onSurface
-                    )
-                }
+            // 年選択（NumberPicker）
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("年", style = MaterialTheme.typography.bodyMedium)
+                NumberPicker(
+                    value = selectedYear.toIntOrNull() ?: currentYear,
+                    range = currentYear..currentYear + 5,
+                    onValueChange = { onYearChange(it.toString()) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(120.dp)
+                )
             }
-        }
-        
-        // 月選択（12カ月分表示）
-        Text("月", style = MaterialTheme.typography.bodyMedium)
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(4),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier
-                .padding(vertical = 8.dp)
-                .height(120.dp)
-        ) {
-            items(monthOptions) { month ->
-                Button(
-                    onClick = { onMonthChange(month) },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = if (selectedMonth == month) 
-                            MaterialTheme.colorScheme.primary 
-                        else 
-                            MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
-                    )
-                ) {
-                    Text(
-                        "${month}月",
-                        color = if (selectedMonth == month) 
-                            MaterialTheme.colorScheme.onPrimary 
-                        else 
-                            MaterialTheme.colorScheme.onSurface
-                    )
-                }
+            
+            // 月選択（NumberPicker）
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("月", style = MaterialTheme.typography.bodyMedium)
+                NumberPicker(
+                    value = selectedMonth.toIntOrNull() ?: 1,
+                    range = 1..12,
+                    onValueChange = { onMonthChange(it.toString()) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(120.dp)
+                )
             }
         }
         
@@ -468,7 +574,10 @@ fun ExpirationSelectionBottomSheet(
                                         Button(
                 onClick = onConfirm,
                                             modifier = Modifier.weight(1f),
-                enabled = selectedYear != "0" && selectedMonth != "0"
+                enabled = selectedYear != "0" && selectedMonth != "0",
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.tertiaryContainer
+                )
             ) {
                 Text("確認")
             }
@@ -492,10 +601,11 @@ fun PeriodSelectionBottomSheet(
     onMonthChange: (String) -> Unit,
     onStageChange: (String) -> Unit,
     onConfirm: () -> Unit,
-    onCancel: () -> Unit
+    onCancel: () -> Unit,
+    confirmButtonColor: androidx.compose.ui.graphics.Color? = null,
+    hideYearSelection: Boolean = false
 ) {
     val currentYear = java.time.LocalDate.now().year
-    val yearOptions = (currentYear - 1..currentYear + 2).map { it.toString() }
     val monthOptions = (1..12).map { it.toString() }
     val stageOptions = listOf("上旬", "中旬", "下旬")
     
@@ -510,59 +620,51 @@ fun PeriodSelectionBottomSheet(
                         modifier = Modifier.padding(bottom = 16.dp)
                     )
                     
-        // 年選択（NumberPicker風）
-        Text("年", style = MaterialTheme.typography.bodyMedium)
-        LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.padding(vertical = 8.dp)
-        ) {
-            items(yearOptions) { year ->
-                Button(
-                    onClick = { onYearChange(year) },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = if (selectedYear == year) 
-                            MaterialTheme.colorScheme.primary 
-                        else 
-                            MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
-                    )
+        // 年と月を横並びで表示（年選択が無効の場合は月のみ）
+        if (hideYearSelection) {
+            // 月選択のみ
+            Text("月", style = MaterialTheme.typography.bodyMedium)
+            NumberPicker(
+                value = selectedMonth.toIntOrNull() ?: 1,
+                range = 1..12,
+                onValueChange = { onMonthChange(it.toString()) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(120.dp)
+            )
+        } else {
+            // 年と月を横並びで表示
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // 年選択（NumberPicker）
+                Column(
+                    modifier = Modifier.weight(1f)
                 ) {
-                    Text(
-                        year,
-                        color = if (selectedYear == year) 
-                            MaterialTheme.colorScheme.onPrimary 
-                        else 
-                            MaterialTheme.colorScheme.onSurface
+                    Text("年", style = MaterialTheme.typography.bodyMedium)
+                    NumberPicker(
+                        value = selectedYear.toIntOrNull() ?: currentYear,
+                        range = currentYear - 1..currentYear + 2,
+                        onValueChange = { onYearChange(it.toString()) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(120.dp)
                     )
                 }
-            }
-        }
-        
-        // 月選択（12カ月分表示）
-        Text("月", style = MaterialTheme.typography.bodyMedium)
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(4),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier
-                .padding(vertical = 8.dp)
-                .height(120.dp)
-        ) {
-            items(monthOptions) { month ->
-                Button(
-                    onClick = { onMonthChange(month) },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = if (selectedMonth == month) 
-                            MaterialTheme.colorScheme.primary 
-                        else 
-                            MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
-                    )
+                
+                // 月選択（NumberPicker）
+                Column(
+                    modifier = Modifier.weight(1f)
                 ) {
-                    Text(
-                        "${month}月",
-                        color = if (selectedMonth == month) 
-                            MaterialTheme.colorScheme.onPrimary 
-                        else 
-                            MaterialTheme.colorScheme.onSurface
+                    Text("月", style = MaterialTheme.typography.bodyMedium)
+                    NumberPicker(
+                        value = selectedMonth.toIntOrNull() ?: 1,
+                        range = 1..12,
+                        onValueChange = { onMonthChange(it.toString()) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(120.dp)
                     )
                 }
             }
@@ -605,7 +707,14 @@ fun PeriodSelectionBottomSheet(
                                     Button(
                 onClick = onConfirm,
                                         modifier = Modifier.weight(1f),
-                enabled = selectedYear != "0" && selectedMonth != "0" && selectedStage.isNotEmpty()
+                enabled = if (hideYearSelection) {
+                    selectedMonth != "0" && selectedStage.isNotEmpty()
+                } else {
+                    selectedYear != "0" && selectedMonth != "0" && selectedStage.isNotEmpty()
+                },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = confirmButtonColor ?: MaterialTheme.colorScheme.primary
+                )
             ) {
                 Text("確認")
             }

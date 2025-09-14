@@ -43,7 +43,7 @@ fun FamilyIcon(
         "ウリ科" -> R.drawable.cucumber
         "マメ科" -> R.drawable.bean
         "キク科" -> R.drawable.lettuce
-        "セリ科" -> R.drawable.carrot
+        "セリ科", "せり科" -> R.drawable.carrot
         "ネギ科" -> R.drawable.onion2
         "アマランサス科" -> R.drawable.spinach
         "バラ科" -> R.drawable.strawberry
@@ -118,7 +118,7 @@ fun FamilyIconCircle(
         "ウリ科" -> R.drawable.cucumber
         "マメ科" -> R.drawable.bean
         "キク科" -> R.drawable.lettuce
-        "セリ科" -> R.drawable.carrot
+        "セリ科", "せり科" -> R.drawable.carrot
         "ネギ科" -> R.drawable.onion2
         "アマランサス科" -> R.drawable.spinach
         "バラ科" -> R.drawable.strawberry

@@ -40,6 +40,23 @@ fun createPreviewSeedInputViewModel(
                     harvest_start_date = "2025-10-01",
                     harvest_end_date = "2025-12-31"
                 )
+            ),
+            cultivation = com.example.seedstockkeeper6.model.Cultivation(
+                notes = "種まきは深さ1cm程度に。発芽まで土を乾かさないよう注意。間引きは本葉2-3枚の頃に行う。",
+                harvesting = "根の直径が2-3cmになったら収穫。葉も食用可能。",
+                soilPrep_per_sqm = com.example.seedstockkeeper6.model.SoilPrep(
+                    chemical_fertilizer_g = 50
+                )
+            ),
+            companionPlants = listOf(
+                com.example.seedstockkeeper6.model.CompanionPlant(
+                    plant = "ネギ",
+                    effects = listOf(com.example.seedstockkeeper6.model.CompanionEffectCode.PEST_PREVENTION.code)
+                ),
+                com.example.seedstockkeeper6.model.CompanionPlant(
+                    plant = "レタス",
+                    effects = listOf(com.example.seedstockkeeper6.model.CompanionEffectCode.SPACE_UTILIZATION.code)
+                )
             )
         )
     } else {

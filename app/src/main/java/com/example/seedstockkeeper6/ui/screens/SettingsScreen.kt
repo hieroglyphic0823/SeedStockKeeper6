@@ -25,6 +25,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.example.seedstockkeeper6.FullScreenSaveAnimation
 import com.example.seedstockkeeper6.viewmodel.SettingsViewModel
 import kotlinx.coroutines.delay
 
@@ -41,11 +42,84 @@ private fun getRegionColor(region: String): Color {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+fun RegionSelectionBottomSheet(
+    selectedRegion: String,
+    onRegionSelected: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val regions = listOf(
+        "寒地", "寒冷地", "温暖地", "暖地"
+    )
+    
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = rememberModalBottomSheetState(),
+        containerColor = MaterialTheme.colorScheme.surface,
+        contentColor = MaterialTheme.colorScheme.onSurface
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(24.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.padding(bottom = 20.dp)
+            ) {
+                Icon(
+                    Icons.Filled.Public,
+                    contentDescription = "地域選択",
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(24.dp)
+                )
+                Text(
+                    text = "地域を選択",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+            
+            regions.forEach { region ->
+                Button(
+                    onClick = { onRegionSelected(region) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 6.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = getRegionColor(region),
+                        contentColor = Color.White
+                    ),
+                    shape = MaterialTheme.shapes.large,
+                    elevation = ButtonDefaults.buttonElevation(
+                        defaultElevation = if (region == selectedRegion) 4.dp else 2.dp
+                    ),
+                    border = if (region == selectedRegion) {
+                        BorderStroke(2.dp, MaterialTheme.colorScheme.outline)
+                    } else null
+                ) {
+                    Text(
+                        text = region,
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = if (region == selectedRegion) FontWeight.Bold else FontWeight.Medium
+                    )
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
 fun SettingsScreen(
     navController: NavController,
     viewModel: SettingsViewModel
 ) {
     var showRegionBottomSheet by remember { mutableStateOf(false) }
+    var showSaveAnimation by remember { mutableStateOf(false) }
     
     val snackbarHostState = remember { SnackbarHostState() }
     
@@ -66,26 +140,28 @@ fun SettingsScreen(
     
     
     
-              Scaffold(
-         snackbarHost = { SnackbarHost(snackbarHostState) },
-         floatingActionButton = {
-             if (viewModel.isEditMode) {
-                 FloatingActionButton(
-                     onClick = {
-                         viewModel.saveSettings()
-                         viewModel.exitEditMode()
-                     },
-                     containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                     contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                 ) {
-                     Icon(
-                         imageVector = Icons.Filled.Save,
-                         contentDescription = "保存"
-                     )
-                 }
-             }
-         }
-     ) { paddingValues ->
+    Box(modifier = Modifier.fillMaxSize()) {
+        Scaffold(
+            snackbarHost = { SnackbarHost(snackbarHostState) },
+            floatingActionButton = {
+                if (viewModel.isEditMode) {
+                   FloatingActionButton(
+                       onClick = {
+                           showSaveAnimation = true
+                           viewModel.saveSettings()
+                           viewModel.exitEditMode()
+                       },
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Save,
+                            contentDescription = "保存"
+                        )
+                    }
+                }
+            }
+        ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -262,87 +338,21 @@ fun SettingsScreen(
         }
     }
     
-    // 地域選択ボトムシート
-    if (showRegionBottomSheet) {
-        RegionSelectionBottomSheet(
-            selectedRegion = viewModel.defaultRegion,
-            onRegionSelected = { 
-                viewModel.updateDefaultRegion(it)
-                showRegionBottomSheet = false
-            },
-            onDismiss = { showRegionBottomSheet = false }
-        )
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun RegionSelectionBottomSheet(
-    selectedRegion: String,
-    onRegionSelected: (String) -> Unit,
-    onDismiss: () -> Unit
-) {
-    val regions = listOf(
-        "寒地", "寒冷地", "温暖地", "暖地"
-    )
-    
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = rememberModalBottomSheetState(),
-        containerColor = MaterialTheme.colorScheme.surface,
-        contentColor = MaterialTheme.colorScheme.onSurface
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(24.dp)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.padding(bottom = 20.dp)
-            ) {
-                Icon(
-                    Icons.Filled.Public,
-                    contentDescription = "地域選択",
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(24.dp)
-                )
-                Text(
-                    text = "地域を選択",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-            }
-            
-            regions.forEach { region ->
-                Button(
-                    onClick = { onRegionSelected(region) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 6.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = getRegionColor(region),
-                        contentColor = Color.White
-                    ),
-                    shape = MaterialTheme.shapes.large,
-                    elevation = ButtonDefaults.buttonElevation(
-                        defaultElevation = if (region == selectedRegion) 4.dp else 2.dp
-                    ),
-                    border = if (region == selectedRegion) {
-                        BorderStroke(2.dp, MaterialTheme.colorScheme.outline)
-                    } else null
-                ) {
-                    Text(
-                        text = region,
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = if (region == selectedRegion) FontWeight.Bold else FontWeight.Medium
-                    )
-                }
-            }
-            
-            Spacer(modifier = Modifier.height(16.dp))
+        // 地域選択ボトムシート
+        if (showRegionBottomSheet) {
+            RegionSelectionBottomSheet(
+                selectedRegion = viewModel.defaultRegion,
+                onRegionSelected = { region -> 
+                    viewModel.updateDefaultRegion(region)
+                    showRegionBottomSheet = false
+                },
+                onDismiss = { showRegionBottomSheet = false }
+            )
+        }
+        
+        // 保存アニメーション
+        if (showSaveAnimation) {
+            FullScreenSaveAnimation()
         }
     }
 }

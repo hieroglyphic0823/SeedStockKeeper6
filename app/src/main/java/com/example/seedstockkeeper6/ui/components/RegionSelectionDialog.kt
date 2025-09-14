@@ -186,7 +186,7 @@ fun RegionSelectionDialog(
                                     Spacer(modifier = Modifier.height(16.dp))
                                 }
                                 
-                                // 編集項目を表示
+                                // 編集項目を表示（OCR結果地域選択ダイアログでは年選択を無効）
                                 CalendarEntryEditor(
                                     entry = entryToShow,
                                     onUpdate = { updatedEntry ->
@@ -202,7 +202,8 @@ fun RegionSelectionDialog(
                                     onCancel = {
                                         // キャンセル処理
                                         onCancelEditing()
-                                    }
+                                    },
+                                    hideYearSelection = true
                                 )
                             }
                         }

@@ -11,6 +11,10 @@ import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -19,6 +23,7 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.navigation.NavController
+import com.example.seedstockkeeper6.FullScreenSaveAnimation
 import com.example.seedstockkeeper6.ui.components.AIDiffDialog
 import com.example.seedstockkeeper6.ui.components.RegionSelectionDialog
 import com.example.seedstockkeeper6.viewmodel.SeedInputViewModel
@@ -36,6 +41,7 @@ fun SeedInputScreen(
 ) {
     val scroll = rememberScrollState()
     val context = LocalContext.current
+    var showSaveAnimation by remember { mutableStateOf(false) }
     
     // 農園情報の地域を設定
     LaunchedEffect(settingsViewModel?.defaultRegion) {
@@ -49,6 +55,7 @@ fun SeedInputScreen(
             if (viewModel.isEditMode || !viewModel.hasExistingData) {
                 FloatingActionButton(
                     onClick = {
+                        showSaveAnimation = true
                         viewModel.saveSeedData(context) { result ->
                             if (result.isSuccess) {
                                 viewModel.exitEditMode()
@@ -171,4 +178,9 @@ fun SeedInputScreen(
     
     // 画像拡大表示ダイアログ
     ImageDialog(viewModel)
+    
+    // 保存アニメーション
+    if (showSaveAnimation) {
+        FullScreenSaveAnimation()
+    }
 }

@@ -23,7 +23,7 @@ import com.example.seedstockkeeper6.ui.theme.SeedStockKeeper6Theme
 import com.example.seedstockkeeper6.ui.screens.*
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Preview(showBackground = true, name = "種情報表示画面 - 表示モード", heightDp = 2000)
+@Preview(showBackground = true, name = "種情報表示画面 - 表示モード", heightDp = 4000)
 @Composable
 fun SeedInputScreenPreview_DisplayMode() {
     SeedStockKeeper6Theme(darkTheme = false, dynamicColor = false) {
@@ -66,7 +66,7 @@ fun SeedInputScreenPreview_DisplayMode() {
                                 modifier = Modifier.size(24.dp)
                             ) {
                             Icon(
-                                    imageVector = Icons.Filled.Edit,
+                                    painter = painterResource(id = com.example.seedstockkeeper6.R.drawable.edit),
                                     contentDescription = "編集",
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                     modifier = Modifier.size(24.dp)
@@ -111,6 +111,9 @@ fun SeedInputScreenPreview_DisplayMode() {
                     modifier = Modifier.padding(vertical = 16.dp)
                 )
                 
+                // 栽培メモ、収穫方法、コンパニオンプランツセクション
+                NotesCardSection(seedInputViewModel)
+                
                 // 栽培情報セクション
                 CultivationInfoSection(seedInputViewModel)
                 
@@ -119,16 +122,13 @@ fun SeedInputScreenPreview_DisplayMode() {
                     thickness = 1.dp,
                     modifier = Modifier.padding(vertical = 16.dp)
                 )
-                
-                // 栽培メモ、収穫方法、コンパニオンプランツセクション
-                NotesCardSection(seedInputViewModel)
             }
         }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Preview(showBackground = true, name = "種情報新規作成画面", heightDp = 2000)
+@Preview(showBackground = true, name = "種情報新規作成画面", heightDp = 6000)
 @Composable
 fun SeedInputScreenPreview_NewCreation() {
     SeedStockKeeper6Theme(darkTheme = false, dynamicColor = false) {
@@ -212,6 +212,9 @@ fun SeedInputScreenPreview_NewCreation() {
                     modifier = Modifier.padding(vertical = 16.dp)
                 )
                 
+                // 栽培メモ、収穫方法、コンパニオンプランツセクション
+                NotesCardSection(seedInputViewModel)
+                
                 // 栽培情報セクション
                 CultivationInfoSection(seedInputViewModel)
                 
@@ -220,16 +223,13 @@ fun SeedInputScreenPreview_NewCreation() {
                     thickness = 1.dp,
                     modifier = Modifier.padding(vertical = 16.dp)
                 )
-                
-                // 栽培メモ、収穫方法、コンパニオンプランツセクション
-                NotesCardSection(seedInputViewModel)
             }
         }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Preview(showBackground = true, name = "種情報登録画面 - 編集モード", heightDp = 2000)
+@Preview(showBackground = true, name = "種情報登録画面 - 編集モード", heightDp = 6000)
 @Composable
 fun SeedInputScreenPreview_EditMode() {
     SeedStockKeeper6Theme(darkTheme = false, dynamicColor = false) {
@@ -312,6 +312,9 @@ fun SeedInputScreenPreview_EditMode() {
                     modifier = Modifier.padding(vertical = 16.dp)
                 )
                 
+                // 栽培メモ、収穫方法、コンパニオンプランツセクション
+                NotesCardSection(seedInputViewModel)
+                
                 // 栽培情報セクション
                 CultivationInfoSection(seedInputViewModel)
                 
@@ -320,9 +323,6 @@ fun SeedInputScreenPreview_EditMode() {
                     thickness = 1.dp,
                     modifier = Modifier.padding(vertical = 16.dp)
                 )
-                
-                // 栽培メモ、収穫方法、コンパニオンプランツセクション
-                NotesCardSection(seedInputViewModel)
             }
         }
     }
