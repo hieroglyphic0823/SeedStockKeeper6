@@ -273,7 +273,7 @@ fun CalendarEntryEditor(
             )
         }
         
-        // 播種開始期間
+        // 播種開始
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -285,7 +285,7 @@ fun CalendarEntryEditor(
             ) {
                 Text(
                     text = if (sowingStart == "0" && sowingStartStage.isEmpty() && sowingStartYear == "0") {
-                        "播種開始期間を選択"
+                        "播種開始"
                     } else {
                         "${if (sowingStartYear == "0") "" else "${sowingStartYear}年"}${if (sowingStart == "0") "不明" else sowingStart}月${if (sowingStartStage.isEmpty()) "" else "(${sowingStartStage})"}"
                     }
@@ -293,14 +293,14 @@ fun CalendarEntryEditor(
             }
         }
         
-        // 播種開始期間選択ボトムシート
+        // 播種開始選択ボトムシート
         if (sowingStartExpanded) {
             ModalBottomSheet(
                 onDismissRequest = { sowingStartExpanded = false },
                 sheetState = rememberModalBottomSheetState()
             ) {
                 PeriodSelectionBottomSheet(
-                    title = "播種開始期間を選択",
+                    title = "播種開始",
                     selectedYear = sowingStartYear,
                     selectedMonth = sowingStart,
                     selectedStage = sowingStartStage,
@@ -319,7 +319,7 @@ fun CalendarEntryEditor(
         
         Text("～", style = MaterialTheme.typography.bodyLarge)
         
-        // 播種終了期間
+        // 播種終了
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -331,7 +331,7 @@ fun CalendarEntryEditor(
             ) {
                 Text(
                     text = if (sowingEnd == "0" && sowingEndStage.isEmpty() && sowingEndYear == "0") {
-                        "播種終了期間を選択"
+                        "播種終了"
                     } else {
                         "${if (sowingEndYear == "0") "" else "${sowingEndYear}年"}${if (sowingEnd == "0") "不明" else sowingEnd}月${if (sowingEndStage.isEmpty()) "" else "(${sowingEndStage})"}"
                     }
@@ -339,14 +339,14 @@ fun CalendarEntryEditor(
             }
         }
         
-        // 播種終了期間選択ボトムシート
+        // 播種終了選択ボトムシート
         if (sowingEndExpanded) {
             ModalBottomSheet(
                 onDismissRequest = { sowingEndExpanded = false },
                 sheetState = rememberModalBottomSheetState()
             ) {
                 PeriodSelectionBottomSheet(
-                    title = "播種終了期間を選択",
+                    title = "播種終了",
                     selectedYear = sowingEndYear,
                     selectedMonth = sowingEnd,
                     selectedStage = sowingEndStage,
@@ -392,7 +392,7 @@ fun CalendarEntryEditor(
             )
         }
         
-        // 収穫開始期間
+        // 収穫開始
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -404,7 +404,7 @@ fun CalendarEntryEditor(
             ) {
                 Text(
                     text = if (harvestStart == "0" && harvestStartStage.isEmpty() && harvestStartYear == "0") {
-                        "収穫開始期間を選択"
+                        "収穫開始"
                     } else {
                         "${if (harvestStartYear == "0") "" else "${harvestStartYear}年"}${if (harvestStart == "0") "不明" else harvestStart}月${if (harvestStartStage.isEmpty()) "" else "(${harvestStartStage})"}"
                     }
@@ -412,14 +412,14 @@ fun CalendarEntryEditor(
             }
         }
         
-        // 収穫開始期間選択ボトムシート
+        // 収穫開始選択ボトムシート
         if (harvestStartExpanded) {
             ModalBottomSheet(
                 onDismissRequest = { harvestStartExpanded = false },
                 sheetState = rememberModalBottomSheetState()
             ) {
                 PeriodSelectionBottomSheet(
-                    title = "収穫開始期間を選択",
+                    title = "収穫開始",
                     selectedYear = harvestStartYear,
                     selectedMonth = harvestStart,
                     selectedStage = harvestStartStage,
@@ -438,7 +438,7 @@ fun CalendarEntryEditor(
         
         Text("～", style = MaterialTheme.typography.bodyLarge)
         
-        // 収穫終了期間
+        // 収穫終了
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -450,7 +450,7 @@ fun CalendarEntryEditor(
             ) {
                 Text(
                     text = if (harvestEnd == "0" && harvestEndStage.isEmpty() && harvestEndYear == "0") {
-                        "収穫終了期間を選択"
+                        "収穫終了"
                     } else {
                         "${if (harvestEndYear == "0") "" else "${harvestEndYear}年"}${if (harvestEnd == "0") "不明" else harvestEnd}月${if (harvestEndStage.isEmpty()) "" else "(${harvestEndStage})"}"
                     }
@@ -458,14 +458,14 @@ fun CalendarEntryEditor(
             }
         }
         
-        // 収穫終了期間選択ボトムシート
+        // 収穫終了選択ボトムシート
         if (harvestEndExpanded) {
             ModalBottomSheet(
                 onDismissRequest = { harvestEndExpanded = false },
                 sheetState = rememberModalBottomSheetState()
             ) {
                 PeriodSelectionBottomSheet(
-                    title = "収穫終了期間を選択",
+                    title = "収穫終了",
                     selectedYear = harvestEndYear,
                     selectedMonth = harvestEnd,
                     selectedStage = harvestEndStage,

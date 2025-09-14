@@ -48,7 +48,7 @@ fun PreviewImageManagementSection(viewModel: com.example.seedstockkeeper6.viewmo
             )
             Text(
                 text = "画像管理",
-                style = MaterialTheme.typography.titleLarge
+                style = MaterialTheme.typography.titleMedium
             )
         }
         

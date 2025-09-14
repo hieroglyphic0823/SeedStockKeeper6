@@ -88,7 +88,7 @@ private fun CompanionPlantInputSection(viewModel: SeedInputViewModel) {
         Spacer(modifier = Modifier.height(8.dp))
         
         // 効果選択
-        Text("効果を選択:", style = MaterialTheme.typography.bodyLarge)
+        Text("効果:", style = MaterialTheme.typography.bodyLarge)
         Spacer(modifier = Modifier.height(4.dp))
         
         // 効果の選択肢をグリッドで表示

@@ -19,6 +19,7 @@ import androidx.compose.material3.*
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
@@ -74,7 +75,7 @@ fun RegionSelectionBottomSheet(
                     modifier = Modifier.size(24.dp)
                 )
                 Text(
-                    text = "地域を選択",
+                    text = "地域",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
@@ -145,12 +146,17 @@ fun SettingsScreen(
             snackbarHost = { SnackbarHost(snackbarHostState) },
             floatingActionButton = {
                 if (viewModel.isEditMode) {
-                   FloatingActionButton(
-                       onClick = {
-                           showSaveAnimation = true
-                           viewModel.saveSettings()
-                           viewModel.exitEditMode()
-                       },
+                FloatingActionButton(
+                    onClick = {
+                        showSaveAnimation = true
+                        // 保存処理をシミュレート（実際の保存処理に合わせて調整）
+                        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch {
+                            kotlinx.coroutines.delay(1000) // 1秒の保存処理をシミュレート
+                            viewModel.saveSettings()
+                            viewModel.exitEditMode()
+                            showSaveAnimation = false
+                        }
+                    },
                         containerColor = MaterialTheme.colorScheme.secondaryContainer,
                         contentColor = MaterialTheme.colorScheme.onSecondaryContainer
                     ) {
@@ -289,7 +295,7 @@ fun SettingsScreen(
                                 elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp)
                             ) {
                                 Text(
-                                    text = viewModel.defaultRegion.ifEmpty { "地域を選択" },
+                                    text = viewModel.defaultRegion.ifEmpty { "地域" },
                                     style = MaterialTheme.typography.bodyLarge,
                                     fontWeight = FontWeight.Medium
                                 )

@@ -32,13 +32,17 @@ fun createPreviewSeedInputViewModel(
             contents = "5ml",
             germinationRate = "85",
             seedTreatment = "無処理",
+            imageUrls = listOf(
+                "https://picsum.photos/300/400?random=1",
+                "https://picsum.photos/300/400?random=2"
+            ),
             calendar = listOf(
                 com.example.seedstockkeeper6.model.CalendarEntry(
                     region = "関東",
-                    sowing_start_date = "2025-08-15",
-                    sowing_end_date = "2025-09-15",
-                    harvest_start_date = "2025-10-01",
-                    harvest_end_date = "2025-12-31"
+                    sowing_start_date = "2025-08-15", // 8月15日（中旬）
+                    sowing_end_date = "2025-09-15",   // 9月15日（中旬）
+                    harvest_start_date = "2025-10-01", // 10月1日（上旬）
+                    harvest_end_date = "2025-12-31"    // 12月31日（下旬）
                 )
             ),
             cultivation = com.example.seedstockkeeper6.model.Cultivation(

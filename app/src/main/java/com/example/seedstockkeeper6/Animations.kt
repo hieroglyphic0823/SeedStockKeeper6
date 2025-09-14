@@ -23,17 +23,30 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import coil.ImageLoader
+import coil.compose.AsyncImage
+import coil.decode.ImageDecoderDecoder
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
-fun FullScreenSaveAnimation() {
-    var showAnimation by remember { mutableStateOf(false) }
+fun FullScreenSaveAnimation(
+    onAnimationComplete: () -> Unit = {}
+) {
     val context = LocalContext.current
+    
+    // CoilのImageLoaderを設定（GIFサポート付き）
+    val imageLoader = remember {
+        ImageLoader.Builder(context)
+            .components {
+                add(ImageDecoderDecoder.Factory()) // GIFをサポートするために必要
+            }
+            .build()
+    }
     
     // sukesan.gifのスケールアニメーション
     val animatedScale by animateFloatAsState(
-        targetValue = if (showAnimation) 1f else 0.5f,
+        targetValue = 1f,
         animationSpec = tween(
             durationMillis = 500,
             easing = EaseInOutQuart
@@ -43,7 +56,7 @@ fun FullScreenSaveAnimation() {
     
     // sukesan.gifの透明度アニメーション
     val animatedAlpha by animateFloatAsState(
-        targetValue = if (showAnimation) 1f else 0f,
+        targetValue = 1f,
         animationSpec = tween(
             durationMillis = 300,
             easing = EaseInOutQuart
@@ -51,21 +64,17 @@ fun FullScreenSaveAnimation() {
         label = "alphaAnimation"
     )
 
-    LaunchedEffect(Unit) {
-        showAnimation = true
-        delay(2000) // 2秒間表示
-    }
-
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.Black.copy(alpha = 0.7f)),
         contentAlignment = Alignment.Center
     ) {
-        // sukesan.gifアニメーション
-        Image(
-            painter = painterResource(id = com.example.seedstockkeeper6.R.drawable.sukesan),
-            contentDescription = "保存完了",
+        // sukesan.gifアニメーション（保存中待機表示）
+        AsyncImage(
+            model = com.example.seedstockkeeper6.R.drawable.sukesan,
+            contentDescription = "保存中...",
+            imageLoader = imageLoader,
             modifier = Modifier
                 .graphicsLayer(
                     scaleX = animatedScale,

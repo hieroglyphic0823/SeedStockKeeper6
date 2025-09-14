@@ -14,6 +14,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -23,7 +24,7 @@ import com.example.seedstockkeeper6.ui.theme.SeedStockKeeper6Theme
 import com.example.seedstockkeeper6.ui.screens.*
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Preview(showBackground = true, name = "種情報表示画面 - 表示モード", heightDp = 4000)
+@Preview(showBackground = true, name = "種情報表示画面 - 表示モード", heightDp = 8000)
 @Composable
 fun SeedInputScreenPreview_DisplayMode() {
     SeedStockKeeper6Theme(darkTheme = false, dynamicColor = false) {
@@ -63,12 +64,14 @@ fun SeedInputScreenPreview_DisplayMode() {
                     ) {
                             IconButton(
                             onClick = { },
-                                modifier = Modifier.size(24.dp)
+                                modifier = Modifier.size(24.dp),
+                                colors = IconButtonDefaults.iconButtonColors(
+                                    contentColor = Color.Unspecified
+                                )
                             ) {
                             Icon(
                                     painter = painterResource(id = com.example.seedstockkeeper6.R.drawable.edit),
                                     contentDescription = "編集",
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                     modifier = Modifier.size(24.dp)
                                 )
                             }
@@ -79,10 +82,10 @@ fun SeedInputScreenPreview_DisplayMode() {
         ) { paddingValues ->
             Column(
                 modifier = Modifier
-                    .fillMaxSize()
+                    .fillMaxHeight()
+                    .fillMaxWidth()
                     .padding(paddingValues)
                     .padding(horizontal = 16.dp)
-                    .verticalScroll(rememberScrollState())
             ) {
                 // 画像管理セクション
                 ImageManagementSection(seedInputViewModel)
@@ -128,7 +131,7 @@ fun SeedInputScreenPreview_DisplayMode() {
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Preview(showBackground = true, name = "種情報新規作成画面", heightDp = 6000)
+@Preview(showBackground = true, name = "種情報新規作成画面", heightDp = 8000)
 @Composable
 fun SeedInputScreenPreview_NewCreation() {
     SeedStockKeeper6Theme(darkTheme = false, dynamicColor = false) {
@@ -180,10 +183,10 @@ fun SeedInputScreenPreview_NewCreation() {
         ) { paddingValues ->
             Column(
                 modifier = Modifier
-                    .fillMaxSize()
+                    .fillMaxHeight()
+                    .fillMaxWidth()
                     .padding(paddingValues)
                     .padding(horizontal = 16.dp)
-                    .verticalScroll(rememberScrollState())
             ) {
                 // 画像管理セクション
                 ImageManagementSection(seedInputViewModel)
@@ -229,7 +232,7 @@ fun SeedInputScreenPreview_NewCreation() {
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Preview(showBackground = true, name = "種情報登録画面 - 編集モード", heightDp = 6000)
+@Preview(showBackground = true, name = "種情報登録画面 - 編集モード", heightDp = 8000)
 @Composable
 fun SeedInputScreenPreview_EditMode() {
     SeedStockKeeper6Theme(darkTheme = false, dynamicColor = false) {
@@ -251,7 +254,7 @@ fun SeedInputScreenPreview_EditMode() {
                                 size = 24.dp
                             )
                             Text(
-                                text = "恋むすめ（ニンジン）（編集）",
+                                text = "恋むすめ（せり科）",
                                 modifier = Modifier.fillMaxWidth(),
                                 textAlign = TextAlign.Start
                             )
@@ -280,10 +283,10 @@ fun SeedInputScreenPreview_EditMode() {
         ) { paddingValues ->
             Column(
                 modifier = Modifier
-                    .fillMaxSize()
+                    .fillMaxHeight()
+                    .fillMaxWidth()
                     .padding(paddingValues)
                     .padding(horizontal = 16.dp)
-                    .verticalScroll(rememberScrollState())
             ) {
                 // 画像管理セクション
                 ImageManagementSection(seedInputViewModel)

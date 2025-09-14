@@ -57,6 +57,7 @@ fun SeedInputScreen(
                     onClick = {
                         showSaveAnimation = true
                         viewModel.saveSeedData(context) { result ->
+                            showSaveAnimation = false
                             if (result.isSuccess) {
                                 viewModel.exitEditMode()
                             }

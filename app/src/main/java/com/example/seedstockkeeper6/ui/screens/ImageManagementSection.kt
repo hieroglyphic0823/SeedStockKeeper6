@@ -20,7 +20,6 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.ZoomIn
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.graphics.ColorFilter
@@ -77,7 +76,7 @@ fun ImageManagementSection(viewModel: SeedInputViewModel) {
             )
             Text(
                 "画像管理",
-                style = MaterialTheme.typography.titleLarge
+                style = MaterialTheme.typography.titleMedium
             )
         }
         
@@ -110,7 +109,7 @@ fun ImageManagementSection(viewModel: SeedInputViewModel) {
                     .then(
                         if (viewModel.ocrTargetIndex == index) {
                             Modifier.border(
-                                width = 4.dp,
+                                width = 8.dp,
                                 color = MaterialTheme.colorScheme.tertiary,
                                 shape = RoundedCornerShape(4.dp)
                             )
@@ -194,7 +193,7 @@ fun ImageManagementSection(viewModel: SeedInputViewModel) {
                         .padding(4.dp)
                 ) {
                     Image(
-                        painter = painterResource(id = R.drawable.predictive_analysis),
+                        painter = painterResource(id = R.drawable.search),
                         contentDescription = "拡大表示",
                         modifier = Modifier
                             .size(24.dp)

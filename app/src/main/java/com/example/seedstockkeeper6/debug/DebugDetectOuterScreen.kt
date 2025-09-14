@@ -199,7 +199,7 @@ fun DebugDetectOuterScreen() {
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Button(onClick = { pick.launch("image/*") }) { Text("画像を選択") }
+            Button(onClick = { pick.launch("image/*") }) { Text("画像") }
 
             Button(
                 enabled = srcBmp != null,

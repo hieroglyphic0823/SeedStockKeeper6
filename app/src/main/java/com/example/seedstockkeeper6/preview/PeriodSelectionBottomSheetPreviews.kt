@@ -10,7 +10,7 @@ import com.example.seedstockkeeper6.ui.components.PeriodSelectionBottomSheet
 import com.example.seedstockkeeper6.ui.theme.SeedStockKeeper6Theme
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Preview(showBackground = true, name = "期間選択ボトムシート - 播種開始期間")
+@Preview(showBackground = true, name = "期間選択ボトムシート - 播種開始")
 @Composable
 fun PeriodSelectionBottomSheetPreview_SowingStart() {
     SeedStockKeeper6Theme(darkTheme = false, dynamicColor = false) {
@@ -20,7 +20,7 @@ fun PeriodSelectionBottomSheetPreview_SowingStart() {
         
         Surface {
             PeriodSelectionBottomSheet(
-                title = "播種開始期間を選択",
+                title = "播種開始",
                 selectedYear = selectedYear,
                 selectedMonth = selectedMonth,
                 selectedStage = selectedStage,
@@ -35,7 +35,7 @@ fun PeriodSelectionBottomSheetPreview_SowingStart() {
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Preview(showBackground = true, name = "期間選択ボトムシート - 収穫開始期間")
+@Preview(showBackground = true, name = "期間選択ボトムシート - 収穫開始")
 @Composable
 fun PeriodSelectionBottomSheetPreview_HarvestStart() {
     SeedStockKeeper6Theme(darkTheme = false, dynamicColor = false) {
@@ -45,7 +45,7 @@ fun PeriodSelectionBottomSheetPreview_HarvestStart() {
         
         Surface {
             PeriodSelectionBottomSheet(
-                title = "収穫開始期間を選択",
+                title = "収穫開始",
                 selectedYear = selectedYear,
                 selectedMonth = selectedMonth,
                 selectedStage = selectedStage,
@@ -70,7 +70,7 @@ fun PeriodSelectionBottomSheetPreview_Expiration() {
         
         Surface {
             PeriodSelectionBottomSheet(
-                title = "有効期限を選択",
+                title = "有効期限",
                 selectedYear = selectedYear,
                 selectedMonth = selectedMonth,
                 selectedStage = selectedStage,

@@ -67,7 +67,7 @@ fun RegionSelectionDialogPreview() {
                     .verticalScroll(rememberScrollState())
             ) {
                 Text(
-                    text = "地域区分を選択してください",
+                    text = "地域区分",
                     style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
@@ -175,7 +175,7 @@ fun RegionSelectionDialogContentPreview() {
                     .verticalScroll(rememberScrollState())
             ) {
                 Text(
-                    text = "地域区分を選択してください",
+                    text = "地域区分",
                     style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
@@ -297,7 +297,7 @@ fun OcrRegionSelectionDialogPreview() {
                     .verticalScroll(rememberScrollState())
             ) {
                 Text(
-                    text = "地域区分を選択してください",
+                    text = "地域区分",
                     style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
@@ -339,7 +339,7 @@ fun OcrRegionSelectionDialogPreview() {
                         value = selectedRegion,
                         onValueChange = { },
                         readOnly = true,
-                        label = { Text("地域を選択") },
+                        label = { Text("地域") },
                         trailingIcon = {
                             ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
                         },
@@ -475,7 +475,7 @@ fun OcrRegionSelectionDialogMultipleRegionsPreview() {
                     .verticalScroll(rememberScrollState())
             ) {
                 Text(
-                    text = "地域区分を選択してください",
+                    text = "地域区分",
                     style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
