@@ -63,11 +63,7 @@ fun CompanionPlantsSection(viewModel: SeedInputViewModel) {
                 )
                 
                 // 効果アイコン（右側、適度な余白を保って詰めて表示）
-                Row(
-                    horizontalArrangement = Arrangement.End
-                ) {
-                    CompanionEffectIconCompact(companion.effects)
-                }
+                CompanionEffectIconCompact(companion.effects)
             }
         }
         

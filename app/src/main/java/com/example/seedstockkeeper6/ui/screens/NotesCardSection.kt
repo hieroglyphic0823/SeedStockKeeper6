@@ -3,8 +3,6 @@ package com.example.seedstockkeeper6.ui.screens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Note
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -18,6 +16,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.Image
 import com.example.seedstockkeeper6.R
 import com.example.seedstockkeeper6.ui.components.CompanionEffectIcon
+import com.example.seedstockkeeper6.ui.components.CompanionEffectIconCompact
 import com.example.seedstockkeeper6.viewmodel.SeedInputViewModel
 
 @Composable
@@ -47,7 +46,7 @@ fun NotesCardSection(viewModel: SeedInputViewModel) {
                                 modifier = Modifier
                                     .size(24.dp)
                                     .clip(RoundedCornerShape(4.dp))
-                                    .background(MaterialTheme.colorScheme.onPrimaryContainer),
+                                    .background(MaterialTheme.colorScheme.surfaceContainer),
                                 contentAlignment = Alignment.Center
                             ) {
                                 androidx.compose.foundation.Image(
@@ -138,24 +137,23 @@ fun NotesCardSection(viewModel: SeedInputViewModel) {
                     ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
                             Box(
                                 modifier = Modifier
                                     .size(24.dp)
                                     .clip(RoundedCornerShape(4.dp))
-                                    .background(MaterialTheme.colorScheme.onTertiaryContainer),
+                                    .background(MaterialTheme.colorScheme.surfaceContainer),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Icon(
-                                    Icons.Filled.Note,
-                                    contentDescription = "コンパニオンプランツ",
-                                    tint = MaterialTheme.colorScheme.tertiaryContainer,
+                                androidx.compose.foundation.Image(
+                                    painter = painterResource(id = R.drawable.grass),
+                                    contentDescription = "コンパニオンプランツと効果",
                                     modifier = Modifier.size(16.dp)
                                 )
                             }
                             Text(
-                                "コンパニオンプランツ",
+                                "コンパニオンプランツと効果",
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.SemiBold,
                                 color = MaterialTheme.colorScheme.onTertiaryContainer
@@ -175,9 +173,10 @@ fun NotesCardSection(viewModel: SeedInputViewModel) {
                                 Text(
                                     companion.plant,
                                     style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onTertiaryContainer
+                                    color = MaterialTheme.colorScheme.onTertiaryContainer,
+                                    modifier = Modifier.weight(1f)
                                 )
-                                CompanionEffectIcon(companion.effects)
+                                CompanionEffectIconCompact(companion.effects)
                             }
                         }
                     }

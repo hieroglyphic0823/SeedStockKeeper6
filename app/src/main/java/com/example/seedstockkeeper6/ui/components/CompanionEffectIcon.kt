@@ -134,13 +134,13 @@ fun SingleEffectIcon(effectCode: CompanionEffectCode) {
             }
         }
 
-        // アイコン表示（surface色の丸で囲む）
+        // アイコン表示（surfaceContainer色の丸で囲む）
         if (iconRes != null) {
             Box(
                 modifier = Modifier
-                    .size(40.dp)
+                    .size(30.dp)
                     .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.surface),
+                    .background(MaterialTheme.colorScheme.surfaceContainer),
                 contentAlignment = Alignment.Center
             ) {
                 Image(
@@ -152,9 +152,9 @@ fun SingleEffectIcon(effectCode: CompanionEffectCode) {
         } else if (imageVector != null) {
             Box(
                 modifier = Modifier
-                    .size(40.dp)
+                    .size(30.dp)
                     .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.surface),
+                    .background(MaterialTheme.colorScheme.surfaceContainer),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
