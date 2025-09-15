@@ -554,7 +554,7 @@ fun ExpirationSelectionBottomSheet(
                     containerColor = MaterialTheme.colorScheme.tertiaryContainer
                 )
             ) {
-                Text("確認")
+                Text("OK")
             }
             Button(
                 onClick = onCancel,
@@ -656,15 +656,15 @@ fun PeriodSelectionBottomSheet(
                     onClick = { onStageChange(stage) },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = if (selectedStage == stage) 
-                            MaterialTheme.colorScheme.primary 
+                            MaterialTheme.colorScheme.primaryContainer 
                         else 
-                            MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
+                            MaterialTheme.colorScheme.surface
                     )
                 ) {
                     Text(
                         stage,
                         color = if (selectedStage == stage) 
-                            MaterialTheme.colorScheme.onPrimary 
+                            MaterialTheme.colorScheme.onPrimaryContainer 
                         else 
                             MaterialTheme.colorScheme.onSurface
                     )
@@ -688,14 +688,19 @@ fun PeriodSelectionBottomSheet(
                     selectedYear != "0" && selectedMonth != "0" && selectedStage.isNotEmpty()
                 },
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = confirmButtonColor ?: MaterialTheme.colorScheme.primary
+                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onTertiaryContainer
                 )
             ) {
-                Text("確認")
+                Text("OK")
             }
                     Button(
                 onClick = onCancel,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+                )
                     ) {
                 Text("キャンセル")
                     }
@@ -774,11 +779,11 @@ fun MonthStageSelectionBottomSheet(
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = if (currentStage == stage) 
-                            MaterialTheme.colorScheme.primary 
+                            MaterialTheme.colorScheme.primaryContainer 
                         else 
                             MaterialTheme.colorScheme.surface,
                         contentColor = if (currentStage == stage) 
-                            MaterialTheme.colorScheme.onPrimary 
+                            MaterialTheme.colorScheme.onPrimaryContainer 
                         else 
                             MaterialTheme.colorScheme.onSurface
                     )
@@ -797,7 +802,11 @@ fun MonthStageSelectionBottomSheet(
         ) {
             Button(
                 onClick = onCancel,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+                )
             ) {
                 Text("キャンセル")
             }
@@ -806,11 +815,11 @@ fun MonthStageSelectionBottomSheet(
                 onClick = onConfirm,
                 modifier = Modifier.weight(1f),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onTertiaryContainer
                 )
             ) {
-                Text("確認")
+                Text("OK")
             }
         }
         

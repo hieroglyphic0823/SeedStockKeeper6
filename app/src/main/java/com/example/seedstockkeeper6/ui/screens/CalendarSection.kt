@@ -128,7 +128,8 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
                 packetExpirationYear = viewModel.packet.expirationYear,
                 packetExpirationMonth = viewModel.packet.expirationMonth,
                 modifier = Modifier.fillMaxWidth(),
-                heightDp = 114
+                heightDp = 114,
+                previewDate = null // 通常の実行時は現在の日付を使用
             )
 
             // 播種期間と収穫期間の表示

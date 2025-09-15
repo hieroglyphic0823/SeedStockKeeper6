@@ -573,10 +573,18 @@ fun MainScaffold(
                 navController = navController,
                 modifier = Modifier.padding(padding),
                 selectedIds = selectedIds,
-                settingsViewModel = settingsViewModel
+                settingsViewModel = settingsViewModel,
+                onSaveRequest = {
+                    showSaveAnimation = true
+                    // 保存処理完了後にアニメーションを非表示にする
+                    kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch {
+                        kotlinx.coroutines.delay(2000) // 2秒間アニメーション表示
+                        showSaveAnimation = false
+                    }
+                }
             )
             
-            // 全画面保存アニメーション
+            // 全画面保存アニメーション（sukesan.gif）
             if (showSaveAnimation) {
                 FullScreenSaveAnimation()
             }

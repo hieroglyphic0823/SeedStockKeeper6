@@ -71,9 +71,10 @@ fun SeedCalendarGrouped(
     packetExpirationYear: Int,
     packetExpirationMonth: Int,
     modifier: Modifier = Modifier.fillMaxWidth(),
-    heightDp: Int = 114
+    heightDp: Int = 114,
+    previewDate: LocalDate? = null // プレビュー用の日付
 ) {
-    val today = LocalDate.now() // 現在の日付を取得
+    val today = previewDate ?: LocalDate.now() // プレビュー用の日付があれば使用、なければ現在の日付
     val scrollState = rememberScrollState()
     
     // 播種期間と収穫期間の両方を考慮して、最も早い開始月を取得
@@ -104,12 +105,19 @@ fun SeedCalendarGrouped(
     android.util.Log.d("SeedCalendar", "calendarEndDate=$calendarEndDate")
     
     // 現在の月の位置を計算（スクロール初期位置用）
-    // 現在の年月（2025年9月）が左端に表示されるようにスクロール位置を調整
+    // カレンダー開始月が左端に表示されるようにスクロール位置を調整
     val currentDate = LocalDate.of(today.year, today.monthValue, 1)
     val monthsFromStart = ChronoUnit.MONTHS.between(calendarStartDate, currentDate).toInt()
-    val monthWidth = 60.dp // 1ヶ月の幅
-    // 現在の年月が左端に表示されるようにスクロール位置を計算
-    val initialScrollOffset = (monthsFromStart * monthWidth.value).toInt()
+    
+    // 月幅を統一（実際の表示幅に基づく）
+    // 画面幅を取得して12ヶ月分で割る
+    val density = LocalDensity.current
+    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
+    val monthWidth = screenWidth / 12f // 実際の表示幅に基づく月幅
+    
+    // カレンダー開始月が左端に表示されるようにスクロール位置を計算
+    // 負の値の場合は0に設定（カレンダー開始月より前の場合は開始位置にスクロール）
+    val initialScrollOffset = maxOf(0, monthsFromStart * monthWidth.value.toInt())
     
     // MaterialTheme から直接取得
     val baseSowingColor = MaterialTheme.colorScheme.primaryContainer
@@ -171,7 +179,7 @@ fun SeedCalendarGrouped(
     Box(
         modifier = modifier
             .horizontalScroll(scrollState)
-            .width((24 * monthWidth.value).dp) // 2年分の幅
+            .width(monthWidth * 24) // 2年分の幅（統一された月幅を使用）
     ) {
         SeedCalendarGroupedInternal(
             bands = groupedBands,
@@ -269,8 +277,8 @@ fun SeedCalendarGroupedInternal(
         android.util.Log.d("SeedCalendar", "SeedCalendarGroupedInternal: calendarStartDate=$calendarStartDate, calendarEndDate=$calendarEndDate")
         android.util.Log.d("SeedCalendar", "SeedCalendarGroupedInternal: startDate=$startDate, endDate=$endDate, totalMonths=$totalMonths")
         
-        // 枠内に12ヶ月分を表示するように幅を調整
-        val colW = gridW / 12f // 12ヶ月分の幅で計算（表示範囲は12ヶ月分に制限）
+        // 実際の表示幅に基づいて月幅を計算
+        val colW = gridW / 12f // 12ヶ月分の幅で計算（表示範囲は12ヶ月分）
         val rowH = with(density) { 118.dp.toPx() } // 栽培カレンダーの縦幅を118dpに設定（140dp - 22dp = 118dp）
 
         // 月ラベルの背景色を描画 (secondaryContainerLight) - 12ヶ月分のみ

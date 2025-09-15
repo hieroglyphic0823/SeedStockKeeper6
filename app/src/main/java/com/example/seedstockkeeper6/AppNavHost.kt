@@ -20,7 +20,8 @@ fun AppNavHost(
     navController: NavHostController,
     modifier: Modifier = Modifier,
     selectedIds: MutableList<String>,
-    settingsViewModel: com.example.seedstockkeeper6.viewmodel.SettingsViewModel? = null
+    settingsViewModel: com.example.seedstockkeeper6.viewmodel.SettingsViewModel? = null,
+    onSaveRequest: () -> Unit = {} // MainScaffoldからの保存リクエストコールバック
 ) {
     NavHost(
         navController = navController,
@@ -47,7 +48,8 @@ fun AppNavHost(
             SeedInputScreen(
                 navController = navController,
                 viewModel = currentInputViewModel,
-                settingsViewModel = settingsViewModel
+                settingsViewModel = settingsViewModel,
+                onSaveRequest = onSaveRequest
             )
         }
         

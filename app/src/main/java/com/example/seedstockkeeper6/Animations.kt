@@ -21,6 +21,8 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import coil.ImageLoader
@@ -34,6 +36,37 @@ fun FullScreenSaveAnimation(
     onAnimationComplete: () -> Unit = {}
 ) {
     val context = LocalContext.current
+    
+    // Lottieアニメーション開始のLog出力
+    LaunchedEffect(Unit) {
+        android.util.Log.d("FullScreenSaveAnimation", "=== Lottieアニメーション開始 ===")
+        android.util.Log.d("FullScreenSaveAnimation", "FABボタンで保存中に表示されるsukesan.gifアニメーション")
+        android.util.Log.d("FullScreenSaveAnimation", "アニメーション開始時刻: ${System.currentTimeMillis()}")
+    }
+    
+    // ウィンドウサイズとアニメーションサイズをLog出力（ダイアログと同じ幅に設定）
+    val configuration = androidx.compose.ui.platform.LocalConfiguration.current
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    val windowWidthDp = configuration.screenWidthDp
+    val windowHeightDp = configuration.screenHeightDp
+    val screenDensity = density.density
+    
+    // ダイアログと同じ幅を計算（Card padding 16dp + Column padding 20dp = 36dp）
+    val dialogPadding = 16.dp + 20.dp // ダイアログの合計padding
+    val dialogActualWidthDp = windowWidthDp - dialogPadding.value
+    val animationWidthRatio = dialogActualWidthDp / windowWidthDp
+    
+    LaunchedEffect(Unit) {
+        android.util.Log.d("FullScreenSaveAnimation", "=== 保存アニメーションサイズ（ダイアログと同じ幅） ===")
+        android.util.Log.d("FullScreenSaveAnimation", "ウィンドウ幅: ${windowWidthDp}dp")
+        android.util.Log.d("FullScreenSaveAnimation", "ウィンドウ高: ${windowHeightDp}dp")
+        android.util.Log.d("FullScreenSaveAnimation", "画面密度: ${screenDensity}")
+        android.util.Log.d("FullScreenSaveAnimation", "ダイアログpadding: ${dialogPadding.value}dp")
+        android.util.Log.d("FullScreenSaveAnimation", "ダイアログ実際の幅: ${dialogActualWidthDp}dp")
+        android.util.Log.d("FullScreenSaveAnimation", "アニメーション幅比率: ${(animationWidthRatio * 100).toInt()}%")
+        android.util.Log.d("FullScreenSaveAnimation", "アニメーション幅(px): ${density.run { dialogActualWidthDp.dp.toPx() }}px")
+        android.util.Log.d("FullScreenSaveAnimation", "Pixel 7解像度: 1080x2100px")
+    }
     
     // CoilのImageLoaderを設定（GIFサポート付き）
     val imageLoader = remember {
@@ -81,7 +114,8 @@ fun FullScreenSaveAnimation(
                     scaleY = animatedScale,
                     alpha = animatedAlpha
                 )
-                .size(120.dp)
+                .fillMaxWidth(animationWidthRatio) // ダイアログと同じ幅
+                .aspectRatio(1f) // 正方形を維持
         )
     }
 }

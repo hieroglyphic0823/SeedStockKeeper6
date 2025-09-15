@@ -8,6 +8,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.Alignment
@@ -17,11 +19,16 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.ui.zIndex
-import androidx.compose.ui.unit.offset
-import androidx.compose.ui.viewinterop.AndroidView
-import android.widget.NumberPicker
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Public
+import com.example.seedstockkeeper6.R
 
 // 分割したファイルから関数をインポート
 import com.example.seedstockkeeper6.ui.components.CalendarEntryDisplay
@@ -57,6 +64,35 @@ fun RegionSelectionDialog(
 ) {
     android.util.Log.d("RegionSelectionDialog", "RegionSelectionDialog開始: showDialog=$showDialog, regionList=$regionList")
     
+    // ウィンドウサイズとダイアログサイズをLog出力
+    val configuration = androidx.compose.ui.platform.LocalConfiguration.current
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    val windowWidthDp = configuration.screenWidthDp
+    val windowHeightDp = configuration.screenHeightDp
+    val dialogHeightDp = windowHeightDp * 0.9f
+    
+    // ダイアログの実際の横幅を計算
+    val dialogPadding = 16.dp // Cardのpadding
+    val dialogContentPadding = 20.dp // Columnのpadding
+    val totalDialogPadding = dialogPadding + dialogContentPadding
+    val dialogActualWidthDp = windowWidthDp - totalDialogPadding.value
+    
+    LaunchedEffect(showDialog) {
+        if (showDialog) {
+            android.util.Log.d("RegionSelectionDialog", "=== ダイアログサイズ計算 ===")
+            android.util.Log.d("RegionSelectionDialog", "ウィンドウ幅: ${windowWidthDp}dp")
+            android.util.Log.d("RegionSelectionDialog", "ウィンドウ高: ${windowHeightDp}dp")
+            android.util.Log.d("RegionSelectionDialog", "ダイアログ高(90%): ${dialogHeightDp}dp")
+            android.util.Log.d("RegionSelectionDialog", "ダイアログ高(px): ${density.run { dialogHeightDp.dp.toPx() }}px")
+            android.util.Log.d("RegionSelectionDialog", "Card padding: ${dialogPadding.value}dp")
+            android.util.Log.d("RegionSelectionDialog", "Column padding: ${dialogContentPadding.value}dp")
+            android.util.Log.d("RegionSelectionDialog", "合計padding: ${totalDialogPadding.value}dp")
+            android.util.Log.d("RegionSelectionDialog", "ダイアログ実際の幅: ${dialogActualWidthDp}dp")
+            android.util.Log.d("RegionSelectionDialog", "ダイアログ実際の幅(px): ${density.run { dialogActualWidthDp.dp.toPx() }}px")
+            android.util.Log.d("RegionSelectionDialog", "ダイアログ幅の割合: ${(dialogActualWidthDp / windowWidthDp * 100).toInt()}%")
+        }
+    }
+    
     if (showDialog) {
         var selectedRegion by remember { mutableStateOf(defaultRegion) }
         var editedEntry by remember { mutableStateOf<com.example.seedstockkeeper6.model.CalendarEntry?>(null) }
@@ -67,195 +103,328 @@ fun RegionSelectionDialog(
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .fillMaxHeight(0.9f) // 画面の90%の高さに制限
                     .padding(16.dp),
                 shape = RoundedCornerShape(16.dp)
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .fillMaxHeight()
                         .padding(20.dp)
                 ) {
+                    // 固定ヘッダー部分
                     Text(
-                        text = "地域区分",
+                        text = "地域確認",
                         style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.padding(bottom = 16.dp)
-                    )
-
-                    // 切り抜きされたカレンダー画像を表示
-                    if (croppedCalendarBitmap != null) {
-                        Card(
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceContainer,
-                                contentColor = MaterialTheme.colorScheme.onSurface
-                            ),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(bottom = 16.dp)
-                        ) {
-                            Column(
-                                modifier = Modifier.padding(16.dp)
-                            ) {
-                                Image(
-                                    bitmap = croppedCalendarBitmap.asImageBitmap(),
-                                    contentDescription = "切り抜きされたカレンダー",
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clip(RoundedCornerShape(8.dp)),
-                                    contentScale = ContentScale.FillWidth
-                                )
-                            }
-                        }
-                    }
-
-                    // 地域選択のボタン
-                    Text(
-                        text = "地域区分",
-                        style = MaterialTheme.typography.titleSmall,
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
                     
-                    LazyVerticalGrid(
-                        columns = GridCells.Fixed(2),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    // 説明コメント
+                    Text(
+                        text = "AIで読み取った地域区分、播種期間、収穫期間を確認してください。間違っていた場合は修正してください。",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+
+                    // スクロール可能なコンテンツエリア
+                    LazyColumn(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .heightIn(max = 200.dp)
+                            .weight(1f), // 残りのスペースを使用
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        items(regionList.size) { index ->
-                            val region = regionList[index]
-                            Button(
-                                onClick = {
-                                    selectedRegion = region
-                                    android.util.Log.d("RegionSelectionDialog", "地域選択: $region")
-                                    
-                                    // 地域変更時にOCR結果で期間を上書き
-                                    val newRegionEntry = ocrResult?.calendar?.find { it.region == region }
-                                    if (newRegionEntry != null) {
-                                        onUpdateEditing(newRegionEntry)
-                                        editedEntry = newRegionEntry
-                                    } else {
-                                        // 新しい地域の場合は空のエントリを作成
-                                        editedEntry = com.example.seedstockkeeper6.model.CalendarEntry(
-                                            region = region,
-                                            sowing_start_date = "",
-                                            sowing_end_date = "",
-                                            harvest_start_date = "",
-                                            harvest_end_date = ""
+                        // 切り抜きされたカレンダー画像を表示
+                        if (croppedCalendarBitmap != null) {
+                            item {
+                                Card(
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                                        contentColor = MaterialTheme.colorScheme.onSurface
+                                    ),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Column(
+                                        modifier = Modifier.padding(16.dp)
+                                    ) {
+                                        Image(
+                                            bitmap = croppedCalendarBitmap.asImageBitmap(),
+                                            contentDescription = "切り抜きされたカレンダー",
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .clip(RoundedCornerShape(8.dp)),
+                                            contentScale = ContentScale.FillWidth
                                         )
                                     }
-                                },
-                                modifier = Modifier.fillMaxWidth(),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                                ),
-                                shape = MaterialTheme.shapes.large,
-                                elevation = ButtonDefaults.buttonElevation(
-                                    defaultElevation = if (region == selectedRegion) 4.dp else 2.dp
+                                }
+                            }
+                        }
+
+                        // OCR結果表示カード（写真と地域選択の間）
+                        item {
+                            val selectedRegionEntry = ocrResult?.calendar?.find { it.region == selectedRegion }
+                            selectedRegionEntry?.let { entry ->
+                                Card(
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                        contentColor = MaterialTheme.colorScheme.onSurface
+                                    ),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Column(
+                                        modifier = Modifier.padding(16.dp)
+                                    ) {
+                                        // アイコン + AI読み取り結果をtitleLargeで表示
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                            modifier = Modifier.padding(bottom = 8.dp)
+                                        ) {
+                                            Image(
+                                                painter = painterResource(id = R.drawable.star_opc),
+                                                contentDescription = "AI読み取り結果",
+                                                modifier = Modifier.size(24.dp)
+                                            )
+                                            Text(
+                                                "AI読み取り結果",
+                                                style = MaterialTheme.typography.titleMedium
+                                            )
+                                        }
+                                        
+                                        // 地域情報を表示（農園情報のDisplayModeと同じスタイル）
+                                        Surface(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            color = getRegionColor(selectedRegion).copy(alpha = 0.1f),
+                                            shape = MaterialTheme.shapes.medium
+                                        ) {
+                                            Row(
+                                                modifier = Modifier.padding(16.dp),
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                            ) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .size(12.dp)
+                                                        .background(
+                                                            color = getRegionColor(selectedRegion),
+                                                            shape = CircleShape
+                                                        )
+                                                )
+                    Text(
+                                                    text = selectedRegion.ifEmpty { "未設定" },
+                                                    style = MaterialTheme.typography.bodyLarge,
+                                                    color = if (selectedRegion.isEmpty()) 
+                                                        MaterialTheme.colorScheme.onSurfaceVariant 
+                                                    else 
+                                                        MaterialTheme.colorScheme.onSurface,
+                                                    fontWeight = androidx.compose.ui.text.font.FontWeight.Medium
+                                                )
+                                            }
+                                        }
+                                        
+                                        // 表示モード（OCR結果では年を表示しない）
+                                        CalendarEntryDisplay(entry = entry, showYear = false)
+                                    }
+                                }
+                            }
+                        }
+
+                        // 編集項目を表示
+                        if (selectedRegion.isNotEmpty()) {
+                            item {
+                                val entryToShow = ocrResult?.calendar?.find { it.region == selectedRegion } ?: com.example.seedstockkeeper6.model.CalendarEntry(
+                                    region = selectedRegion,
+                                    sowing_start_date = "",
+                                    sowing_end_date = "",
+                                    harvest_start_date = "",
+                                    harvest_end_date = ""
                                 )
-                            ) {
-                                Text(
-                                    text = region,
-                                    style = MaterialTheme.typography.bodyMedium
-                                )
+                                
+                                Card(
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                                        contentColor = MaterialTheme.colorScheme.onSurface
+                                    ),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Column(
+                                        modifier = Modifier.padding(16.dp)
+                                    ) {
+                                        // 地域設定セクション（農園情報画面と同じスタイル）
+                                        var showRegionBottomSheet by remember { mutableStateOf(false) }
+                                        
+                                        Column(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                                        ) {
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                            ) {
+                                                androidx.compose.material3.Icon(
+                                                    androidx.compose.material.icons.Icons.Filled.Public,
+                                                    contentDescription = "地域設定",
+                                                    tint = MaterialTheme.colorScheme.onSurface,
+                                                    modifier = Modifier.size(24.dp)
+                                                )
+                                                Text(
+                                                    text = "地域",
+                                                    style = MaterialTheme.typography.titleMedium,
+                                                    fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
+                                                    color = MaterialTheme.colorScheme.onSurface
+                                                )
+                                            }
+                                            
+                                            // 地域選択ボタン（農園情報画面と同じスタイル）
+                                            Button(
+                                                onClick = { showRegionBottomSheet = true },
+                                                modifier = Modifier.fillMaxWidth(),
+                                                colors = ButtonDefaults.buttonColors(
+                                                    containerColor = getRegionColor(selectedRegion),
+                                                    contentColor = Color.White
+                                                ),
+                                                shape = MaterialTheme.shapes.large,
+                                                elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp)
+                                            ) {
+                                                Text(
+                                                    text = selectedRegion.ifEmpty { "地域" },
+                                                    style = MaterialTheme.typography.bodyLarge,
+                                                    fontWeight = androidx.compose.ui.text.font.FontWeight.Medium
+                                                )
+                                            }
+                                        }
+                                        
+                                        // 地域選択ボトムシート（農園情報画面と同じ）
+                                        if (showRegionBottomSheet) {
+                                            androidx.compose.material3.ModalBottomSheet(
+                                                onDismissRequest = { showRegionBottomSheet = false }
+                                            ) {
+                                                Column(
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .padding(16.dp)
+                                                ) {
+                                                    Text(
+                                                        text = "地域を選択",
+                                                        style = MaterialTheme.typography.titleMedium,
+                                                        modifier = Modifier.padding(bottom = 16.dp)
+                                                    )
+                                                    
+                                                    listOf("寒地", "寒冷地", "温暖地", "暖地").forEach { region ->
+                                                        Button(
+                                                            onClick = {
+                                                                selectedRegion = region
+                                                                showRegionBottomSheet = false
+                                                                
+                                                                // 地域変更時にOCR結果で期間を上書き
+                                                                val newRegionEntry = ocrResult?.calendar?.find { it.region == region }
+                                                                if (newRegionEntry != null) {
+                                                                    onUpdateEditing(newRegionEntry)
+                                                                    editedEntry = newRegionEntry
+                                                                } else {
+                                                                    // 新しい地域の場合は空のエントリを作成
+                                                                    editedEntry = com.example.seedstockkeeper6.model.CalendarEntry(
+                                                                        region = region,
+                                                                        sowing_start_date = "",
+                                                                        sowing_end_date = "",
+                                                                        harvest_start_date = "",
+                                                                        harvest_end_date = ""
+                                                                    )
+                                                                }
+                                                            },
+                                                            modifier = Modifier
+                                                                .fillMaxWidth()
+                                                                .padding(vertical = 6.dp),
+                                                            colors = ButtonDefaults.buttonColors(
+                                                                containerColor = getRegionColor(region),
+                                                                contentColor = Color.White
+                                                            ),
+                                                            shape = MaterialTheme.shapes.large,
+                                                            elevation = ButtonDefaults.buttonElevation(
+                                                                defaultElevation = if (region == selectedRegion) 4.dp else 2.dp
+                                                            ),
+                                                            border = if (region == selectedRegion) {
+                                                                androidx.compose.foundation.BorderStroke(2.dp, MaterialTheme.colorScheme.outline)
+                                                            } else null
+                                                        ) {
+                                                            Text(
+                                                                text = region,
+                                                                style = MaterialTheme.typography.bodyLarge,
+                                                                fontWeight = if (region == selectedRegion) 
+                                                                    androidx.compose.ui.text.font.FontWeight.Bold 
+                                                                else 
+                                                                    androidx.compose.ui.text.font.FontWeight.Medium
+                                                            )
+                                                        }
+                                                    }
+                                                    
+                                                    Spacer(modifier = Modifier.height(16.dp))
+                                                }
+                                            }
+                                        }
+                                        
+                                        Spacer(modifier = Modifier.height(16.dp))
+                                        
+                                        // 編集項目を表示
+                                        CalendarEntryEditor(
+                                            entry = entryToShow,
+                                            onUpdate = { updatedEntry ->
+                                                // 編集内容をViewModelに反映
+                                                onUpdateEditing(updatedEntry)
+                                                // ローカルでも編集された値を保存
+                                                editedEntry = updatedEntry
+                                            },
+                                            onSave = { },
+                                            onCancel = { }
+                                        )
+                                    }
+                                }
                             }
                         }
                     }
-
-                    // 選択された地域のOCR結果と編集項目を表示
-                    if (selectedRegion.isNotEmpty()) {
-                        Spacer(modifier = Modifier.height(16.dp))
-                        
-                        val selectedRegionEntry = ocrResult?.calendar?.find { it.region == selectedRegion }
-                        val entryToShow = selectedRegionEntry ?: com.example.seedstockkeeper6.model.CalendarEntry(
-                            region = selectedRegion,
-                            sowing_start_date = "",
-                            sowing_end_date = "",
-                            harvest_start_date = "",
-                            harvest_end_date = ""
-                        )
-                        
-                        Card(
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceContainer,
-                                contentColor = MaterialTheme.colorScheme.onSurface
-                            ),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Column(
-                                modifier = Modifier.padding(16.dp)
-                            ) {
-                                if (selectedRegionEntry != null) {
-                                    // OCR結果がある場合は表示
-                                    Text(
-                                        "OCR結果: ${selectedRegion}",
-                                        style = MaterialTheme.typography.titleSmall,
-                                        modifier = Modifier.padding(bottom = 8.dp)
-                                    )
-                                    
-                                    // 表示モード（OCR結果では年を表示しない）
-                                    CalendarEntryDisplay(entry = selectedRegionEntry, showYear = false)
-                                    
-                                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    // 固定フッター部分（OK・キャンセルボタン）- Column内に配置
+                    LaunchedEffect(Unit) {
+                        android.util.Log.d("RegionSelectionDialog", "OKボタン表示位置: Column内、Card内")
+                        android.util.Log.d("RegionSelectionDialog", "OKボタンパディング: horizontal=0dp, vertical=16dp")
+                    }
+                    
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Button(
+                            onClick = {
+                                android.util.Log.d("RegionSelectionDialog", "OKボタンクリック: $selectedRegion")
+                                // 編集された値がある場合は、それを含めて保存
+                                if (editedEntry != null) {
+                                    onUpdateEditing(editedEntry!!)
+                                    // 編集された値を保存
+                                    onSaveEditing()
                                 }
-                                
-                                // 編集項目を表示（OCR結果地域選択ダイアログでは年選択を無効）
-                                CalendarEntryEditor(
-                                    entry = entryToShow,
-                                    onUpdate = { updatedEntry ->
-                                        // 編集内容をViewModelに反映
-                                        onUpdateEditing(updatedEntry)
-                                        // ローカルでも編集された値を保存
-                                        editedEntry = updatedEntry
-                                    },
-                                    onSave = {
-                                        // カード内の保存ボタンは削除（何もしない）
-                                    },
-                                    onCancel = {
-                                        // カード内のキャンセルボタンは削除（何もしない）
-                                    },
-                                    hideYearSelection = true
-                                )
-                            }
+                                onRegionSelected(selectedRegion)
+                                onDismiss()
+                            },
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.tertiary,
+                                contentColor = MaterialTheme.colorScheme.onTertiary
+                            )
+                        ) {
+                            Text("OK")
                         }
-
-                        Spacer(modifier = Modifier.height(24.dp))
-
-                        // ボタン
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.End
+                        Button(
+                            onClick = onDismiss,
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.tertiary,
+                                contentColor = MaterialTheme.colorScheme.onTertiary
+                            )
                         ) {
-                            TextButton(
-                                onClick = onDismiss
-                            ) {
-                                Text("キャンセル")
-                            }
-                            
-                            if (selectedRegion.isNotEmpty()) {
-                                Spacer(modifier = Modifier.width(8.dp))
-                                
-                                Button(
-                                    onClick = {
-                                        android.util.Log.d("RegionSelectionDialog", "OKボタンクリック: $selectedRegion")
-                                        // 編集された値がある場合は、それを含めて保存
-                                        if (editedEntry != null) {
-                                            onUpdateEditing(editedEntry!!)
-                                            // 編集された値を保存
-                                            onSaveEditing()
-                                        }
-                                        onRegionSelected(selectedRegion)
-                                        onDismiss()
-                                    },
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = MaterialTheme.colorScheme.primaryContainer,
-                                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                                    )
-                                ) {
-                                    Text("OK")
-                                }
-                            }
+                            Text("キャンセル")
                         }
                     }
                 }

@@ -331,30 +331,6 @@ fun CultivationInfoSection(viewModel: SeedInputViewModel) {
                 label = { Text("収穫") },
                 modifier = Modifier.fillMaxWidth()
             )
-            
-            Spacer(modifier = Modifier.height(12.dp))
-            
-            // 有効期限
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                OutlinedTextField(
-                    value = if (viewModel.packet.expirationYear > 0) viewModel.packet.expirationYear.toString() else "",
-                    onValueChange = viewModel::onExpirationYearChange,
-                    label = { Text("有効期限年") },
-                    modifier = Modifier.width(100.dp)
-                )
-                Text("年", style = MaterialTheme.typography.bodyLarge)
-                OutlinedTextField(
-                    value = if (viewModel.packet.expirationMonth > 0) viewModel.packet.expirationMonth.toString() else "",
-                    onValueChange = viewModel::onExpirationMonthChange,
-                    label = { Text("月") },
-                    modifier = Modifier.width(80.dp)
-                )
-                Text("月", style = MaterialTheme.typography.bodyLarge)
-            }
         }
     }
 }

@@ -120,7 +120,7 @@ fun SettingsScreen(
     viewModel: SettingsViewModel
 ) {
     var showRegionBottomSheet by remember { mutableStateOf(false) }
-    var showSaveAnimation by remember { mutableStateOf(false) }
+    // showSaveAnimationはMainScaffoldで管理されるため削除
     
     val snackbarHostState = remember { SnackbarHostState() }
     
@@ -148,13 +148,11 @@ fun SettingsScreen(
                 if (viewModel.isEditMode) {
                 FloatingActionButton(
                     onClick = {
-                        showSaveAnimation = true
                         // 保存処理をシミュレート（実際の保存処理に合わせて調整）
                         kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch {
                             kotlinx.coroutines.delay(1000) // 1秒の保存処理をシミュレート
                             viewModel.saveSettings()
                             viewModel.exitEditMode()
-                            showSaveAnimation = false
                         }
                     },
                         containerColor = MaterialTheme.colorScheme.secondaryContainer,
@@ -356,9 +354,6 @@ fun SettingsScreen(
             )
         }
         
-        // 保存アニメーション
-        if (showSaveAnimation) {
-            FullScreenSaveAnimation()
-        }
+        // 保存アニメーション（MainScaffoldで管理されるため削除）
     }
 }

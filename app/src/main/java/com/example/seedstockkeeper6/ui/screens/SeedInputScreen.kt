@@ -37,11 +37,11 @@ import com.example.seedstockkeeper6.ui.screens.*
 fun SeedInputScreen(
     navController: NavController,
     viewModel: SeedInputViewModel,
-    settingsViewModel: com.example.seedstockkeeper6.viewmodel.SettingsViewModel? = null
+    settingsViewModel: com.example.seedstockkeeper6.viewmodel.SettingsViewModel? = null,
+    onSaveRequest: () -> Unit = {} // MainScaffoldからの保存リクエストコールバック
 ) {
     val scroll = rememberScrollState()
     val context = LocalContext.current
-    var showSaveAnimation by remember { mutableStateOf(false) }
     
     // 農園情報の地域を設定
     LaunchedEffect(settingsViewModel?.defaultRegion) {
@@ -52,12 +52,14 @@ fun SeedInputScreen(
 
     Scaffold(
         floatingActionButton = {
-            if (viewModel.isEditMode || !viewModel.hasExistingData) {
+            // AIで読み取り処理中、地域選択ダイアログ表示中はFABを非表示
+            if ((viewModel.isEditMode || !viewModel.hasExistingData) && 
+                !viewModel.isLoading && 
+                !viewModel.showRegionSelectionDialog) {
                 FloatingActionButton(
                     onClick = {
-                        showSaveAnimation = true
+                        onSaveRequest() // MainScaffoldの保存アニメーションを表示
                         viewModel.saveSeedData(context) { result ->
-                            showSaveAnimation = false
                             if (result.isSuccess) {
                                 viewModel.exitEditMode()
                             }
@@ -175,8 +177,5 @@ fun SeedInputScreen(
     // 画像拡大表示ダイアログ
     ImageDialog(viewModel)
     
-    // 保存アニメーション
-    if (showSaveAnimation) {
-        FullScreenSaveAnimation()
-    }
+    // 保存アニメーション（MainScaffoldで管理されるため削除）
 }
