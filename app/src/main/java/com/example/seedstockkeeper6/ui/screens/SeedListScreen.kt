@@ -3,6 +3,7 @@ package com.example.seedstockkeeper6.ui.screens
 import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,9 +12,11 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -101,7 +104,8 @@ fun SeedListScreen(
         state = listState,
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp)
+            .background(MaterialTheme.colorScheme.surface)
+            .padding(horizontal = 16.dp, vertical = 0.dp)
     ) {
         items(seeds) { (id, seed) ->
             val checked = selectedIds.contains(id)
@@ -111,32 +115,78 @@ fun SeedListScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                    .padding(horizontal = 16.dp, vertical = 0.dp)
                     .clickable {
                         navController.navigate("input/$encodedSeed")
                     },
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalAlignment = androidx.compose.ui.Alignment.Top
             ) {
                 val rotation = familyRotationMinYearsLabel(seed.family) ?: ""
                 FamilyIcon(
                     family = seed.family,
-                    size = 50.dp,
+                    size = 48.dp,
                     cornerRadius = 8.dp,
                     rotationLabel = rotation,
-                    badgeProtrusion = 4.dp
+                    badgeProtrusion = 4.dp,
+                    showCircleBorder = true
                 )
-                Spacer(modifier = Modifier.width(16.dp))
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        "${seed.productName} (${seed.variety})", 
-                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Normal)
-                    )
+                
+                // 商品情報Column
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                ) {
+                    // 商品名と品種名を横並び（横スクロール対応）
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            seed.productName, 
+                            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Normal),
+                            maxLines = 1,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                        )
+                        Text(
+                            "（${seed.variety}）", 
+                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Light),
+                            maxLines = 1,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                        )
+                    }
+                    
                     Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        "有効期限: ${seed.expirationYear}年 ${seed.expirationMonth}月", 
-                        style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Light)
-                    )
+                    
+                    // 有効期限とチェックボックスを横並び
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 0.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                    ) {
+                        Text(
+                            "有効期限: ${seed.expirationYear}年 ${seed.expirationMonth}月", 
+                            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Light)
+                        )
+                        
+                        Checkbox(
+                            checked = checked,
+                            onCheckedChange = {
+                                if (it) selectedIds.add(id) else selectedIds.remove(id)
+                            },
+                            colors = androidx.compose.material3.CheckboxDefaults.colors(
+                                checkedColor = MaterialTheme.colorScheme.primary,
+                                uncheckedColor = MaterialTheme.colorScheme.outline,
+                                checkmarkColor = MaterialTheme.colorScheme.onPrimary
+                            )
+                        )
+                    }
                     
                     // コンパニオンプランツの表示
                     if (seed.companionPlants.isNotEmpty()) {
@@ -151,19 +201,20 @@ fun SeedListScreen(
                                 verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
-                                // Cを丸で囲ったアイコン
+                                // Cを丸で囲ったアイコン（Material3準拠）
                                 Box(
                                     modifier = Modifier
-                                        .size(16.dp)
+                                        .size(24.dp)
                                         .background(
-                                            color = MaterialTheme.colorScheme.primary,
+                                            color = MaterialTheme.colorScheme.tertiaryContainer,
                                             shape = CircleShape
                                         ),
                                     contentAlignment = androidx.compose.ui.Alignment.Center
                                 ) {
                                     Text(
                                         text = "C",
-                                        style = MaterialTheme.typography.labelSmall,
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = MaterialTheme.colorScheme.onTertiaryContainer,
                                         fontWeight = FontWeight.Bold
                                     )
                                 }
@@ -171,31 +222,19 @@ fun SeedListScreen(
                                 // コンパニオンプランツ名
                                 Text(
                                     "${companionPlantNames.joinToString(", ")}${if (seed.companionPlants.size > 3) "..." else ""}",
-                                    style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Light)
-
+                                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Light)
                                 )
                             }
                         }
                     }
                 }
-                Checkbox(
-                    checked = checked,
-                    onCheckedChange = {
-                        if (it) selectedIds.add(id) else selectedIds.remove(id)
-                    },
-                    colors = androidx.compose.material3.CheckboxDefaults.colors(
-                        checkedColor = MaterialTheme.colorScheme.primary,
-                        uncheckedColor = MaterialTheme.colorScheme.outline,
-                        checkmarkColor = MaterialTheme.colorScheme.onPrimary
-                    )
-                )
             }
             
             // 区切り線（最後のアイテム以外）
             if (seeds.indexOf(id to seed) < seeds.size - 1) {
                 HorizontalDivider(
                     thickness = 1.dp,
-                    modifier = Modifier.padding(horizontal = 16.dp)
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
                 )
             }
         }

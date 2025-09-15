@@ -233,11 +233,11 @@ fun MainScaffoldTopAppBar(
                     }
                 }
                 else -> {
-                    // デフォルトのタイトル表示
+                    // 種一覧画面のタイトル表示
                     Text(
-                        text = "SeedStockKeeper",
+                        text = "種リスト",
                         modifier = Modifier.fillMaxWidth(),
-                        textAlign = TextAlign.Start
+                        textAlign = TextAlign.Center
                     )
                 }
             }

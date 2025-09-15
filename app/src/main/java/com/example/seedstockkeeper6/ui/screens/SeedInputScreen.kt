@@ -14,7 +14,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -42,6 +44,8 @@ fun SeedInputScreen(
 ) {
     val scroll = rememberScrollState()
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
     
     // 農園情報の地域を設定
     LaunchedEffect(settingsViewModel?.defaultRegion) {
@@ -51,6 +55,7 @@ fun SeedInputScreen(
     }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
             // AIで読み取り処理中、地域選択ダイアログ表示中はFABを非表示
             if ((viewModel.isEditMode || !viewModel.hasExistingData) && 
@@ -63,6 +68,22 @@ fun SeedInputScreen(
                             if (result.isSuccess) {
                                 viewModel.exitEditMode()
                                 viewModel.markAsExistingData() // DisplayModeにする
+                                
+                                // 保存完了のSnackbarを表示
+                                scope.launch {
+                                    snackbarHostState.showSnackbar(
+                                        message = "保存しました",
+                                        duration = SnackbarDuration.Short
+                                    )
+                                }
+                            } else {
+                                // 保存失敗のSnackbarを表示
+                                scope.launch {
+                                    snackbarHostState.showSnackbar(
+                                        message = "保存に失敗しました",
+                                        duration = SnackbarDuration.Short
+                                    )
+                                }
                             }
                         }
                     },

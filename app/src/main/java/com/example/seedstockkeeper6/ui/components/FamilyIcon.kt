@@ -28,10 +28,11 @@ import com.example.seedstockkeeper6.util.normalizeFamilyName
 @Composable
 fun FamilyIcon(
     family: String?,
-    size: Dp = 40.dp,
+    size: Dp = 48.dp,
     cornerRadius: Dp = 10.dp, // ← 角丸。四角なら 0.dp
     rotationLabel: String? = null, // ← 右上に出す「連作年数」など（例: "3年" / "3"）
-    badgeProtrusion: Dp = 8.dp                   // ← アイコン外へハミ出す量（+X, -Y）
+    badgeProtrusion: Dp = 8.dp,                   // ← アイコン外へハミ出す量（+X, -Y）
+    showCircleBorder: Boolean = false // ← 円い枠を表示するかどうか
 ) {
     val normalized = normalizeFamilyName(family)
 
@@ -54,10 +55,10 @@ fun FamilyIcon(
     Box(modifier = Modifier.size(size)) {
         // 本体（四角いタイル）
         Surface(
-            color = MaterialTheme.colorScheme.surface, // surfaceに変更
-            contentColor = MaterialTheme.colorScheme.onSurface,
-            shape = RoundedCornerShape(4.dp), // 4.dpに固定
-            tonalElevation = 0.dp,
+            color = if (showCircleBorder) MaterialTheme.colorScheme.surfaceContainerLow else MaterialTheme.colorScheme.surface, // 円い枠の場合はsurfaceContainerLow
+            contentColor = if (showCircleBorder) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface,
+            shape = if (showCircleBorder) CircleShape else RoundedCornerShape(4.dp), // 円い枠の場合は円形
+            tonalElevation = if (showCircleBorder) 2.dp else 0.dp, // 円い枠の場合はエレベーションを追加
             shadowElevation = 0.dp,
             modifier = Modifier.fillMaxSize()
         ) {
@@ -75,15 +76,14 @@ fun FamilyIcon(
             }
         }
 
-        // 右上の枠付きバッジ（連作年数など）
+        // 右上の丸いバッジ（連作年数など）
         val labelText = rotationLabel?.trim().orEmpty()
         if (labelText.isNotEmpty()) {
             Surface(
                 color = MaterialTheme.colorScheme.primaryContainer,
                 contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                shape = RoundedCornerShape(6.dp),
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-                tonalElevation = 0.dp,
+                shape = CircleShape, // 丸い形状に変更
+                tonalElevation = 2.dp, // Material3ではエレベーションで区別
                 shadowElevation = 0.dp,
                 modifier = Modifier
                     .align(Alignment.TopEnd)
