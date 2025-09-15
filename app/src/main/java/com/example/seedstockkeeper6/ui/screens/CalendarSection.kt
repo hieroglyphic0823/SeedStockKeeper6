@@ -519,7 +519,8 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
                     }
                     showHarvestStartBottomSheet = false
                 },
-                onCancel = { showHarvestStartBottomSheet = false }
+                onCancel = { showHarvestStartBottomSheet = false },
+                isHarvestPeriod = true // 収穫期間のボトムシート
             )
         }
     }
@@ -546,7 +547,8 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
                     }
                     showHarvestEndBottomSheet = false
                 },
-                onCancel = { showHarvestEndBottomSheet = false }
+                onCancel = { showHarvestEndBottomSheet = false },
+                isHarvestPeriod = true // 収穫期間のボトムシート
             )
         }
     }

@@ -53,6 +53,7 @@ class SeedInputViewModel : ViewModel() {
         private set
 
     var isLoading by mutableStateOf(false)
+    var isSaving by mutableStateOf(false)
 
     // 画像置換の確認用
     var showCropConfirmDialog by mutableStateOf(false)
@@ -507,6 +508,7 @@ class SeedInputViewModel : ViewModel() {
 
         viewModelScope.launch(kotlinx.coroutines.Dispatchers.Main) {
             isLoading = true
+            isSaving = true
             try {
                 // 1) docId を確定（既存なら流用、無ければ新規発番）
                 val target = packet.documentId?.let { db.collection("seeds").document(it) }
@@ -624,6 +626,7 @@ class SeedInputViewModel : ViewModel() {
                 onComplete(Result.failure(e))
             } finally {
                 isLoading = false
+                isSaving = false
             }
         }
     }
@@ -1354,6 +1357,10 @@ class SeedInputViewModel : ViewModel() {
     
     fun exitEditMode() {
         isEditMode = false
+    }
+    
+    fun markAsExistingData() {
+        hasExistingData = true
     }
     
     fun saveSeedData(context: android.content.Context, onComplete: (Result<Unit>) -> Unit) {

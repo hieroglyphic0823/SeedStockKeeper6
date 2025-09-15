@@ -62,6 +62,7 @@ fun SeedInputScreen(
                         viewModel.saveSeedData(context) { result ->
                             if (result.isSuccess) {
                                 viewModel.exitEditMode()
+                                viewModel.markAsExistingData() // DisplayModeにする
                             }
                         }
                     },
@@ -135,7 +136,8 @@ fun SeedInputScreen(
                 CropConfirmDialog(viewModel = viewModel)
             }
             
-            if (viewModel.isLoading) {
+            // AI処理中のみSukesanGifAnimationを表示（保存処理中は表示しない）
+            if (viewModel.isLoading && !viewModel.isSaving) {
                 Box(
                     Modifier
                         .fillMaxSize()

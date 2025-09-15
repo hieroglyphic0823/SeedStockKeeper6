@@ -18,6 +18,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.viewinterop.AndroidView
 import android.widget.NumberPicker
 import com.example.seedstockkeeper6.R
@@ -451,7 +452,8 @@ fun CalendarEntryEditor(
                         updateHarvestStart("0", harvestStart, harvestStartStage)
                         harvestStartExpanded = false
                     },
-                    onCancel = { harvestStartExpanded = false }
+                    onCancel = { harvestStartExpanded = false },
+                    isHarvestPeriod = true // 収穫期間のボトムシート
                 )
             }
         }
@@ -472,7 +474,8 @@ fun CalendarEntryEditor(
                         updateHarvestEnd("0", harvestEnd, harvestEndStage)
                         harvestEndExpanded = false
                     },
-                    onCancel = { harvestEndExpanded = false }
+                    onCancel = { harvestEndExpanded = false },
+                    isHarvestPeriod = true // 収穫期間のボトムシート
                 )
             }
         }
@@ -578,7 +581,8 @@ fun PeriodSelectionBottomSheet(
     onConfirm: () -> Unit,
     onCancel: () -> Unit,
     confirmButtonColor: androidx.compose.ui.graphics.Color? = null,
-    hideYearSelection: Boolean = false
+    hideYearSelection: Boolean = false,
+    isHarvestPeriod: Boolean = false // 収穫期間かどうかを判別
 ) {
     val currentYear = java.time.LocalDate.now().year
     val monthOptions = (1..12).map { it.toString() }
@@ -655,18 +659,26 @@ fun PeriodSelectionBottomSheet(
                 Button(
                     onClick = { onStageChange(stage) },
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (selectedStage == stage) 
-                            MaterialTheme.colorScheme.primaryContainer 
-                        else 
+                        containerColor = if (selectedStage == stage) {
+                            if (isHarvestPeriod) 
+                                MaterialTheme.colorScheme.secondaryContainer 
+                            else 
+                                MaterialTheme.colorScheme.primaryContainer
+                        } else {
                             MaterialTheme.colorScheme.surface
+                        }
                     )
                 ) {
                     Text(
                         stage,
-                        color = if (selectedStage == stage) 
-                            MaterialTheme.colorScheme.onPrimaryContainer 
-                        else 
+                        color = if (selectedStage == stage) {
+                            if (isHarvestPeriod) 
+                                MaterialTheme.colorScheme.onSecondaryContainer 
+                            else 
+                                MaterialTheme.colorScheme.onPrimaryContainer
+                        } else {
                             MaterialTheme.colorScheme.onSurface
+                        }
                     )
                 }
             }
@@ -716,7 +728,8 @@ fun MonthStageSelectionBottomSheet(
     onMonthChange: (Int) -> Unit,
     onStageChange: (String) -> Unit,
     onConfirm: () -> Unit,
-    onCancel: () -> Unit
+    onCancel: () -> Unit,
+    isHarvestPeriod: Boolean = false // 収穫期間かどうかを判別
 ) {
     var currentMonth by remember { mutableStateOf(selectedMonth) }
     var currentStage by remember { mutableStateOf(selectedStage) }
@@ -739,6 +752,9 @@ fun MonthStageSelectionBottomSheet(
             modifier = Modifier.padding(bottom = 8.dp)
         )
         
+        // Material3のテーマカラーを取得
+        val colorScheme = MaterialTheme.colorScheme
+        
         AndroidView(
             factory = { context ->
                 NumberPicker(context).apply {
@@ -749,6 +765,22 @@ fun MonthStageSelectionBottomSheet(
                     setOnValueChangedListener { _, _, newVal ->
                         currentMonth = newVal
                         onMonthChange(newVal)
+                    }
+                    
+                    // NumberPickerの色をMaterial3のテーマカラーに設定
+                    try {
+                        // テキスト色を設定
+                        setTextColor(colorScheme.onSurface.toArgb())
+                        // 背景色を設定
+                        setBackgroundColor(colorScheme.surface.toArgb())
+                        
+                        android.util.Log.d("RegionDialogNumberPicker", "=== NumberPicker色設定完了 ===")
+                        android.util.Log.d("RegionDialogNumberPicker", "テキスト色: #${Integer.toHexString(colorScheme.onSurface.toArgb())}")
+                        android.util.Log.d("RegionDialogNumberPicker", "背景色: #${Integer.toHexString(colorScheme.surface.toArgb())}")
+                        android.util.Log.d("RegionDialogNumberPicker", "現在の値: $currentMonth")
+                        android.util.Log.d("RegionDialogNumberPicker", "表示値: ${arrayOf("不明", "1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月")[currentMonth]}")
+                    } catch (e: Exception) {
+                        android.util.Log.e("RegionDialogNumberPicker", "色設定エラー: ${e.message}")
                     }
                 }
             },
@@ -778,14 +810,22 @@ fun MonthStageSelectionBottomSheet(
                     },
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (currentStage == stage) 
-                            MaterialTheme.colorScheme.primaryContainer 
-                        else 
-                            MaterialTheme.colorScheme.surface,
-                        contentColor = if (currentStage == stage) 
-                            MaterialTheme.colorScheme.onPrimaryContainer 
-                        else 
+                        containerColor = if (currentStage == stage) {
+                            if (isHarvestPeriod) 
+                                MaterialTheme.colorScheme.secondaryContainer 
+                            else 
+                                MaterialTheme.colorScheme.primaryContainer
+                        } else {
+                            MaterialTheme.colorScheme.surface
+                        },
+                        contentColor = if (currentStage == stage) {
+                            if (isHarvestPeriod) 
+                                MaterialTheme.colorScheme.onSecondaryContainer 
+                            else 
+                                MaterialTheme.colorScheme.onPrimaryContainer
+                        } else {
                             MaterialTheme.colorScheme.onSurface
+                        }
                     )
                 ) {
                     Text(stage)

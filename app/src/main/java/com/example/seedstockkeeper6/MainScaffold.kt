@@ -37,6 +37,7 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -76,7 +77,9 @@ fun MainScaffoldTopAppBar(
     navController: NavHostController,
     user: FirebaseUser?,
     settingsViewModel: SettingsViewModel? = null,
-    seedInputViewModel: com.example.seedstockkeeper6.viewmodel.SeedInputViewModel? = null
+    seedInputViewModel: com.example.seedstockkeeper6.viewmodel.SeedInputViewModel? = null,
+    selectedIds: List<String> = emptyList(),
+    onDeleteSelected: () -> Unit = {}
 ) {
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -342,10 +345,24 @@ fun MainScaffoldTopAppBar(
                             }
                         }
                     } else {
-                        Box(
-                            modifier = Modifier.padding(horizontal = 12.dp),
-                            contentAlignment = Alignment.Center
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
+                            // 種一覧画面でチェックが入っている場合は削除ボタンを表示
+                            if (currentRoute == "list" && selectedIds.isNotEmpty()) {
+                                IconButton(
+                                    onClick = onDeleteSelected
+                                ) {
+                                    Image(
+                                        painter = painterResource(id = com.example.seedstockkeeper6.R.drawable.delete),
+                                        contentDescription = "削除",
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                }
+                            }
+                            
+                            // 設定ボタン
                             IconButton(
                                 onClick = { navController.navigate("settings") },
                             ) {
@@ -436,15 +453,6 @@ fun MainScaffoldNavigationBar(
                         contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                     ) {
                         Icon(Icons.Filled.Save, contentDescription = "保存")
-                    }
-                }
-                isListScreen && selectedIds.isNotEmpty() -> {
-                    FloatingActionButton(
-                        onClick = { /* 削除処理 */ },
-                        containerColor = MaterialTheme.colorScheme.errorContainer,
-                        contentColor = MaterialTheme.colorScheme.onErrorContainer
-                    ) {
-                        Icon(Icons.Filled.Delete, contentDescription = "削除")
                     }
                 }
                 else -> {
@@ -547,7 +555,61 @@ fun MainScaffold(
                 navController = navController,
                 user = user,
                 settingsViewModel = if (currentRoute == "settings") settingsViewModel else null,
-                seedInputViewModel = if (currentRoute?.startsWith("input") == true) inputViewModel else null
+                seedInputViewModel = if (currentRoute?.startsWith("input") == true) inputViewModel else null,
+                selectedIds = selectedIds,
+                onDeleteSelected = {
+                    // 選択された種情報を削除
+                    val idsToDelete = selectedIds.toList() // コピーを作成
+                    val deleteCount = idsToDelete.size
+                    
+                    // 選択状態をクリア
+                    selectedIds.clear()
+                    
+                    // 削除処理を非同期で実行
+                    scope.launch {
+                        var successCount = 0
+                        var failureCount = 0
+                        
+                        // 各削除処理を順次実行
+                        for (id in idsToDelete) {
+                            try {
+                                val result = listViewModel.deleteSeedPacketWithImagesInternal(id)
+                                if (result.isSuccess) {
+                                    successCount++
+                                    Log.d("MainScaffold", "削除成功: $id")
+                                } else {
+                                    failureCount++
+                                    Log.e("MainScaffold", "削除失敗: $id", result.exceptionOrNull())
+                                }
+                            } catch (e: Exception) {
+                                failureCount++
+                                Log.e("MainScaffold", "削除エラー: $id", e)
+                            }
+                        }
+                        
+                        // 削除完了後にSnackbarでお知らせ
+                        when {
+                            successCount == deleteCount -> {
+                                snackbarHostState.showSnackbar(
+                                    message = "${deleteCount}件の種情報を削除しました",
+                                    duration = SnackbarDuration.Short
+                                )
+                            }
+                            successCount > 0 -> {
+                                snackbarHostState.showSnackbar(
+                                    message = "${successCount}件削除しました（${failureCount}件失敗）",
+                                    duration = SnackbarDuration.Short
+                                )
+                            }
+                            else -> {
+                                snackbarHostState.showSnackbar(
+                                    message = "削除に失敗しました",
+                                    duration = SnackbarDuration.Short
+                                )
+                            }
+                        }
+                    }
+                }
             )
         },
         bottomBar = {
