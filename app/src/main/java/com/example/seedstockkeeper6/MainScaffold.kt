@@ -643,6 +643,52 @@ fun MainScaffold(
                         kotlinx.coroutines.delay(2000) // 2秒間アニメーション表示
                         showSaveAnimation = false
                     }
+                },
+                onDeleteSelected = { idsToDelete ->
+                    // 削除処理を非同期で実行
+                    scope.launch {
+                        var successCount = 0
+                        var failureCount = 0
+                        
+                        // 各削除処理を順次実行
+                        for (id in idsToDelete) {
+                            try {
+                                val result = listViewModel.deleteSeedPacketWithImagesInternal(id)
+                                if (result.isSuccess) {
+                                    successCount++
+                                    Log.d("MainScaffold", "削除成功: $id")
+                                } else {
+                                    failureCount++
+                                    Log.e("MainScaffold", "削除失敗: $id", result.exceptionOrNull())
+                                }
+                            } catch (e: Exception) {
+                                failureCount++
+                                Log.e("MainScaffold", "削除エラー: $id", e)
+                            }
+                        }
+                        
+                        // 結果に応じてSnackbarを表示
+                        when {
+                            successCount == idsToDelete.size -> {
+                                snackbarHostState.showSnackbar(
+                                    message = "${idsToDelete.size}件の種情報を削除しました",
+                                    duration = SnackbarDuration.Short
+                                )
+                            }
+                            successCount > 0 -> {
+                                snackbarHostState.showSnackbar(
+                                    message = "${successCount}件削除しました（${failureCount}件失敗）",
+                                    duration = SnackbarDuration.Short
+                                )
+                            }
+                            else -> {
+                                snackbarHostState.showSnackbar(
+                                    message = "削除に失敗しました",
+                                    duration = SnackbarDuration.Short
+                                )
+                            }
+                        }
+                    }
                 }
             )
             

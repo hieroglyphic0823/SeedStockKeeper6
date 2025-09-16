@@ -2,9 +2,11 @@ package com.example.seedstockkeeper6.preview
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -163,30 +165,23 @@ fun SeedListScreenPreview() {
                                 )
                             }
                             
-                            Spacer(modifier = Modifier.height(4.dp))
+                            Spacer(modifier = Modifier.height(2.dp)) // 4dp → 2dpに縮小
                             
-                            // 有効期限とチェックボックスを横並び
-                            Row(
+                            // 有効期限のみ表示（Checkbox一時削除でテスト）
+                            Text(
+                                "有効期限: ${seed.expirationYear}年 ${seed.expirationMonth}月", 
+                                style = MaterialTheme.typography.bodyLarge.copy(
+                                    fontWeight = androidx.compose.ui.text.font.FontWeight.Light,
+                                    lineHeight = MaterialTheme.typography.bodyLarge.fontSize // フォントサイズと同じlineHeight
+                                ),
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .heightIn(min = 0.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    "有効期限: ${seed.expirationYear}年 ${seed.expirationMonth}月", 
-                                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = androidx.compose.ui.text.font.FontWeight.Light)
-                                )
-                                
-                                androidx.compose.material3.Checkbox(
-                                    checked = selectedIds.value.contains(seed.id),
-                                    onCheckedChange = { /* プレビューでは無効 */ }
-                                )
-                            }
+                                    .padding(vertical = 4.dp) // 上下の余白を4dpに制限（Checkbox削除テスト）
+                            )
                             
                             // コンパニオンプランツの表示（実装と同じ）
                             if (seed.companionPlants.isNotEmpty()) {
-                                Spacer(modifier = Modifier.height(4.dp))
+                                Spacer(modifier = Modifier.height(2.dp)) // 4dp → 2dpに縮小
                                 val companionPlantNames = seed.companionPlants
                                     .filter { it.plant.isNotBlank() }
                                     .map { it.plant }
@@ -194,6 +189,9 @@ fun SeedListScreenPreview() {
                                 
                                 if (companionPlantNames.isNotEmpty()) {
                                     Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .horizontalScroll(rememberScrollState()),
                                         verticalAlignment = Alignment.CenterVertically,
                                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                                     ) {
@@ -215,10 +213,12 @@ fun SeedListScreenPreview() {
                                             )
                                         }
                                         
-                                        // コンパニオンプランツ名
+                                        // コンパニオンプランツ名（1行表示、横スクロール対応）
                                         Text(
                                             "${companionPlantNames.joinToString(", ")}${if (seed.companionPlants.size > 3) "..." else ""}",
-                                            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = androidx.compose.ui.text.font.FontWeight.Light)
+                                            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = androidx.compose.ui.text.font.FontWeight.Light),
+                                            maxLines = 1,
+                                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                                         )
                                     }
                                 }

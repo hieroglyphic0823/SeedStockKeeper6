@@ -21,7 +21,8 @@ fun AppNavHost(
     modifier: Modifier = Modifier,
     selectedIds: MutableList<String>,
     settingsViewModel: com.example.seedstockkeeper6.viewmodel.SettingsViewModel? = null,
-    onSaveRequest: () -> Unit = {} // MainScaffoldからの保存リクエストコールバック
+    onSaveRequest: () -> Unit = {}, // MainScaffoldからの保存リクエストコールバック
+    onDeleteSelected: (List<String>) -> Unit = {} // 削除処理コールバック
 ) {
     NavHost(
         navController = navController,
@@ -34,7 +35,8 @@ fun AppNavHost(
             SeedListScreen(
                 navController = navController,
                 viewModel = listViewModel,
-                selectedIds = selectedIds
+                selectedIds = selectedIds,
+                onDeleteSelected = onDeleteSelected
             )
         }
         composable("input/{packet}") { backStackEntry ->

@@ -28,6 +28,7 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
+import com.example.seedstockkeeper6.ui.components.SwipeToDeleteItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.text.font.FontWeight
@@ -54,7 +55,8 @@ import java.nio.charset.StandardCharsets
 fun SeedListScreen(
     navController: NavController,
     selectedIds: MutableList<String>,
-    viewModel: SeedListViewModel
+    viewModel: SeedListViewModel,
+    onDeleteSelected: (List<String>) -> Unit
 ) {
     Log.d("BootTrace", ">>> SeedListScreen Composable表示")
     val db = Firebase.firestore
@@ -111,17 +113,24 @@ fun SeedListScreen(
             val checked = selectedIds.contains(id)
             val encodedSeed = URLEncoder.encode(Gson().toJson(seed), StandardCharsets.UTF_8.toString())
             
-            // リストアイテム
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 0.dp)
-                    .clickable {
-                        navController.navigate("input/$encodedSeed")
-                    },
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                verticalAlignment = androidx.compose.ui.Alignment.Top
+            // スワイプ可能なリストアイテム
+            SwipeToDeleteItem(
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 0.dp),
+                onDelete = {
+                    // 実際の削除処理を呼び出す
+                    onDeleteSelected(listOf(id))
+                }
             ) {
+                // リストアイテム
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            navController.navigate("input/$encodedSeed")
+                        },
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalAlignment = androidx.compose.ui.Alignment.Top
+                ) {
                 val rotation = familyRotationMinYearsLabel(seed.family) ?: ""
                 FamilyIcon(
                     family = seed.family,
@@ -160,37 +169,23 @@ fun SeedListScreen(
                         )
                     }
                     
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(2.dp)) // 4dp → 2dpに縮小
                     
-                    // 有効期限とチェックボックスを横並び
-                    Row(
+                    // 有効期限のみ表示（Checkbox一時削除でテスト）
+                    Text(
+                        "有効期限: ${seed.expirationYear}年 ${seed.expirationMonth}月", 
+                        style = MaterialTheme.typography.bodyLarge.copy(
+                            fontWeight = FontWeight.Light,
+                            lineHeight = MaterialTheme.typography.bodyLarge.fontSize // フォントサイズと同じlineHeight
+                        ),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .heightIn(min = 0.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
-                    ) {
-                        Text(
-                            "有効期限: ${seed.expirationYear}年 ${seed.expirationMonth}月", 
-                            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Light)
-                        )
-                        
-                        Checkbox(
-                            checked = checked,
-                            onCheckedChange = {
-                                if (it) selectedIds.add(id) else selectedIds.remove(id)
-                            },
-                            colors = androidx.compose.material3.CheckboxDefaults.colors(
-                                checkedColor = MaterialTheme.colorScheme.primary,
-                                uncheckedColor = MaterialTheme.colorScheme.outline,
-                                checkmarkColor = MaterialTheme.colorScheme.onPrimary
-                            )
-                        )
-                    }
+                            .padding(vertical = 4.dp) // 上下の余白を4dpに制限（Checkbox削除テスト）
+                    )
                     
                     // コンパニオンプランツの表示
                     if (seed.companionPlants.isNotEmpty()) {
-                        Spacer(modifier = Modifier.height(4.dp))
+                        Spacer(modifier = Modifier.height(2.dp)) // 4dp → 2dpに縮小
                         val companionPlantNames = seed.companionPlants
                             .filter { it.plant.isNotBlank() }
                             .map { it.plant }
@@ -198,6 +193,9 @@ fun SeedListScreen(
                         
                         if (companionPlantNames.isNotEmpty()) {
                             Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .horizontalScroll(rememberScrollState()),
                                 verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
@@ -219,15 +217,18 @@ fun SeedListScreen(
                                     )
                                 }
                                 
-                                // コンパニオンプランツ名
+                                // コンパニオンプランツ名（1行表示、横スクロール対応）
                                 Text(
                                     "${companionPlantNames.joinToString(", ")}${if (seed.companionPlants.size > 3) "..." else ""}",
-                                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Light)
+                                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Light),
+                                    maxLines = 1,
+                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                                 )
                             }
                         }
                     }
                 }
+            }
             }
             
             // 区切り線（最後のアイテム以外）
