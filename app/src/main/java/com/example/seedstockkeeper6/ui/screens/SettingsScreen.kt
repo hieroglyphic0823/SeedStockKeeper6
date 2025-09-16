@@ -15,6 +15,9 @@ import androidx.compose.material.icons.filled.LocalFlorist
 import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Save
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Link
+import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material3.*
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.*
@@ -28,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.seedstockkeeper6.FullScreenSaveAnimation
 import com.example.seedstockkeeper6.viewmodel.SettingsViewModel
+import com.example.seedstockkeeper6.ui.components.PrefectureSelectionBottomSheet
 import kotlinx.coroutines.delay
 
 // 地域ごとの色定義
@@ -120,7 +124,15 @@ fun SettingsScreen(
     viewModel: SettingsViewModel
 ) {
     var showRegionBottomSheet by remember { mutableStateOf(false) }
+    var showPrefectureBottomSheet by remember { mutableStateOf(false) }
     // showSaveAnimationはMainScaffoldで管理されるため削除
+    
+    // 通知設定の状態（ViewModelから取得）
+    val notificationFrequency = viewModel.notificationFrequency
+    val selectedWeekday = viewModel.selectedWeekday
+    val selectedPrefecture = viewModel.selectedPrefecture
+    val seedInfoUrlProvider = viewModel.seedInfoUrlProvider
+    val customSeedInfoUrl = viewModel.customSeedInfoUrl
     
     val snackbarHostState = remember { SnackbarHostState() }
     
@@ -336,6 +348,399 @@ fun SettingsScreen(
                             style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                         )
+                        
+                        // 県設定セクション
+                        if (viewModel.isEditMode || !viewModel.hasExistingData) {
+                            // EditMode: ボタンで県選択
+                            Button(
+                                onClick = { showPrefectureBottomSheet = true },
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                                ),
+                                shape = MaterialTheme.shapes.large,
+                                elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp)
+                            ) {
+                                Text(
+                                    text = selectedPrefecture.ifEmpty { "県を選択" },
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        } else {
+                            // DisplayMode: 表示のみ
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    text = "県",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                                )
+                                Text(
+                                    text = selectedPrefecture.ifEmpty { "未設定" },
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = if (selectedPrefecture.isEmpty()) 
+                                        MaterialTheme.colorScheme.onSurfaceVariant 
+                                    else 
+                                        MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+                        }
+                    }
+                    
+                    // 区切り線
+                    HorizontalDivider(
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
+                        thickness = 1.dp
+                    )
+                    
+                    // 通知タイミング設定セクション
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Icon(
+                                Icons.Filled.NotificationsActive,
+                                contentDescription = "通知設定",
+                                tint = MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Text(
+                                text = "通知タイミング",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                        
+                        // 通知設定の表示/編集
+                        if (viewModel.isEditMode || !viewModel.hasExistingData) {
+                            // EditMode: ラジオボタンで編集可能
+                            Column(
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                // 月一回
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.clickable { viewModel.updateNotificationSettings("月一回") }
+                                ) {
+                                    RadioButton(
+                                        selected = notificationFrequency == "月一回",
+                                        onClick = { viewModel.updateNotificationSettings("月一回") },
+                                        colors = RadioButtonDefaults.colors(
+                                            selectedColor = MaterialTheme.colorScheme.primary
+                                        )
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = "月一回",
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                }
+                                
+                                // 週１回
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.clickable { viewModel.updateNotificationSettings("週１回") }
+                                ) {
+                                    RadioButton(
+                                        selected = notificationFrequency == "週１回",
+                                        onClick = { viewModel.updateNotificationSettings("週１回") },
+                                        colors = RadioButtonDefaults.colors(
+                                            selectedColor = MaterialTheme.colorScheme.primary
+                                        )
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = "週１回",
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                }
+                                
+                                // なし
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.clickable { viewModel.updateNotificationSettings("なし") }
+                                ) {
+                                    RadioButton(
+                                        selected = notificationFrequency == "なし",
+                                        onClick = { viewModel.updateNotificationSettings("なし") },
+                                        colors = RadioButtonDefaults.colors(
+                                            selectedColor = MaterialTheme.colorScheme.primary
+                                        )
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = "なし",
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                }
+                                
+                                // 週１回の場合の曜日選択
+                                if (notificationFrequency == "週１回") {
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        text = "曜日を選択:",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                                    )
+                                    
+                                    val weekdays = listOf("月曜日", "火曜日", "水曜日", "木曜日", "金曜日", "土曜日", "日曜日")
+                                    
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        weekdays.forEach { weekday ->
+                                            FilterChip(
+                                                selected = selectedWeekday == weekday,
+                                                onClick = { viewModel.updateNotificationSettings("週１回", weekday) },
+                                                label = { Text(weekday) },
+                                                modifier = Modifier.weight(1f)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        } else {
+                            // DisplayMode: 表示のみ
+                            Column(
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                // 通知頻度の表示
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text(
+                                        text = "通知頻度",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                                    )
+                                    Text(
+                                        text = notificationFrequency,
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
+                                
+                                // 週１回の場合の曜日表示
+                                if (notificationFrequency == "週１回") {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Text(
+                                            text = "通知曜日",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                                        )
+                                        Text(
+                                            text = selectedWeekday,
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                        
+                        Text(
+                            text = "種まきのタイミングをお知らせします",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                        )
+                    }
+                    
+                    // 区切り線
+                    HorizontalDivider(
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
+                        thickness = 1.dp
+                    )
+                    
+                    // 種情報URL設定セクション
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Icon(
+                                Icons.Filled.Link,
+                                contentDescription = "種情報URL設定",
+                                tint = MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Text(
+                                text = "種情報URL",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                        
+                        // 種情報URL設定の表示/編集
+                        if (viewModel.isEditMode || !viewModel.hasExistingData) {
+                            // EditMode: ラジオボタンで編集可能
+                            Column(
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                // サカタのたね
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.clickable { viewModel.updateSeedInfoUrlProvider("サカタのたね") }
+                                ) {
+                                    RadioButton(
+                                        selected = seedInfoUrlProvider == "サカタのたね",
+                                        onClick = { viewModel.updateSeedInfoUrlProvider("サカタのたね") },
+                                        colors = RadioButtonDefaults.colors(
+                                            selectedColor = MaterialTheme.colorScheme.primary
+                                        )
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = "サカタのたね",
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                }
+                                
+                                // たねのタキイ
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.clickable { viewModel.updateSeedInfoUrlProvider("たねのタキイ") }
+                                ) {
+                                    RadioButton(
+                                        selected = seedInfoUrlProvider == "たねのタキイ",
+                                        onClick = { viewModel.updateSeedInfoUrlProvider("たねのタキイ") },
+                                        colors = RadioButtonDefaults.colors(
+                                            selectedColor = MaterialTheme.colorScheme.primary
+                                        )
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = "たねのタキイ",
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                }
+                                
+                                // その他
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.clickable { viewModel.updateSeedInfoUrlProvider("その他") }
+                                ) {
+                                    RadioButton(
+                                        selected = seedInfoUrlProvider == "その他",
+                                        onClick = { viewModel.updateSeedInfoUrlProvider("その他") },
+                                        colors = RadioButtonDefaults.colors(
+                                            selectedColor = MaterialTheme.colorScheme.primary
+                                        )
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = "その他",
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                }
+                                
+                                // その他選択時のURL入力欄
+                                if (seedInfoUrlProvider == "その他") {
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    OutlinedTextField(
+                                        value = customSeedInfoUrl,
+                                        onValueChange = { viewModel.updateCustomSeedInfoUrl(it) },
+                                        label = { Text("URLを入力") },
+                                        placeholder = { Text("https://example.com") },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        singleLine = true,
+                                        colors = OutlinedTextFieldDefaults.colors(
+                                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                            focusedLabelColor = MaterialTheme.colorScheme.primary,
+                                            focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+                                            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLowest
+                                        )
+                                    )
+                                }
+                            }
+                        } else {
+                            // DisplayMode: 表示のみ
+                            Column(
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                // 種情報URLプロバイダーの表示
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text(
+                                        text = "種情報URL",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                                    )
+                                    Text(
+                                        text = seedInfoUrlProvider,
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
+                                
+                                // その他選択時のURL表示
+                                if (seedInfoUrlProvider == "その他" && customSeedInfoUrl.isNotEmpty()) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Text(
+                                            text = "カスタムURL",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                                        )
+                                        Text(
+                                            text = customSeedInfoUrl,
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                        
+                        Text(
+                            text = "種情報の参照先URLを設定します",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                        )
+                        
+                        // 通知テストボタン
+                        Button(
+                            onClick = { 
+                                navController.navigate("notification_preview")
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                                contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+                            )
+                        ) {
+                            Icon(
+                                Icons.Filled.Notifications,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("通知テスト・プレビュー")
+                        }
                     }
                 }
             }
@@ -351,6 +756,18 @@ fun SettingsScreen(
                     showRegionBottomSheet = false
                 },
                 onDismiss = { showRegionBottomSheet = false }
+            )
+        }
+        
+        // 県選択ボトムシート
+        if (showPrefectureBottomSheet) {
+            PrefectureSelectionBottomSheet(
+                selectedPrefecture = selectedPrefecture,
+                onPrefectureSelected = { prefecture -> 
+                    viewModel.updateSelectedPrefecture(prefecture)
+                    showPrefectureBottomSheet = false
+                },
+                onDismiss = { showPrefectureBottomSheet = false }
             )
         }
         

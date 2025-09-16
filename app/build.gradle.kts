@@ -77,6 +77,9 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.navigation.compose)
+    
+    // WorkManager
+    implementation("androidx.work:work-runtime-ktx:2.9.0")
 
     // Firebase（BoM で統一）
     implementation(platform(libs.firebase.bom))

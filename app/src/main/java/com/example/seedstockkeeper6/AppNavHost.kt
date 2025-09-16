@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -11,6 +12,7 @@ import androidx.navigation.compose.composable
 import com.example.seedstockkeeper6.model.SeedPacket
 import com.example.seedstockkeeper6.ui.screens.SeedInputScreen
 import com.example.seedstockkeeper6.ui.screens.SeedListScreen
+import com.example.seedstockkeeper6.ui.screens.NotificationPreviewScreen
 import com.example.seedstockkeeper6.viewmodel.SeedInputViewModel
 import com.example.seedstockkeeper6.viewmodel.SeedListViewModel
 import com.google.gson.Gson
@@ -67,6 +69,12 @@ fun AppNavHost(
             com.example.seedstockkeeper6.ui.screens.SettingsScreen(
                 navController = navController,
                 viewModel = viewModel
+            )
+        }
+        composable("notification_preview") {
+            NotificationPreviewScreen(
+                navController = navController,
+                context = LocalContext.current
             )
         }
     }

@@ -525,9 +525,9 @@ fun MainScaffold(
     
     val snackbarHostState = remember { SnackbarHostState() }
     val listViewModel: SeedListViewModel = viewModel()
-    val settingsViewModel: SettingsViewModel = viewModel()
     val scope = rememberCoroutineScope()
     val ctx = LocalContext.current
+    val settingsViewModel: SettingsViewModel = viewModel { SettingsViewModel(ctx) }
     
     // アプリ起動後の初期化完了フラグ
     var isAppInitialized by remember { mutableStateOf(false) }
