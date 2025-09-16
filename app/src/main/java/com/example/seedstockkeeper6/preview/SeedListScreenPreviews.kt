@@ -121,7 +121,9 @@ fun SeedListScreenPreview() {
                     .fillMaxSize()
                     .background(MaterialTheme.colorScheme.surface)
                     .padding(paddingValues)
-                    .padding(horizontal = 16.dp, vertical = 0.dp)
+                    .padding(horizontal = 16.dp, vertical = 0.dp),
+                verticalArrangement = Arrangement.spacedBy(0.dp), // アイテム間の間隔を0dpに設定
+                contentPadding = PaddingValues(vertical = 8.dp) // 上下に8dpのパディングを追加
             ) {
                 items(demoSeeds) { seed ->
                     val checked = selectedIds.value.contains(seed.id)
@@ -132,7 +134,7 @@ fun SeedListScreenPreview() {
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp, vertical = 0.dp),
                         horizontalArrangement = Arrangement.spacedBy(16.dp),
-                        verticalAlignment = Alignment.Top
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         // FamilyIcon（色変更が反映される）
                         com.example.seedstockkeeper6.ui.components.FamilyIcon(
@@ -150,6 +152,9 @@ fun SeedListScreenPreview() {
                                 .weight(1f)
                                 .fillMaxWidth()
                         ) {
+                            // 品種名の上の余白（Material3ルール: 8dp）
+                            Spacer(modifier = Modifier.height(8.dp))
+                            
                             // 商品名と品種名を横並び
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
@@ -223,6 +228,9 @@ fun SeedListScreenPreview() {
                                     }
                                 }
                             }
+                            
+                            // コンパニオンプランツの下の余白（Material3ルール: 8dp）
+                            Spacer(modifier = Modifier.height(8.dp))
                         }
                     }
                     

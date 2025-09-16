@@ -55,7 +55,7 @@ fun FamilyIcon(
     Box(modifier = Modifier.size(size)) {
         // 本体（四角いタイル）
         Surface(
-            color = if (showCircleBorder) MaterialTheme.colorScheme.surfaceContainerLow else MaterialTheme.colorScheme.surface, // 円い枠の場合はsurfaceContainerLow
+            color = if (showCircleBorder) MaterialTheme.colorScheme.surfaceContainerLowest else MaterialTheme.colorScheme.surface, // 円い枠の場合はsurfaceContainerLowest
             contentColor = if (showCircleBorder) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface,
             shape = if (showCircleBorder) CircleShape else RoundedCornerShape(4.dp), // 円い枠の場合は円形
             tonalElevation = if (showCircleBorder) 2.dp else 0.dp, // 円い枠の場合はエレベーションを追加

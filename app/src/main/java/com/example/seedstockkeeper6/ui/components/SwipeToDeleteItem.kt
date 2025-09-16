@@ -51,12 +51,16 @@ fun SwipeToDeleteItem(
             .fillMaxWidth()
             .clip(RoundedCornerShape(8.dp))
     ) {
-        // 削除ボタン（背景）- スワイプ時のみ表示
+        // 削除ボタン（背景）- スワイプ幅に応じて動的に表示
         if (animatedOffsetX < 0) {
+            // スワイプ幅に応じた削除ボタンの幅を計算
+            val currentSwipeWidth = (-animatedOffsetX).coerceAtMost(maxSwipeOffset)
+            val currentButtonWidthDp = with(density) { currentSwipeWidth.toDp() }
+            
             Box(
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
-                    .width(deleteButtonWidthDp)
+                    .width(currentButtonWidthDp)
                     .fillMaxHeight()
                     .background(
                         color = MaterialTheme.colorScheme.error,
@@ -72,6 +76,8 @@ fun SwipeToDeleteItem(
                             offsetX = -maxSwipeOffset
                             kotlinx.coroutines.delay(150)
                             onDelete()
+                            // 削除後にリストを再表示するため、オフセットをリセット
+                            offsetX = 0f
                         }
                     },
                     modifier = Modifier.size(24.dp)

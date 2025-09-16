@@ -7,6 +7,7 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -25,9 +26,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import com.example.seedstockkeeper6.ui.components.SwipeToDeleteItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -37,6 +41,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -63,10 +68,46 @@ fun SeedListScreen(
     var seeds by remember { mutableStateOf(listOf<Pair<String, SeedPacket>>()) }
     val listState = rememberLazyListState()
     
+    // 検索状態
+    var searchQuery by remember { mutableStateOf("") }
+    var showThisMonthOnly by remember { mutableStateOf(false) }
+    
     // 現在のユーザーのUIDを取得
     val auth = Firebase.auth
     val currentUser = auth.currentUser
     val currentUid = currentUser?.uid
+    
+    // フィルタリングされた種リスト
+    val filteredSeeds = remember(seeds, searchQuery, showThisMonthOnly) {
+        seeds.filter { (_, seed) ->
+            val matchesSearch = searchQuery.isEmpty() || 
+                seed.productName.contains(searchQuery, ignoreCase = true) ||
+                seed.variety.contains(searchQuery, ignoreCase = true) ||
+                seed.family.contains(searchQuery, ignoreCase = true)
+            
+            val matchesThisMonth = if (showThisMonthOnly) {
+                val currentMonth = java.util.Calendar.getInstance().get(java.util.Calendar.MONTH) + 1
+                // 播種期間のCalendarEntryを探す
+                seed.calendar.any { entry ->
+                    if (entry.sowing_start_date.isNotEmpty() && entry.sowing_end_date.isNotEmpty()) {
+                        try {
+                            val startMonth = entry.sowing_start_date.split("-")[1].toInt()
+                            val endMonth = entry.sowing_end_date.split("-")[1].toInt()
+                            startMonth <= currentMonth && endMonth >= currentMonth
+                        } catch (e: Exception) {
+                            false
+                        }
+                    } else {
+                        false
+                    }
+                }
+            } else {
+                true
+            }
+            
+            matchesSearch && matchesThisMonth
+        }
+    }
 
     DisposableEffect(Unit) {
         if (currentUid == null) {
@@ -102,14 +143,70 @@ fun SeedListScreen(
         }
     }
 
-    LazyColumn(
-        state = listState,
+    Column(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.surface)
-            .padding(horizontal = 16.dp, vertical = 0.dp)
     ) {
-        items(seeds) { (id, seed) ->
+        // 検索バー
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainer
+            )
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp)
+            ) {
+                // フリーワード検索
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    label = { Text("種を検索") },
+                    placeholder = { Text("商品名、品種、科名で検索") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outline
+                    )
+                )
+                
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                // 今月まける種チェックボックス
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Checkbox(
+                        checked = showThisMonthOnly,
+                        onCheckedChange = { showThisMonthOnly = it },
+                        colors = CheckboxDefaults.colors(
+                            checkedColor = MaterialTheme.colorScheme.primary,
+                            uncheckedColor = MaterialTheme.colorScheme.outline
+                        )
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "今月まける種",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
+        }
+        
+        // 種リスト
+        LazyColumn(
+            state = listState,
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f),
+            verticalArrangement = Arrangement.spacedBy(0.dp), // アイテム間の間隔を0dpに設定
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp) // 上下に8dpのパディングを追加
+        ) {
+            items(filteredSeeds) { (id, seed) ->
             val checked = selectedIds.contains(id)
             val encodedSeed = URLEncoder.encode(Gson().toJson(seed), StandardCharsets.UTF_8.toString())
             
@@ -129,7 +226,7 @@ fun SeedListScreen(
                             navController.navigate("input/$encodedSeed")
                         },
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    verticalAlignment = androidx.compose.ui.Alignment.Top
+                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
                 ) {
                 val rotation = familyRotationMinYearsLabel(seed.family) ?: ""
                 FamilyIcon(
@@ -147,6 +244,9 @@ fun SeedListScreen(
                         .weight(1f)
                         .fillMaxWidth()
                 ) {
+                    // 品種名の上の余白（Material3ルール: 8dp）
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
                     // 商品名と品種名を横並び（横スクロール対応）
                     Row(
                         modifier = Modifier
@@ -227,17 +327,21 @@ fun SeedListScreen(
                             }
                         }
                     }
+                    
+                    // コンパニオンプランツの下の余白（Material3ルール: 8dp）
+                    Spacer(modifier = Modifier.height(8.dp))
                 }
             }
             }
             
             // 区切り線（最後のアイテム以外）
-            if (seeds.indexOf(id to seed) < seeds.size - 1) {
+            if (filteredSeeds.indexOf(id to seed) < filteredSeeds.size - 1) {
                 HorizontalDivider(
                     thickness = 1.dp,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
                 )
             }
+        }
         }
     }
 }
