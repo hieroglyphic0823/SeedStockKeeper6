@@ -24,6 +24,13 @@ class SettingsViewModel(private val context: Context? = null) : ViewModel() {
     var selectedPrefecture by mutableStateOf("")
         private set
     
+    // 農園主設定の状態
+    var farmOwner by mutableStateOf("水戸黄門") // "水戸黄門", "お銀", "八兵衛", "その他"
+        private set
+    
+    var customFarmOwner by mutableStateOf("") // その他選択時のフリー入力
+        private set
+    
     var isLoading by mutableStateOf(false)
         private set
     
@@ -72,6 +79,14 @@ class SettingsViewModel(private val context: Context? = null) : ViewModel() {
         selectedPrefecture = prefecture
     }
     
+    fun updateFarmOwner(owner: String) {
+        farmOwner = owner
+    }
+    
+    fun updateCustomFarmOwner(customOwner: String) {
+        customFarmOwner = customOwner
+    }
+    
     fun updateNotificationFrequency(frequency: String) {
         notificationFrequency = frequency
     }
@@ -110,6 +125,8 @@ class SettingsViewModel(private val context: Context? = null) : ViewModel() {
                     farmName = snapshot.getString("farmName") ?: ""
                     defaultRegion = snapshot.getString("defaultRegion") ?: ""
                     selectedPrefecture = snapshot.getString("selectedPrefecture") ?: ""
+                    farmOwner = snapshot.getString("farmOwner") ?: "水戸黄門"
+                    customFarmOwner = snapshot.getString("customFarmOwner") ?: ""
                     notificationFrequency = snapshot.getString("notificationFrequency") ?: "なし"
                     selectedWeekday = snapshot.getString("selectedWeekday") ?: "月曜日"
                     seedInfoUrlProvider = snapshot.getString("seedInfoUrlProvider") ?: "サカタのたね"
@@ -119,6 +136,8 @@ class SettingsViewModel(private val context: Context? = null) : ViewModel() {
                     // デフォルト値を設定
                     defaultRegion = "温暖地"
                     selectedPrefecture = ""
+                    farmOwner = "水戸黄門"
+                    customFarmOwner = ""
                     notificationFrequency = "なし"
                     selectedWeekday = "月曜日"
                     seedInfoUrlProvider = "サカタのたね"
@@ -164,7 +183,7 @@ class SettingsViewModel(private val context: Context? = null) : ViewModel() {
                 val uid = auth.currentUser?.uid
                 
                 // デバッグ用ログ
-                android.util.Log.d("SettingsViewModel", "保存開始: farmName='$farmName', defaultRegion='$defaultRegion', selectedPrefecture='$selectedPrefecture', notificationFrequency='$notificationFrequency', selectedWeekday='$selectedWeekday', seedInfoUrlProvider='$seedInfoUrlProvider', customSeedInfoUrl='$customSeedInfoUrl'")
+                android.util.Log.d("SettingsViewModel", "保存開始: farmName='$farmName', defaultRegion='$defaultRegion', selectedPrefecture='$selectedPrefecture', farmOwner='$farmOwner', customFarmOwner='$customFarmOwner', notificationFrequency='$notificationFrequency', selectedWeekday='$selectedWeekday', seedInfoUrlProvider='$seedInfoUrlProvider', customSeedInfoUrl='$customSeedInfoUrl'")
                 
                 if (uid == null) {
                     showSnackbar = "ログインが必要です"
@@ -180,6 +199,8 @@ class SettingsViewModel(private val context: Context? = null) : ViewModel() {
                     "farmName" to farmName,
                     "defaultRegion" to defaultRegion,
                     "selectedPrefecture" to selectedPrefecture,
+                    "farmOwner" to farmOwner,
+                    "customFarmOwner" to customFarmOwner,
                     "notificationFrequency" to notificationFrequency,
                     "selectedWeekday" to selectedWeekday,
                     "seedInfoUrlProvider" to seedInfoUrlProvider,

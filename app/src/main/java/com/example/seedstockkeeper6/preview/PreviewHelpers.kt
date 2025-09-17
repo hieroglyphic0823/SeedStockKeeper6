@@ -95,6 +95,35 @@ fun createPreviewSettingsViewModel(
     if (hasExistingData) {
         viewModel.updateFarmName("サンプル農園")
         viewModel.updateDefaultRegion("温暖地")
+        viewModel.updateFarmOwner("お銀")
+        viewModel.updateCustomFarmOwner("")
+        // hasExistingDataをtrueに設定
+        viewModel.hasExistingData = true
+    }
+    
+    // 編集モードの設定
+    if (isEditMode) {
+        viewModel.enterEditMode()
+    }
+    
+    return viewModel
+}
+
+// 農園主別のプレビュー用SettingsViewModel
+fun createPreviewSettingsViewModelWithFarmOwner(
+    farmOwner: String,
+    customFarmOwner: String = "",
+    isEditMode: Boolean = false,
+    hasExistingData: Boolean = true
+): SettingsViewModel {
+    val viewModel = SettingsViewModel()
+    
+    // プレビュー用のデモデータを設定
+    if (hasExistingData) {
+        viewModel.updateFarmName("サンプル農園")
+        viewModel.updateDefaultRegion("温暖地")
+        viewModel.updateFarmOwner(farmOwner)
+        viewModel.updateCustomFarmOwner(customFarmOwner)
         // hasExistingDataをtrueに設定
         viewModel.hasExistingData = true
     }

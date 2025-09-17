@@ -550,14 +550,15 @@ fun MainScaffold(
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
-            MainScaffoldTopAppBar(
-                currentRoute = currentRoute,
-                navController = navController,
-                user = user,
-                settingsViewModel = if (currentRoute == "settings") settingsViewModel else null,
-                seedInputViewModel = if (currentRoute?.startsWith("input") == true) inputViewModel else null,
-                selectedIds = selectedIds,
-                onDeleteSelected = {
+            if (currentRoute != "notification_preview") {
+                MainScaffoldTopAppBar(
+                    currentRoute = currentRoute,
+                    navController = navController,
+                    user = user,
+                    settingsViewModel = if (currentRoute == "settings") settingsViewModel else null,
+                    seedInputViewModel = if (currentRoute?.startsWith("input") == true) inputViewModel else null,
+                    selectedIds = selectedIds,
+                    onDeleteSelected = {
                     // 選択された種情報を削除
                     val idsToDelete = selectedIds.toList() // コピーを作成
                     val deleteCount = idsToDelete.size
@@ -611,6 +612,7 @@ fun MainScaffold(
                     }
                 }
             )
+            }
         },
         bottomBar = {
             // 設定画面と入力画面ではNavigationBarを表示しない

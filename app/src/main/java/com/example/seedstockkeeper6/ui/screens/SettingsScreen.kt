@@ -13,6 +13,7 @@ import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.LocalFlorist
 import androidx.compose.material.icons.filled.Public
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Notifications
@@ -259,6 +260,121 @@ fun SettingsScreen(
                                         MaterialTheme.colorScheme.onSurfaceVariant 
                                     else 
                                         MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+                        }
+                    }
+
+                    // 区切り線
+                    HorizontalDivider(
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
+                        thickness = 1.dp
+                    )
+
+                    // 農園主設定セクション
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Icon(
+                                Icons.Filled.Person,
+                                contentDescription = "農園主",
+                                tint = MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Text(
+                                text = "農園主",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                        
+                        if (viewModel.isEditMode || !viewModel.hasExistingData) {
+                            // 編集モード: ラジオボタンで選択
+                            Column(
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                val farmOwnerOptions = listOf("水戸黄門", "お銀", "八兵衛", "その他")
+                                
+                                farmOwnerOptions.forEach { option ->
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable { 
+                                                viewModel.updateFarmOwner(option)
+                                                if (option != "その他") {
+                                                    viewModel.updateCustomFarmOwner("")
+                                                }
+                                            },
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        RadioButton(
+                                            selected = viewModel.farmOwner == option,
+                                            onClick = { 
+                                                viewModel.updateFarmOwner(option)
+                                                if (option != "その他") {
+                                                    viewModel.updateCustomFarmOwner("")
+                                                }
+                                            },
+                                            colors = RadioButtonDefaults.colors(
+                                                selectedColor = MaterialTheme.colorScheme.primary,
+                                                unselectedColor = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(
+                                            text = option,
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
+                                    }
+                                }
+                                
+                                // その他選択時のフリー入力フィールド
+                                if (viewModel.farmOwner == "その他") {
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    OutlinedTextField(
+                                        value = viewModel.customFarmOwner,
+                                        onValueChange = { newValue ->
+                                            viewModel.updateCustomFarmOwner(newValue)
+                                        },
+                                        label = { Text("農園主名を入力") },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        singleLine = true,
+                                        colors = OutlinedTextFieldDefaults.colors(
+                                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                            focusedLabelColor = MaterialTheme.colorScheme.primary,
+                                            focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+                                            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLowest
+                                        )
+                                    )
+                                }
+                            }
+                            
+                            Text(
+                                text = "あなたの農園の主を選択してください",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                            )
+                        } else {
+                            // DisplayMode: リスト項目として表示
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    text = if (viewModel.farmOwner == "その他" && viewModel.customFarmOwner.isNotEmpty()) {
+                                        viewModel.customFarmOwner
+                                    } else {
+                                        viewModel.farmOwner
+                                    },
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.onSurface
                                 )
                             }
                         }
@@ -722,24 +838,26 @@ fun SettingsScreen(
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                         )
                         
-                        // 通知テストボタン
-                        Button(
-                            onClick = { 
-                                navController.navigate("notification_preview")
-                            },
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                                contentColor = MaterialTheme.colorScheme.onTertiaryContainer
-                            )
-                        ) {
-                            Icon(
-                                Icons.Filled.Notifications,
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("通知テスト・プレビュー")
+                        // 通知テストボタン（EditModeでのみ表示）
+                        if (viewModel.isEditMode || !viewModel.hasExistingData) {
+                            Button(
+                                onClick = { 
+                                    navController.navigate("notification_preview")
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                                    contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+                                )
+                            ) {
+                                Icon(
+                                    Icons.Filled.Notifications,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("通知テスト・プレビュー")
+                            }
                         }
                     }
                 }

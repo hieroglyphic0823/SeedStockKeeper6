@@ -55,65 +55,148 @@ fun NotificationPreviewScreen(
         val uid = auth.currentUser?.uid
         if (uid != null) {
             try {
-                // ユーザーの種データを取得
-                val seedsSnapshot = db.collection("users").document(uid)
-                    .collection("seeds").get().await()
-                
-                val seeds = seedsSnapshot.documents.mapNotNull { doc ->
-                    try {
-                        com.example.seedstockkeeper6.model.SeedPacket(
-                            id = doc.id,
-                            productName = doc.getString("productName") ?: "",
-                            variety = doc.getString("variety") ?: "",
-                            family = doc.getString("family") ?: "",
-                            expirationYear = doc.getLong("expirationYear")?.toInt() ?: 0,
-                            expirationMonth = doc.getLong("expirationMonth")?.toInt() ?: 0,
-                            germinationRate = doc.getString("germinationRate") ?: "",
-                            imageUrls = (doc.get("imageUrls") as? List<*>)?.mapNotNull { it as? String } ?: emptyList(),
-                            calendar = (doc.get("calendar") as? List<*>)?.mapNotNull { calendarData ->
-                                val calendarMap = calendarData as? Map<String, Any>
-                                calendarMap?.let {
-                                    com.example.seedstockkeeper6.model.CalendarEntry(
-                                        region = it["region"] as? String ?: "",
-                                        sowing_start_date = it["sowing_start_date"] as? String ?: "",
-                                        sowing_end_date = it["sowing_end_date"] as? String ?: "",
-                                        harvest_start_date = it["harvest_start_date"] as? String ?: "",
-                                        harvest_end_date = it["harvest_end_date"] as? String ?: ""
-                                    )
+                // ユーザーの種データを取得（今月関連のみをフィルタリング）
+                try {
+                    android.util.Log.d("NotificationPreviewScreen", "種データ取得開始 - UID: $uid")
+                    val currentMonth = java.util.Calendar.getInstance().get(java.util.Calendar.MONTH) + 1
+                    android.util.Log.d("NotificationPreviewScreen", "現在の月: $currentMonth")
+                    
+                    val seedsSnapshot = db.collection("seeds")
+                        .whereEqualTo("ownerUid", uid)
+                        .get().await()
+                    
+                    val seedsThisMonth = mutableListOf<com.example.seedstockkeeper6.model.SeedPacket>()
+                    val seedsEndingThisMonth = mutableListOf<com.example.seedstockkeeper6.model.SeedPacket>()
+                    
+                    val seeds = seedsSnapshot.documents.mapNotNull { doc ->
+                        try {
+                            val seed = doc.toObject(com.example.seedstockkeeper6.model.SeedPacket::class.java)
+                            if (seed != null) {
+                                val seedWithId = seed.copy(id = doc.id, documentId = doc.id)
+                                
+                                var isThisMonthSowing = false
+                                var isEndingThisMonth = false
+                                
+                                // 今月関連の種かどうかをチェック
+                                seedWithId.calendar.forEach { entry ->
+                                    if (entry.sowing_start_date.isNotEmpty() && entry.sowing_end_date.isNotEmpty()) {
+                                        try {
+                                            val startMonth = entry.sowing_start_date.split("-")[1].toInt()
+                                            val endMonth = entry.sowing_end_date.split("-")[1].toInt()
+                                            
+                                            // 今月が播種期間内かチェック
+                                            if (startMonth <= currentMonth && endMonth >= currentMonth) {
+                                                isThisMonthSowing = true
+                                            }
+                                            
+                                            // 今月が播種期間の終了月かチェック
+                                            if (currentMonth == endMonth) {
+                                                isEndingThisMonth = true
+                                            }
+                                        } catch (e: Exception) {
+                                            // 日付解析エラーはスキップ
+                                        }
+                                    }
                                 }
-                            } ?: emptyList()
-                        )
-                    } catch (e: Exception) {
-                        null
+                                
+                                if (isThisMonthSowing || isEndingThisMonth) {
+                                    if (isThisMonthSowing) {
+                                        seedsThisMonth.add(seedWithId)
+                                        android.util.Log.d("NotificationPreviewScreen", "今月蒔ける種発見: ${seedWithId.productName}")
+                                    }
+                                    if (isEndingThisMonth) {
+                                        seedsEndingThisMonth.add(seedWithId)
+                                        android.util.Log.d("NotificationPreviewScreen", "今月蒔き時終了の種発見: ${seedWithId.productName}")
+                                    }
+                                    seedWithId
+                                } else {
+                                    null
+                                }
+                            } else {
+                                android.util.Log.w("NotificationPreviewScreen", "Failed to convert document ${doc.id} to SeedPacket")
+                                null
+                            }
+                        } catch (e: Exception) {
+                            android.util.Log.e("NotificationPreviewScreen", "種データ変換エラー - docId: ${doc.id}", e)
+                            null
+                        }
                     }
+                    userSeeds = seeds
+                    android.util.Log.d("NotificationPreviewScreen", "種データ取得完了 - 全件数: ${seedsSnapshot.documents.size}, 今月関連: ${seeds.size}")
+                    android.util.Log.d("NotificationPreviewScreen", "今月蒔ける種: ${seedsThisMonth.size}件, 今月蒔き時終了の種: ${seedsEndingThisMonth.size}件")
+                } catch (e: Exception) {
+                    android.util.Log.e("NotificationPreviewScreen", "種データ取得に失敗", e)
+                    userSeeds = emptyList()
                 }
-                userSeeds = seeds
                 
                 // ユーザーの設定を取得
-                val settingsDoc = db.collection("users").document(uid)
-                    .collection("settings").document("general").get().await()
-                
-                val settings = if (settingsDoc.exists()) {
-                    mapOf(
-                        "defaultRegion" to (settingsDoc.getString("defaultRegion") ?: "温暖地"),
-                        "selectedPrefecture" to (settingsDoc.getString("selectedPrefecture") ?: ""),
-                        "seedInfoUrlProvider" to (settingsDoc.getString("seedInfoUrlProvider") ?: "サカタのたね"),
-                        "customSeedInfoUrl" to (settingsDoc.getString("customSeedInfoUrl") ?: "")
-                    )
-                } else {
-                    mapOf(
+                try {
+                    android.util.Log.d("NotificationPreviewScreen", "Firebase設定取得開始 - UID: $uid")
+                    val settingsDoc = db.collection("users").document(uid)
+                        .collection("settings").document("general").get().await()
+                    android.util.Log.d("NotificationPreviewScreen", "Firebase設定取得完了")
+                    
+                    android.util.Log.d("NotificationPreviewScreen", "Firebase設定ドキュメント存在: ${settingsDoc.exists()}")
+                    
+                    val settings = if (settingsDoc.exists()) {
+                        val farmOwnerFromFirebase = settingsDoc.getString("farmOwner")
+                        val customFarmOwnerFromFirebase = settingsDoc.getString("customFarmOwner")
+                        android.util.Log.d("NotificationPreviewScreen", "Firebaseから取得 - farmOwner: $farmOwnerFromFirebase, customFarmOwner: $customFarmOwnerFromFirebase")
+                        
+                        mapOf(
+                            "defaultRegion" to (settingsDoc.getString("defaultRegion") ?: "温暖地"),
+                            "selectedPrefecture" to (settingsDoc.getString("selectedPrefecture") ?: ""),
+                            "farmOwner" to (farmOwnerFromFirebase ?: "水戸黄門"),
+                            "customFarmOwner" to (customFarmOwnerFromFirebase ?: ""),
+                            "seedInfoUrlProvider" to (settingsDoc.getString("seedInfoUrlProvider") ?: "サカタのたね"),
+                            "customSeedInfoUrl" to (settingsDoc.getString("customSeedInfoUrl") ?: "")
+                        )
+                    } else {
+                        android.util.Log.d("NotificationPreviewScreen", "Firebase設定ドキュメントが存在しません")
+                        mapOf(
+                            "defaultRegion" to "温暖地",
+                            "selectedPrefecture" to "",
+                            "farmOwner" to "水戸黄門",
+                            "customFarmOwner" to "",
+                            "seedInfoUrlProvider" to "サカタのたね",
+                            "customSeedInfoUrl" to ""
+                        )
+                    }
+                    userSettings = settings
+                    android.util.Log.d("NotificationPreviewScreen", "取得した設定: $settings")
+                    android.util.Log.d("NotificationPreviewScreen", "農園主設定 - farmOwner: ${settings["farmOwner"]}, customFarmOwner: ${settings["customFarmOwner"]}")
+                    android.util.Log.d("NotificationPreviewScreen", "userSettings更新後: $userSettings")
+                } catch (e: Exception) {
+                    android.util.Log.e("NotificationPreviewScreen", "Firebase設定取得に失敗", e)
+                    // エラー時はデフォルト値を設定
+                    userSettings = mapOf(
                         "defaultRegion" to "温暖地",
                         "selectedPrefecture" to "",
+                        "farmOwner" to "水戸黄門",
+                        "customFarmOwner" to "",
                         "seedInfoUrlProvider" to "サカタのたね",
                         "customSeedInfoUrl" to ""
                     )
                 }
-                userSettings = settings
                 
             } catch (e: Exception) {
-                // エラーハンドリング
+                android.util.Log.e("NotificationPreviewScreen", "ユーザーデータの取得に失敗", e)
+                // エラー時はデフォルト値を設定
+                userSettings = mapOf(
+                    "defaultRegion" to "温暖地",
+                    "selectedPrefecture" to "",
+                    "farmOwner" to "水戸黄門",
+                    "customFarmOwner" to "",
+                    "seedInfoUrlProvider" to "サカタのたね",
+                    "customSeedInfoUrl" to ""
+                )
             }
         }
+    }
+    
+    // 画面表示時にユーザーデータを読み込む
+    LaunchedEffect(Unit) {
+        loadUserData()
     }
     
     // 種情報URLを取得する関数
@@ -176,14 +259,14 @@ fun NotificationPreviewScreen(
                         )
                         Text(
                             text = "通知テスト",
-                            style = MaterialTheme.typography.titleMedium,
+                            style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.SemiBold
                         )
                     }
                     
                     Text(
                         text = "実際の通知を送信してテストできます",
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                     )
                     
@@ -198,12 +281,18 @@ fun NotificationPreviewScreen(
                                         // 実際のユーザーデータを取得
                                         loadUserData()
                                         
+                                        android.util.Log.d("NotificationPreviewScreen", "通知生成時のuserSettings: $userSettings")
+                                        val farmOwnerValue = userSettings["farmOwner"] ?: "水戸黄門"
+                                        android.util.Log.d("NotificationPreviewScreen", "使用するfarmOwner: $farmOwnerValue")
+                                        
                                         val content = geminiService.generateMonthlyNotificationContent(
                                             region = userSettings["defaultRegion"] ?: "温暖地",
                                             prefecture = userSettings["selectedPrefecture"] ?: "",
                                             seedInfoUrl = getSeedInfoUrl(),
                                             currentMonth = java.util.Calendar.getInstance().get(java.util.Calendar.MONTH) + 1,
-                                            userSeeds = userSeeds
+                                            userSeeds = userSeeds,
+                                            farmOwner = farmOwnerValue,
+                                            customFarmOwner = userSettings["customFarmOwner"] ?: ""
                                         )
                                         notificationManager.sendMonthlyRecommendationNotificationWithContent(content)
                                     } catch (e: Exception) {
@@ -231,7 +320,9 @@ fun NotificationPreviewScreen(
                                             region = userSettings["defaultRegion"] ?: "温暖地",
                                             prefecture = userSettings["selectedPrefecture"] ?: "",
                                             seedInfoUrl = getSeedInfoUrl(),
-                                            userSeeds = userSeeds
+                                            userSeeds = userSeeds,
+                                            farmOwner = userSettings["farmOwner"] ?: "水戸黄門",
+                                            customFarmOwner = userSettings["customFarmOwner"] ?: ""
                                         )
                                         notificationManager.sendWeeklyReminderNotificationWithContent(content)
                                     } catch (e: Exception) {
@@ -291,14 +382,14 @@ fun NotificationPreviewScreen(
                         )
                         Text(
                             text = "通知プレビュー",
-                            style = MaterialTheme.typography.titleMedium,
+                            style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.SemiBold
                         )
                     }
                     
                     Text(
                         text = "通知の内容をプレビューできます",
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                     )
                     
@@ -316,12 +407,18 @@ fun NotificationPreviewScreen(
                                             // 実際のユーザーデータを取得
                                             loadUserData()
                                             
+                                            android.util.Log.d("NotificationPreviewScreen", "プレビュー生成時のuserSettings: $userSettings")
+                                            val farmOwnerValue = userSettings["farmOwner"] ?: "水戸黄門"
+                                            android.util.Log.d("NotificationPreviewScreen", "プレビューで使用するfarmOwner: $farmOwnerValue")
+                                            
                                             monthlyPreviewContent = geminiService.generateMonthlyNotificationContent(
                                                 region = userSettings["defaultRegion"] ?: "温暖地",
                                                 prefecture = userSettings["selectedPrefecture"] ?: "",
                                                 seedInfoUrl = getSeedInfoUrl(),
                                                 currentMonth = java.util.Calendar.getInstance().get(java.util.Calendar.MONTH) + 1,
-                                                userSeeds = userSeeds
+                                                userSeeds = userSeeds,
+                                                farmOwner = farmOwnerValue,
+                                                customFarmOwner = userSettings["customFarmOwner"] ?: ""
                                             )
                                         } catch (e: Exception) {
                                             monthlyPreviewContent = buildMonthlyNotificationPreview()
@@ -358,7 +455,9 @@ fun NotificationPreviewScreen(
                                                 region = userSettings["defaultRegion"] ?: "温暖地",
                                                 prefecture = userSettings["selectedPrefecture"] ?: "",
                                                 seedInfoUrl = getSeedInfoUrl(),
-                                                userSeeds = userSeeds
+                                                userSeeds = userSeeds,
+                                                farmOwner = userSettings["farmOwner"] ?: "水戸黄門",
+                                                customFarmOwner = userSettings["customFarmOwner"] ?: ""
                                             )
                                         } catch (e: Exception) {
                                             weeklyPreviewContent = buildWeeklyNotificationPreview()
@@ -415,7 +514,7 @@ fun NotificationPreviewScreen(
                 ) {
                     Text(
                         text = "通知スケジュール情報",
-                        style = MaterialTheme.typography.titleMedium,
+                        style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.SemiBold
                     )
                     
@@ -427,11 +526,11 @@ fun NotificationPreviewScreen(
                     ) {
                         Text(
                             text = "月次通知",
-                            style = MaterialTheme.typography.bodyMedium
+                            style = MaterialTheme.typography.bodyLarge
                         )
                         Text(
                             text = if (scheduleStatus["monthly"] == true) "スケジュール済み" else "未設定",
-                            style = MaterialTheme.typography.bodyMedium,
+                            style = MaterialTheme.typography.bodyLarge,
                             color = if (scheduleStatus["monthly"] == true) 
                                 MaterialTheme.colorScheme.primary 
                             else 
@@ -445,11 +544,11 @@ fun NotificationPreviewScreen(
                     ) {
                         Text(
                             text = "週次通知",
-                            style = MaterialTheme.typography.bodyMedium
+                            style = MaterialTheme.typography.bodyLarge
                         )
                         Text(
                             text = if (scheduleStatus["weekly"] == true) "スケジュール済み" else "未設定",
-                            style = MaterialTheme.typography.bodyMedium,
+                            style = MaterialTheme.typography.bodyLarge,
                             color = if (scheduleStatus["weekly"] == true) 
                                 MaterialTheme.colorScheme.secondary 
                             else 
@@ -503,16 +602,16 @@ private fun NotificationPreviewCard(
                 
                 Text(
                     text = title,
-                    style = MaterialTheme.typography.titleSmall,
+                    style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )
             }
             
             Text(
                 text = content,
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
-                lineHeight = MaterialTheme.typography.bodySmall.lineHeight
+                lineHeight = MaterialTheme.typography.bodyLarge.lineHeight
             )
         }
     }
