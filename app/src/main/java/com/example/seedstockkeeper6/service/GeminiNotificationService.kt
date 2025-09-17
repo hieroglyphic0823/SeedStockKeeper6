@@ -324,7 +324,7 @@ class GeminiNotificationService {
         return """🌱 今月($monthName)まき時の種:
 
 📦 あなたの登録種:
-• 恋むすめ - 有効期限: 2026年10月
+• 恋むすめ (ニンジン) - 有効期限: 2026年10月, 播種期間: 8月〜9月
 
 🌿 おすすめの種:
 • レタス - 今がまき時です
@@ -355,7 +355,7 @@ class GeminiNotificationService {
         return """⏰ まき時終了の2週間前の種があります:
 
 📦 あなたの登録種:
-• 恋むすめ - 有効期限: 2026年10月
+• 恋むすめ (ニンジン) - 有効期限: 2026年10月, 播種期間: 8月〜9月
   土づくりすれば間に合います！
 
 🌿 その他の種:
@@ -397,7 +397,15 @@ class GeminiNotificationService {
                         // 今月が播種期間内かチェック（種リスト画面と同じロジック）
                         if (startMonth <= currentMonth && endMonth >= currentMonth) {
                             android.util.Log.d("GeminiNotiService", "今月まき時の種発見: ${seed.productName}")
-                            val displayName = if (seed.productName.isNotEmpty()) seed.productName else seed.variety
+                            val displayName = if (seed.productName.isNotEmpty()) {
+                                if (seed.variety.isNotEmpty()) {
+                                    "${seed.productName} (${seed.variety})"
+                                } else {
+                                    seed.productName
+                                }
+                            } else {
+                                seed.variety
+                            }
                             seedsThisMonth.add("$displayName - 有効期限: ${seed.expirationYear}年${seed.expirationMonth}月, 播種期間: ${startMonth}月〜${endMonth}月")
                             isRelevant = true
                         }
@@ -405,8 +413,16 @@ class GeminiNotificationService {
                         // 今月が播種期間の終了月かチェック（まき時終了間近）
                         if (currentMonth == endMonth) {
                             android.util.Log.d("GeminiNotiService", "まき時終了間近の種発見: ${seed.productName}")
-                            val displayName = if (seed.productName.isNotEmpty()) seed.productName else seed.variety
-                            seedsEndingThisMonth.add("$displayName - 有効期限: ${seed.expirationYear}年${seed.expirationMonth}月, 播種期間終了: ${endMonth}月")
+                            val displayName = if (seed.productName.isNotEmpty()) {
+                                if (seed.variety.isNotEmpty()) {
+                                    "${seed.productName} (${seed.variety})"
+                                } else {
+                                    seed.productName
+                                }
+                            } else {
+                                seed.variety
+                            }
+                            seedsEndingThisMonth.add("$displayName - 有効期限: ${seed.expirationYear}年${seed.expirationMonth}月, 播種期間: ${startMonth}月〜${endMonth}月")
                             isRelevant = true
                         }
                     } catch (e: Exception) {
@@ -475,14 +491,32 @@ class GeminiNotificationService {
                         if (sowingEndMonth == currentMonth && currentDay >= 15) {
                             // 今月の15日以降で、今月が播種期間の終了月の場合
                             android.util.Log.d("GeminiNotiService", "2週間前の種発見（今月終了）: ${seed.productName}")
-                            val displayName = if (seed.productName.isNotEmpty()) seed.productName else seed.variety
-                            seedsEndingSoon.add("$displayName - 有効期限: ${seed.expirationYear}年${seed.expirationMonth}月, 播種期間終了: ${sowingEndMonth}月")
+                            val displayName = if (seed.productName.isNotEmpty()) {
+                                if (seed.variety.isNotEmpty()) {
+                                    "${seed.productName} (${seed.variety})"
+                                } else {
+                                    seed.productName
+                                }
+                            } else {
+                                seed.variety
+                            }
+                            val sowingStartMonth = calendarEntry.sowing_start_date.split("-")[1].toInt()
+                            seedsEndingSoon.add("$displayName - 有効期限: ${seed.expirationYear}年${seed.expirationMonth}月, 播種期間: ${sowingStartMonth}月〜${sowingEndMonth}月")
                             isRelevant = true
                         } else if (sowingEndMonth == currentMonth + 1 && currentDay <= 15) {
                             // 来月が播種期間の終了月で、今月の15日以前の場合
                             android.util.Log.d("GeminiNotiService", "2週間前の種発見（来月終了）: ${seed.productName}")
-                            val displayName = if (seed.productName.isNotEmpty()) seed.productName else seed.variety
-                            seedsEndingSoon.add("$displayName - 有効期限: ${seed.expirationYear}年${seed.expirationMonth}月, 播種期間終了: ${sowingEndMonth}月")
+                            val displayName = if (seed.productName.isNotEmpty()) {
+                                if (seed.variety.isNotEmpty()) {
+                                    "${seed.productName} (${seed.variety})"
+                                } else {
+                                    seed.productName
+                                }
+                            } else {
+                                seed.variety
+                            }
+                            val sowingStartMonth = calendarEntry.sowing_start_date.split("-")[1].toInt()
+                            seedsEndingSoon.add("$displayName - 有効期限: ${seed.expirationYear}年${seed.expirationMonth}月, 播種期間: ${sowingStartMonth}月〜${sowingEndMonth}月")
                             isRelevant = true
                         }
                     } catch (e: Exception) {

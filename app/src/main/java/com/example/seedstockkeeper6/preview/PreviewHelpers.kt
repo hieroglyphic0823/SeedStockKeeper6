@@ -5,6 +5,7 @@ import com.example.seedstockkeeper6.viewmodel.SeedInputViewModel
 import com.example.seedstockkeeper6.viewmodel.SeedListViewModel
 import com.example.seedstockkeeper6.viewmodel.SettingsViewModel
 import com.google.firebase.auth.FirebaseUser
+import java.util.Calendar
 
 // プレビュー用のモックFirebaseUser（簡易版）
 fun createMockFirebaseUser(): FirebaseUser? = null
@@ -228,4 +229,35 @@ fun createPreviewCompanionPlantsViewModel(
     }
     
     return viewModel
+}
+
+// プレビュー用の週次通知内容生成
+fun generatePreviewWeeklyNotificationContent(farmOwner: String, customFarmOwner: String = ""): String {
+    val currentDate = Calendar.getInstance()
+    val currentMonth = currentDate.get(Calendar.MONTH) + 1
+    val currentDay = currentDate.get(Calendar.DAY_OF_MONTH)
+    
+    // 農園主に応じた口調
+    val tone = when (farmOwner) {
+        "水戸黄門" -> "殿、まき時終了の2週間前の種がございます。今から土づくりをなされば、きっと間に合いますぞ！"
+        "お銀" -> "お銀です。まき時終了の2週間前の種がありますよ。土づくりをすれば間に合いますから、頑張ってくださいね。"
+        "八兵衛" -> "八兵衛でございます。まき時終了の2週間前の種がございます。土づくりをすれば間に合いますぞ！"
+        "その他" -> if (customFarmOwner.isNotEmpty()) {
+            "$customFarmOwner　さん、まき時終了の2週間前の種があります。土づくりをすれば間に合いますよ。"
+        } else {
+            "まき時終了の2週間前の種があります。土づくりをすれば間に合います。"
+        }
+        else -> "まき時終了の2週間前の種があります。土づくりをすれば間に合います。"
+    }
+    
+    return """⏰ まき時終了の2週間前の種があります:
+
+📦 あなたの登録種:
+• 恋むすめ (ニンジン) - 有効期限: 2026年10月, 播種期間: 8月〜9月
+  土づくりすれば間に合います！
+
+🌿 その他の種:
+• レタス - 土づくりすれば間に合います！
+
+$tone"""
 }

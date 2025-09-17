@@ -105,6 +105,11 @@ fun MainScaffoldTopAppBar(
                         Icon(Icons.Filled.ArrowBack, contentDescription = "戻る")
                     }
                 }
+                "notification_preview" -> {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(Icons.Filled.ArrowBack, contentDescription = "戻る")
+                    }
+                }
                 else -> {
                     if (currentRoute?.startsWith("input") == true) {
                         IconButton(onClick = { navController.popBackStack() }) {
@@ -127,6 +132,9 @@ fun MainScaffoldTopAppBar(
         },
         title = { 
             when {
+                currentRoute == "notification_preview" -> {
+                    Text("←通知テスト・プレビュー")
+                }
                 currentRoute == "settings" -> {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -234,11 +242,22 @@ fun MainScaffoldTopAppBar(
                 }
                 else -> {
                     // 種一覧画面のタイトル表示
-                    Text(
-                        text = "種リスト",
-                        modifier = Modifier.fillMaxWidth(),
-                        textAlign = TextAlign.Center
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(id = com.example.seedstockkeeper6.R.drawable.list),
+                            contentDescription = "種リスト",
+                            tint = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Text(
+                            text = "種リスト",
+                            modifier = Modifier.fillMaxWidth(),
+                            textAlign = TextAlign.Start
+                        )
+                    }
                 }
             }
         },
@@ -520,6 +539,7 @@ fun MainScaffold(
     val selectedIds = remember { mutableStateListOf<String>() }
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
+    Log.d("MainScaffold", "MainScaffold recompose - currentRoute: $currentRoute, navBackStackEntry: $navBackStackEntry")
     val isListScreen = currentRoute == "list"
     val isInputScreen = currentRoute?.startsWith("input") == true
     
@@ -550,15 +570,15 @@ fun MainScaffold(
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
-            if (currentRoute != "notification_preview") {
-                MainScaffoldTopAppBar(
-                    currentRoute = currentRoute,
-                    navController = navController,
-                    user = user,
-                    settingsViewModel = if (currentRoute == "settings") settingsViewModel else null,
-                    seedInputViewModel = if (currentRoute?.startsWith("input") == true) inputViewModel else null,
-                    selectedIds = selectedIds,
-                    onDeleteSelected = {
+            Log.d("MainScaffold", "currentRoute: $currentRoute, notification_preview check: ${currentRoute != "notification_preview"}")
+            MainScaffoldTopAppBar(
+                currentRoute = currentRoute,
+                navController = navController,
+                user = user,
+                settingsViewModel = if (currentRoute == "settings") settingsViewModel else null,
+                seedInputViewModel = if (currentRoute?.startsWith("input") == true) inputViewModel else null,
+                selectedIds = selectedIds,
+                onDeleteSelected = {
                     // 選択された種情報を削除
                     val idsToDelete = selectedIds.toList() // コピーを作成
                     val deleteCount = idsToDelete.size
@@ -612,7 +632,6 @@ fun MainScaffold(
                     }
                 }
             )
-            }
         },
         bottomBar = {
             // 設定画面と入力画面ではNavigationBarを表示しない

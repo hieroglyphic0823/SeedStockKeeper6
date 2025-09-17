@@ -31,12 +31,11 @@ import com.example.seedstockkeeper6.ui.theme.SeedStockKeeper6Theme
 import com.example.seedstockkeeper6.ui.screens.*
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Preview(showBackground = true, name = "農園情報画面 - 水戸黄門(表示モード)", heightDp = 1800)
+@Preview(showBackground = true, name = "農園情報画面 - 水戸黄門(表示モード)", heightDp = 2000)
 @Composable
 fun SettingsScreenPreview_MitoKomono_DisplayMode() {
     SeedStockKeeper6Theme(darkTheme = false, dynamicColor = false) {
         val navController = rememberNavController()
-        val mockUser = com.example.seedstockkeeper6.preview.createMockFirebaseUser()
         val settingsViewModel = com.example.seedstockkeeper6.preview.createPreviewSettingsViewModelWithFarmOwner(
             farmOwner = "水戸黄門",
             isEditMode = false,
@@ -44,23 +43,60 @@ fun SettingsScreenPreview_MitoKomono_DisplayMode() {
         )
         
         // AppTopBarを含む完全な画面を表示
-        com.example.seedstockkeeper6.MainScaffold(
-            navController = navController,
-            user = mockUser,
-            settingsViewModel = settingsViewModel
-        ) {
-            com.example.seedstockkeeper6.ui.screens.SettingsScreen(navController, settingsViewModel)
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { 
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(id = com.example.seedstockkeeper6.R.drawable.garden_cart),
+                                contentDescription = "農園設定",
+                                tint = MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Text(
+                                text = "農園設定",
+                                modifier = Modifier.fillMaxWidth(),
+                                textAlign = TextAlign.Start
+                            )
+                        }
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = { /* プレビューでは何もしない */ }) {
+                            Icon(Icons.Filled.ArrowBack, contentDescription = "戻る")
+                        }
+                    },
+                    actions = {
+                        IconButton(onClick = { /* プレビューでは何もしない */ }) {
+                            Icon(Icons.Filled.Edit, contentDescription = "編集")
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        titleContentColor = MaterialTheme.colorScheme.onSurface
+                    )
+                )
+            }
+        ) { innerPadding ->
+            Box(modifier = Modifier.padding(innerPadding)) {
+                com.example.seedstockkeeper6.ui.screens.SettingsScreen(
+                    navController = navController, 
+                    viewModel = settingsViewModel
+                )
+            }
         }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Preview(showBackground = true, name = "農園情報画面 - 水戸黄門(編集モード)", heightDp = 1800)
+@Preview(showBackground = true, name = "農園情報画面 - 水戸黄門(編集モード)", heightDp = 2000)
 @Composable
 fun SettingsScreenPreview_MitoKomono_EditMode() {
     SeedStockKeeper6Theme(darkTheme = false, dynamicColor = false) {
         val navController = rememberNavController()
-        val mockUser = com.example.seedstockkeeper6.preview.createMockFirebaseUser()
         val settingsViewModel = com.example.seedstockkeeper6.preview.createPreviewSettingsViewModelWithFarmOwner(
             farmOwner = "水戸黄門",
             isEditMode = true,
@@ -68,18 +104,56 @@ fun SettingsScreenPreview_MitoKomono_EditMode() {
         )
         
         // AppTopBarを含む完全な画面を表示
-        com.example.seedstockkeeper6.MainScaffold(
-            navController = navController,
-            user = mockUser,
-            settingsViewModel = settingsViewModel
-        ) {
-            com.example.seedstockkeeper6.ui.screens.SettingsScreen(navController, settingsViewModel)
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { 
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(id = com.example.seedstockkeeper6.R.drawable.garden_cart),
+                                contentDescription = "農園設定",
+                                tint = MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Text(
+                                text = "農園設定",
+                                modifier = Modifier.fillMaxWidth(),
+                                textAlign = TextAlign.Start
+                            )
+                        }
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = { /* プレビューでは何もしない */ }) {
+                            Icon(Icons.Filled.ArrowBack, contentDescription = "戻る")
+                        }
+                    },
+                    actions = {
+                        IconButton(onClick = { /* プレビューでは何もしない */ }) {
+                            Icon(Icons.Filled.Save, contentDescription = "保存")
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        titleContentColor = MaterialTheme.colorScheme.onSurface
+                    )
+                )
+            }
+        ) { innerPadding ->
+            Box(modifier = Modifier.padding(innerPadding)) {
+                com.example.seedstockkeeper6.ui.screens.SettingsScreen(
+                    navController = navController, 
+                    viewModel = settingsViewModel
+                )
+            }
         }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Preview(showBackground = true, name = "通知テストプレビュー画面", heightDp = 1800)
+@Preview(showBackground = true, name = "通知テストプレビュー画面", heightDp = 2000)
 @Composable
 fun NotificationPreviewScreenPreview() {
     SeedStockKeeper6Theme(darkTheme = false, dynamicColor = false) {
@@ -116,9 +190,8 @@ fun SimpleNotificationPreviewScreen(navController: NavController) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(16.dp)
                 .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(0.dp)
         ) {
             // 通知テストセクション
             Card(
@@ -128,8 +201,8 @@ fun SimpleNotificationPreviewScreen(navController: NavController) {
                 )
             ) {
                 Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    modifier = Modifier.padding(24.dp),
+                    verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -191,8 +264,8 @@ fun SimpleNotificationPreviewScreen(navController: NavController) {
                 )
             ) {
                 Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    modifier = Modifier.padding(24.dp),
+                    verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -253,8 +326,8 @@ fun SimpleNotificationPreviewScreen(navController: NavController) {
                             )
                         ) {
                             Column(
-                                modifier = Modifier.padding(16.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                                modifier = Modifier.padding(24.dp),
+                                verticalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
                                 Text(
                                     text = "月次通知プレビュー",
@@ -262,7 +335,7 @@ fun SimpleNotificationPreviewScreen(navController: NavController) {
                                     fontWeight = FontWeight.SemiBold
                                 )
                                 Text(
-                                    text = "🌱 今月(10月)まき時の種:\n\n📦 あなたの登録種:\n• 恋むすめ (ニンジン) - 発芽率: 85%, 有効期限: 2026年10月\n\n🌿 おすすめの種:\n• レタス (サラダミックス) - 今がまき時です",
+                                    text = "🌱 今月(10月)まき時の種:\n\n📦 あなたの登録種:\n• 恋むすめ - 有効期限: 2026年10月\n\n🌿 おすすめの種:\n• レタス - 今がまき時です",
                                     style = MaterialTheme.typography.bodyLarge,
                                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
                                 )
@@ -278,8 +351,8 @@ fun SimpleNotificationPreviewScreen(navController: NavController) {
                             )
                         ) {
                             Column(
-                                modifier = Modifier.padding(16.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                                modifier = Modifier.padding(24.dp),
+                                verticalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
                                 Text(
                                     text = "週次通知プレビュー",
@@ -287,7 +360,7 @@ fun SimpleNotificationPreviewScreen(navController: NavController) {
                                     fontWeight = FontWeight.SemiBold
                                 )
                                 Text(
-                                    text = "⏰ まき時終了の2週間前の種があります:\n\n📦 あなたの登録種:\n• 恋むすめ (ニンジン) - 発芽率: 85%, 有効期限: 2026年10月\n  土づくりすれば間に合います！",
+                                    text = com.example.seedstockkeeper6.preview.generatePreviewWeeklyNotificationContent("水戸黄門"),
                                     style = MaterialTheme.typography.bodyLarge,
                                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
                                 )
