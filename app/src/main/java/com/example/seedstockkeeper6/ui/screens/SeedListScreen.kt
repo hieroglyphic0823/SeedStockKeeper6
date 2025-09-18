@@ -135,7 +135,10 @@ fun SeedListScreen(
                             null
                         }
                     }
-                    seeds = newSeeds
+                    // データが実際に変更された場合のみ更新
+                    if (newSeeds != seeds) {
+                        seeds = newSeeds
+                    }
                 }
             }
         onDispose {
@@ -204,15 +207,22 @@ fun SeedListScreen(
                 .fillMaxWidth()
                 .weight(1f),
             verticalArrangement = Arrangement.spacedBy(0.dp), // アイテム間の間隔を0dpに設定
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp) // 上下に8dpのパディングを追加
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp), // 上下に8dpのパディングを追加
+            // パフォーマンス最適化
+            userScrollEnabled = true
         ) {
-            items(filteredSeeds) { (id, seed) ->
+            items(
+                items = filteredSeeds,
+                key = { (id, _) -> id } // キーを指定してリコンポジションを最適化
+            ) { (id, seed) ->
             val checked = selectedIds.contains(id)
             val encodedSeed = URLEncoder.encode(Gson().toJson(seed), StandardCharsets.UTF_8.toString())
             
             // スワイプ可能なリストアイテム
             SwipeToDeleteItem(
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 0.dp),
+                modifier = Modifier
+                    .padding(horizontal = 16.dp, vertical = 0.dp)
+                    .heightIn(min = 80.dp), // 最小高さを設定してスクロール性能を向上
                 onDelete = {
                     // 実際の削除処理を呼び出す
                     onDeleteSelected(listOf(id))

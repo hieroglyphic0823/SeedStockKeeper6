@@ -112,9 +112,12 @@ fun SwipeToDeleteItem(
                             }
                         }
                     ) { change, dragAmount ->
-                        // 左方向のスワイプのみ許可
-                        val newOffset = (offsetX + dragAmount.x).coerceIn(-maxSwipeOffset, 0f)
-                        offsetX = newOffset
+                        // 横方向のドラッグのみ処理（縦スクロールを阻害しない）
+                        if (kotlin.math.abs(dragAmount.x) > kotlin.math.abs(dragAmount.y)) {
+                            // 左方向のスワイプのみ許可
+                            val newOffset = (offsetX + dragAmount.x).coerceIn(-maxSwipeOffset, 0f)
+                            offsetX = newOffset
+                        }
                     }
                 }
         ) {

@@ -11,9 +11,19 @@ import androidx.core.app.NotificationManagerCompat
 import com.example.seedstockkeeper6.MainActivity
 import com.example.seedstockkeeper6.R
 import com.example.seedstockkeeper6.model.SeedPacket
+import com.example.seedstockkeeper6.model.NotificationType
+import com.example.seedstockkeeper6.service.NotificationHistoryService
+import com.example.seedstockkeeper6.service.GeminiNotificationService
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.util.Calendar
 
 class NotificationManager(private val context: Context) {
+    
+    private val historyService = NotificationHistoryService()
+    private val geminiService = GeminiNotificationService()
+    private val coroutineScope = CoroutineScope(Dispatchers.IO)
     
     companion object {
         const val CHANNEL_ID = "seed_notifications"
@@ -97,28 +107,87 @@ class NotificationManager(private val context: Context) {
     /**
      * GeminiAPI生成の月次通知を送信
      */
-    fun sendMonthlyRecommendationNotificationWithContent(content: String) {
-        val title = "今月の種まきおすすめ"
-        
-        val notification = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setContentTitle(title)
-            .setContentText(content)
-            .setStyle(NotificationCompat.BigTextStyle().bigText(content))
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-            .setAutoCancel(true)
-            .setContentIntent(createPendingIntent())
-            .build()
-        
-        with(NotificationManagerCompat.from(context)) {
-            notify(MONTHLY_NOTIFICATION_ID, notification)
+    fun sendMonthlyRecommendationNotificationWithContent(
+        content: String,
+        farmOwner: String = "",
+        region: String = "",
+        prefecture: String = "",
+        month: Int = Calendar.getInstance().get(Calendar.MONTH) + 1,
+        seedCount: Int = 0
+    ) {
+        // 和風月名でタイトルを生成（非同期）
+        coroutineScope.launch {
+            try {
+                val title = geminiService.generateMonthlyNotificationTitle(month, farmOwner)
+                
+                val notification = NotificationCompat.Builder(context, CHANNEL_ID)
+                    .setSmallIcon(R.drawable.ic_launcher_foreground)
+                    .setContentTitle(title)
+                    .setContentText(content)
+                    .setStyle(NotificationCompat.BigTextStyle().bigText(content))
+                    .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                    .setAutoCancel(true)
+                    .setContentIntent(createPendingIntent())
+                    .build()
+                
+                with(NotificationManagerCompat.from(context)) {
+                    notify(MONTHLY_NOTIFICATION_ID, notification)
+                }
+                
+                // 通知履歴を保存
+                historyService.saveNotificationHistory(
+                    type = NotificationType.MONTHLY,
+                    title = title,
+                    content = content,
+                    farmOwner = farmOwner,
+                    region = region,
+                    prefecture = prefecture,
+                    month = month,
+                    seedCount = seedCount
+                )
+            } catch (e: Exception) {
+                // フォールバック: デフォルトタイトルで通知
+                val fallbackTitle = "今月の種まきおすすめ"
+                
+                val notification = NotificationCompat.Builder(context, CHANNEL_ID)
+                    .setSmallIcon(R.drawable.ic_launcher_foreground)
+                    .setContentTitle(fallbackTitle)
+                    .setContentText(content)
+                    .setStyle(NotificationCompat.BigTextStyle().bigText(content))
+                    .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                    .setAutoCancel(true)
+                    .setContentIntent(createPendingIntent())
+                    .build()
+                
+                with(NotificationManagerCompat.from(context)) {
+                    notify(MONTHLY_NOTIFICATION_ID, notification)
+                }
+                
+                // 通知履歴を保存
+                historyService.saveNotificationHistory(
+                    type = NotificationType.MONTHLY,
+                    title = fallbackTitle,
+                    content = content,
+                    farmOwner = farmOwner,
+                    region = region,
+                    prefecture = prefecture,
+                    month = month,
+                    seedCount = seedCount
+                )
+            }
         }
     }
     
     /**
      * GeminiAPI生成の週次通知を送信
      */
-    fun sendWeeklyReminderNotificationWithContent(content: String) {
+    fun sendWeeklyReminderNotificationWithContent(
+        content: String,
+        farmOwner: String = "",
+        region: String = "",
+        prefecture: String = "",
+        seedCount: Int = 0
+    ) {
         val title = "種まきタイミングリマインダー"
         
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
@@ -133,6 +202,20 @@ class NotificationManager(private val context: Context) {
         
         with(NotificationManagerCompat.from(context)) {
             notify(WEEKLY_NOTIFICATION_ID, notification)
+        }
+        
+        // 通知履歴を保存
+        coroutineScope.launch {
+            historyService.saveNotificationHistory(
+                type = NotificationType.WEEKLY,
+                title = title,
+                content = content,
+                farmOwner = farmOwner,
+                region = region,
+                prefecture = prefecture,
+                month = 0, // 週次通知は月を指定しない
+                seedCount = seedCount
+            )
         }
     }
     

@@ -2,6 +2,8 @@ package com.example.seedstockkeeper6.service
 
 import android.util.Log
 import com.example.seedstockkeeper6.BuildConfig
+import com.example.seedstockkeeper6.utils.DateUtils
+import com.example.seedstockkeeper6.utils.JapaneseMonthUtils
 import com.google.ai.client.generativeai.GenerativeModel
 import com.google.ai.client.generativeai.type.generationConfig
 import kotlinx.coroutines.Dispatchers
@@ -128,38 +130,38 @@ class GeminiNotificationService {
                 $userSeedsInfo
 
                 【生成する通知内容の要件】
-                1. 今月（$monthName）に種まきできる野菜のリスト（ユーザー登録種も含む）
-                2. 地域（$region）と県（$prefecture）に適した季節のおすすめ品種
-                3. まき時が今月で終わる種への注意喚起（ユーザー登録種も含む）
-                   - 今月が播種期間の終了月の種は「まき時終了間近」として表示
-                4. ユーザーが登録している種で今月まき時のものがあれば優先的に表示
-                5. 実用的で分かりやすい内容
-                6. 絵文字を使って見やすくする
-                7. 各項目は簡潔に（最大3-5種類程度）
-                8. 上記で設定した助さんの口調・キャラクターで話す
-                9. ユーザー登録種とそうでない種を明確に区別する
+                1. ユーザーが登録している種で今月まき時のものがあれば優先的に表示
+                2. ユーザー登録種のうちまき時が今月で終わる種への注意喚起
+                   - 今月が播種期間の終了月の種を「まき時終了間近」として表示
+                3. まき時終了まで2週間以上ある種には「今から土づくりすれば間に合う」という励ましのメッセージを追加
+                   - 土づくり時間がある種に対して積極的に励ましの言葉をかける
+                4. ユーザーが登録している種以外の今月（$monthName）に種まきできる野菜のリスト（ユーザー登録種以外）
+                5. 地域（$region）と県（$prefecture）に適した季節のおすすめ品種
+                6. 実用的で分かりやすい内容
+                7. 絵文字を使って見やすくする
+                8. 各項目は簡潔に（最大3-5種類程度）
+                9. 上記で設定した助さんの口調・キャラクターで話す
+                10. ユーザー登録種とそうでない種を明確に区別する
 
                 【出力形式】
-                🌱 今月まき時の種:
+                🌱 登録種について:
                 
                 📦 今月まき時の登録種:
-                • [品種名] ([種類]) - 発芽率: [発芽率]%, 有効期限: [年月]
+                • [商品名] ([品種名]) - 播種期間: [月]、有効期限: [年月]
+
+                📦 まき時終了間近の登録種:
+                • [商品名] ([品種名]) - 播種期間: [月]、 有効期限: [年月] 
+                
+                💪 土づくり時間がある登録種:
+                • [商品名] ([品種名]) - 播種期間: [月]、 有効期限: [年月]
+                  今から土づくりすれば間に合います！
                 
                 🌿 おすすめの種:
-                • [品種名] ([種類]) - 今がまき時です
+                • [品種名]  - [月] 月までまけます
 
-                🌟 季節のおすすめ:
-                • [おすすめ内容]
-                • [おすすめ内容]
-
-                ⚠️ まき時終了間近:
-                
-                📦 まき時終了間近の登録種:
-                • [品種名] ([種類]) - 発芽率: [発芽率]%, 有効期限: [年月] - 今月でまき時終了！
-                
-                🌿 その他の種:
-                • [品種名] ([種類]) - 今月でまき時終了！
-
+                🌟 季節の畑情報:
+                • [季節の畑情報]
+               
                 上記の形式で、設定した助さんの口調・キャラクターで、ユーザーの登録種を優先的に含み、登録種とそうでない種を明確に区別した実用的で分かりやすい通知内容を生成してください。
             """.trimIndent()
             
@@ -169,6 +171,10 @@ class GeminiNotificationService {
                     response?.text ?: getDefaultMonthlyContent(monthName)
                 } catch (apiException: Exception) {
                     Log.w("GeminiNotiService", "GeminiAPI呼び出しに失敗（過負荷等）: ${apiException.message}")
+                    Log.w("GeminiNotiService", "API例外の詳細: ${apiException.javaClass.simpleName}")
+                    if (apiException.message?.contains("overloaded") == true || apiException.message?.contains("503") == true) {
+                        Log.w("GeminiNotiService", "API過負荷のため、デフォルト内容を使用します")
+                    }
                     getDefaultMonthlyContent(monthName)
                 }
             } else {
@@ -234,7 +240,7 @@ class GeminiNotificationService {
                 ⏰ まき時終了の2週間前の種があります:
 
                 📦 まき時終了間近の登録種:
-                • [品種名] ([種類]) - 発芽率: [発芽率]%, 有効期限: [年月]
+                • [商品名] ([品種名]) -  有効期限: [年月]
                   土づくりすれば間に合います！
 
                 🌿 その他の種:
@@ -250,6 +256,10 @@ class GeminiNotificationService {
                     response?.text ?: getDefaultWeeklyContent()
                 } catch (apiException: Exception) {
                     Log.w("GeminiNotiService", "GeminiAPI呼び出しに失敗（過負荷等）: ${apiException.message}")
+                    Log.w("GeminiNotiService", "API例外の詳細: ${apiException.javaClass.simpleName}")
+                    if (apiException.message?.contains("overloaded") == true || apiException.message?.contains("503") == true) {
+                        Log.w("GeminiNotiService", "API過負荷のため、デフォルト内容を使用します")
+                    }
                     getDefaultWeeklyContent()
                 }
             } else {
@@ -318,13 +328,108 @@ class GeminiNotificationService {
     }
     
     /**
+     * 月次通知のタイトルを生成
+     */
+    suspend fun generateMonthlyNotificationTitle(
+        currentMonth: Int,
+        farmOwner: String,
+        customFarmOwner: String = ""
+    ): String = withContext(Dispatchers.IO) {
+        try {
+            val japaneseMonth = JapaneseMonthUtils.getJapaneseMonthName(currentMonth)
+            val japaneseMonthShort = JapaneseMonthUtils.getJapaneseMonthNameShort(currentMonth)
+            val seasonalGreeting = JapaneseMonthUtils.getSeasonalGreeting(currentMonth)
+            val sowingKeyword = JapaneseMonthUtils.getSowingKeyword(currentMonth)
+            
+            val actualFarmOwner = if (farmOwner == "その他" && customFarmOwner.isNotEmpty()) customFarmOwner else farmOwner
+            
+            val prompt = """
+                あなたは水戸黄門の世界観で、農園主への月次通知タイトルを生成してください。
+                
+                【基本情報】
+                - 現在の月: ${currentMonth}月
+                - 和風月名: $japaneseMonth
+                - 和風月名（短縮）: $japaneseMonthShort
+                - 季節の候: $seasonalGreeting
+                - 種まきキーワード: $sowingKeyword
+                - 農園主: $actualFarmOwner
+                
+                【キャラクター別のタイトル案】
+                
+                📜 水戸黄門 宛て
+                「◯◯月、◯◯の候にて――お出ましの時期にございます」
+                例（10月）：「神無月、種まきの候にて――お出ましの時期にございます」
+                風格ある文体で、黄門様への報告っぽく。
+                
+                🌸 お銀 宛て
+                「◯◯月の風に乗せて――◯◯の候、菜園より」
+                例（3月）：「弥生の風に乗せて――春の種まきの候、菜園より」
+                少しやわらかくて風流な感じ。お銀の気品を意識。
+                
+                🍡 八兵衛 宛て
+                「おい八、◯◯月だぞ！◯◯は始めどきだ」
+                例（5月）：「おい八、皐月だぞ！きゅうりの種は始めどきだ」
+                ちょっと砕けたフレンドリー調で、八兵衛への呼びかけに。
+                
+                🔔 汎用タイトル案（誰向けでも使える系）
+                「長月の便り：秋の種をお忘れなく」
+                「文月の候、夏野菜の収穫を楽しみに」
+                「霜月の候、冬支度はいかがですか」
+                「卯月便り：春まきの季節がやってきました」
+                
+                【要件】
+                1. 和風月名（$japaneseMonth）を必ず含める
+                2. 農園主（$actualFarmOwner）に適したキャラクターの口調を使用
+                3. 季節感と種まきのタイミングを表現
+                4. 水戸黄門の世界観に合った格調高い文体
+                5. 30文字以内で簡潔に
+                6. 絵文字は使用しない
+                
+                上記の要件に従って、農園主に適した月次通知タイトルを1つ生成してください。
+            """.trimIndent()
+            
+            if (generativeModel != null) {
+                try {
+                    val response = generativeModel?.generateContent(prompt)
+                    response?.text?.trim() ?: getDefaultMonthlyTitle(currentMonth, actualFarmOwner)
+                } catch (apiException: Exception) {
+                    Log.w("GeminiNotiService", "月次通知タイトル生成に失敗: ${apiException.message}")
+                    getDefaultMonthlyTitle(currentMonth, actualFarmOwner)
+                }
+            } else {
+                Log.w("GeminiNotiService", "GeminiAPIが利用できません。デフォルトタイトルを返します。")
+                getDefaultMonthlyTitle(currentMonth, actualFarmOwner)
+            }
+            
+        } catch (e: Exception) {
+            Log.e("GeminiNotiService", "月次通知タイトル生成に失敗", e)
+            getDefaultMonthlyTitle(currentMonth, farmOwner)
+        }
+    }
+    
+    /**
+     * デフォルトの月次通知タイトル
+     */
+    private fun getDefaultMonthlyTitle(currentMonth: Int, farmOwner: String): String {
+        val japaneseMonth = JapaneseMonthUtils.getJapaneseMonthNameShort(currentMonth)
+        val seasonalGreeting = JapaneseMonthUtils.getSeasonalGreeting(currentMonth)
+        
+        return when (farmOwner) {
+            "水戸黄門" -> "$japaneseMonth、${seasonalGreeting}にて――お出ましの時期にございます"
+            "お銀" -> "${japaneseMonth}の風に乗せて――${seasonalGreeting}、菜園より"
+            "八兵衛" -> "おい八、${japaneseMonth}だぞ！種まきは始めどきだ"
+            else -> "${japaneseMonth}の便り：${seasonalGreeting}をお忘れなく"
+        }
+    }
+
+    /**
      * デフォルトの月次通知内容
      */
     private fun getDefaultMonthlyContent(monthName: String): String {
         return """🌱 今月($monthName)まき時の種:
 
 📦 あなたの登録種:
-• 恋むすめ (ニンジン) - 有効期限: 2026年10月, 播種期間: 8月〜9月
+• 恋むすめ (ニンジン) - 有効期限: 2026年10月, 播種期間: 8月上旬〜9月下旬
 
 🌿 おすすめの種:
 • レタス - 今がまき時です
@@ -343,6 +448,10 @@ class GeminiNotificationService {
 🌿 その他の種:
 • 特にありません
 
+💪 土づくり時間がある登録種:
+• 春菊 (中葉春菊) - 有効期限: 2026年10月, 播種期間: 8月下旬〜9月中旬
+  今から土づくりすれば間に合います！
+
 💡 ヒント: 種まき前に土の準備をしっかり行いましょう
 
 ※ Gemini APIが一時的に利用できないため、デフォルト内容を表示しています。"""
@@ -355,7 +464,7 @@ class GeminiNotificationService {
         return """⏰ まき時終了の2週間前の種があります:
 
 📦 あなたの登録種:
-• 恋むすめ (ニンジン) - 有効期限: 2026年10月, 播種期間: 8月〜9月
+• 恋むすめ (ニンジン) - 有効期限: 2026年10月, 播種期間: 8月上旬〜9月下旬
   土づくりすれば間に合います！
 
 🌿 その他の種:
@@ -382,6 +491,7 @@ class GeminiNotificationService {
         
         val seedsThisMonth = mutableListOf<String>()
         val seedsEndingThisMonth = mutableListOf<String>()
+        val seedsWithTimeToPrepare = mutableListOf<String>() // 土づくり時間がある種
         var relevantSeedsCount = 0
         
         seeds.forEach { seed ->
@@ -406,7 +516,12 @@ class GeminiNotificationService {
                             } else {
                                 seed.variety
                             }
-                            seedsThisMonth.add("$displayName - 有効期限: ${seed.expirationYear}年${seed.expirationMonth}月, 播種期間: ${startMonth}月〜${endMonth}月")
+                            val seasonRange = if (entry.sowing_start_date.isNotEmpty() && entry.sowing_end_date.isNotEmpty()) {
+                                DateUtils.getSeasonRangeFromDates(entry.sowing_start_date, entry.sowing_end_date)
+                            } else {
+                                DateUtils.getSeasonRangeFromMonths(startMonth, endMonth)
+                            }
+                            seedsThisMonth.add("$displayName - 有効期限: ${seed.expirationYear}年${seed.expirationMonth}月, 播種期間: $seasonRange")
                             isRelevant = true
                         }
                         
@@ -422,8 +537,40 @@ class GeminiNotificationService {
                             } else {
                                 seed.variety
                             }
-                            seedsEndingThisMonth.add("$displayName - 有効期限: ${seed.expirationYear}年${seed.expirationMonth}月, 播種期間: ${startMonth}月〜${endMonth}月")
+                            val seasonRange = if (entry.sowing_start_date.isNotEmpty() && entry.sowing_end_date.isNotEmpty()) {
+                                DateUtils.getSeasonRangeFromDates(entry.sowing_start_date, entry.sowing_end_date)
+                            } else {
+                                DateUtils.getSeasonRangeFromMonths(startMonth, endMonth)
+                            }
+                            seedsEndingThisMonth.add("$displayName - 有効期限: ${seed.expirationYear}年${seed.expirationMonth}月, 播種期間: $seasonRange")
                             isRelevant = true
+                        }
+                        
+                        // まき時終了まで2週間以上ある種をチェック（土づくり時間がある）
+                        if (currentMonth < endMonth) {
+                            val monthsUntilEnd = endMonth - currentMonth
+                            val currentDay = java.util.Calendar.getInstance().get(java.util.Calendar.DAY_OF_MONTH)
+                            
+                            // 2週間以上（約0.5ヶ月）の余裕がある場合
+                            if (monthsUntilEnd > 0 || (monthsUntilEnd == 0 && currentDay <= 15)) {
+                                android.util.Log.d("GeminiNotiService", "土づくり時間がある種発見: ${seed.productName}")
+                                val displayName = if (seed.productName.isNotEmpty()) {
+                                    if (seed.variety.isNotEmpty()) {
+                                        "${seed.productName} (${seed.variety})"
+                                    } else {
+                                        seed.productName
+                                    }
+                                } else {
+                                    seed.variety
+                                }
+                                val seasonRange = if (entry.sowing_start_date.isNotEmpty() && entry.sowing_end_date.isNotEmpty()) {
+                                    DateUtils.getSeasonRangeFromDates(entry.sowing_start_date, entry.sowing_end_date)
+                                } else {
+                                    DateUtils.getSeasonRangeFromMonths(startMonth, endMonth)
+                                }
+                                seedsWithTimeToPrepare.add("$displayName - 有効期限: ${seed.expirationYear}年${seed.expirationMonth}月, 播種期間: $seasonRange")
+                                isRelevant = true
+                            }
                         }
                     } catch (e: Exception) {
                         // 日付解析エラーの場合はスキップ
@@ -454,11 +601,18 @@ class GeminiNotificationService {
             }
         }
         
-        if (seedsThisMonth.isEmpty() && seedsEndingThisMonth.isEmpty()) {
+        if (seedsWithTimeToPrepare.isNotEmpty()) {
+            result.appendLine("まき時終了まで2週間以上ある登録種（土づくり時間あり）:")
+            seedsWithTimeToPrepare.forEach { seed ->
+                result.appendLine("- $seed")
+            }
+        }
+        
+        if (seedsThisMonth.isEmpty() && seedsEndingThisMonth.isEmpty() && seedsWithTimeToPrepare.isEmpty()) {
             result.appendLine("今月に関連する登録種はありません。")
         }
         
-        android.util.Log.d("GeminiNotiService", "formatUserSeedsForPrompt結果 - 今月関連種: ${relevantSeedsCount}件/${seeds.size}件, 今月まき時: ${seedsThisMonth.size}件, まき時終了間近: ${seedsEndingThisMonth.size}件")
+        android.util.Log.d("GeminiNotiService", "formatUserSeedsForPrompt結果 - 今月関連種: ${relevantSeedsCount}件/${seeds.size}件, 今月まき時: ${seedsThisMonth.size}件, まき時終了間近: ${seedsEndingThisMonth.size}件, 土づくり時間あり: ${seedsWithTimeToPrepare.size}件")
         
         return result.toString()
     }
@@ -501,7 +655,12 @@ class GeminiNotificationService {
                                 seed.variety
                             }
                             val sowingStartMonth = calendarEntry.sowing_start_date.split("-")[1].toInt()
-                            seedsEndingSoon.add("$displayName - 有効期限: ${seed.expirationYear}年${seed.expirationMonth}月, 播種期間: ${sowingStartMonth}月〜${sowingEndMonth}月")
+                            val seasonRange = if (calendarEntry.sowing_start_date.isNotEmpty() && calendarEntry.sowing_end_date.isNotEmpty()) {
+                                DateUtils.getSeasonRangeFromDates(calendarEntry.sowing_start_date, calendarEntry.sowing_end_date)
+                            } else {
+                                DateUtils.getSeasonRangeFromMonths(sowingStartMonth, sowingEndMonth)
+                            }
+                            seedsEndingSoon.add("$displayName - 有効期限: ${seed.expirationYear}年${seed.expirationMonth}月, 播種期間: $seasonRange")
                             isRelevant = true
                         } else if (sowingEndMonth == currentMonth + 1 && currentDay <= 15) {
                             // 来月が播種期間の終了月で、今月の15日以前の場合
@@ -516,7 +675,12 @@ class GeminiNotificationService {
                                 seed.variety
                             }
                             val sowingStartMonth = calendarEntry.sowing_start_date.split("-")[1].toInt()
-                            seedsEndingSoon.add("$displayName - 有効期限: ${seed.expirationYear}年${seed.expirationMonth}月, 播種期間: ${sowingStartMonth}月〜${sowingEndMonth}月")
+                            val seasonRange = if (calendarEntry.sowing_start_date.isNotEmpty() && calendarEntry.sowing_end_date.isNotEmpty()) {
+                                DateUtils.getSeasonRangeFromDates(calendarEntry.sowing_start_date, calendarEntry.sowing_end_date)
+                            } else {
+                                DateUtils.getSeasonRangeFromMonths(sowingStartMonth, sowingEndMonth)
+                            }
+                            seedsEndingSoon.add("$displayName - 有効期限: ${seed.expirationYear}年${seed.expirationMonth}月, 播種期間: $seasonRange")
                             isRelevant = true
                         }
                     } catch (e: Exception) {

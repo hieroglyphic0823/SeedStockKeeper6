@@ -169,6 +169,8 @@ fun NotificationPreviewScreenPreview() {
 fun SimpleNotificationPreviewScreen(navController: NavController) {
     var showMonthlyPreview by remember { mutableStateOf(false) }
     var showWeeklyPreview by remember { mutableStateOf(false) }
+    var isLoading by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf("") }
     
     Scaffold(
         topBar = {
@@ -191,8 +193,37 @@ fun SimpleNotificationPreviewScreen(navController: NavController) {
                 .fillMaxSize()
                 .padding(paddingValues)
                 .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(0.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            // エラーメッセージの表示（プレビュー用）
+            if (errorMessage.isNotEmpty()) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp)
+                    ) {
+                        Text(
+                            text = "⚠️ エラー",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onErrorContainer
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = errorMessage,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onErrorContainer
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "デモデータを使用してプレビューを表示します。\n実際のデータを使用するにはログインしてください。",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onErrorContainer
+                        )
+                    }
+                }
+            }
             // 通知テストセクション
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -335,7 +366,7 @@ fun SimpleNotificationPreviewScreen(navController: NavController) {
                                     fontWeight = FontWeight.SemiBold
                                 )
                                 Text(
-                                    text = "🌱 今月(10月)まき時の種:\n\n📦 あなたの登録種:\n• 恋むすめ - 有効期限: 2026年10月\n\n🌿 おすすめの種:\n• レタス - 今がまき時です",
+                                    text = "🌱 今月まき時の種:\n• 恋むすめ (ニンジン)\n• サラダミックス (レタス)\n\n🌟 季節のおすすめ:\n• 春野菜の種まきシーズンです\n• トマト、ナス、ピーマンの準備を始めましょう\n• レタス、キャベツの種まきが最適です\n\n⚠️ まき時終了間近:\n• 春菊 (中葉春菊)",
                                     style = MaterialTheme.typography.bodyLarge,
                                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
                                 )
@@ -360,7 +391,7 @@ fun SimpleNotificationPreviewScreen(navController: NavController) {
                                     fontWeight = FontWeight.SemiBold
                                 )
                                 Text(
-                                    text = com.example.seedstockkeeper6.preview.generatePreviewWeeklyNotificationContent("水戸黄門"),
+                                    text = "⏰ まき時終了の2週間前の種があります:\n\n• 恋むすめ (ニンジン)\n  土づくりすれば間に合います！\n\n• 大根 (青首大根)\n  土づくりすれば間に合います！",
                                     style = MaterialTheme.typography.bodyLarge,
                                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
                                 )

@@ -519,14 +519,14 @@ fun MainScaffoldNavigationBar(
         NavigationBarItem(
             icon = { 
                 Icon(
-                    imageVector = if (currentRoute == "notifications") Icons.Filled.Notifications else Icons.Outlined.Notifications, 
-                    contentDescription = "通知",
+                    imageVector = if (currentRoute == "notification_history") Icons.Filled.Notifications else Icons.Outlined.Notifications, 
+                    contentDescription = "通知履歴",
                     tint = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.size(if (currentRoute == "notifications") 28.dp else 24.dp)
+                    modifier = Modifier.size(if (currentRoute == "notification_history") 28.dp else 24.dp)
                 )
             },
-            selected = currentRoute == "notifications",
-            onClick = { navController.navigate("notifications") }
+            selected = currentRoute == "notification_history",
+            onClick = { navController.navigate("notification_history") }
         )
     }
 }

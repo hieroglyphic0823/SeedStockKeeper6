@@ -13,6 +13,7 @@ import com.example.seedstockkeeper6.model.SeedPacket
 import com.example.seedstockkeeper6.ui.screens.SeedInputScreen
 import com.example.seedstockkeeper6.ui.screens.SeedListScreen
 import com.example.seedstockkeeper6.ui.screens.NotificationPreviewScreen
+import com.example.seedstockkeeper6.ui.screens.NotificationHistoryScreen
 import com.example.seedstockkeeper6.viewmodel.SeedInputViewModel
 import com.example.seedstockkeeper6.viewmodel.SeedListViewModel
 import com.google.gson.Gson
@@ -75,6 +76,11 @@ fun AppNavHost(
             NotificationPreviewScreen(
                 navController = navController,
                 context = LocalContext.current
+            )
+        }
+        composable("notification_history") {
+            NotificationHistoryScreen(
+                navController = navController
             )
         }
     }
