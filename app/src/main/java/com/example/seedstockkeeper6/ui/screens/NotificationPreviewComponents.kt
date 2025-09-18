@@ -95,6 +95,8 @@ fun NotificationPreviewCard(
     showWeeklyPreview: Boolean,
     monthlyPreviewContent: String,
     weeklyPreviewContent: String,
+    monthlyPreviewTitle: String = "",
+    weeklyPreviewTitle: String = "",
     isOcrSuccessful: Boolean = false,
     onMonthlyPreviewToggle: () -> Unit,
     onWeeklyPreviewToggle: () -> Unit
@@ -161,9 +163,9 @@ fun NotificationPreviewCard(
             
             // プレビュー内容表示
             if (showMonthlyPreview) {
-                android.util.Log.d("NotificationPreviewComponents", "月次プレビュー表示 - content: $monthlyPreviewContent")
+                android.util.Log.d("NotificationPreviewComponents", "月次プレビュー表示 - title: $monthlyPreviewTitle, content: $monthlyPreviewContent")
                 NotificationPreviewContentCard(
-                    title = "月次通知プレビュー",
+                    title = if (monthlyPreviewTitle.isNotEmpty()) monthlyPreviewTitle else "月次通知プレビュー",
                     content = monthlyPreviewContent,
                     isOcrSuccessful = isOcrSuccessful
                 )
@@ -171,7 +173,7 @@ fun NotificationPreviewCard(
             
             if (showWeeklyPreview) {
                 NotificationPreviewContentCard(
-                    title = "週次通知プレビュー",
+                    title = if (weeklyPreviewTitle.isNotEmpty()) weeklyPreviewTitle else "週次通知プレビュー",
                     content = weeklyPreviewContent
                 )
             }

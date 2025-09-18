@@ -9,6 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.async
 import com.example.seedstockkeeper6.notification.NotificationManager
 import com.example.seedstockkeeper6.notification.NotificationScheduler
 import com.example.seedstockkeeper6.service.GeminiNotificationService
@@ -41,6 +42,8 @@ fun NotificationPreviewScreen(
     var showWeeklyPreview by remember { mutableStateOf(false) }
     var monthlyPreviewContent by remember { mutableStateOf("") }
     var weeklyPreviewContent by remember { mutableStateOf("") }
+    var monthlyPreviewTitle by remember { mutableStateOf("") }
+    var weeklyPreviewTitle by remember { mutableStateOf("") }
     var userSeeds by remember { mutableStateOf<List<com.example.seedstockkeeper6.model.SeedPacket>>(emptyList()) }
     var userSettings by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
     var isLoading by remember { mutableStateOf(true) }
@@ -261,6 +264,8 @@ fun NotificationPreviewScreen(
             showWeeklyPreview = showWeeklyPreview,
             monthlyPreviewContent = monthlyPreviewContent,
             weeklyPreviewContent = weeklyPreviewContent,
+            monthlyPreviewTitle = monthlyPreviewTitle,
+            weeklyPreviewTitle = weeklyPreviewTitle,
             isOcrSuccessful = isOcrSuccessful,
             onMonthlyPreviewToggle = {
                 android.util.Log.d("NotificationPreviewScreen", "月次プレビューボタン押下 - showMonthlyPreview: $showMonthlyPreview")
@@ -270,32 +275,52 @@ fun NotificationPreviewScreen(
                     
                     // ローディング状態を表示
                     monthlyPreviewContent = "通知内容を生成中..."
+                    monthlyPreviewTitle = "通知タイトルを生成中..."
                     
                     // 実際の内容を生成
                     scope.launch {
                         try {
                             val farmOwnerValue = userSettings["farmOwner"] ?: "水戸黄門"
+                            val currentMonth = java.util.Calendar.getInstance().get(java.util.Calendar.MONTH) + 1
                             android.util.Log.d("NotificationPreviewScreen", "月次プレビュー生成 - farmOwner: $farmOwnerValue")
-                            android.util.Log.d("NotificationPreviewScreen", "月次プレビューGeminiAPI呼び出し開始")
-                            val generatedContent = geminiService.generateMonthlyNotificationContent(
-                                region = userSettings["defaultRegion"] ?: "温暖地",
-                                prefecture = userSettings["selectedPrefecture"] ?: "",
-                                seedInfoUrl = getSeedInfoUrl(userSettings),
-                                currentMonth = java.util.Calendar.getInstance().get(java.util.Calendar.MONTH) + 1,
-                                userSeeds = userSeeds,
-                                farmOwner = farmOwnerValue,
-                                customFarmOwner = userSettings["customFarmOwner"] ?: ""
-                            )
-                            android.util.Log.d("NotificationPreviewScreen", "月次プレビューGeminiAPI呼び出し完了")
-                            monthlyPreviewContent = generatedContent
-                            android.util.Log.d("NotificationPreviewScreen", "月次プレビュー生成完了 - content: $monthlyPreviewContent")
+                            
+                            // タイトルとコンテンツを並行生成
+                            val titleDeferred = scope.async {
+                                geminiService.generateMonthlyNotificationTitle(
+                                    currentMonth = currentMonth,
+                                    farmOwner = farmOwnerValue,
+                                    customFarmOwner = userSettings["customFarmOwner"] ?: ""
+                                )
+                            }
+                            
+                            val contentDeferred = scope.async {
+                                android.util.Log.d("NotificationPreviewScreen", "月次プレビューGeminiAPI呼び出し開始")
+                                geminiService.generateMonthlyNotificationContent(
+                                    region = userSettings["defaultRegion"] ?: "温暖地",
+                                    prefecture = userSettings["selectedPrefecture"] ?: "",
+                                    seedInfoUrl = getSeedInfoUrl(userSettings),
+                                    currentMonth = currentMonth,
+                                    userSeeds = userSeeds,
+                                    farmOwner = farmOwnerValue,
+                                    customFarmOwner = userSettings["customFarmOwner"] ?: "",
+                                    userSettings = userSettings
+                                )
+                            }
+                            
+                            // 両方の結果を待つ
+                            monthlyPreviewTitle = titleDeferred.await()
+                            monthlyPreviewContent = contentDeferred.await()
+                            
+                            android.util.Log.d("NotificationPreviewScreen", "月次プレビュー生成完了 - title: $monthlyPreviewTitle, content: ${monthlyPreviewContent.take(100)}...")
                         } catch (e: Exception) {
                             android.util.Log.e("NotificationPreviewScreen", "月次プレビュー生成エラー", e)
                             android.util.Log.e("NotificationPreviewScreen", "エラー詳細: ${e.javaClass.simpleName} - ${e.message}")
                             if (e.message?.contains("overloaded") == true || e.message?.contains("503") == true) {
-                                android.util.Log.w("NotificationPreviewScreen", "API過負荷のため、デフォルト内容を使用します")
-                                monthlyPreviewContent = buildMonthlyNotificationPreview()
+                                android.util.Log.w("NotificationPreviewScreen", "API過負荷のため、通知を作成できません")
+                                monthlyPreviewTitle = "API過負荷"
+                                monthlyPreviewContent = "API過負荷のため通知を作成できません。しばらく時間をおいてから再度お試しください。"
                             } else {
+                                monthlyPreviewTitle = "今月の種まきおすすめ"
                                 monthlyPreviewContent = "通知内容の生成に失敗しました。\n\n${buildMonthlyNotificationPreview()}"
                             }
                         }
@@ -307,6 +332,7 @@ fun NotificationPreviewScreen(
                 if (showWeeklyPreview) {
                     // ローディング状態を表示
                     weeklyPreviewContent = "通知内容を生成中..."
+                    weeklyPreviewTitle = "通知タイトルを生成中..."
                     
                     scope.launch {
                         try {
@@ -318,15 +344,19 @@ fun NotificationPreviewScreen(
                                 seedInfoUrl = getSeedInfoUrl(userSettings),
                                 userSeeds = userSeeds,
                                 farmOwner = farmOwnerValue,
-                                customFarmOwner = userSettings["customFarmOwner"] ?: ""
+                                customFarmOwner = userSettings["customFarmOwner"] ?: "",
+                                userSettings = userSettings
                             )
+                            weeklyPreviewTitle = "まき時終了の2週間前の種があります"
                             android.util.Log.d("NotificationPreviewScreen", "週次プレビューGeminiAPI呼び出し完了")
                         } catch (e: Exception) {
                             android.util.Log.e("NotificationPreviewScreen", "週次プレビュー生成エラー", e)
                             if (e.message?.contains("overloaded") == true || e.message?.contains("503") == true) {
-                                android.util.Log.w("NotificationPreviewScreen", "API過負荷のため、デフォルト内容を使用します")
-                                weeklyPreviewContent = buildWeeklyNotificationPreview()
+                                android.util.Log.w("NotificationPreviewScreen", "API過負荷のため、通知を作成できません")
+                                weeklyPreviewTitle = "API過負荷"
+                                weeklyPreviewContent = "API過負荷のため通知を作成できません。しばらく時間をおいてから再度お試しください。"
                             } else {
+                                weeklyPreviewTitle = "まき時終了の2週間前の種があります"
                                 weeklyPreviewContent = "通知内容の生成に失敗しました。\n\n${buildWeeklyNotificationPreview()}"
                             }
                         }

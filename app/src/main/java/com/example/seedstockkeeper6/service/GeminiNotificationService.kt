@@ -51,12 +51,13 @@ class GeminiNotificationService {
             
             "お銀" -> """
                 あなたは水戸黄門の登場人物の助さんとして、お銀に話しかける口調で話してください：
-                - 親しみと信頼が感じられる、丁寧でありながらも少し柔らかな口調
-                - 「お銀、ご苦労」「いかがなされたか、お銀」
-                - 共に旅をする仲間として、対等の関係に近い接し方
-                - 女性に対する優しさや、忍びとして互いを認め合う敬意
+                - 尊敬と親しみが感じられる、丁寧で格式高い口調
+                - 「お銀、ご苦労でござる」「いかがなされたか、お銀」
+                - 共に旅をする仲間として、互いを認め合う敬意
+                - 女性に対する優しさと、忍びとしての信頼関係
+                - 「～でござる」「～でございます」などの丁寧語を使用
                 - 実用的で分かりやすい説明
-                - 例：「お銀、$monthName の種まきについて相談があるんだが」
+                - 例：「お銀、$monthName の種まきについて相談があるでござる」
             """.trimIndent()
             
             "八兵衛" -> """
@@ -100,7 +101,8 @@ class GeminiNotificationService {
         currentMonth: Int,
         userSeeds: List<com.example.seedstockkeeper6.model.SeedPacket> = emptyList(),
         farmOwner: String,
-        customFarmOwner: String = ""
+        customFarmOwner: String = "",
+        userSettings: Map<String, String> = emptyMap()
     ): String = withContext(Dispatchers.IO) {
         try {
             Log.d("GeminiNotiService", "月次通知生成開始 - farmOwner: $farmOwner, customFarmOwner: $customFarmOwner")
@@ -119,6 +121,7 @@ class GeminiNotificationService {
                 - 現在の月: $monthName
                 - 種情報URL: $seedInfoUrl
                 - 農園主: $farmOwner${if (farmOwner == "その他" && customFarmOwner.isNotEmpty()) " ($customFarmOwner)" else ""}
+                - 農場名: ${userSettings["farmName"] ?: "菜園"}
 
                 【助さんの口調・キャラクター設定】
                 $farmOwnerTone
@@ -130,18 +133,40 @@ class GeminiNotificationService {
                 $userSeedsInfo
 
                 【生成する通知内容の要件】
-                1. ユーザーが登録している種で今月まき時のものがあれば優先的に表示
-                2. ユーザー登録種のうちまき時が今月で終わる種への注意喚起
+                1. 農園主に農場名を含めて呼びかける（例：「お銀、●●農園の睦月の種まきについて」）
+                2. ユーザーが登録している種で今月まき時のものがあれば優先的に表示
+                3. ユーザー登録種のうちまき時が今月で終わる種への注意喚起
                    - 今月が播種期間の終了月の種を「まき時終了間近」として表示
-                3. まき時終了まで2週間以上ある種には「今から土づくりすれば間に合う」という励ましのメッセージを追加
+                4. まき時終了まで2週間以上ある種には「今から土づくりすれば間に合う」という励ましのメッセージを追加
                    - 土づくり時間がある種に対して積極的に励ましの言葉をかける
-                4. ユーザーが登録している種以外の今月（$monthName）に種まきできる野菜のリスト（ユーザー登録種以外）
-                5. 地域（$region）と県（$prefecture）に適した季節のおすすめ品種
-                6. 実用的で分かりやすい内容
-                7. 絵文字を使って見やすくする
-                8. 各項目は簡潔に（最大3-5種類程度）
-                9. 上記で設定した助さんの口調・キャラクターで話す
-                10. ユーザー登録種とそうでない種を明確に区別する
+                5. 登録種のコンパニオンプランツ情報を活用して、今月まけるコンパニオンプランツを提案
+                   - パッケージに記載されている場合は、それをもとに植物名と効果を記載
+                   - パッケージに記載がない場合でも、該当植物に対して一般的または推奨される代表的なコンパニオンプランツとその効果を、必ず1つ以上含めて記載
+                   - 効果コード（01-13, 99）を厳密に使用し、該当が明確でない場合は「99」を使用
+                6. ユーザーが登録している種以外の今月（$monthName）に種まきできる野菜のリスト（ユーザー登録種以外）
+                7. 地域（$region）と県（$prefecture）に適した季節のおすすめ品種
+                8. 実用的で分かりやすい内容
+                9. 絵文字を使って見やすくする
+                10. 各項目は簡潔に（最大3-5種類程度）
+                11. 上記で設定した助さんの口調・キャラクターで話す
+                12. ユーザー登録種とそうでない種を明確に区別する
+
+                【コンパニオンプランツ効果コード】
+                効果のフィールド（"effects"）は、以下の2桁のコードを**厳密に**使用してください。該当が明確でない場合は「99」を使用してください：
+                - "01": 害虫予防
+                - "02": 病気予防
+                - "03": 生育促進
+                - "04": 空間活用
+                - "05": 風味向上
+                - "06": 土壌改善
+                - "07": 受粉促進
+                - "08": 雑草抑制
+                - "09": 景観美化
+                - "10": 水分保持
+                - "11": pH調整
+                - "12": 効率UP
+                - "13": 収量安定
+                - "99": その他
 
                 【出力形式】
                 🌱 登録種について:
@@ -152,12 +177,11 @@ class GeminiNotificationService {
                 📦 まき時終了間近の登録種:
                 • [商品名] ([品種名]) - 播種期間: [月]、 有効期限: [年月] 
                 
-                💪 土づくり時間がある登録種:
-                • [商品名] ([品種名]) - 播種期間: [月]、 有効期限: [年月]
-                  今から土づくりすれば間に合います！
-                
-                🌿 おすすめの種:
-                • [品種名]  - [月] 月までまけます
+                🌿 登録種とコンパニオンプランツとなる今月まける種:
+                • [品種名] ［コンパニオンプランツ効果］ - 播種期間:[月] 
+
+                🌿 登録種以外のおすすめの種:
+                • [品種名]  - 播種期間:[月] 
 
                 🌟 季節の畑情報:
                 • [季節の畑情報]
@@ -173,9 +197,11 @@ class GeminiNotificationService {
                     Log.w("GeminiNotiService", "GeminiAPI呼び出しに失敗（過負荷等）: ${apiException.message}")
                     Log.w("GeminiNotiService", "API例外の詳細: ${apiException.javaClass.simpleName}")
                     if (apiException.message?.contains("overloaded") == true || apiException.message?.contains("503") == true) {
-                        Log.w("GeminiNotiService", "API過負荷のため、デフォルト内容を使用します")
+                        Log.w("GeminiNotiService", "API過負荷のため、通知を作成できません")
+                        "API過負荷のため通知を作成できません。しばらく時間をおいてから再度お試しください。"
+                    } else {
+                        getDefaultMonthlyContent(monthName)
                     }
-                    getDefaultMonthlyContent(monthName)
                 }
             } else {
                 Log.w("GeminiNotiService", "GeminiAPIが利用できません。デフォルト内容を返します。")
@@ -197,7 +223,8 @@ class GeminiNotificationService {
         seedInfoUrl: String,
         userSeeds: List<com.example.seedstockkeeper6.model.SeedPacket> = emptyList(),
         farmOwner: String,
-        customFarmOwner: String = ""
+        customFarmOwner: String = "",
+        userSettings: Map<String, String> = emptyMap()
     ): String = withContext(Dispatchers.IO) {
         try {
             Log.d("GeminiNotiService", "週次通知生成開始 - farmOwner: $farmOwner, customFarmOwner: $customFarmOwner")
@@ -214,6 +241,7 @@ class GeminiNotificationService {
                 - 県: $prefecture
                 - 種情報URL: $seedInfoUrl
                 - 農園主: $farmOwner${if (farmOwner == "その他" && customFarmOwner.isNotEmpty()) " ($customFarmOwner)" else ""}
+                - 農場名: ${userSettings["farmName"] ?: "菜園"}
 
                 【助さんの口調・キャラクター設定】
                 $farmOwnerTone
@@ -225,16 +253,17 @@ class GeminiNotificationService {
                 $userSeedsInfo
 
                 【生成する通知内容の要件】
-                1. まき時終了の2週間前の種のリスト（ユーザー登録種も含む）
+                1. 農園主に農場名を含めて呼びかける（例：「お銀、●●農園のまき時終了間近の種について」）
+                2. まき時終了の2週間前の種のリスト（ユーザー登録種も含む）
                    - 播種期間の終了が2週間以内の種を対象とする
-                2. 「土づくりすれば間に合う」という励ましのメッセージ
-                3. 地域（$region）と県（$prefecture）に適した内容
-                4. ユーザーが登録している種でまき時終了間近のものがあれば優先的に表示
-                5. 実用的で分かりやすい内容
-                6. 絵文字を使って見やすくする
-                7. 各項目は簡潔に（最大3-5種類程度）
-                8. 上記で設定した助さんの口調・キャラクターで話す
-                9. ユーザー登録種とそうでない種を明確に区別する
+                3. 「土づくりすれば間に合う」という励ましのメッセージ
+                4. 地域（$region）と県（$prefecture）に適した内容
+                5. ユーザーが登録している種でまき時終了間近のものがあれば優先的に表示
+                6. 実用的で分かりやすい内容
+                7. 絵文字を使って見やすくする
+                8. 各項目は簡潔に（最大3-5種類程度）
+                9. 上記で設定した助さんの口調・キャラクターで話す
+                10. ユーザー登録種とそうでない種を明確に区別する
 
                 【出力形式】
                 ⏰ まき時終了の2週間前の種があります:
@@ -258,9 +287,11 @@ class GeminiNotificationService {
                     Log.w("GeminiNotiService", "GeminiAPI呼び出しに失敗（過負荷等）: ${apiException.message}")
                     Log.w("GeminiNotiService", "API例外の詳細: ${apiException.javaClass.simpleName}")
                     if (apiException.message?.contains("overloaded") == true || apiException.message?.contains("503") == true) {
-                        Log.w("GeminiNotiService", "API過負荷のため、デフォルト内容を使用します")
+                        Log.w("GeminiNotiService", "API過負荷のため、通知を作成できません")
+                        "API過負荷のため通知を作成できません。しばらく時間をおいてから再度お試しください。"
+                    } else {
+                        getDefaultWeeklyContent()
                     }
-                    getDefaultWeeklyContent()
                 }
             } else {
                 Log.w("GeminiNotiService", "GeminiAPIが利用できません。デフォルト内容を返します。")
@@ -431,7 +462,11 @@ class GeminiNotificationService {
 📦 あなたの登録種:
 • 恋むすめ (ニンジン) - 有効期限: 2026年10月, 播種期間: 8月上旬〜9月下旬
 
-🌿 おすすめの種:
+🌿 登録種とコンパニオンプランツとなる今月まける種:
+• マリーゴールド ［害虫予防(01)］ - 播種期間: 3月〜5月
+• バジル ［風味向上(05)］ - 播種期間: 4月〜6月
+
+🌿 登録種以外のおすすめの種:
 • レタス - 今がまき時です
 • キャベツ - 今がまき時です
 
@@ -480,6 +515,47 @@ class GeminiNotificationService {
     }
     
     /**
+     * コンパニオンプランツの効果コードを取得
+     */
+    private fun getCompanionPlantEffectCode(effect: String): String {
+        return when (effect.lowercase()) {
+            "害虫予防", "害虫忌避", "虫除け" -> "01"
+            "病気予防", "病害予防", "抗菌" -> "02"
+            "生育促進", "成長促進", "発育促進" -> "03"
+            "空間活用", "立体栽培", "垂直栽培" -> "04"
+            "風味向上", "味向上", "香り" -> "05"
+            "土壌改善", "土壌改良", "土作り" -> "06"
+            "受粉促進", "受粉", "花粉媒介" -> "07"
+            "雑草抑制", "雑草防止", "草取り" -> "08"
+            "景観美化", "見た目", "美観" -> "09"
+            "水分保持", "保水", "乾燥防止" -> "10"
+            "ph調整", "ph", "酸性", "アルカリ性" -> "11"
+            "効率up", "効率", "収穫効率" -> "12"
+            "収量安定", "収量", "安定" -> "13"
+            else -> "99"
+        }
+    }
+
+    /**
+     * コンパニオンプランツ情報をフォーマット
+     */
+    private fun formatCompanionPlants(companionPlants: List<com.example.seedstockkeeper6.model.CompanionPlant>): String {
+        if (companionPlants.isEmpty()) {
+            return ""
+        }
+        
+        val companionInfo = StringBuilder()
+        companionPlants.forEach { companion ->
+            val effects = companion.effects.map { effect ->
+                val code = getCompanionPlantEffectCode(effect)
+                "$effect($code)"
+            }.joinToString(", ")
+            companionInfo.appendLine("- ${companion.plant}: $effects")
+        }
+        return companionInfo.toString()
+    }
+
+    /**
      * ユーザーの種データを月次通知用プロンプトにフォーマット
      */
     private fun formatUserSeedsForPrompt(seeds: List<com.example.seedstockkeeper6.model.SeedPacket>, currentMonth: Int): String {
@@ -492,6 +568,7 @@ class GeminiNotificationService {
         val seedsThisMonth = mutableListOf<String>()
         val seedsEndingThisMonth = mutableListOf<String>()
         val seedsWithTimeToPrepare = mutableListOf<String>() // 土づくり時間がある種
+        val companionPlantsInfo = mutableListOf<String>() // コンパニオンプランツ情報
         var relevantSeedsCount = 0
         
         seeds.forEach { seed ->
@@ -579,6 +656,23 @@ class GeminiNotificationService {
                 }
             }
             
+            // コンパニオンプランツ情報を収集（今月まき時の種のみ）
+            if (seed.companionPlants.isNotEmpty()) {
+                val companionInfo = formatCompanionPlants(seed.companionPlants)
+                if (companionInfo.isNotEmpty()) {
+                    val displayName = if (seed.productName.isNotEmpty()) {
+                        if (seed.variety.isNotEmpty()) {
+                            "${seed.productName} (${seed.variety})"
+                        } else {
+                            seed.productName
+                        }
+                    } else {
+                        seed.variety
+                    }
+                    companionPlantsInfo.add("$displayName のコンパニオンプランツ:\n$companionInfo")
+                }
+            }
+            
             if (isRelevant) {
                 relevantSeedsCount++
             }
@@ -605,6 +699,13 @@ class GeminiNotificationService {
             result.appendLine("まき時終了まで2週間以上ある登録種（土づくり時間あり）:")
             seedsWithTimeToPrepare.forEach { seed ->
                 result.appendLine("- $seed")
+            }
+        }
+        
+        if (companionPlantsInfo.isNotEmpty()) {
+            result.appendLine("登録種のコンパニオンプランツ情報:")
+            companionPlantsInfo.forEach { companion ->
+                result.appendLine(companion)
             }
         }
         
