@@ -456,12 +456,12 @@ fun MainScaffoldNavigationBar(
             icon = { 
                 Icon(
                     painter = painterResource(id = com.example.seedstockkeeper6.R.drawable.home),
-                    contentDescription = "城",
+                    contentDescription = "お城",
                     tint = ComposeColor.Unspecified,
                     modifier = Modifier.size(if (currentRoute == "list") 28.dp else 24.dp)
                 )
             },
-            label = { Text("城") },
+            label = { Text("お城") },
             selected = currentRoute == "list",
             onClick = { navController.navigate("list") }
         )

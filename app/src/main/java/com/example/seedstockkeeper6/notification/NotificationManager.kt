@@ -112,7 +112,7 @@ class NotificationManager(private val context: Context) {
         val content = buildMonthlyNotificationContent(seedsToSowThisMonth, seasonalRecommendations, seedsEndingThisMonth)
         
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setSmallIcon(R.mipmap.ic_tanesuke_foreground)
             .setContentTitle(title)
             .setContentText(content)
             .setStyle(NotificationCompat.BigTextStyle().bigText(content))
@@ -148,7 +148,7 @@ class NotificationManager(private val context: Context) {
                 val content = buildWeeklyNotificationContent(seedsEndingSoon)
         
                 val notification = NotificationCompat.Builder(context, CHANNEL_ID)
-                    .setSmallIcon(R.drawable.ic_launcher_foreground)
+                    .setSmallIcon(R.mipmap.ic_tanesuke_foreground)
                     .setContentTitle(title)
                     .setContentText(content)
                     .setStyle(NotificationCompat.BigTextStyle().bigText(content))
@@ -173,7 +173,7 @@ class NotificationManager(private val context: Context) {
                 val content = buildWeeklyNotificationContent(seedsEndingSoon)
                 
                 val notification = NotificationCompat.Builder(context, CHANNEL_ID)
-                    .setSmallIcon(R.drawable.ic_launcher_foreground)
+                    .setSmallIcon(R.mipmap.ic_tanesuke_foreground)
                     .setContentTitle(fallbackTitle)
                     .setContentText(content)
                     .setStyle(NotificationCompat.BigTextStyle().bigText(content))
@@ -230,7 +230,7 @@ class NotificationManager(private val context: Context) {
                 }
                 
                 val notification = NotificationCompat.Builder(context, CHANNEL_ID)
-                    .setSmallIcon(R.drawable.ic_launcher_foreground)
+                    .setSmallIcon(R.mipmap.ic_tanesuke_foreground)
                     .setContentTitle(title)
                     .setContentText(summary) // 要点を表示
                     .setStyle(notificationStyle)
@@ -269,7 +269,7 @@ class NotificationManager(private val context: Context) {
                 val fallbackTitle = "今月の種まきおすすめ"
                 
                 val notification = NotificationCompat.Builder(context, CHANNEL_ID)
-                    .setSmallIcon(R.drawable.ic_launcher_foreground)
+                    .setSmallIcon(R.mipmap.ic_tanesuke_foreground)
                     .setContentTitle(fallbackTitle)
                     .setContentText(content)
                     .setStyle(NotificationCompat.BigTextStyle().bigText(content))
@@ -329,7 +329,7 @@ class NotificationManager(private val context: Context) {
                 android.util.Log.d("NotificationManager", "通知内容（最初の100文字）: ${content.take(100)}...")
                 
                 val notification = NotificationCompat.Builder(context, CHANNEL_ID)
-                    .setSmallIcon(R.drawable.ic_launcher_foreground)
+                    .setSmallIcon(R.mipmap.ic_tanesuke_foreground)
                     .setContentTitle(title)
                     .setContentText(summary) // 要点を表示
                     .setStyle(NotificationCompat.BigTextStyle()
