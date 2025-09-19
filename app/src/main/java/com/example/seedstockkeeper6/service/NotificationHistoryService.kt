@@ -22,6 +22,7 @@ class NotificationHistoryService {
         type: NotificationType,
         title: String,
         content: String,
+        summary: String = "", // 要点を追加
         farmOwner: String,
         region: String,
         prefecture: String,
@@ -30,6 +31,7 @@ class NotificationHistoryService {
     ): Boolean {
         return try {
             val currentUser = auth.currentUser
+            Log.d("NotificationHistoryService", "通知履歴保存開始 - currentUser: ${currentUser?.uid}")
             if (currentUser == null) {
                 Log.w("NotificationHistoryService", "ユーザーが認証されていません")
                 return false
@@ -43,6 +45,7 @@ class NotificationHistoryService {
                 type = type,
                 title = title,
                 content = content,
+                summary = summary, // 要点を追加
                 sentAt = now,
                 userId = currentUser.uid,
                 farmOwner = farmOwner,
@@ -51,6 +54,8 @@ class NotificationHistoryService {
                 month = month,
                 seedCount = seedCount
             )
+            
+            Log.d("NotificationHistoryService", "保存する通知履歴: $history")
             
             val docRef = db.collection("notificationHistory")
                 .add(history)
@@ -71,21 +76,35 @@ class NotificationHistoryService {
     suspend fun getUserNotificationHistory(limit: Int = 50): List<NotificationHistory> {
         return try {
             val currentUser = auth.currentUser
+            Log.d("NotificationHistoryService", "通知履歴取得開始 - currentUser: ${currentUser?.uid}")
+            Log.d("NotificationHistoryService", "認証状態: ${auth.currentUser != null}")
+            Log.d("NotificationHistoryService", "ユーザー情報: ${currentUser?.email}, ${currentUser?.displayName}")
+            
             if (currentUser == null) {
                 Log.w("NotificationHistoryService", "ユーザーが認証されていません")
                 return emptyList()
             }
             
+            Log.d("NotificationHistoryService", "Firebaseクエリ実行開始 - userId: ${currentUser.uid}")
+            // 一時的にorderByを削除してインデックス不足を回避
             val snapshot = db.collection("notificationHistory")
                 .whereEqualTo("userId", currentUser.uid)
-                .orderBy("sentAt", com.google.firebase.firestore.Query.Direction.DESCENDING)
                 .limit(limit.toLong())
                 .get()
                 .await()
             
+            Log.d("NotificationHistoryService", "Firebaseクエリ完了 - 取得ドキュメント数: ${snapshot.documents.size}")
+            
+            // ドキュメントの生データをログ出力
+            snapshot.documents.forEach { doc ->
+                Log.d("NotificationHistoryService", "ドキュメント生データ: ${doc.id} = ${doc.data}")
+            }
+            
             val histories = snapshot.documents.mapNotNull { doc ->
                 try {
+                    Log.d("NotificationHistoryService", "ドキュメント解析中: ${doc.id}")
                     val history = doc.toObject(NotificationHistory::class.java)
+                    Log.d("NotificationHistoryService", "解析結果: $history")
                     history?.copy(documentId = doc.id)
                 } catch (e: Exception) {
                     Log.w("NotificationHistoryService", "通知履歴の解析に失敗: ${doc.id}", e)
@@ -93,8 +112,23 @@ class NotificationHistoryService {
                 }
             }
             
-            Log.d("NotificationHistoryService", "通知履歴を取得しました: ${histories.size}件")
-            histories
+            // クライアント側で日時順にソート
+            val sortedHistories = histories.sortedByDescending { history ->
+                try {
+                    val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault()).apply {
+                        timeZone = TimeZone.getTimeZone("UTC")
+                    }
+                    format.parse(history.sentAt)?.time ?: 0L
+                } catch (e: Exception) {
+                    0L
+                }
+            }
+            
+            Log.d("NotificationHistoryService", "通知履歴を取得しました: ${sortedHistories.size}件")
+            sortedHistories.forEach { history ->
+                Log.d("NotificationHistoryService", "履歴詳細: id=${history.id}, title=${history.title}, sentAt=${history.sentAt}")
+            }
+            sortedHistories
             
         } catch (e: Exception) {
             Log.e("NotificationHistoryService", "通知履歴の取得に失敗", e)

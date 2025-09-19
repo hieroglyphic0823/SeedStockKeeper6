@@ -38,9 +38,9 @@ fun NotificationTestCard(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Icon(
-                    Icons.Filled.NotificationsActive,
+                    painter = painterResource(id = R.drawable.yabumi0),
                     contentDescription = "通知テスト",
-                    tint = MaterialTheme.colorScheme.primary,
+                    tint = Color.Unspecified,
                     modifier = Modifier.size(24.dp)
                 )
                 Text(
@@ -116,9 +116,9 @@ fun NotificationPreviewCard(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Icon(
-                    Icons.Filled.Notifications,
+                    painter = painterResource(id = R.drawable.fumi),
                     contentDescription = "通知プレビュー",
-                    tint = MaterialTheme.colorScheme.primary,
+                    tint = Color.Unspecified,
                     modifier = Modifier.size(24.dp)
                 )
                 Text(

@@ -6,6 +6,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import kotlinx.coroutines.launch
@@ -20,6 +21,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
+import androidx.activity.compose.LocalActivity
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,6 +39,7 @@ fun NotificationPreviewScreen(
     val seedListViewModel: SeedListViewModel = viewModel()
     val auth = remember { FirebaseAuth.getInstance() }
     val db = remember { Firebase.firestore }
+    val activity = LocalActivity.current
     
     var showMonthlyPreview by remember { mutableStateOf(false) }
     var showWeeklyPreview by remember { mutableStateOf(false) }
@@ -154,18 +157,6 @@ fun NotificationPreviewScreen(
             }
         }
         
-        // 通知履歴ボタン
-        Button(
-            onClick = { navController.navigate("notification_history") },
-            modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                contentColor = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        ) {
-            Text("📋 通知履歴を表示")
-        }
-        
         // 通知テストセクション
         NotificationTestCard(
             onMonthlyTest = {
@@ -187,19 +178,17 @@ fun NotificationPreviewScreen(
                         )
                         android.util.Log.d("NotificationPreviewScreen", "GeminiAPI呼び出し完了 - content: ${content.take(100)}...")
                         android.util.Log.d("NotificationPreviewScreen", "通知送信開始")
-                        notificationManager.sendMonthlyRecommendationNotificationWithContent(
-                            content = content,
-                            farmOwner = farmOwnerValue,
-                            region = userSettings["defaultRegion"] ?: "温暖地",
-                            prefecture = userSettings["selectedPrefecture"] ?: "",
-                            month = java.util.Calendar.getInstance().get(java.util.Calendar.MONTH) + 1,
-                            seedCount = userSeeds.size
-                        )
                         
-                        // 通知履歴を直接保存（テスト用）
-                        historyService.saveNotificationHistory(
-                            type = NotificationType.MONTHLY,
-                            title = "今月の種まきおすすめ",
+                        // 通知権限をチェック
+                        if (!notificationManager.hasNotificationPermission()) {
+                            android.util.Log.w("NotificationPreviewScreen", "通知権限が許可されていません")
+                            if (activity != null) {
+                                (activity as com.example.seedstockkeeper6.MainActivity).requestNotificationPermission()
+                            }
+                            return@launch
+                        }
+                        
+                        notificationManager.sendMonthlyRecommendationNotificationWithContent(
                             content = content,
                             farmOwner = farmOwnerValue,
                             region = userSettings["defaultRegion"] ?: "温暖地",
@@ -231,23 +220,21 @@ fun NotificationPreviewScreen(
                         )
                         android.util.Log.d("NotificationPreviewScreen", "週次GeminiAPI呼び出し完了 - content: ${content.take(100)}...")
                         android.util.Log.d("NotificationPreviewScreen", "週次通知送信開始")
+                        
+                        // 通知権限をチェック
+                        if (!notificationManager.hasNotificationPermission()) {
+                            android.util.Log.w("NotificationPreviewScreen", "通知権限が許可されていません")
+                            if (activity != null) {
+                                (activity as com.example.seedstockkeeper6.MainActivity).requestNotificationPermission()
+                            }
+                            return@launch
+                        }
+                        
                         notificationManager.sendWeeklyReminderNotificationWithContent(
                             content = content,
                             farmOwner = farmOwnerValue,
                             region = userSettings["defaultRegion"] ?: "温暖地",
                             prefecture = userSettings["selectedPrefecture"] ?: "",
-                            seedCount = userSeeds.size
-                        )
-                        
-                        // 通知履歴を直接保存（テスト用）
-                        historyService.saveNotificationHistory(
-                            type = NotificationType.WEEKLY,
-                            title = "まき時終了の2週間前の種があります",
-                            content = content,
-                            farmOwner = farmOwnerValue,
-                            region = userSettings["defaultRegion"] ?: "温暖地",
-                            prefecture = userSettings["selectedPrefecture"] ?: "",
-                            month = 0, // 週次通知では月は0
                             seedCount = userSeeds.size
                         )
                         android.util.Log.d("NotificationPreviewScreen", "週次通知送信完了")

@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.Image
+import androidx.compose.ui.graphics.Color as ComposeColor
+import androidx.compose.ui.res.painterResource
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
@@ -110,6 +112,11 @@ fun MainScaffoldTopAppBar(
                         Icon(Icons.Filled.ArrowBack, contentDescription = "戻る")
                     }
                 }
+                "notification_history" -> {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(Icons.Filled.ArrowBack, contentDescription = "戻る")
+                    }
+                }
                 else -> {
                     if (currentRoute?.startsWith("input") == true) {
                         IconButton(onClick = { navController.popBackStack() }) {
@@ -131,11 +138,11 @@ fun MainScaffoldTopAppBar(
             }
         },
         title = { 
-            when {
-                currentRoute == "notification_preview" -> {
-                    Text("←通知テスト・プレビュー")
+            when (currentRoute) {
+                "notification_preview" -> {
+                    Text("通知テスト・プレビュー")
                 }
-                currentRoute == "settings" -> {
+                "settings" -> {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -153,8 +160,21 @@ fun MainScaffoldTopAppBar(
                         )
                     }
                 }
-                currentRoute?.startsWith("input") == true -> {
+                "notification_history" -> {
                     Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Text(
+                            text = "通知履歴",
+                            modifier = Modifier.fillMaxWidth(),
+                            textAlign = TextAlign.Start
+                        )
+                    }
+                }
+                else -> {
+                    if (currentRoute?.startsWith("input") == true) {
+                        Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
@@ -239,24 +259,24 @@ fun MainScaffoldTopAppBar(
                             }
                         }
                     }
-                }
-                else -> {
-                    // 種一覧画面のタイトル表示
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Icon(
-                            painter = painterResource(id = com.example.seedstockkeeper6.R.drawable.list),
-                            contentDescription = "種リスト",
-                            tint = MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier.size(24.dp)
-                        )
-                        Text(
-                            text = "種リスト",
-                            modifier = Modifier.fillMaxWidth(),
-                            textAlign = TextAlign.Start
-                        )
+                    } else {
+                        // 種一覧画面のタイトル表示
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(id = com.example.seedstockkeeper6.R.drawable.list),
+                                contentDescription = "種リスト",
+                                tint = MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Text(
+                                text = "種リスト",
+                                modifier = Modifier.fillMaxWidth(),
+                                textAlign = TextAlign.Start
+                            )
+                        }
                     }
                 }
             }
@@ -329,6 +349,22 @@ fun MainScaffoldTopAppBar(
                             }
                         }
                     }
+                }
+                "notification_history" -> {
+                    // 通知テスト・プレビュー画面への遷移ボタン
+                    IconButton(
+                        onClick = { navController.navigate("notification_preview") }
+                    ) {
+                        Icon(
+                            painter = painterResource(id = com.example.seedstockkeeper6.R.drawable.yabumi0),
+                            contentDescription = "通知テスト・プレビュー",
+                            tint = Color.Unspecified,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                }
+                "notification_preview" -> {
+                    // 通知テスト・プレビュー画面では何も表示しない
                 }
                 else -> {
                     if (currentRoute?.startsWith("input") == true) {
@@ -419,28 +455,28 @@ fun MainScaffoldNavigationBar(
         NavigationBarItem(
             icon = { 
                 Icon(
-                    painter = painterResource(
-                        id = com.example.seedstockkeeper6.R.drawable.home_and_garden
-                    ),
-                    contentDescription = "ホーム",
-                    tint = Color.Unspecified,
+                    painter = painterResource(id = com.example.seedstockkeeper6.R.drawable.home),
+                    contentDescription = "城",
+                    tint = ComposeColor.Unspecified,
                     modifier = Modifier.size(if (currentRoute == "list") 28.dp else 24.dp)
                 )
             },
+            label = { Text("城") },
             selected = currentRoute == "list",
             onClick = { navController.navigate("list") }
         )
         
-        // 検索アイコン
+        // 一覧アイコン
         NavigationBarItem(
             icon = { 
                 Icon(
-                    imageVector = if (currentRoute == "search") Icons.Filled.Search else Icons.Outlined.Search, 
-                    contentDescription = "検索",
+                    painter = painterResource(id = com.example.seedstockkeeper6.R.drawable.list),
+                    contentDescription = "一覧",
                     tint = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.size(if (currentRoute == "search") 28.dp else 24.dp)
                 )
             },
+            label = { Text("一覧") },
             selected = currentRoute == "search",
             onClick = { navController.navigate("search") }
         )
@@ -506,25 +542,27 @@ fun MainScaffoldNavigationBar(
                                 com.example.seedstockkeeper6.R.drawable.calendar_light
                         ),
                         contentDescription = "カレンダー",
-                        tint = Color.Unspecified,
+                        tint = ComposeColor.Unspecified,
                         modifier = Modifier.size(if (currentRoute == "calendar") 28.dp else 24.dp)
                     )
                 }
             },
+            label = { Text("種暦") },
             selected = currentRoute == "calendar",
             onClick = { navController.navigate("calendar") }
         )
         
-        // 通知アイコン
+        // 通知アイコン（yabumi - 矢文）
         NavigationBarItem(
             icon = { 
                 Icon(
-                    imageVector = if (currentRoute == "notification_history") Icons.Filled.Notifications else Icons.Outlined.Notifications, 
+                    painter = painterResource(id = com.example.seedstockkeeper6.R.drawable.yabumi3),
                     contentDescription = "通知履歴",
-                    tint = MaterialTheme.colorScheme.onSurface,
+                    tint = ComposeColor.Unspecified,
                     modifier = Modifier.size(if (currentRoute == "notification_history") 28.dp else 24.dp)
                 )
             },
+            label = { Text("通知") },
             selected = currentRoute == "notification_history",
             onClick = { navController.navigate("notification_history") }
         )

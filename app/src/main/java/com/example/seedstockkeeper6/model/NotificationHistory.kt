@@ -9,6 +9,7 @@ data class NotificationHistory(
     val type: NotificationType = NotificationType.MONTHLY,
     val title: String = "",
     val content: String = "",
+    val summary: String = "", // 要点を追加
     val sentAt: String = "", // ISO形式の日時文字列
     val userId: String = "", // 送信先ユーザーのUID
     val farmOwner: String = "",

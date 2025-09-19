@@ -5,9 +5,12 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Build
+import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
 import com.example.seedstockkeeper6.MainActivity
 import com.example.seedstockkeeper6.R
 import com.example.seedstockkeeper6.model.SeedPacket
@@ -33,26 +36,62 @@ class NotificationManager(private val context: Context) {
         // 通知チャンネルの設定
         private const val CHANNEL_NAME = "種まき通知"
         private const val CHANNEL_DESCRIPTION = "種まきのタイミングをお知らせします"
+        
+        // 通知権限
+        private const val POST_NOTIFICATIONS_PERMISSION = "android.permission.POST_NOTIFICATIONS"
     }
     
     init {
         createNotificationChannel()
     }
     
+    /**
+     * 通知権限が許可されているかチェック
+     */
+    fun hasNotificationPermission(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            ContextCompat.checkSelfPermission(
+                context,
+                POST_NOTIFICATIONS_PERMISSION
+            ) == PackageManager.PERMISSION_GRANTED
+        } else {
+            // Android 12以下では権限は不要
+            true
+        }
+    }
+    
+    /**
+     * 通知権限をリクエスト（Activityから呼び出し）
+     */
+    fun requestNotificationPermission(activity: android.app.Activity) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            ActivityCompat.requestPermissions(
+                activity,
+                arrayOf(POST_NOTIFICATIONS_PERMISSION),
+                1001 // リクエストコード
+            )
+        }
+    }
+    
     private fun createNotificationChannel() {
+        android.util.Log.d("NotificationManager", "通知チャンネル作成開始")
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 CHANNEL_ID,
                 CHANNEL_NAME,
-                NotificationManager.IMPORTANCE_DEFAULT
+                NotificationManager.IMPORTANCE_HIGH
             ).apply {
                 description = CHANNEL_DESCRIPTION
                 enableVibration(true)
                 enableLights(true)
+                setShowBadge(true) // 通知ドット（バッジ）を有効化
             }
             
             val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.createNotificationChannel(channel)
+            android.util.Log.d("NotificationManager", "通知チャンネル作成完了 - ID: $CHANNEL_ID, 名前: $CHANNEL_NAME")
+        } else {
+            android.util.Log.d("NotificationManager", "Android O未満のため通知チャンネル作成をスキップ")
         }
     }
     
@@ -64,6 +103,11 @@ class NotificationManager(private val context: Context) {
         seasonalRecommendations: List<String> = emptyList(),
         seedsEndingThisMonth: List<SeedPacket> = emptyList()
     ) {
+        if (!hasNotificationPermission()) {
+            android.util.Log.w("NotificationManager", "通知権限が許可されていません")
+            return
+        }
+        
         val title = "今月の種まきおすすめ"
         val content = buildMonthlyNotificationContent(seedsToSowThisMonth, seasonalRecommendations, seedsEndingThisMonth)
         
@@ -72,13 +116,19 @@ class NotificationManager(private val context: Context) {
             .setContentTitle(title)
             .setContentText(content)
             .setStyle(NotificationCompat.BigTextStyle().bigText(content))
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
             .setContentIntent(createPendingIntent())
+            .setBadgeIconType(NotificationCompat.BADGE_ICON_SMALL) // 通知ドット（バッジ）を設定
+            .setNumber(1) // バッジに表示する数値
             .build()
         
-        with(NotificationManagerCompat.from(context)) {
-            notify(MONTHLY_NOTIFICATION_ID, notification)
+        try {
+            with(NotificationManagerCompat.from(context)) {
+                notify(MONTHLY_NOTIFICATION_ID, notification)
+            }
+        } catch (e: SecurityException) {
+            android.util.Log.e("NotificationManager", "通知送信に失敗: 権限が不足しています", e)
         }
     }
     
@@ -86,21 +136,62 @@ class NotificationManager(private val context: Context) {
      * 週1回のリマインダー通知を送信
      */
     fun sendWeeklyReminderNotification(seedsEndingSoon: List<SeedPacket>) {
-        val title = "種まきタイミングリマインダー"
-        val content = buildWeeklyNotificationContent(seedsEndingSoon)
+        if (!hasNotificationPermission()) {
+            android.util.Log.w("NotificationManager", "通知権限が許可されていません")
+            return
+        }
         
-        val notification = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setContentTitle(title)
-            .setContentText(content)
-            .setStyle(NotificationCompat.BigTextStyle().bigText(content))
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-            .setAutoCancel(true)
-            .setContentIntent(createPendingIntent())
-            .build()
+        // 動的タイトル生成
+        coroutineScope.launch {
+            try {
+                val title = geminiService.generateWeeklyNotificationTitle("お銀")
+                val content = buildWeeklyNotificationContent(seedsEndingSoon)
         
-        with(NotificationManagerCompat.from(context)) {
-            notify(WEEKLY_NOTIFICATION_ID, notification)
+                val notification = NotificationCompat.Builder(context, CHANNEL_ID)
+                    .setSmallIcon(R.drawable.ic_launcher_foreground)
+                    .setContentTitle(title)
+                    .setContentText(content)
+                    .setStyle(NotificationCompat.BigTextStyle().bigText(content))
+                    .setPriority(NotificationCompat.PRIORITY_HIGH)
+                    .setAutoCancel(true)
+                    .setContentIntent(createPendingIntent())
+                    .setBadgeIconType(NotificationCompat.BADGE_ICON_SMALL) // 通知ドット（バッジ）を設定
+                    .setNumber(1) // バッジに表示する数値
+                    .build()
+                
+                try {
+                    with(NotificationManagerCompat.from(context)) {
+                        notify(WEEKLY_NOTIFICATION_ID, notification)
+                    }
+                } catch (e: SecurityException) {
+                    android.util.Log.e("NotificationManager", "通知送信に失敗: 権限が不足しています", e)
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("NotificationManager", "週次通知タイトル生成に失敗", e)
+                // フォールバック: 固定タイトルで通知送信
+                val fallbackTitle = "種まきタイミングリマインダー"
+                val content = buildWeeklyNotificationContent(seedsEndingSoon)
+                
+                val notification = NotificationCompat.Builder(context, CHANNEL_ID)
+                    .setSmallIcon(R.drawable.ic_launcher_foreground)
+                    .setContentTitle(fallbackTitle)
+                    .setContentText(content)
+                    .setStyle(NotificationCompat.BigTextStyle().bigText(content))
+                    .setPriority(NotificationCompat.PRIORITY_HIGH)
+                    .setAutoCancel(true)
+                    .setContentIntent(createPendingIntent())
+                    .setBadgeIconType(NotificationCompat.BADGE_ICON_SMALL)
+                    .setNumber(1)
+                    .build()
+                
+                try {
+                    with(NotificationManagerCompat.from(context)) {
+                        notify(WEEKLY_NOTIFICATION_ID, notification)
+                    }
+                } catch (e: SecurityException) {
+                    android.util.Log.e("NotificationManager", "通知送信に失敗: 権限が不足しています", e)
+                }
+            }
         }
     }
     
@@ -115,30 +206,58 @@ class NotificationManager(private val context: Context) {
         month: Int = Calendar.getInstance().get(Calendar.MONTH) + 1,
         seedCount: Int = 0
     ) {
+        if (!hasNotificationPermission()) {
+            android.util.Log.w("NotificationManager", "通知権限が許可されていません")
+            return
+        }
+        
         // 和風月名でタイトルを生成（非同期）
         coroutineScope.launch {
             try {
                 val title = geminiService.generateMonthlyNotificationTitle(month, farmOwner)
+                // 要点を生成
+                val summary = geminiService.extractNotificationSummary(content)
+                
+                // 通知スタイルを決定（内容に応じて）
+                val notificationStyle = if (content.contains("•") && content.split("•").size > 3) {
+                    // リスト形式の内容の場合はInboxStyleを使用
+                    createInboxStyle(content, summary)
+                } else {
+                    // 通常のテキストの場合はBigTextStyleを使用
+                    NotificationCompat.BigTextStyle()
+                        .bigText(content)
+                        .setSummaryText("詳細を表示するには通知を展開してください")
+                }
                 
                 val notification = NotificationCompat.Builder(context, CHANNEL_ID)
                     .setSmallIcon(R.drawable.ic_launcher_foreground)
                     .setContentTitle(title)
-                    .setContentText(content)
-                    .setStyle(NotificationCompat.BigTextStyle().bigText(content))
-                    .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                    .setContentText(summary) // 要点を表示
+                    .setStyle(notificationStyle)
+                    .setPriority(NotificationCompat.PRIORITY_HIGH)
                     .setAutoCancel(true)
                     .setContentIntent(createPendingIntent())
+                    .setBadgeIconType(NotificationCompat.BADGE_ICON_SMALL) // 通知ドット（バッジ）を設定
+                    .setNumber(1) // バッジに表示する数値
+                    .setCategory(NotificationCompat.CATEGORY_REMINDER) // リマインダーカテゴリ
+                    .setVisibility(NotificationCompat.VISIBILITY_PUBLIC) // ロック画面で表示
                     .build()
                 
-                with(NotificationManagerCompat.from(context)) {
-                    notify(MONTHLY_NOTIFICATION_ID, notification)
+                try {
+                    with(NotificationManagerCompat.from(context)) {
+                        notify(MONTHLY_NOTIFICATION_ID, notification)
+                    }
+                } catch (e: SecurityException) {
+                    android.util.Log.e("NotificationManager", "通知送信に失敗: 権限が不足しています", e)
+                    return@launch
                 }
                 
-                // 通知履歴を保存
+                // 通知履歴を保存（要点を含む）
                 historyService.saveNotificationHistory(
                     type = NotificationType.MONTHLY,
                     title = title,
                     content = content,
+                    summary = summary, // 要点を追加
                     farmOwner = farmOwner,
                     region = region,
                     prefecture = prefecture,
@@ -154,13 +273,18 @@ class NotificationManager(private val context: Context) {
                     .setContentTitle(fallbackTitle)
                     .setContentText(content)
                     .setStyle(NotificationCompat.BigTextStyle().bigText(content))
-                    .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                    .setPriority(NotificationCompat.PRIORITY_HIGH)
                     .setAutoCancel(true)
                     .setContentIntent(createPendingIntent())
                     .build()
                 
-                with(NotificationManagerCompat.from(context)) {
-                    notify(MONTHLY_NOTIFICATION_ID, notification)
+                try {
+                    with(NotificationManagerCompat.from(context)) {
+                        notify(MONTHLY_NOTIFICATION_ID, notification)
+                    }
+                } catch (e: SecurityException) {
+                    android.util.Log.e("NotificationManager", "通知送信に失敗: 権限が不足しています", e)
+                    return@launch
                 }
                 
                 // 通知履歴を保存
@@ -188,34 +312,68 @@ class NotificationManager(private val context: Context) {
         prefecture: String = "",
         seedCount: Int = 0
     ) {
-        val title = "種まきタイミングリマインダー"
-        
-        val notification = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setContentTitle(title)
-            .setContentText(content)
-            .setStyle(NotificationCompat.BigTextStyle().bigText(content))
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-            .setAutoCancel(true)
-            .setContentIntent(createPendingIntent())
-            .build()
-        
-        with(NotificationManagerCompat.from(context)) {
-            notify(WEEKLY_NOTIFICATION_ID, notification)
+        android.util.Log.d("NotificationManager", "週次通知送信開始 - 権限チェック")
+        if (!hasNotificationPermission()) {
+            android.util.Log.w("NotificationManager", "通知権限が許可されていません")
+            return
         }
+        android.util.Log.d("NotificationManager", "通知権限OK - 通知作成開始")
         
-        // 通知履歴を保存
+        // 要点を生成
         coroutineScope.launch {
-            historyService.saveNotificationHistory(
-                type = NotificationType.WEEKLY,
-                title = title,
-                content = content,
-                farmOwner = farmOwner,
-                region = region,
-                prefecture = prefecture,
-                month = 0, // 週次通知は月を指定しない
-                seedCount = seedCount
-            )
+            try {
+                val title = geminiService.generateWeeklyNotificationTitle(farmOwner)
+                val summary = geminiService.extractNotificationSummary(content)
+                
+                android.util.Log.d("NotificationManager", "通知タイトル: $title")
+                android.util.Log.d("NotificationManager", "通知内容（最初の100文字）: ${content.take(100)}...")
+                
+                val notification = NotificationCompat.Builder(context, CHANNEL_ID)
+                    .setSmallIcon(R.drawable.ic_launcher_foreground)
+                    .setContentTitle(title)
+                    .setContentText(summary) // 要点を表示
+                    .setStyle(NotificationCompat.BigTextStyle()
+                        .bigText(content) // 詳細は展開時に表示
+                        .setSummaryText("詳細を表示するには通知を展開してください"))
+                    .setPriority(NotificationCompat.PRIORITY_HIGH)
+                    .setAutoCancel(true)
+                    .setContentIntent(createPendingIntent())
+                    .setBadgeIconType(NotificationCompat.BADGE_ICON_SMALL) // 通知ドット（バッジ）を設定
+                    .setNumber(1) // バッジに表示する数値
+                    .setCategory(NotificationCompat.CATEGORY_REMINDER) // リマインダーカテゴリ
+                    .setVisibility(NotificationCompat.VISIBILITY_PUBLIC) // ロック画面で表示
+                    .build()
+                
+                android.util.Log.d("NotificationManager", "通知オブジェクト作成完了 - ID: $WEEKLY_NOTIFICATION_ID")
+                
+                try {
+                    with(NotificationManagerCompat.from(context)) {
+                        android.util.Log.d("NotificationManager", "NotificationManagerCompat取得完了")
+                        notify(WEEKLY_NOTIFICATION_ID, notification)
+                        android.util.Log.d("NotificationManager", "通知送信完了 - ID: $WEEKLY_NOTIFICATION_ID")
+                    }
+                } catch (e: SecurityException) {
+                    android.util.Log.e("NotificationManager", "通知送信に失敗: 権限が不足しています", e)
+                    return@launch
+                } catch (e: Exception) {
+                    android.util.Log.e("NotificationManager", "通知送信に失敗", e)
+                    return@launch
+                }
+                
+                // 通知履歴を保存（要点を含む）
+                historyService.saveNotificationHistory(
+                    type = NotificationType.WEEKLY,
+                    title = title,
+                    content = content,
+                    summary = summary, // 要点を追加
+                    farmOwner = farmOwner,
+                    region = region,
+                    prefecture = prefecture,
+                    seedCount = seedCount
+                )
+            } catch (e: Exception) {
+                android.util.Log.e("NotificationManager", "週次通知送信に失敗", e)
+            }
         }
     }
     
@@ -281,6 +439,35 @@ class NotificationManager(private val context: Context) {
         return content.toString().trim()
     }
     
+    /**
+     * InboxStyle通知を作成（リスト形式の内容用）
+     */
+    private fun createInboxStyle(content: String, summary: String): NotificationCompat.InboxStyle {
+        val lines = content.split("\n").filter { it.trim().isNotEmpty() }
+        val inboxStyle = NotificationCompat.InboxStyle()
+            .setSummaryText("詳細を表示するには通知を展開してください")
+        
+        // 各項目をInboxStyleに追加（最大5項目まで）
+        var itemCount = 0
+        for (line in lines) {
+            if (line.contains("•") && itemCount < 5) {
+                val cleanLine = line.replace("•", "").trim()
+                if (cleanLine.isNotEmpty()) {
+                    inboxStyle.addLine(cleanLine)
+                    itemCount++
+                }
+            }
+        }
+        
+        // 項目が多すぎる場合は「他X項目」を追加
+        val totalItems = lines.count { it.contains("•") }
+        if (totalItems > 5) {
+            inboxStyle.addLine("他 ${totalItems - 5} 項目...")
+        }
+        
+        return inboxStyle
+    }
+    
     private fun createPendingIntent(): PendingIntent {
         val intent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
@@ -316,6 +503,11 @@ class NotificationManager(private val context: Context) {
      * テスト用の月次通知を送信
      */
     fun sendTestMonthlyNotification() {
+        if (!hasNotificationPermission()) {
+            android.util.Log.w("NotificationManager", "通知権限が許可されていません")
+            return
+        }
+        
         val testSeeds = listOf(
             SeedPacket(
                 id = "test1",
@@ -375,6 +567,11 @@ class NotificationManager(private val context: Context) {
      * テスト用の週次通知を送信
      */
     fun sendTestWeeklyNotification() {
+        if (!hasNotificationPermission()) {
+            android.util.Log.w("NotificationManager", "通知権限が許可されていません")
+            return
+        }
+        
         val testSeeds = listOf(
             SeedPacket(
                 id = "test1",

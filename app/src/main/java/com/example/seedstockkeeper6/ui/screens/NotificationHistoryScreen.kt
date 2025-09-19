@@ -6,7 +6,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -15,6 +14,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.graphics.Color as ComposeColor
 import androidx.navigation.NavController
 import com.example.seedstockkeeper6.model.NotificationHistory
 import com.example.seedstockkeeper6.model.NotificationType
@@ -37,10 +38,15 @@ fun NotificationHistoryScreen(
     // 通知履歴を読み込み
     LaunchedEffect(Unit) {
         try {
+            android.util.Log.d("NotificationHistoryScreen", "通知履歴読み込み開始")
             isLoading = true
             errorMessage = ""
-            histories = historyService.getUserNotificationHistory()
+            val result = historyService.getUserNotificationHistory()
+            android.util.Log.d("NotificationHistoryScreen", "通知履歴読み込み完了 - 取得件数: ${result.size}")
+            android.util.Log.d("NotificationHistoryScreen", "取得した履歴: $result")
+            histories = result
         } catch (e: Exception) {
+            android.util.Log.e("NotificationHistoryScreen", "通知履歴の読み込みに失敗", e)
             errorMessage = "通知履歴の読み込みに失敗しました: ${e.message}"
         } finally {
             isLoading = false
@@ -48,20 +54,6 @@ fun NotificationHistoryScreen(
     }
     
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("通知履歴") },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "戻る")
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    titleContentColor = MaterialTheme.colorScheme.onSurface
-                )
-            )
-        }
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -110,6 +102,7 @@ fun NotificationHistoryScreen(
             }
             // 通知履歴リスト
             else if (histories.isEmpty()) {
+                android.util.Log.d("NotificationHistoryScreen", "空の履歴を表示 - histories.isEmpty() = true")
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
@@ -118,9 +111,11 @@ fun NotificationHistoryScreen(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        Text(
-                            text = "📭",
-                            style = MaterialTheme.typography.displayLarge
+                        Icon(
+                            painter = painterResource(id = com.example.seedstockkeeper6.R.drawable.kazaguruma_c),
+                            contentDescription = "空の通知履歴",
+                            tint = ComposeColor.Unspecified,
+                            modifier = Modifier.size(64.dp)
                         )
                         Text(
                             text = "通知履歴がありません",
@@ -136,6 +131,7 @@ fun NotificationHistoryScreen(
                 }
             }
             else {
+                android.util.Log.d("NotificationHistoryScreen", "履歴リストを表示 - 件数: ${histories.size}")
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
@@ -166,6 +162,7 @@ private fun NotificationHistoryCard(
     onDelete: (String) -> Unit
 ) {
     var showDeleteDialog by remember { mutableStateOf(false) }
+    var showDetailDialog by remember { mutableStateOf(false) }
     
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -176,7 +173,7 @@ private fun NotificationHistoryCard(
                 NotificationType.CUSTOM -> MaterialTheme.colorScheme.tertiaryContainer
             }
         ),
-        onClick = { /* 詳細表示など */ }
+        onClick = { showDetailDialog = true }
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
@@ -221,13 +218,24 @@ private fun NotificationHistoryCard(
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
             )
             
-            // 通知内容（プレビュー）
-            Text(
-                text = history.content.take(100) + if (history.content.length > 100) "..." else "",
-                style = MaterialTheme.typography.bodyMedium,
-                maxLines = 3,
-                overflow = TextOverflow.Ellipsis
-            )
+            // 要点表示（新規追加）
+            if (history.summary.isNotEmpty()) {
+                Text(
+                    text = history.summary,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                    maxLines = 3,
+                    overflow = TextOverflow.Ellipsis
+                )
+            } else {
+                // 要点がない場合は従来のプレビュー表示
+                Text(
+                    text = history.content.take(100) + if (history.content.length > 100) "..." else "",
+                    style = MaterialTheme.typography.bodyMedium,
+                    maxLines = 3,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
             
             // メタ情報
             if (history.farmOwner.isNotEmpty() || history.region.isNotEmpty()) {
@@ -259,6 +267,69 @@ private fun NotificationHistoryCard(
                 }
             }
         }
+    }
+    
+    // 詳細表示ダイアログ
+    if (showDetailDialog) {
+        AlertDialog(
+            onDismissRequest = { showDetailDialog = false },
+            title = { 
+                Text(
+                    text = history.title,
+                    style = MaterialTheme.typography.headlineSmall
+                ) 
+            },
+            text = {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    // メタ情報
+                    if (history.farmOwner.isNotEmpty() || history.region.isNotEmpty()) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            if (history.farmOwner.isNotEmpty()) {
+                                Text(
+                                    text = "👤 ${history.farmOwner}",
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                            }
+                            if (history.region.isNotEmpty()) {
+                                Text(
+                                    text = "📍 ${history.region}",
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                    
+                    // 送信日時
+                    Text(
+                        text = formatDateTime(history.sentAt),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    // 通知内容（全文表示）
+                    Text(
+                        text = history.content,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = { showDetailDialog = false }
+                ) {
+                    Text("閉じる")
+                }
+            }
+        )
     }
     
     // 削除確認ダイアログ

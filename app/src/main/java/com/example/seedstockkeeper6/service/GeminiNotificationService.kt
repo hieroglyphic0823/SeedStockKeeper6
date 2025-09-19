@@ -151,22 +151,8 @@ class GeminiNotificationService {
                 11. 上記で設定した助さんの口調・キャラクターで話す
                 12. ユーザー登録種とそうでない種を明確に区別する
 
-                【コンパニオンプランツ効果コード】
-                効果のフィールド（"effects"）は、以下の2桁のコードを**厳密に**使用してください。該当が明確でない場合は「99」を使用してください：
-                - "01": 害虫予防
-                - "02": 病気予防
-                - "03": 生育促進
-                - "04": 空間活用
-                - "05": 風味向上
-                - "06": 土壌改善
-                - "07": 受粉促進
-                - "08": 雑草抑制
-                - "09": 景観美化
-                - "10": 水分保持
-                - "11": pH調整
-                - "12": 効率UP
-                - "13": 収量安定
-                - "99": その他
+                【コンパニオンプランツ効果】
+                効果のフィールド（"effects"）は、効果名称をそのまま使用してください。
 
                 【出力形式】
                 🌱 登録種について:
@@ -181,7 +167,7 @@ class GeminiNotificationService {
                 • [品種名] ［コンパニオンプランツ効果］ - 播種期間:[月] 
 
                 🌿 登録種以外のおすすめの種:
-                • [品種名]  - 播種期間:[月] 
+                • [品種名] 
 
                 🌟 季節の畑情報:
                 • [季節の畑情報]
@@ -194,13 +180,22 @@ class GeminiNotificationService {
                     val response = generativeModel?.generateContent(prompt)
                     response?.text ?: getDefaultMonthlyContent(monthName)
                 } catch (apiException: Exception) {
-                    Log.w("GeminiNotiService", "GeminiAPI呼び出しに失敗（過負荷等）: ${apiException.message}")
+                    Log.w("GeminiNotiService", "GeminiAPI呼び出しに失敗: ${apiException.message}")
                     Log.w("GeminiNotiService", "API例外の詳細: ${apiException.javaClass.simpleName}")
-                    if (apiException.message?.contains("overloaded") == true || apiException.message?.contains("503") == true) {
-                        Log.w("GeminiNotiService", "API過負荷のため、通知を作成できません")
-                        "API過負荷のため通知を作成できません。しばらく時間をおいてから再度お試しください。"
-                    } else {
-                        getDefaultMonthlyContent(monthName)
+                    
+                    when {
+                        apiException is SecurityException -> {
+                            Log.w("GeminiNotiService", "GeminiAPI認証エラー: ${apiException.message}")
+                            getDefaultMonthlyContent(monthName)
+                        }
+                        apiException.message?.contains("overloaded") == true || apiException.message?.contains("503") == true -> {
+                            Log.w("GeminiNotiService", "API過負荷のため、通知を作成できません")
+                            "API過負荷のため通知を作成できません。しばらく時間をおいてから再度お試しください。"
+                        }
+                        else -> {
+                            Log.w("GeminiNotiService", "その他のAPIエラー: ${apiException.message}")
+                            getDefaultMonthlyContent(monthName)
+                        }
                     }
                 }
             } else {
@@ -211,6 +206,94 @@ class GeminiNotificationService {
         } catch (e: Exception) {
             Log.e("GeminiNotiService", "月次通知内容生成に失敗", e)
             getDefaultMonthlyContent(getMonthName(currentMonth))
+        }
+    }
+    
+    /**
+     * 週次通知のタイトルを生成
+     */
+    suspend fun generateWeeklyNotificationTitle(
+        farmOwner: String,
+        customFarmOwner: String = ""
+    ): String = withContext(Dispatchers.IO) {
+        try {
+            val currentDate = java.time.LocalDate.now()
+            val weekNumber = getWeekNumber(currentDate)
+            val japaneseMonthName = getJapaneseMonthName(currentDate.monthValue)
+            
+            val farmOwnerTone = getFarmOwnerTone(farmOwner, customFarmOwner, "今週")
+            
+            if (generativeModel == null) {
+                return@withContext "【${japaneseMonthName}（第${weekNumber}週）】種まきタイミングリマインダー"
+            }
+            
+            val prompt = """
+                あなたは水戸黄門の登場人物の助さんです。以下の情報を基に、週次通知のタイトルを生成してください。
+                
+                【基本情報】
+                - 現在の月: ${japaneseMonthName}
+                - 週番号: 第${weekNumber}週
+                - 農園主: $farmOwner${if (farmOwner == "その他" && customFarmOwner.isNotEmpty()) " ($customFarmOwner)" else ""}
+                - 農園主トーン: $farmOwnerTone
+                
+                【キャラクター別のタイトル案】
+                
+                📜 水戸黄門 宛て
+                「◯◯月、◯◯の候にて――お出ましの時期にございます」
+                例（10月）：「神無月、種まきの候にて――お出ましの時期にございます」
+                風格ある文体で、黄門様への報告っぽく。
+                
+                🌸 お銀 宛て
+                「◯◯月の風に乗せて――◯◯の候、菜園より」
+                例（3月）：「弥生の風に乗せて――春の種まきの候、菜園より」
+                少しやわらかくて風流な感じ。お銀の気品を意識。
+                
+                🍡 八兵衛 宛て
+                「おい八、◯◯月だぞ！◯◯は始めどきだ」
+                例（5月）：「おい八、皐月だぞ！きゅうりの種は始めどきだ」
+                ちょっと砕けたフレンドリー調で、八兵衛への呼びかけに。
+                
+                🔔 汎用タイトル案（誰向けでも使える系）
+                「長月の便り：秋の種をお忘れなく」
+                「文月の候、夏野菜の収穫を楽しみに」
+                「霜月の候、冬支度はいかがですか」
+                「卯月便り：春まきの季節がやってきました」
+                
+                【要件】
+                1. 和風月名（${japaneseMonthName}）を必ず含める
+                2. 農園主（$farmOwner）に適したキャラクターの口調を使用
+                3. 季節感と種まきのタイミングを表現
+                4. 水戸黄門の世界観に合った格調高い文体
+                5. 30文字以内で簡潔に
+                6. 絵文字は使用しない
+                
+                上記の要件に従って、農園主に適した週次通知タイトルを1つ生成してください。
+            """.trimIndent()
+            
+            try {
+                val response = generativeModel?.generateContent(prompt)
+                response?.text?.trim() ?: "【${japaneseMonthName}（第${weekNumber}週）】種まきタイミングリマインダー"
+            } catch (apiException: Exception) {
+                Log.w("GeminiNotiService", "週次通知タイトル生成に失敗: ${apiException.message}")
+                Log.w("GeminiNotiService", "API例外の詳細: ${apiException.javaClass.simpleName}")
+                
+                when {
+                    apiException is SecurityException -> {
+                        Log.w("GeminiNotiService", "GeminiAPI認証エラー: ${apiException.message}")
+                    }
+                    else -> {
+                        Log.w("GeminiNotiService", "その他のAPIエラー: ${apiException.message}")
+                    }
+                }
+                "【${japaneseMonthName}（第${weekNumber}週）】種まきタイミングリマインダー"
+            }
+            
+        } catch (e: Exception) {
+            Log.e("GeminiNotiService", "週次通知タイトル生成に失敗", e)
+            val currentDate = java.time.LocalDate.now()
+            val weekNumber = getWeekNumber(currentDate)
+            val japaneseMonthName = getJapaneseMonthName(currentDate.monthValue)
+            "【${japaneseMonthName}（第${weekNumber}週）】種まきタイミングリマインダー"
         }
     }
     
@@ -284,13 +367,22 @@ class GeminiNotificationService {
                     val response = generativeModel?.generateContent(prompt)
                     response?.text ?: getDefaultWeeklyContent()
                 } catch (apiException: Exception) {
-                    Log.w("GeminiNotiService", "GeminiAPI呼び出しに失敗（過負荷等）: ${apiException.message}")
+                    Log.w("GeminiNotiService", "GeminiAPI呼び出しに失敗: ${apiException.message}")
                     Log.w("GeminiNotiService", "API例外の詳細: ${apiException.javaClass.simpleName}")
-                    if (apiException.message?.contains("overloaded") == true || apiException.message?.contains("503") == true) {
-                        Log.w("GeminiNotiService", "API過負荷のため、通知を作成できません")
-                        "API過負荷のため通知を作成できません。しばらく時間をおいてから再度お試しください。"
-                    } else {
-                        getDefaultWeeklyContent()
+                    
+                    when {
+                        apiException is SecurityException -> {
+                            Log.w("GeminiNotiService", "GeminiAPI認証エラー: ${apiException.message}")
+                            getDefaultWeeklyContent()
+                        }
+                        apiException.message?.contains("overloaded") == true || apiException.message?.contains("503") == true -> {
+                            Log.w("GeminiNotiService", "API過負荷のため、通知を作成できません")
+                            "API過負荷のため通知を作成できません。しばらく時間をおいてから再度お試しください。"
+                        }
+                        else -> {
+                            Log.w("GeminiNotiService", "その他のAPIエラー: ${apiException.message}")
+                            getDefaultWeeklyContent()
+                        }
                     }
                 }
             } else {
@@ -425,6 +517,16 @@ class GeminiNotificationService {
                     response?.text?.trim() ?: getDefaultMonthlyTitle(currentMonth, actualFarmOwner)
                 } catch (apiException: Exception) {
                     Log.w("GeminiNotiService", "月次通知タイトル生成に失敗: ${apiException.message}")
+                    Log.w("GeminiNotiService", "API例外の詳細: ${apiException.javaClass.simpleName}")
+                    
+                    when {
+                        apiException is SecurityException -> {
+                            Log.w("GeminiNotiService", "GeminiAPI認証エラー: ${apiException.message}")
+                        }
+                        else -> {
+                            Log.w("GeminiNotiService", "その他のAPIエラー: ${apiException.message}")
+                        }
+                    }
                     getDefaultMonthlyTitle(currentMonth, actualFarmOwner)
                 }
             } else {
@@ -546,10 +648,7 @@ class GeminiNotificationService {
         
         val companionInfo = StringBuilder()
         companionPlants.forEach { companion ->
-            val effects = companion.effects.map { effect ->
-                val code = getCompanionPlantEffectCode(effect)
-                "$effect($code)"
-            }.joinToString(", ")
+            val effects = companion.effects.joinToString(", ")
             companionInfo.appendLine("- ${companion.plant}: $effects")
         }
         return companionInfo.toString()
@@ -830,6 +929,116 @@ class GeminiNotificationService {
     }
     
     /**
+     * 通知内容から要点を抽出
+     */
+    suspend fun extractNotificationSummary(fullContent: String): String = withContext(Dispatchers.IO) {
+        try {
+            if (generativeModel == null) {
+                return@withContext extractSummaryManually(fullContent)
+            }
+            
+            val prompt = """
+                以下の通知内容から、2つの要点を抽出してください。
+                
+                【通知内容】
+                $fullContent
+                
+                【要件】
+                1. 播種期間終了間近な登録種の商品名
+                2. まきどきの登録種の商品名
+                
+                【出力形式】
+                ⚠️ まき時終了間近：[商品名]、[商品名]
+                🌱 今月まき時：[商品名]、[商品名]
+                
+                上記の形式で、商品名のみを抽出してください。
+            """.trimIndent()
+            
+            try {
+                val response = generativeModel?.generateContent(prompt)
+                response?.text?.trim() ?: extractSummaryManually(fullContent)
+            } catch (apiException: Exception) {
+                Log.w("GeminiNotiService", "要点抽出に失敗: ${apiException.message}")
+                Log.w("GeminiNotiService", "API例外の詳細: ${apiException.javaClass.simpleName}")
+                
+                when {
+                    apiException is SecurityException -> {
+                        Log.w("GeminiNotiService", "GeminiAPI認証エラー: ${apiException.message}")
+                    }
+                    else -> {
+                        Log.w("GeminiNotiService", "その他のAPIエラー: ${apiException.message}")
+                    }
+                }
+                extractSummaryManually(fullContent)
+            }
+            
+        } catch (e: Exception) {
+            Log.e("GeminiNotiService", "要点抽出に失敗", e)
+            extractSummaryManually(fullContent)
+        }
+    }
+    
+    /**
+     * 手動で要点を抽出（APIが利用できない場合）
+     */
+    private fun extractSummaryManually(content: String): String {
+        val lines = content.split("\n").filter { it.trim().isNotEmpty() }
+        val summary = mutableListOf<String>()
+        
+        // まき時終了間近の種の商品名を抽出
+        val endingSeedsLine = lines.find { it.contains("まき時終了間近") || it.contains("📦 まき時終了間近の登録種") }
+        val endingSeeds = mutableListOf<String>()
+        if (endingSeedsLine != null) {
+            // まき時終了間近の種の商品名を抽出
+            val endingIndex = lines.indexOf(endingSeedsLine)
+            for (i in endingIndex + 1 until lines.size) {
+                val line = lines[i].trim()
+                if (line.startsWith("📦") || line.startsWith("•") || line.startsWith("-")) {
+                    val seedName = line.replace(Regex("^[📦•-\\s]+"), "").trim()
+                    if (seedName.isNotEmpty()) {
+                        endingSeeds.add(seedName)
+                    }
+                } else if (line.isEmpty() || line.contains("今月まき時") || line.contains("土づくり") || line.contains("コンパニオンプランツ")) {
+                    break
+                }
+            }
+        }
+        
+        // 今月まき時の種の商品名を抽出
+        val thisMonthSeedsLine = lines.find { it.contains("今月まき時") || it.contains("📦 今月まき時の登録種") }
+        val thisMonthSeeds = mutableListOf<String>()
+        if (thisMonthSeedsLine != null) {
+            val thisMonthIndex = lines.indexOf(thisMonthSeedsLine)
+            for (i in thisMonthIndex + 1 until lines.size) {
+                val line = lines[i].trim()
+                if (line.startsWith("📦") || line.startsWith("•") || line.startsWith("-")) {
+                    val seedName = line.replace(Regex("^[📦•-\\s]+"), "").trim()
+                    if (seedName.isNotEmpty()) {
+                        thisMonthSeeds.add(seedName)
+                    }
+                } else if (line.isEmpty() || line.contains("まき時終了間近") || line.contains("土づくり") || line.contains("コンパニオンプランツ")) {
+                    break
+                }
+            }
+        }
+        
+        // 要約を構築
+        if (endingSeeds.isNotEmpty()) {
+            summary.add("⚠️ まき時終了間近：${endingSeeds.joinToString("、")}")
+        }
+        
+        if (thisMonthSeeds.isNotEmpty()) {
+            summary.add("🌱 今月まき時：${thisMonthSeeds.joinToString("、")}")
+        }
+        
+        return if (summary.isNotEmpty()) {
+            summary.joinToString("\n")
+        } else {
+            "🌱 今月の種まき情報をお知らせします"
+        }
+    }
+
+    /**
      * 指定月が範囲内かチェック
      */
     private fun isMonthInRange(targetMonth: Int, startMonth: Int, endMonth: Int): Boolean {
@@ -840,5 +1049,34 @@ class GeminiNotificationService {
             // 年をまたぐ範囲（例: 11月〜2月）
             targetMonth >= startMonth || targetMonth <= endMonth
         }
+    }
+    
+    /**
+     * 和風月名を取得
+     */
+    private fun getJapaneseMonthName(month: Int): String {
+        return when (month) {
+            1 -> "睦月"
+            2 -> "如月"
+            3 -> "弥生"
+            4 -> "卯月"
+            5 -> "皐月"
+            6 -> "水無月"
+            7 -> "文月"
+            8 -> "葉月"
+            9 -> "長月"
+            10 -> "神無月"
+            11 -> "霜月"
+            12 -> "師走"
+            else -> "${month}月"
+        }
+    }
+    
+    /**
+     * 月の週番号を取得（1日から7日を第1週とする）
+     */
+    private fun getWeekNumber(date: java.time.LocalDate): Int {
+        val dayOfMonth = date.dayOfMonth
+        return ((dayOfMonth - 1) / 7) + 1
     }
 }
