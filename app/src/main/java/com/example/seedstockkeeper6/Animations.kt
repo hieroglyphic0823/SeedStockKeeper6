@@ -103,9 +103,9 @@ fun FullScreenSaveAnimation(
             .background(Color.Black.copy(alpha = 0.7f)),
         contentAlignment = Alignment.Center
     ) {
-        // sukesan.gifアニメーション（保存中待機表示）
+        // tanesuke.gifアニメーション（保存中待機表示）
         AsyncImage(
-            model = com.example.seedstockkeeper6.R.drawable.sukesan,
+            model = com.example.seedstockkeeper6.R.drawable.tanesuke,
             contentDescription = "保存中...",
             imageLoader = imageLoader,
             modifier = Modifier

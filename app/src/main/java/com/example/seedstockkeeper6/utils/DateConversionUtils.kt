@@ -80,6 +80,18 @@ object DateConversionUtils {
     }
     
     /**
+     * 日付から日を取得
+     */
+    fun getDayFromDate(dateString: String): Int {
+        if (dateString.isEmpty()) return 0
+        return try {
+            dateString.substring(8, 10).toInt()
+        } catch (e: Exception) {
+            0
+        }
+    }
+    
+    /**
      * 日付文字列が有効かチェック
      */
     fun isValidDate(dateString: String): Boolean {

@@ -117,6 +117,11 @@ fun MainScaffoldTopAppBar(
                         Icon(Icons.Filled.ArrowBack, contentDescription = "戻る")
                     }
                 }
+                "calendar" -> {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(Icons.Filled.ArrowBack, contentDescription = "戻る")
+                    }
+                }
                 else -> {
                     if (currentRoute?.startsWith("input") == true) {
                         IconButton(onClick = { navController.popBackStack() }) {
@@ -259,6 +264,24 @@ fun MainScaffoldTopAppBar(
                             }
                         }
                     }
+                    } else if (currentRoute == "calendar") {
+                        // 種暦画面のタイトル表示
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(id = com.example.seedstockkeeper6.R.drawable.calendar),
+                                contentDescription = "種暦",
+                                modifier = Modifier.size(24.dp),
+                                tint = Color.Unspecified
+                            )
+                            Text(
+                                text = "種暦",
+                                modifier = Modifier.fillMaxWidth(),
+                                textAlign = TextAlign.Start
+                            )
+                        }
                     } else {
                         // 種一覧画面のタイトル表示
                         Row(
@@ -316,6 +339,9 @@ fun MainScaffoldTopAppBar(
                         }
                         }
                     }
+                }
+                "calendar" -> {
+                    // 種暦画面では何も表示しない
                 }
                 "input" -> {
                     // DisplayModeの時はEDITアイコン、EditModeの時は×ボタンを表示
@@ -582,7 +608,7 @@ fun MainScaffold(
     val isInputScreen = currentRoute?.startsWith("input") == true
     
     val snackbarHostState = remember { SnackbarHostState() }
-    val listViewModel: SeedListViewModel = viewModel()
+    val listViewModel = viewModel<SeedListViewModel>()
     val scope = rememberCoroutineScope()
     val ctx = LocalContext.current
     val settingsViewModel: SettingsViewModel = viewModel { SettingsViewModel(ctx) }

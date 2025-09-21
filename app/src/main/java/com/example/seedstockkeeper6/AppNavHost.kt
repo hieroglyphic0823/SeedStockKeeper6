@@ -12,6 +12,7 @@ import androidx.navigation.compose.composable
 import com.example.seedstockkeeper6.model.SeedPacket
 import com.example.seedstockkeeper6.ui.screens.SeedInputScreen
 import com.example.seedstockkeeper6.ui.screens.SeedListScreen
+import com.example.seedstockkeeper6.ui.screens.CalendarScreen
 import com.example.seedstockkeeper6.ui.screens.NotificationPreviewScreen
 import com.example.seedstockkeeper6.ui.screens.NotificationHistoryScreen
 import com.example.seedstockkeeper6.viewmodel.SeedInputViewModel
@@ -34,7 +35,7 @@ fun AppNavHost(
     ) {
         composable("list") {
             Log.d("BootTrace", "Screen: SeedListScreen初期化")
-            val listViewModel: SeedListViewModel = viewModel()
+            val listViewModel = viewModel<SeedListViewModel>()
             SeedListScreen(
                 navController = navController,
                 viewModel = listViewModel,
@@ -63,7 +64,11 @@ fun AppNavHost(
             PlaceholderScreen(title = "検索", description = "種子の検索機能")
         }
         composable("calendar") {
-            PlaceholderScreen(title = "カレンダー", description = "種子のカレンダー機能")
+            val calendarViewModel = viewModel<SeedListViewModel>()
+            CalendarScreen(
+                navController = navController,
+                viewModel = calendarViewModel
+            )
         }
         composable("settings") {
             val viewModel = settingsViewModel ?: viewModel<com.example.seedstockkeeper6.viewmodel.SettingsViewModel>()

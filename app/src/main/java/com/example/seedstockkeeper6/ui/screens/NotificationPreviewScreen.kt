@@ -36,7 +36,7 @@ fun NotificationPreviewScreen(
     val geminiService = remember { GeminiNotificationService() }
     val historyService = remember { NotificationHistoryService() }
     val scope = rememberCoroutineScope()
-    val seedListViewModel: SeedListViewModel = viewModel()
+    val seedListViewModel = viewModel<SeedListViewModel>()
     val auth = remember { FirebaseAuth.getInstance() }
     val db = remember { Firebase.firestore }
     val activity = LocalActivity.current

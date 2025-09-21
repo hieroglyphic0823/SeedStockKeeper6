@@ -1,6 +1,7 @@
 package com.example.seedstockkeeper6.ui.auth
 
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -8,15 +9,24 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import coil.ImageLoader
+import coil.decode.ImageDecoderDecoder
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.EaseInOutQuart
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -25,6 +35,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.credentials.CredentialManager
 import com.google.firebase.auth.FirebaseAuth
@@ -65,10 +76,55 @@ fun AuthGate(
 
 @Composable
 private fun Splash(modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    
+    // CoilのImageLoaderを設定（GIFサポート付き）
+    val imageLoader = remember {
+        ImageLoader.Builder(context)
+            .components {
+                add(ImageDecoderDecoder.Factory()) // GIFをサポートするために必要
+            }
+            .build()
+    }
+    
+    // tanesuke.gifのスケールアニメーション（種登録画面と同じ設定）
+    val animatedScale by animateFloatAsState(
+        targetValue = 1f,
+        animationSpec = tween(
+            durationMillis = 500,
+            easing = EaseInOutQuart
+        ),
+        label = "scaleAnimation"
+    )
+    
+    // tanesuke.gifの透明度アニメーション（種登録画面と同じ設定）
+    val animatedAlpha by animateFloatAsState(
+        targetValue = 1f,
+        animationSpec = tween(
+            durationMillis = 300,
+            easing = EaseInOutQuart
+        ),
+        label = "alphaAnimation"
+    )
+    
     Box(
         modifier = modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
-    ) { CircularProgressIndicator() }
+    ) { 
+        // tanesuke.gifアニメーション（アプリ起動中表示）
+        AsyncImage(
+            model = com.example.seedstockkeeper6.R.drawable.tanesuke,
+            contentDescription = "アプリ起動中",
+            imageLoader = imageLoader,
+            modifier = Modifier
+                .graphicsLayer(
+                    scaleX = animatedScale,
+                    scaleY = animatedScale,
+                    alpha = animatedAlpha
+                )
+                .size(200.dp)
+        )
+    }
 }
 
 /**

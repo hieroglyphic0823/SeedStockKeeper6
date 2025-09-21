@@ -2,4 +2,12 @@
 <resources>
 
     <style name="Theme.SeedStockKeeper6" parent="android:Theme.Material.Light.NoActionBar" />
+    
+    <!-- スプラッシュスクリーン用テーマ -->
+    <style name="Theme.SeedStockKeeper6.Splash" parent="Theme.SeedStockKeeper6">
+        <item name="android:windowBackground">@android:color/white</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+    </style>
 </resources>

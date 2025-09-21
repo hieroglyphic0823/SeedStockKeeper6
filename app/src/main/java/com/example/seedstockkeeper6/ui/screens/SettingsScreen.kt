@@ -1,6 +1,7 @@
 package com.example.seedstockkeeper6.ui.screens
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -211,10 +212,9 @@ fun SettingsScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            Icon(
-                                Icons.Filled.LocalFlorist,
+                            Image(
+                                painter = painterResource(id = com.example.seedstockkeeper6.R.drawable.home),
                                 contentDescription = "農園名",
-                                tint = MaterialTheme.colorScheme.onSurface,
                                 modifier = Modifier.size(24.dp)
                             )
                             Text(

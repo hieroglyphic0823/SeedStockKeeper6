@@ -47,6 +47,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
+        // スプラッシュスクリーンのテーマから通常のテーマに切り替え
+        setTheme(com.example.seedstockkeeper6.R.style.Theme_SeedStockKeeper6)
+        
         // エッジトゥエッジを有効にする
         enableEdgeToEdge()
         

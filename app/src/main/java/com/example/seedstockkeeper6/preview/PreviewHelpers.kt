@@ -1,6 +1,8 @@
 package com.example.seedstockkeeper6.preview
 
 import com.example.seedstockkeeper6.model.SeedPacket
+import com.example.seedstockkeeper6.model.Cultivation
+import com.example.seedstockkeeper6.model.CalendarEntry
 import com.example.seedstockkeeper6.viewmodel.SeedInputViewModel
 import com.example.seedstockkeeper6.viewmodel.SeedListViewModel
 import com.example.seedstockkeeper6.viewmodel.SettingsViewModel
@@ -81,7 +83,115 @@ fun createPreviewSeedInputViewModel(
 // プレビュー用のSeedListViewModel
 fun createPreviewSeedListViewModel(): SeedListViewModel {
     val viewModel = SeedListViewModel()
-    // 必要に応じてデモデータを設定
+    
+    // プレビュー用のデモデータを設定
+    val demoSeeds = listOf(
+        SeedPacket(
+            id = "demo1",
+            productName = "恋むすめ",
+            variety = "ニンジン",
+            family = "せり科",
+            productNumber = "DEMO001",
+            company = "サンプル種苗",
+            originCountry = "日本",
+            expirationYear = 2026,
+            expirationMonth = 10,
+            contents = "100粒",
+            germinationRate = "85",
+            seedTreatment = "無処理",
+            imageUrls = emptyList(),
+            features = listOf("甘みが強い", "栽培しやすい"),
+            cultivation = Cultivation(),
+            calendar = listOf(
+                CalendarEntry(
+                    id = "cal1",
+                    region = "温暖地",
+                    sowing_start_date = "2025-09-01", // 現在の月（9月）に調整
+                    sowing_end_date = "2025-09-20",   // 現在の月（9月）に調整
+                    harvest_start_date = "2025-12-11",
+                    harvest_end_date = "2025-12-30"
+                ),
+                CalendarEntry(
+                    id = "cal2",
+                    region = "寒冷地",
+                    sowing_start_date = "2025-09-15", // 現在の月（9月）に調整
+                    sowing_end_date = "2025-09-30",   // 現在の月（9月）に調整
+                    harvest_start_date = "2025-12-15",
+                    harvest_end_date = "2025-12-31"
+                )
+            ),
+            companionPlants = emptyList(),
+            documentId = "demo1",
+            selectedRegion = "温暖地",
+            ownerUid = "demo_user"
+        ),
+        SeedPacket(
+            id = "demo2",
+            productName = "打越一寸",
+            variety = "ダイコン",
+            family = "アブラナ科",
+            productNumber = "DEMO002",
+            company = "サンプル種苗",
+            originCountry = "日本",
+            expirationYear = 2026,
+            expirationMonth = 10,
+            contents = "200粒",
+            germinationRate = "90",
+            seedTreatment = "無処理",
+            imageUrls = emptyList(),
+            features = listOf("大きく育つ", "甘みがある"),
+            cultivation = Cultivation(),
+            calendar = listOf(
+                CalendarEntry(
+                    id = "cal3",
+                    region = "温暖地",
+                    sowing_start_date = "2025-09-05", // 現在の月（9月）に調整
+                    sowing_end_date = "2025-09-25",   // 現在の月（9月）に調整
+                    harvest_start_date = "2025-12-05",
+                    harvest_end_date = "2025-12-25"
+                )
+            ),
+            companionPlants = emptyList(),
+            documentId = "demo2",
+            selectedRegion = "温暖地",
+            ownerUid = "demo_user"
+        ),
+        SeedPacket(
+            id = "demo3",
+            productName = "ブロッコリー",
+            variety = "緑嶺",
+            family = "アブラナ科",
+            productNumber = "DEMO003",
+            company = "サンプル種苗",
+            originCountry = "日本",
+            expirationYear = 2026,
+            expirationMonth = 10,
+            contents = "50粒",
+            germinationRate = "88",
+            seedTreatment = "無処理",
+            imageUrls = emptyList(),
+            features = listOf("収穫量が多い", "病気に強い"),
+            cultivation = Cultivation(),
+            calendar = listOf(
+                CalendarEntry(
+                    id = "cal4",
+                    region = "温暖地",
+                    sowing_start_date = "2025-09-10", // 現在の月（9月）に調整
+                    sowing_end_date = "2025-09-30",   // 現在の月（9月）に調整
+                    harvest_start_date = "2025-12-10",
+                    harvest_end_date = "2025-12-31"
+                )
+            ),
+            companionPlants = emptyList(),
+            documentId = "demo3",
+            selectedRegion = "温暖地",
+            ownerUid = "demo_user"
+        )
+    )
+    
+    // デモデータをViewModelに設定
+    viewModel.setDemoSeeds(demoSeeds)
+    
     return viewModel
 }
 

@@ -11,10 +11,21 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
+import com.example.seedstockkeeper6.model.SeedPacket
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.State
 
 class SeedListViewModel : ViewModel() {
+    private val _seeds = mutableStateOf<List<SeedPacket>>(emptyList())
+    val seeds: State<List<SeedPacket>> = _seeds
+    
     init {
         Log.d("BootTrace", "SeedListViewModel init")
+    }
+    
+    // プレビュー用のデモデータ設定メソッド
+    fun setDemoSeeds(demoSeeds: List<SeedPacket>) {
+        _seeds.value = demoSeeds
     }
 
     fun deleteSeedPacketWithImages(documentId: String, onComplete: (Result<Unit>) -> Unit) {
