@@ -11,6 +11,7 @@ import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.Canvas
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.toArgb
@@ -131,12 +132,6 @@ fun CalendarScreen(
                     contentDescription = "検索"
                 )
             },
-            trailingIcon = {
-                Icon(
-                    imageVector = Icons.Filled.CalendarMonth,
-                    contentDescription = "カレンダー"
-                )
-            },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 16.dp),
@@ -226,19 +221,41 @@ fun GanttChartCalendar(
     // 横スクロールの状態を共有
     val scrollState = rememberScrollState()
     
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        shape = RoundedCornerShape(0.dp)
-    ) {
-        Column {
+    // MaterialTheme.colorSchemeの値を抽出
+    val tertiaryContainerColor = MaterialTheme.colorScheme.tertiaryContainer
+    val outlineColor = MaterialTheme.colorScheme.outline
+    
+    Column {
             // ヘッダー行
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.secondaryContainer)
+                    .background(tertiaryContainerColor)
                     .height(24.dp)
-                    .padding(horizontal = 16.dp),
+                    .drawWithContent {
+                        drawContent()
+                        // 上の境界線を描画
+                        drawLine(
+                            color = outlineColor,
+                            start = androidx.compose.ui.geometry.Offset(0f, 0f),
+                            end = androidx.compose.ui.geometry.Offset(size.width, 0f),
+                            strokeWidth = 1.dp.toPx()
+                        )
+                        // 下の境界線を描画
+                        drawLine(
+                            color = outlineColor,
+                            start = androidx.compose.ui.geometry.Offset(0f, size.height),
+                            end = androidx.compose.ui.geometry.Offset(size.width, size.height),
+                            strokeWidth = 1.dp.toPx()
+                        )
+                        // 左の境界線を描画（商品名部分のみ）
+                        drawLine(
+                            color = outlineColor,
+                            start = androidx.compose.ui.geometry.Offset(0f, 0f),
+                            end = androidx.compose.ui.geometry.Offset(0f, size.height),
+                            strokeWidth = 1.dp.toPx()
+                        )
+                    },
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // 左側：商品名ヘッダー
@@ -246,14 +263,16 @@ fun GanttChartCalendar(
                     text = "商品名",
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.width(80.dp)
+                    color = MaterialTheme.colorScheme.onTertiaryContainer,
+                    modifier = Modifier
+                        .width(80.dp)
+                        .padding(horizontal = 16.dp)
                 )
                 
                 // 右側：月ヘッダー（横スクロール可能）
                 val outlineColor = MaterialTheme.colorScheme.outline
                 val thinLineColor = outlineColor.copy(alpha = 0.3f)
-                val headerBackgroundColor = MaterialTheme.colorScheme.secondaryContainer
+                val headerBackgroundColor = MaterialTheme.colorScheme.tertiaryContainer
                 
                 Box(
                     modifier = Modifier
@@ -283,23 +302,6 @@ fun GanttChartCalendar(
                                 strokeWidth = 1.dp.toPx()
                             )
                             
-                            // 月の三分割ライン
-                            val firstThirdX = x + 20.dp.toPx()
-                            val secondThirdX = x + 40.dp.toPx()
-                            
-                            drawLine(
-                                color = thinLineColor,
-                                start = androidx.compose.ui.geometry.Offset(firstThirdX, 0f),
-                                end = androidx.compose.ui.geometry.Offset(firstThirdX, size.height),
-                                strokeWidth = 0.5.dp.toPx()
-                            )
-                            
-                            drawLine(
-                                color = thinLineColor,
-                                start = androidx.compose.ui.geometry.Offset(secondThirdX, 0f),
-                                end = androidx.compose.ui.geometry.Offset(secondThirdX, size.height),
-                                strokeWidth = 0.5.dp.toPx()
-                            )
                         }
                         
                         // 右端の線
@@ -343,8 +345,8 @@ fun GanttChartCalendar(
                             ) {
                                 Text(
                                     text = "${month}",
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = MaterialTheme.colorScheme.onSurface
+                                    style = MaterialTheme.typography.labelLarge,
+                                    color = MaterialTheme.colorScheme.onTertiaryContainer
                                 )
                             }
                         }
@@ -353,7 +355,9 @@ fun GanttChartCalendar(
             }
             
             // データ行
-            LazyColumn {
+            LazyColumn(
+                verticalArrangement = Arrangement.Top
+            ) {
                 items(seeds) { seed: SeedPacket ->
                     GanttChartRow(
                         seed = seed,
@@ -366,7 +370,6 @@ fun GanttChartCalendar(
                 }
             }
         }
-    }
 }
 
 @Composable
@@ -387,15 +390,40 @@ fun GanttChartRow(
     val currentYear = today.year
     val cellWidth = 20.dp  // 上旬・中旬・下旬 1つのセル幅
     val cellWidthPx = with(LocalDensity.current) { cellWidth.toPx() }
+    
+    // MaterialTheme.colorSchemeの値を抽出
+    val surfaceContainerColor = MaterialTheme.colorScheme.surfaceContainer
+    val outlineColor = MaterialTheme.colorScheme.outline
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp),
+            .background(surfaceContainerColor)
+            .drawWithContent {
+                drawContent()
+                // 下の境界線を描画
+                drawLine(
+                    color = outlineColor,
+                    start = androidx.compose.ui.geometry.Offset(0f, size.height),
+                    end = androidx.compose.ui.geometry.Offset(size.width, size.height),
+                    strokeWidth = 1.dp.toPx()
+                )
+                // 左の境界線を描画（商品名部分のみ）
+                drawLine(
+                    color = outlineColor,
+                    start = androidx.compose.ui.geometry.Offset(0f, 0f),
+                    end = androidx.compose.ui.geometry.Offset(0f, size.height),
+                    strokeWidth = 1.dp.toPx()
+                )
+            },
         verticalAlignment = Alignment.CenterVertically
     ) {
         // 左側：商品名と品種名
-        Column(modifier = Modifier.width(80.dp)) {
+        Column(
+            modifier = Modifier
+                .width(80.dp)
+                .padding(horizontal = 0.dp, vertical = 0.dp)
+        ) {
             Text(
                 text = seed.productName,
                 style = MaterialTheme.typography.bodyMedium,
@@ -457,6 +485,14 @@ fun GanttChartRow(
                     }
                 }
 
+                // 左端の境界
+                drawLine(
+                    color = gridOutlineColor,
+                    start = androidx.compose.ui.geometry.Offset(0f, 0f),
+                    end = androidx.compose.ui.geometry.Offset(0f, size.height),
+                    strokeWidth = 1.dp.toPx()
+                )
+                
                 // 右端の境界
                 val right = months.size * 3 * cellWidthPx
                 drawLine(
