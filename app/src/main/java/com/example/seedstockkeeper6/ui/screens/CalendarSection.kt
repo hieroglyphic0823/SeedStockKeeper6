@@ -161,7 +161,8 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
                                 painter = painterResource(id = R.drawable.grain),
                                 contentDescription = "播種期間",
                                 modifier = Modifier.size(18.dp),
-                                contentScale = ContentScale.Fit
+                                contentScale = ContentScale.Fit,
+                                colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(MaterialTheme.colorScheme.onPrimaryContainer)
                             )
                         }
                         

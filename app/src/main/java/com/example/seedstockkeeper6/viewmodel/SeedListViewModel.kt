@@ -21,11 +21,17 @@ class SeedListViewModel : ViewModel() {
     
     init {
         Log.d("BootTrace", "SeedListViewModel init")
+        android.util.Log.d("SeedListViewModel", "初期化時: seeds.value.size = ${_seeds.value.size}")
     }
     
     // プレビュー用のデモデータ設定メソッド
     fun setDemoSeeds(demoSeeds: List<SeedPacket>) {
+        android.util.Log.d("SeedListViewModel", "setDemoSeeds呼び出し: ${demoSeeds.size}件")
+        demoSeeds.forEach { seed ->
+            android.util.Log.d("SeedListViewModel", "設定する商品: ${seed.productName}")
+        }
         _seeds.value = demoSeeds
+        android.util.Log.d("SeedListViewModel", "seeds.value更新完了: ${_seeds.value.size}件")
     }
 
     fun deleteSeedPacketWithImages(documentId: String, onComplete: (Result<Unit>) -> Unit) {

@@ -82,13 +82,14 @@ fun createPreviewSeedInputViewModel(
 
 // プレビュー用のSeedListViewModel
 fun createPreviewSeedListViewModel(): SeedListViewModel {
+    android.util.Log.d("PreviewHelpers", "createPreviewSeedListViewModel開始")
     val viewModel = SeedListViewModel()
     
     // プレビュー用のデモデータを設定
     val demoSeeds = listOf(
         SeedPacket(
             id = "demo1",
-            productName = "恋むすめ",
+            productName = "今月まけるにんじん",
             variety = "ニンジン",
             family = "せり科",
             productNumber = "DEMO001",
@@ -105,24 +106,15 @@ fun createPreviewSeedListViewModel(): SeedListViewModel {
             calendar = listOf(
                 CalendarEntry(
                     id = "cal1",
-                    region = "温暖地",
-                    sowing_start_date = "2025-09-01", // 現在の月（9月）に調整
-                    sowing_end_date = "2025-09-20",   // 現在の月（9月）に調整
+                    region = "暖地",
+                    sowing_start_date = "2025-05-01",
+                    sowing_end_date = "2025-10-10",
                     harvest_start_date = "2025-12-11",
                     harvest_end_date = "2025-12-30"
-                ),
-                CalendarEntry(
-                    id = "cal2",
-                    region = "寒冷地",
-                    sowing_start_date = "2025-09-15", // 現在の月（9月）に調整
-                    sowing_end_date = "2025-09-30",   // 現在の月（9月）に調整
-                    harvest_start_date = "2025-12-15",
-                    harvest_end_date = "2025-12-31"
                 )
             ),
             companionPlants = emptyList(),
             documentId = "demo1",
-            selectedRegion = "温暖地",
             ownerUid = "demo_user"
         ),
         SeedPacket(
@@ -144,7 +136,7 @@ fun createPreviewSeedListViewModel(): SeedListViewModel {
             calendar = listOf(
                 CalendarEntry(
                     id = "cal3",
-                    region = "温暖地",
+                    region = "暖地",
                     sowing_start_date = "2025-09-05", // 現在の月（9月）に調整
                     sowing_end_date = "2025-09-25",   // 現在の月（9月）に調整
                     harvest_start_date = "2025-12-05",
@@ -153,7 +145,6 @@ fun createPreviewSeedListViewModel(): SeedListViewModel {
             ),
             companionPlants = emptyList(),
             documentId = "demo2",
-            selectedRegion = "温暖地",
             ownerUid = "demo_user"
         ),
         SeedPacket(
@@ -175,7 +166,7 @@ fun createPreviewSeedListViewModel(): SeedListViewModel {
             calendar = listOf(
                 CalendarEntry(
                     id = "cal4",
-                    region = "温暖地",
+                    region = "暖地",
                     sowing_start_date = "2025-09-10", // 現在の月（9月）に調整
                     sowing_end_date = "2025-09-30",   // 現在の月（9月）に調整
                     harvest_start_date = "2025-12-10",
@@ -184,13 +175,18 @@ fun createPreviewSeedListViewModel(): SeedListViewModel {
             ),
             companionPlants = emptyList(),
             documentId = "demo3",
-            selectedRegion = "温暖地",
             ownerUid = "demo_user"
         )
     )
     
     // デモデータをViewModelに設定
     viewModel.setDemoSeeds(demoSeeds)
+    
+    // デバッグログ出力
+    android.util.Log.d("PreviewHelpers", "プレビュー用デモデータを設定しました: ${demoSeeds.size}件")
+    demoSeeds.forEach { seed ->
+        android.util.Log.d("PreviewHelpers", "商品名: ${seed.productName}, 播種期間: ${seed.calendar.map { "${it.sowing_start_date}〜${it.sowing_end_date}" }}")
+    }
     
     return viewModel
 }

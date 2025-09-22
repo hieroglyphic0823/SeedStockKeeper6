@@ -104,4 +104,17 @@ object DateConversionUtils {
             false
         }
     }
+    
+    /**
+     * 日付文字列をLocalDateに変換
+     */
+    fun toLocalDate(dateString: String): java.time.LocalDate? {
+        if (dateString.isEmpty()) return null
+        return try {
+            val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+            java.time.LocalDate.parse(dateString, formatter)
+        } catch (e: Exception) {
+            null
+        }
+    }
 }

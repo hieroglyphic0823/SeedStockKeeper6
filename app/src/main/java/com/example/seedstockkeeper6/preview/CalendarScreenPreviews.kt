@@ -7,7 +7,7 @@ import com.example.seedstockkeeper6.ui.theme.SeedStockKeeper6Theme
 import com.example.seedstockkeeper6.ui.screens.CalendarScreen
 import com.example.seedstockkeeper6.viewmodel.SeedListViewModel
 
-@Preview(showBackground = true, name = "カレンダー画面 - ライトテーマ")
+@Preview(showBackground = true, name = "カレンダー画面 - ライトテーマ", heightDp = 800)
 @Composable
 fun CalendarScreenPreview() {
     SeedStockKeeper6Theme(darkTheme = false, dynamicColor = false) {
@@ -22,7 +22,7 @@ fun CalendarScreenPreview() {
     }
 }
 
-@Preview(showBackground = true, name = "カレンダー画面 - ダークテーマ")
+@Preview(showBackground = true, name = "カレンダー画面 - ダークテーマ", heightDp = 800)
 @Composable
 fun CalendarScreenDarkPreview() {
     SeedStockKeeper6Theme(darkTheme = true, dynamicColor = false) {
@@ -37,7 +37,7 @@ fun CalendarScreenDarkPreview() {
     }
 }
 
-@Preview(showBackground = true, name = "カレンダー画面 - 動的カラー")
+@Preview(showBackground = true, name = "カレンダー画面 - 動的カラー", heightDp = 800)
 @Composable
 fun CalendarScreenDynamicPreview() {
     SeedStockKeeper6Theme(darkTheme = false, dynamicColor = true) {

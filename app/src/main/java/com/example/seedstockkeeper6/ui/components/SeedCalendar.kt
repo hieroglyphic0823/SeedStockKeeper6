@@ -221,6 +221,7 @@ fun SeedCalendarGroupedInternal(
     val onErrorColor = MaterialTheme.colorScheme.onError
     val secondaryContainerColor = MaterialTheme.colorScheme.secondaryContainer
     val primaryContainerColor = MaterialTheme.colorScheme.primaryContainer
+    val onSecondaryContainerColor = MaterialTheme.colorScheme.onSecondaryContainer
     // カレンダーの月背景色
     val calendarMonthBackgroundWithinExpiration= tertiaryContainerColor // 月の数字が入っている枠の背景色（tertiaryContainerLight）
     val calendarMonthBackgroundExpired= errorContainerColor // errorContainerLight
@@ -621,7 +622,12 @@ fun SeedCalendarGroupedInternal(
                                             x = currentIconX.toInt(),
                                             y = iconY.toInt()
                                         ),
-                                        dstSize = IntSize(iconDisplaySizeInt, iconDisplaySizeInt)
+                                        dstSize = IntSize(iconDisplaySizeInt, iconDisplaySizeInt),
+                                        colorFilter = if (item.itemLabel == "播種") {
+                                            androidx.compose.ui.graphics.ColorFilter.tint(onPrimaryContainerColor)
+                                        } else {
+                                            null // 収穫アイコンは色付けなし（アイコンそのままの色）
+                                        }
                                     )
                                 }
                                 
