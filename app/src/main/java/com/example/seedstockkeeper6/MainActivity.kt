@@ -55,6 +55,22 @@ class MainActivity : ComponentActivity() {
         
         FirebaseApp.initializeApp(this)
         
+        // Firestoreのオフライン対応を有効化
+        try {
+            com.example.seedstockkeeper6.utils.FirestoreUtils.enableOfflinePersistence()
+            Log.d("MainActivity", "Firestore offline persistence enabled")
+        } catch (e: Exception) {
+            Log.w("MainActivity", "Failed to enable Firestore offline persistence: ${e.message}")
+        }
+        
+        // ネットワーク接続状態をログ出力
+        try {
+            val networkInfo = com.example.seedstockkeeper6.utils.NetworkUtils.getNetworkInfo(this)
+            Log.d("MainActivity", "Network info: $networkInfo")
+        } catch (e: Exception) {
+            Log.w("MainActivity", "Failed to get network info: ${e.message}")
+        }
+        
         // 通知マネージャーを初期化
         notificationManager = NotificationManager(this)
 

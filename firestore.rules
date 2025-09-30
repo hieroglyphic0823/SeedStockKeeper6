@@ -1,0 +1,26 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 種子データ
+    match /seeds/{seedId} {
+      allow read, write: if request.auth != null && 
+        (resource == null || resource.data.ownerUid == request.auth.uid);
+    }
+    
+    // ユーザー設定
+    match /users/{userId}/settings/{settingId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // たねすけさんからのメッセージ
+    match /messages/{messageId} {
+      allow read, write: if request.auth != null && 
+        (resource == null || resource.data.userId == request.auth.uid);
+    }
+    
+    // ユーザー別メッセージ（推奨）
+    match /users/{userId}/messages/{messageId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}

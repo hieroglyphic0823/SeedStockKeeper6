@@ -13,6 +13,7 @@ import com.example.seedstockkeeper6.model.SeedPacket
 import com.example.seedstockkeeper6.ui.screens.SeedInputScreen
 import com.example.seedstockkeeper6.ui.screens.SeedListScreen
 import com.example.seedstockkeeper6.ui.screens.CalendarScreen
+import com.example.seedstockkeeper6.ui.screens.CastleScreen
 import com.example.seedstockkeeper6.ui.screens.NotificationPreviewScreen
 import com.example.seedstockkeeper6.ui.screens.NotificationHistoryScreen
 import com.example.seedstockkeeper6.viewmodel.SeedInputViewModel
@@ -30,9 +31,17 @@ fun AppNavHost(
 ) {
     NavHost(
         navController = navController,
-        startDestination = "list",
+        startDestination = "castle",
         modifier = modifier
     ) {
+        composable("castle") {
+            Log.d("BootTrace", "Screen: CastleScreen初期化")
+            val castleViewModel = viewModel<SeedListViewModel>()
+            CastleScreen(
+                navController = navController,
+                viewModel = castleViewModel
+            )
+        }
         composable("list") {
             Log.d("BootTrace", "Screen: SeedListScreen初期化")
             val listViewModel = viewModel<SeedListViewModel>()

@@ -70,33 +70,53 @@ fun CalendarScreen(
         var firebaseSeeds by remember { mutableStateOf(listOf<SeedPacket>()) }
         
         DisposableEffect(currentUid) {
-            val registration = if (currentUid.isNotEmpty()) {
-                db.collection("seeds")
-                    .whereEqualTo("ownerUid", currentUid)
-                    .addSnapshotListener { snapshot, error ->
-                        if (error != null) {
-                            Log.w("CalendarScreen", "Listen failed.", error)
-                            return@addSnapshotListener
-                        }
-                        
-                        if (snapshot != null) {
-                            val newSeeds = snapshot.documents.mapNotNull { doc ->
-                                try {
-                                    doc.toObject(SeedPacket::class.java)?.copy(id = doc.id)
-                                } catch (e: Exception) {
-                                    Log.w("CalendarScreen", "Failed to convert document ${doc.id} to SeedPacket", e)
-                                    null
+            var registration: com.google.firebase.firestore.ListenerRegistration? = null
+            
+            if (currentUid.isNotEmpty()) {
+                try {
+                    registration = db.collection("seeds")
+                        .whereEqualTo("ownerUid", currentUid)
+                        .addSnapshotListener { snapshot, error ->
+                            if (error != null) {
+                                Log.w("CalendarScreen", "Listen failed: ${error.message}")
+                                // エラーハンドリングを改善
+                                when (error.code) {
+                                    com.google.firebase.firestore.FirebaseFirestoreException.Code.UNAVAILABLE -> {
+                                        Log.w("CalendarScreen", "Network unavailable, using cached data")
+                                    }
+                                    com.google.firebase.firestore.FirebaseFirestoreException.Code.DEADLINE_EXCEEDED -> {
+                                        Log.w("CalendarScreen", "Request timeout, using cached data")
+                                    }
+                                    else -> {
+                                        Log.e("CalendarScreen", "Firestore error: ${error.code} - ${error.message}")
+                                    }
                                 }
+                                return@addSnapshotListener
                             }
-                            firebaseSeeds = newSeeds
+                            
+                            if (snapshot != null) {
+                                val newSeeds = snapshot.documents.mapNotNull { doc ->
+                                    try {
+                                        doc.toObject(SeedPacket::class.java)?.copy(id = doc.id)
+                                    } catch (e: Exception) {
+                                        Log.w("CalendarScreen", "Failed to convert document ${doc.id} to SeedPacket", e)
+                                        null
+                                    }
+                                }
+                                firebaseSeeds = newSeeds
+                            }
                         }
-                    }
-            } else {
-                null
+                } catch (e: Exception) {
+                    Log.e("CalendarScreen", "Error setting up Firestore listener: ${e.message}")
+                }
             }
             
             onDispose {
-                registration?.remove()
+                try {
+                    registration?.remove()
+                } catch (e: Exception) {
+                    Log.w("CalendarScreen", "Error removing listener: ${e.message}")
+                }
             }
         }
         
@@ -222,7 +242,7 @@ fun GanttChartCalendar(
     val scrollState = rememberScrollState()
     
     // MaterialTheme.colorSchemeの値を抽出
-    val tertiaryContainerColor = MaterialTheme.colorScheme.tertiaryContainer
+    val secondaryContainerColor = MaterialTheme.colorScheme.secondaryContainer
     val outlineColor = MaterialTheme.colorScheme.outline
     
     Column {
@@ -230,7 +250,7 @@ fun GanttChartCalendar(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(tertiaryContainerColor)
+                    .background(secondaryContainerColor)
                     .height(24.dp)
                     .drawWithContent {
                         drawContent()
@@ -263,7 +283,7 @@ fun GanttChartCalendar(
                     text = "商品名",
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onTertiaryContainer,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer,
                     modifier = Modifier
                         .width(80.dp)
                         .padding(horizontal = 16.dp)
@@ -272,7 +292,7 @@ fun GanttChartCalendar(
                 // 右側：月ヘッダー（横スクロール可能）
                 val outlineColor = MaterialTheme.colorScheme.outline
                 val thinLineColor = outlineColor.copy(alpha = 0.3f)
-                val headerBackgroundColor = MaterialTheme.colorScheme.tertiaryContainer
+                val headerBackgroundColor = MaterialTheme.colorScheme.secondaryContainer
                 
                 Box(
                     modifier = Modifier
@@ -346,7 +366,7 @@ fun GanttChartCalendar(
                                 Text(
                                     text = "${month}",
                                     style = MaterialTheme.typography.labelLarge,
-                                    color = MaterialTheme.colorScheme.onTertiaryContainer
+                                    color = MaterialTheme.colorScheme.onSecondaryContainer
                                 )
                             }
                         }
@@ -392,13 +412,13 @@ fun GanttChartRow(
     val cellWidthPx = with(LocalDensity.current) { cellWidth.toPx() }
     
     // MaterialTheme.colorSchemeの値を抽出
-    val surfaceContainerColor = MaterialTheme.colorScheme.surfaceContainer
+    val surfaceContainerLowColor = MaterialTheme.colorScheme.surfaceContainerLow
     val outlineColor = MaterialTheme.colorScheme.outline
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(surfaceContainerColor)
+            .background(surfaceContainerLowColor)
             .drawWithContent {
                 drawContent()
                 // 下の境界線を描画
@@ -445,7 +465,7 @@ fun GanttChartRow(
         val gridThinLineColor = gridOutlineColor.copy(alpha = 0.3f)
         val gridBackgroundColor = MaterialTheme.colorScheme.surfaceContainerLowest // カレンダー部の色
         val sowingBarColor = MaterialTheme.colorScheme.primaryContainer // 播種期間: PrimaryContainer
-        val harvestBarColor = MaterialTheme.colorScheme.secondaryContainer // 収穫期間: SecondaryContainer
+        val harvestBarColor = MaterialTheme.colorScheme.secondary // 収穫期間: Secondary
         
         Box(
             modifier = Modifier

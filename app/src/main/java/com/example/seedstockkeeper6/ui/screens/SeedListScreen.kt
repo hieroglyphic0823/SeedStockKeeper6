@@ -52,6 +52,7 @@ import com.example.seedstockkeeper6.viewmodel.SeedListViewModel
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.auth.ktx.auth
+import com.google.firebase.firestore.ListenerRegistration
 import com.google.gson.Gson
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
@@ -115,34 +116,62 @@ fun SeedListScreen(
             return@DisposableEffect onDispose { }
         }
         
-        val registration = db.collection("seeds")
-            .whereEqualTo("ownerUid", currentUid)
-            .addSnapshotListener { snapshot, error ->
-                if (error != null) {
-                    Log.e("SeedListScreen", "Firebase error: ${error.message}")
-                    return@addSnapshotListener
-                }
-                
-                snapshot?.let {
-                    val newSeeds = it.documents.mapNotNull { doc ->
-                        val seed = doc.toObject(SeedPacket::class.java)
-                        if (seed != null) {
-                            // FirestoreのドキュメントIDをSeedPacketのidフィールドに設定
-                            val seedWithId = seed.copy(id = doc.id, documentId = doc.id)
-                            doc.id to seedWithId
-                        } else {
-                            Log.w("SeedListScreen", "Failed to convert document ${doc.id} to SeedPacket")
-                            null
+        var registration: ListenerRegistration? = null
+        
+        try {
+            registration = db.collection("seeds")
+                .whereEqualTo("ownerUid", currentUid)
+                .addSnapshotListener { snapshot, error ->
+                    if (error != null) {
+                        Log.e("SeedListScreen", "Firebase error: ${error.message}")
+                        // エラーハンドリングを改善
+                        when (error.code) {
+                            com.google.firebase.firestore.FirebaseFirestoreException.Code.UNAVAILABLE -> {
+                                Log.w("SeedListScreen", "Network unavailable, using cached data")
+                            }
+                            com.google.firebase.firestore.FirebaseFirestoreException.Code.DEADLINE_EXCEEDED -> {
+                                Log.w("SeedListScreen", "Request timeout, using cached data")
+                            }
+                            else -> {
+                                Log.e("SeedListScreen", "Firestore error: ${error.code} - ${error.message}")
+                            }
+                        }
+                        return@addSnapshotListener
+                    }
+                    
+                    snapshot?.let {
+                        val newSeeds = it.documents.mapNotNull { doc ->
+                            try {
+                                val seed = doc.toObject(SeedPacket::class.java)
+                                if (seed != null) {
+                                    // FirestoreのドキュメントIDをSeedPacketのidフィールドに設定
+                                    val seedWithId = seed.copy(id = doc.id, documentId = doc.id)
+                                    doc.id to seedWithId
+                                } else {
+                                    Log.w("SeedListScreen", "Failed to convert document ${doc.id} to SeedPacket")
+                                    null
+                                }
+                            } catch (e: Exception) {
+                                Log.w("SeedListScreen", "Error converting document ${doc.id}: ${e.message}")
+                                null
+                            }
+                        }
+                        // データが実際に変更された場合のみ更新
+                        if (newSeeds != seeds) {
+                            seeds = newSeeds
                         }
                     }
-                    // データが実際に変更された場合のみ更新
-                    if (newSeeds != seeds) {
-                        seeds = newSeeds
-                    }
                 }
-            }
+        } catch (e: Exception) {
+            Log.e("SeedListScreen", "Error setting up Firestore listener: ${e.message}")
+        }
+        
         onDispose {
-            registration.remove()
+            try {
+                registration?.remove()
+            } catch (e: Exception) {
+                Log.w("SeedListScreen", "Error removing listener: ${e.message}")
+            }
         }
     }
 
@@ -216,7 +245,7 @@ fun SeedListScreen(
                 key = { (id, _) -> id } // キーを指定してリコンポジションを最適化
             ) { (id, seed) ->
             val checked = selectedIds.contains(id)
-            val encodedSeed = URLEncoder.encode(Gson().toJson(seed), StandardCharsets.UTF_8.toString())
+            val encodedSeed = URLEncoder.encode(Gson().toJson(seed), "UTF-8")
             
             // スワイプ可能なリストアイテム
             SwipeToDeleteItem(

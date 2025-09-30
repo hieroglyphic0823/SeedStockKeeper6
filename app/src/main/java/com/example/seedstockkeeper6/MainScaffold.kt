@@ -264,6 +264,24 @@ fun MainScaffoldTopAppBar(
                             }
                         }
                     }
+                    } else if (currentRoute == "castle") {
+                        // お城画面のタイトル表示
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(id = com.example.seedstockkeeper6.R.drawable.home),
+                                contentDescription = "お城",
+                                modifier = Modifier.size(24.dp),
+                                tint = Color.Unspecified
+                            )
+                            Text(
+                                text = "お城",
+                                modifier = Modifier.fillMaxWidth(),
+                                textAlign = TextAlign.Start
+                            )
+                        }
                     } else if (currentRoute == "calendar") {
                         // 種暦画面のタイトル表示
                         Row(
@@ -477,19 +495,19 @@ fun MainScaffoldNavigationBar(
         containerColor = MaterialTheme.colorScheme.surfaceContainer,
         contentColor = MaterialTheme.colorScheme.onSurface
     ) {
-        // ホームアイコン
+        // お城アイコン
         NavigationBarItem(
             icon = { 
                 Icon(
                     painter = painterResource(id = com.example.seedstockkeeper6.R.drawable.home),
                     contentDescription = "お城",
                     tint = ComposeColor.Unspecified,
-                    modifier = Modifier.size(if (currentRoute == "list") 28.dp else 24.dp)
+                    modifier = Modifier.size(if (currentRoute == "castle") 28.dp else 24.dp)
                 )
             },
             label = { Text("お城") },
-            selected = currentRoute == "list",
-            onClick = { navController.navigate("list") }
+            selected = currentRoute == "castle",
+            onClick = { navController.navigate("castle") }
         )
         
         // 一覧アイコン
@@ -499,12 +517,12 @@ fun MainScaffoldNavigationBar(
                     painter = painterResource(id = com.example.seedstockkeeper6.R.drawable.list),
                     contentDescription = "一覧",
                     tint = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.size(if (currentRoute == "search") 28.dp else 24.dp)
+                    modifier = Modifier.size(if (currentRoute == "list") 28.dp else 24.dp)
                 )
             },
             label = { Text("一覧") },
-            selected = currentRoute == "search",
-            onClick = { navController.navigate("search") }
+            selected = currentRoute == "list",
+            onClick = { navController.navigate("list") }
         )
         
         // 中央のFab
@@ -605,6 +623,7 @@ fun MainScaffold(
     val currentRoute = navBackStackEntry?.destination?.route
     Log.d("MainScaffold", "MainScaffold recompose - currentRoute: $currentRoute, navBackStackEntry: $navBackStackEntry")
     val isListScreen = currentRoute == "list"
+    val isCastleScreen = currentRoute == "castle"
     val isInputScreen = currentRoute?.startsWith("input") == true
     
     val snackbarHostState = remember { SnackbarHostState() }
