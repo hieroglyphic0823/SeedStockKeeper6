@@ -398,8 +398,10 @@ class SeedInputViewModel : ViewModel() {
     }
 
     fun applyAIDiffResult() {
+        Log.d("SeedInputViewModel", "applyAIDiffResult開始: aiDiffList=$aiDiffList")
         if (aiDiffList.isNotEmpty()) {
             aiDiffList.forEach { (label, _, aiValue) ->
+                Log.d("SeedInputViewModel", "差分適用: label=$label, aiValue=$aiValue")
                 when (label) {
                     "商品名" -> onProductNameChange(aiValue)
                     "品種" -> onVarietyChange(aiValue)
@@ -409,6 +411,26 @@ class SeedInputViewModel : ViewModel() {
                     "内容量" -> onContentsChange(aiValue)
                 }
             }
+            
+            // 地域確認ダイアログで編集されたカレンダー情報をパケットに反映
+            // OCR結果ではなく、地域確認ダイアログで編集された値を優先
+            if (packet.calendar != null && packet.calendar.isNotEmpty()) {
+                Log.d("Calendar", "地域確認ダイアログで編集されたカレンダー情報を反映: ${packet.calendar}")
+                Log.d("Calendar", "更新前のパケットカレンダー: ${packet.calendar}")
+                // 既にpacket.calendarに反映されているので、そのまま使用
+                Log.d("Calendar", "パケット更新完了: ${packet.calendar}")
+            } else {
+                // パケットにカレンダー情報がない場合は、OCR結果を使用
+                ocrResult?.let { result ->
+                    Log.d("Calendar", "OCR結果のカレンダー情報を反映: ${result.calendar}")
+                    Log.d("Calendar", "更新前のパケットカレンダー: ${packet.calendar}")
+                    packet = packet.copy(calendar = result.calendar)
+                    Log.d("Calendar", "パケット更新完了: ${packet.calendar}")
+                } ?: run {
+                    Log.w("Calendar", "ocrResultがnullのため、カレンダー情報の反映をスキップ")
+                }
+            }
+            
             showSnackbar = "AI解析結果を反映しました"
         }
         showAIDiffDialog = false
@@ -1329,16 +1351,20 @@ class SeedInputViewModel : ViewModel() {
     }
 
     fun updateEditingCalendarEntry(updatedEntry: CalendarEntry) {
-        Log.d("RegionSelection", "updateEditingCalendarEntry: $updatedEntry")
+        Log.d("Calendar", "updateEditingCalendarEntry: $updatedEntry")
+        Log.d("Calendar", "更新前のeditingCalendarEntry: $editingCalendarEntry")
         editingCalendarEntry = updatedEntry
+        Log.d("Calendar", "更新後のeditingCalendarEntry: $editingCalendarEntry")
     }
 
     fun saveEditingCalendarEntry() {
+        Log.d("Calendar", "saveEditingCalendarEntry開始: editingCalendarEntry=$editingCalendarEntry")
         editingCalendarEntry?.let { entry ->
-            Log.d("RegionSelection", "saveEditingCalendarEntry: $entry")
+            Log.d("Calendar", "saveEditingCalendarEntry: $entry")
             
             // 年を有効期限から計算して設定
             val expirationYear = packet.expirationYear
+            Log.d("Calendar", "有効期限年: $expirationYear")
             val calculatedEntry = if (expirationYear > 0) {
                 // 有効期限の年を使用して日付を再構築
                 val updatedEntry = entry.copy(
@@ -1347,27 +1373,34 @@ class SeedInputViewModel : ViewModel() {
                     harvest_start_date = calculateDateWithYear(entry.harvest_start_date, expirationYear),
                     harvest_end_date = calculateDateWithYear(entry.harvest_end_date, expirationYear)
                 )
-                Log.d("RegionSelection", "年計算完了: $updatedEntry")
+                Log.d("Calendar", "年計算完了: $updatedEntry")
                 updatedEntry
             } else {
+                Log.d("Calendar", "有効期限年が0のため、そのまま使用: $entry")
                 entry
             }
             
             // OCR結果を更新
             ocrResult?.let { result ->
+                Log.d("Calendar", "更新前のOCR結果: ${result.calendar}")
                 val updatedCalendar = result.calendar.map { 
                     if (it.region == calculatedEntry.region) calculatedEntry else it 
                 }
                 ocrResult = result.copy(calendar = updatedCalendar)
-                Log.d("RegionSelection", "OCR結果更新完了: $updatedCalendar")
+                Log.d("Calendar", "OCR結果更新完了: $updatedCalendar")
+            } ?: run {
+                Log.w("Calendar", "ocrResultがnullのため、OCR結果の更新をスキップ")
             }
             
             // パケットのカレンダーも更新
             packet = packet.copy(calendar = listOf(calculatedEntry))
-            Log.d("RegionSelection", "パケット更新完了: ${packet.calendar}")
+            Log.d("Calendar", "パケット更新完了: ${packet.calendar}")
             
             // 編集状態をクリア
             editingCalendarEntry = null
+            Log.d("Calendar", "編集状態クリア完了")
+        } ?: run {
+            Log.w("Calendar", "editingCalendarEntryがnullのため、保存をスキップ")
         }
     }
     

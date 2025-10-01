@@ -112,6 +112,9 @@ fun CalendarEntryEditor(
     onCancel: () -> Unit,
     hideYearSelection: Boolean = false
 ) {
+    // 現在の編集状態を保持するローカル状態
+    var currentEntry by remember(entry) { mutableStateOf(entry) }
+    
     // 現在の日付を取得
     val currentDate = java.time.LocalDate.now()
     val currentYear = currentDate.year
@@ -178,8 +181,12 @@ fun CalendarEntryEditor(
 
     // 日付変換と更新処理
     fun updateSowingStart(year: String, month: String, stage: String) {
+        android.util.Log.d("Calendar", "updateSowingStart呼び出し: year=$year, month=$month, stage=$stage")
+        android.util.Log.d("Calendar", "hideYearSelection: $hideYearSelection")
         val yearInt = if (hideYearSelection) 0 else (year.toIntOrNull() ?: 0)
         val monthInt = month.toIntOrNull() ?: 0
+        android.util.Log.d("Calendar", "変換後: yearInt=$yearInt, monthInt=$monthInt")
+        
         if (monthInt > 0 && stage.isNotEmpty()) {
             val startDate = if (hideYearSelection) {
                 // 年選択が無効の場合は月と旬のみで日付を構築（年は後で計算）
@@ -194,13 +201,25 @@ fun CalendarEntryEditor(
             } else {
                 DateConversionUtils.convertStageToStartDate(yearInt, monthInt, stage)
             }
-            onUpdate(entry.copy(sowing_start_date = startDate))
+            android.util.Log.d("Calendar", "生成されたstartDate: $startDate")
+            val updatedEntry = currentEntry.copy(sowing_start_date = startDate)
+            android.util.Log.d("Calendar", "更新前のentry: $currentEntry")
+            android.util.Log.d("Calendar", "更新後のentry: $updatedEntry")
+            currentEntry = updatedEntry
+            onUpdate(updatedEntry)
+            android.util.Log.d("Calendar", "onUpdate呼び出し完了")
+        } else {
+            android.util.Log.w("Calendar", "updateSowingStart: 条件を満たさない - monthInt=$monthInt, stage=$stage")
         }
     }
     
     fun updateSowingEnd(year: String, month: String, stage: String) {
+        android.util.Log.d("Calendar", "updateSowingEnd呼び出し: year=$year, month=$month, stage=$stage")
+        android.util.Log.d("Calendar", "hideYearSelection: $hideYearSelection")
         val yearInt = if (hideYearSelection) 0 else (year.toIntOrNull() ?: 0)
         val monthInt = month.toIntOrNull() ?: 0
+        android.util.Log.d("Calendar", "変換後: yearInt=$yearInt, monthInt=$monthInt")
+        
         if (monthInt > 0 && stage.isNotEmpty()) {
             val endDate = if (hideYearSelection) {
                 // 年選択が無効の場合は月と旬のみで日付を構築（年は後で計算）
@@ -215,13 +234,24 @@ fun CalendarEntryEditor(
             } else {
                 DateConversionUtils.convertStageToEndDate(yearInt, monthInt, stage)
             }
-            onUpdate(entry.copy(sowing_end_date = endDate))
+            android.util.Log.d("Calendar", "生成されたendDate: $endDate")
+            val updatedEntry = currentEntry.copy(sowing_end_date = endDate)
+            android.util.Log.d("Calendar", "更新前のentry: $currentEntry")
+            android.util.Log.d("Calendar", "更新後のentry: $updatedEntry")
+            currentEntry = updatedEntry
+            onUpdate(updatedEntry)
+            android.util.Log.d("Calendar", "onUpdate呼び出し完了")
+        } else {
+            android.util.Log.w("Calendar", "updateSowingEnd: 条件を満たさない - monthInt=$monthInt, stage=$stage")
         }
     }
     
     fun updateHarvestStart(year: String, month: String, stage: String) {
+        android.util.Log.d("Calendar", "updateHarvestStart呼び出し: year=$year, month=$month, stage=$stage")
         val yearInt = if (hideYearSelection) 0 else (year.toIntOrNull() ?: 0)
         val monthInt = month.toIntOrNull() ?: 0
+        android.util.Log.d("Calendar", "変換後: yearInt=$yearInt, monthInt=$monthInt")
+        
         if (monthInt > 0 && stage.isNotEmpty()) {
             val startDate = if (hideYearSelection) {
                 // 年選択が無効の場合は月と旬のみで日付を構築（年は後で計算）
@@ -236,13 +266,24 @@ fun CalendarEntryEditor(
             } else {
                 DateConversionUtils.convertStageToStartDate(yearInt, monthInt, stage)
             }
-            onUpdate(entry.copy(harvest_start_date = startDate))
+            android.util.Log.d("Calendar", "生成されたstartDate: $startDate")
+            val updatedEntry = currentEntry.copy(harvest_start_date = startDate)
+            android.util.Log.d("Calendar", "更新前のentry: $currentEntry")
+            android.util.Log.d("Calendar", "更新後のentry: $updatedEntry")
+            currentEntry = updatedEntry
+            onUpdate(updatedEntry)
+            android.util.Log.d("Calendar", "onUpdate呼び出し完了")
+        } else {
+            android.util.Log.w("Calendar", "updateHarvestStart: 条件を満たさない - monthInt=$monthInt, stage=$stage")
         }
     }
     
     fun updateHarvestEnd(year: String, month: String, stage: String) {
+        android.util.Log.d("Calendar", "updateHarvestEnd呼び出し: year=$year, month=$month, stage=$stage")
         val yearInt = if (hideYearSelection) 0 else (year.toIntOrNull() ?: 0)
         val monthInt = month.toIntOrNull() ?: 0
+        android.util.Log.d("Calendar", "変換後: yearInt=$yearInt, monthInt=$monthInt")
+        
         if (monthInt > 0 && stage.isNotEmpty()) {
             val endDate = if (hideYearSelection) {
                 // 年選択が無効の場合は月と旬のみで日付を構築（年は後で計算）
@@ -257,7 +298,15 @@ fun CalendarEntryEditor(
             } else {
                 DateConversionUtils.convertStageToEndDate(yearInt, monthInt, stage)
             }
-            onUpdate(entry.copy(harvest_end_date = endDate))
+            android.util.Log.d("Calendar", "生成されたendDate: $endDate")
+            val updatedEntry = currentEntry.copy(harvest_end_date = endDate)
+            android.util.Log.d("Calendar", "更新前のentry: $currentEntry")
+            android.util.Log.d("Calendar", "更新後のentry: $updatedEntry")
+            currentEntry = updatedEntry
+            onUpdate(updatedEntry)
+            android.util.Log.d("Calendar", "onUpdate呼び出し完了")
+        } else {
+            android.util.Log.w("Calendar", "updateHarvestEnd: 条件を満たさない - monthInt=$monthInt, stage=$stage")
         }
     }
 
@@ -342,16 +391,14 @@ fun CalendarEntryEditor(
                 onDismissRequest = { sowingStartExpanded = false },
                 sheetState = rememberModalBottomSheetState()
             ) {
-                PeriodSelectionBottomSheet(
+                MonthStageSelectionBottomSheet(
                     title = "播種開始",
-                    selectedYear = sowingStartYear,
-                    selectedMonth = sowingStart,
+                    selectedMonth = sowingStart.toIntOrNull() ?: 0,
                     selectedStage = sowingStartStage,
-                    onYearChange = { sowingStartYear = it },
-                    onMonthChange = { sowingStart = it },
+                    onMonthChange = { sowingStart = it.toString() },
                     onStageChange = { sowingStartStage = it },
                     onConfirm = {
-                        updateSowingStart(sowingStartYear, sowingStart, sowingStartStage)
+                        updateSowingStart("0", sowingStart, sowingStartStage)
                         sowingStartExpanded = false
                     },
                     onCancel = { sowingStartExpanded = false }
@@ -365,16 +412,14 @@ fun CalendarEntryEditor(
                 onDismissRequest = { sowingEndExpanded = false },
                 sheetState = rememberModalBottomSheetState()
             ) {
-                PeriodSelectionBottomSheet(
+                MonthStageSelectionBottomSheet(
                     title = "播種終了",
-                    selectedYear = sowingEndYear,
-                    selectedMonth = sowingEnd,
+                    selectedMonth = sowingEnd.toIntOrNull() ?: 0,
                     selectedStage = sowingEndStage,
-                    onYearChange = { sowingEndYear = it },
-                    onMonthChange = { sowingEnd = it },
+                    onMonthChange = { sowingEnd = it.toString() },
                     onStageChange = { sowingEndStage = it },
                     onConfirm = {
-                        updateSowingEnd(sowingEndYear, sowingEnd, sowingEndStage)
+                        updateSowingEnd("0", sowingEnd, sowingEndStage)
                         sowingEndExpanded = false
                     },
                     onCancel = { sowingEndExpanded = false }
@@ -462,16 +507,14 @@ fun CalendarEntryEditor(
                 onDismissRequest = { harvestStartExpanded = false },
                 sheetState = rememberModalBottomSheetState()
             ) {
-                PeriodSelectionBottomSheet(
+                MonthStageSelectionBottomSheet(
                     title = "収穫開始",
-                    selectedYear = harvestStartYear,
-                    selectedMonth = harvestStart,
+                    selectedMonth = harvestStart.toIntOrNull() ?: 0,
                     selectedStage = harvestStartStage,
-                    onYearChange = { harvestStartYear = it },
-                    onMonthChange = { harvestStart = it },
+                    onMonthChange = { harvestStart = it.toString() },
                     onStageChange = { harvestStartStage = it },
                     onConfirm = {
-                        updateHarvestStart(harvestStartYear, harvestStart, harvestStartStage)
+                        updateHarvestStart("0", harvestStart, harvestStartStage)
                         harvestStartExpanded = false
                     },
                     onCancel = { harvestStartExpanded = false },
@@ -486,16 +529,14 @@ fun CalendarEntryEditor(
                 onDismissRequest = { harvestEndExpanded = false },
                 sheetState = rememberModalBottomSheetState()
             ) {
-                PeriodSelectionBottomSheet(
+                MonthStageSelectionBottomSheet(
                     title = "収穫終了",
-                    selectedYear = harvestEndYear,
-                    selectedMonth = harvestEnd,
+                    selectedMonth = harvestEnd.toIntOrNull() ?: 0,
                     selectedStage = harvestEndStage,
-                    onYearChange = { harvestEndYear = it },
-                    onMonthChange = { harvestEnd = it },
+                    onMonthChange = { harvestEnd = it.toString() },
                     onStageChange = { harvestEndStage = it },
                     onConfirm = {
-                        updateHarvestEnd(harvestEndYear, harvestEnd, harvestEndStage)
+                        updateHarvestEnd("0", harvestEnd, harvestEndStage)
                         harvestEndExpanded = false
                     },
                     onCancel = { harvestEndExpanded = false },
@@ -858,7 +899,7 @@ fun MonthStageSelectionBottomSheet(
         
         Spacer(modifier = Modifier.height(24.dp))
         
-        // ボタン
+        // ボタン（OKを右側に配置）
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -867,8 +908,8 @@ fun MonthStageSelectionBottomSheet(
                 onClick = onCancel,
                 modifier = Modifier.weight(1f),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             ) {
                 Text("キャンセル")
@@ -878,8 +919,8 @@ fun MonthStageSelectionBottomSheet(
                 onClick = onConfirm,
                 modifier = Modifier.weight(1f),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
                 )
             ) {
                 Text("OK")

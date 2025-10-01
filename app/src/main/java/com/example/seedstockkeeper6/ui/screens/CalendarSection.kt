@@ -40,7 +40,11 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
     // カレンダーエントリが変更された時に再計算
     LaunchedEffect(currentEntry) {
         // カレンダーエントリが変更された時の処理
-        android.util.Log.d("CalendarSection", "カレンダーエントリ変更検出: $currentEntry")
+        android.util.Log.d("Calendar", "カレンダーエントリ変更検出: $currentEntry")
+        android.util.Log.d("Calendar", "播種開始日: ${currentEntry.sowing_start_date}")
+        android.util.Log.d("Calendar", "播種終了日: ${currentEntry.sowing_end_date}")
+        android.util.Log.d("Calendar", "収穫開始日: ${currentEntry.harvest_start_date}")
+        android.util.Log.d("Calendar", "収穫終了日: ${currentEntry.harvest_end_date}")
     }
     
     // 現在の日付を取得

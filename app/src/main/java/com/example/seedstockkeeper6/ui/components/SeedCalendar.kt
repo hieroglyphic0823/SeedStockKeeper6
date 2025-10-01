@@ -470,11 +470,7 @@ fun SeedCalendarGroupedInternal(
                     
                     // 帯の開始月が有効期限内かで色を決定
                     val bandStartMonthForCheck = YearMonth.of(startYear, startMonth)
-                    val actualColor = if (!bandStartMonthForCheck.isAfter(expirationDate)) {
-                        item.color // 基本色 (有効期限内)
-                    } else {
-                        expiredColor // 期限切れ色
-                    }
+                    val actualColor = item.color // 常に基本色を使用（背景色で期限切れを表示）
 
                     // 帯のX座標計算 (カレンダー表示上の相対位置)
                     val startDateForRange = LocalDate.of(startYear, startMonth, 1)
@@ -563,8 +559,6 @@ fun SeedCalendarGroupedInternal(
                                 R.drawable.harvest
                             }
                             
-                            // アイコン描画開始のデバッグログ
-                            android.util.Log.d("SeedCalendar", "アイコン描画開始: itemLabel=${item.itemLabel}, iconResource=$iconResource, startX=$startX, endX=$endX")
                             
                             // アイコンを棒グラフ幅に横に繰り返し表示
                             val iconSpacing = iconSize * 1.5f // アイコン間隔（アイコンサイズの1.5倍）
@@ -593,7 +587,6 @@ fun SeedCalendarGroupedInternal(
                                     }
                                 } catch (e: Exception) {
                                     // Vector Drawableの場合は、適切なサイズでBitmapを作成
-                                    android.util.Log.d("SeedCalendar", "Vector Drawable処理開始: iconResource=$iconResource")
                                     val drawable = context.resources.getDrawable(iconResource, null)
                                     val bitmap = Bitmap.createBitmap(
                                         iconSize.toInt(), 
@@ -637,11 +630,8 @@ fun SeedCalendarGroupedInternal(
                                     )
                                 }
                                 
-                                // アイコン描画成功のログ
-                                android.util.Log.d("SeedCalendar", "アイコン描画成功: itemLabel=${item.itemLabel}, iconCount=$iconCount, iconSize=$iconDisplaySizeInt")
                             } catch (e: Exception) {
                                 // アイコンの描画に失敗した場合は無視
-                                android.util.Log.e("SeedCalendar", "Icon drawing failed", e)
                             }
                         }
                     }

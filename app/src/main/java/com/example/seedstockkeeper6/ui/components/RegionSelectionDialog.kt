@@ -122,7 +122,7 @@ fun RegionSelectionDialog(
                     
                     // 説明コメント
                     Text(
-                        text = "AIで読み取った地域区分、播種期間、収穫期間を確認してください。間違っていた場合は修正してください。",
+                        text = "AIで読み取った期間を確認してください。",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(bottom = 16.dp)
@@ -370,10 +370,12 @@ fun RegionSelectionDialog(
                                         CalendarEntryEditor(
                                             entry = entryToShow,
                                             onUpdate = { updatedEntry ->
+                                                android.util.Log.d("RegionSelectionDialog", "CalendarEntryEditor onUpdate: $updatedEntry")
                                                 // 編集内容をViewModelに反映
                                                 onUpdateEditing(updatedEntry)
                                                 // ローカルでも編集された値を保存
                                                 editedEntry = updatedEntry
+                                                android.util.Log.d("RegionSelectionDialog", "editedEntry更新: $editedEntry")
                                             },
                                             onSave = { },
                                             onCancel = { }
@@ -397,34 +399,39 @@ fun RegionSelectionDialog(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Button(
+                            onClick = onDismiss,
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        ) {
+                            Text("キャンセル")
+                        }
+                        
+                        Button(
                             onClick = {
                                 android.util.Log.d("RegionSelectionDialog", "OKボタンクリック: $selectedRegion")
+                                android.util.Log.d("RegionSelectionDialog", "editedEntry: $editedEntry")
                                 // 編集された値がある場合は、それを含めて保存
                                 if (editedEntry != null) {
+                                    android.util.Log.d("RegionSelectionDialog", "editedEntryを保存: $editedEntry")
                                     onUpdateEditing(editedEntry!!)
                                     // 編集された値を保存
                                     onSaveEditing()
+                                } else {
+                                    android.util.Log.w("RegionSelectionDialog", "editedEntryがnullです")
                                 }
                                 onRegionSelected(selectedRegion)
                                 onDismiss()
                             },
                             modifier = Modifier.weight(1f),
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.tertiary,
-                                contentColor = MaterialTheme.colorScheme.onTertiary
+                                containerColor = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary
                             )
                         ) {
                             Text("OK")
-                        }
-                        Button(
-                            onClick = onDismiss,
-                            modifier = Modifier.weight(1f),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.tertiary,
-                                contentColor = MaterialTheme.colorScheme.onTertiary
-                            )
-                        ) {
-                            Text("キャンセル")
                         }
                     }
                 }
