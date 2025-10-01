@@ -4,8 +4,10 @@ import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.example.seedstockkeeper6.model.SeedPacket
+import com.example.seedstockkeeper6.model.MonthlyStatistics
 import com.example.seedstockkeeper6.viewmodel.SeedListViewModel
 import com.example.seedstockkeeper6.service.GeminiNotificationService
+import com.example.seedstockkeeper6.service.StatisticsService
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
@@ -22,6 +24,7 @@ class MonthlyNotificationWorker(
     
     private val notificationManager = NotificationManager(context)
     private val geminiService = GeminiNotificationService()
+    private val statisticsService = StatisticsService()
     private val db = Firebase.firestore
     private val auth = FirebaseAuth.getInstance()
     
@@ -56,8 +59,15 @@ class MonthlyNotificationWorker(
             // 現在の月を取得
             val currentMonth = Calendar.getInstance().get(Calendar.MONTH) + 1
             
-            // ユーザーの種データを取得
-            val userSeeds = getSeedsForUser(uid)
+            // 集計データを取得（効率化）
+            val monthlyStatistics = statisticsService.getCurrentMonthStatistics(uid)
+            val userSeeds = if (monthlyStatistics != null && monthlyStatistics.isValid()) {
+                // 集計データが有効な場合は、最小限のデータのみ取得
+                getSeedsForUserOptimized(uid, monthlyStatistics)
+            } else {
+                // 集計データが古い場合は従来の方法で取得
+                getSeedsForUser(uid)
+            }
             
             // GeminiAPIで通知内容を生成
             val notificationContent = geminiService.generateMonthlyNotificationContent(
@@ -471,5 +481,70 @@ class WeeklyNotificationWorker(
             android.util.Log.w("WeeklyNotificationWorker", "日付の解析に失敗: $dateString", e)
             null
         }
+    }
+}
+
+/**
+ * 集計データを使用して最適化された種データ取得
+ */
+private suspend fun getSeedsForUserOptimized(uid: String, statistics: MonthlyStatistics): List<SeedPacket> {
+    return try {
+        android.util.Log.d("MonthlyNotificationWorker", "最適化された種データ取得開始 - UID: $uid")
+        
+        // 集計データから必要な情報を取得
+        val currentMonth = Calendar.getInstance().get(Calendar.MONTH) + 1
+        val currentYear = Calendar.getInstance().get(Calendar.YEAR)
+        
+        // 今月関連の種のみを取得（集計データの情報を活用）
+        val db = Firebase.firestore
+        val seedsSnapshot = db.collection("seeds")
+            .whereEqualTo("ownerUid", uid)
+            .get().await()
+        
+        val seeds = seedsSnapshot.documents.mapNotNull { doc ->
+            try {
+                val seed = doc.toObject(SeedPacket::class.java)
+                if (seed != null) {
+                    val seedWithId = seed.copy(id = doc.id, documentId = doc.id)
+                    
+                    var isThisMonthSowing = false
+                    var isEndingThisMonth = false
+                    
+                    // 今月関連の種かどうかをチェック
+                    seedWithId.calendar.forEach { entry ->
+                        val sowingStartMonth = com.example.seedstockkeeper6.utils.DateConversionUtils.getMonthFromDate(entry.sowing_start_date)
+                        val sowingStartYear = com.example.seedstockkeeper6.utils.DateConversionUtils.getYearFromDate(entry.sowing_start_date)
+                        val sowingEndMonth = com.example.seedstockkeeper6.utils.DateConversionUtils.getMonthFromDate(entry.sowing_end_date)
+                        val sowingEndYear = com.example.seedstockkeeper6.utils.DateConversionUtils.getYearFromDate(entry.sowing_end_date)
+                        val sowingEndStage = com.example.seedstockkeeper6.utils.DateConversionUtils.convertDateToStage(entry.sowing_end_date)
+                        
+                        if (sowingStartMonth == currentMonth && sowingStartYear == currentYear) {
+                            isThisMonthSowing = true
+                        }
+                        
+                        if (sowingEndMonth == currentMonth && sowingEndYear == currentYear && sowingEndStage == "下旬") {
+                            isEndingThisMonth = true
+                        }
+                    }
+                    
+                    if (isThisMonthSowing || isEndingThisMonth) {
+                        seedWithId
+                    } else {
+                        null
+                    }
+                } else {
+                    null
+                }
+            } catch (e: Exception) {
+                android.util.Log.w("MonthlyNotificationWorker", "種データ解析エラー: ${doc.id}", e)
+                null
+            }
+        }
+        
+        android.util.Log.d("MonthlyNotificationWorker", "最適化された種データ取得完了: ${seeds.size}件")
+        seeds
+    } catch (e: Exception) {
+        android.util.Log.e("MonthlyNotificationWorker", "最適化された種データ取得エラー", e)
+        emptyList()
     }
 }

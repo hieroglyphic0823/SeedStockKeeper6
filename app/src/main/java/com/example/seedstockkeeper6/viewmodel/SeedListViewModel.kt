@@ -12,12 +12,16 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import com.example.seedstockkeeper6.model.SeedPacket
+import com.example.seedstockkeeper6.service.StatisticsService
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.State
 
 class SeedListViewModel : ViewModel() {
     private val _seeds = mutableStateOf<List<SeedPacket>>(emptyList())
     val seeds: State<List<SeedPacket>> = _seeds
+    
+    // 集計サービス
+    private val statisticsService = StatisticsService()
     
     init {
         Log.d("BootTrace", "SeedListViewModel init")
@@ -74,10 +78,54 @@ class SeedListViewModel : ViewModel() {
 
                 docRef.delete().await()
                 Log.d("SeedListVM", "Deleted document: $documentId")
+                
+                // 集計データを更新
+                try {
+                    updateStatisticsAfterSeedChange()
+                } catch (e: Exception) {
+                    Log.w("SeedListVM", "集計更新に失敗しましたが、削除は成功", e)
+                }
+                
                 Result.success(Unit)
             } catch (e: Exception) {
                 Log.e("SeedListVM", "Error deleting packet $documentId", e)
                 Result.failure(e)
             }
         }
+    
+    /**
+     * 種データ変更後の集計更新処理
+     */
+    private suspend fun updateStatisticsAfterSeedChange() {
+        try {
+            val auth = com.google.firebase.auth.FirebaseAuth.getInstance()
+            val uid = auth.currentUser?.uid ?: return
+            
+            // 現在のユーザーの全種データを取得
+            val db = Firebase.firestore
+            val seedsSnapshot = db.collection("seeds")
+                .whereEqualTo("ownerUid", uid)
+                .get().await()
+            
+            val seeds = seedsSnapshot.documents.mapNotNull { doc ->
+                try {
+                    val seed = doc.toObject(SeedPacket::class.java)
+                    seed?.copy(id = doc.id, documentId = doc.id)
+                } catch (e: Exception) {
+                    Log.w("StatisticsUpdate", "種データ解析エラー: ${doc.id}", e)
+                    null
+                }
+            }
+            
+            // 集計データを更新
+            val result = statisticsService.updateStatisticsOnSeedChange(uid, seeds)
+            if (result.success) {
+                Log.d("StatisticsUpdate", "集計データ更新完了")
+            } else {
+                Log.w("StatisticsUpdate", "集計データ更新失敗: ${result.message}")
+            }
+        } catch (e: Exception) {
+            Log.e("StatisticsUpdate", "集計更新処理エラー", e)
+        }
+    }
 }

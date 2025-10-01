@@ -1,26 +1,114 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // 種子データ
+
+    // 種データ
     match /seeds/{seedId} {
-      allow read, write: if request.auth != null && 
-        (resource == null || resource.data.ownerUid == request.auth.uid);
+      function signedIn() {
+        return request.auth != null;
+      }
+      // 既存ドキュメントの所有者判定
+      function isOwnerExisting() {
+        return signedIn() && resource.data.ownerUid == request.auth.uid;
+      }
+      // 作成（create）時の所有者判定（resource はまだ無いので request.resource を見る）
+      function isOwnerCreating() {
+        return signedIn() && request.resource.data.ownerUid == request.auth.uid;
+      }
+      // ownerUid は更新不可（不変）
+      function ownerUnchanged() {
+        return request.resource.data.ownerUid == resource.data.ownerUid;
+      }
+
+      allow create: if isOwnerCreating();
+      allow read:   if isOwnerExisting();
+      allow update: if isOwnerExisting() && ownerUnchanged();
+      allow delete: if isOwnerExisting();
     }
-    
-    // ユーザー設定
-    match /users/{userId}/settings/{settingId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+
+    // ユーザー設定データ
+    match /users/{userId}/settings/{document} {
+      function signedIn() {
+        return request.auth != null;
+      }
+      // 自分の設定データのみアクセス可能
+      function isOwner() {
+        return signedIn() && request.auth.uid == userId;
+      }
+
+      allow read, write: if isOwner();
     }
-    
-    // たねすけさんからのメッセージ
-    match /messages/{messageId} {
-      allow read, write: if request.auth != null && 
-        (resource == null || resource.data.userId == request.auth.uid);
+
+    // 通知履歴データ
+    match /notificationHistory/{document} {
+      function signedIn() {
+        return request.auth != null;
+      }
+      // 自分の通知履歴のみアクセス可能
+      function isOwner() {
+        return signedIn() && resource.data.userId == request.auth.uid;
+      }
+      function isOwnerCreating() {
+        return signedIn() && request.resource.data.userId == request.auth.uid;
+      }
+
+      allow read, write: if isOwner();
+      allow create: if isOwnerCreating();
     }
-    
-    // ユーザー別メッセージ（推奨）
+
+    // たねすけさんからのメッセージ（改善版）
     match /users/{userId}/messages/{messageId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      function signedIn() {
+        return request.auth != null;
+      }
+      // 自分のメッセージのみアクセス可能
+      function isOwner() {
+        return signedIn() && request.auth.uid == userId;
+      }
+      // 作成時の所有者判定
+      function isOwnerCreating() {
+        return signedIn() && request.auth.uid == userId && 
+               request.resource.data.userId == request.auth.uid;
+      }
+      // 既存メッセージの所有者判定
+      function isOwnerExisting() {
+        return signedIn() && request.auth.uid == userId && 
+               resource.data.userId == request.auth.uid;
+      }
+
+      allow create: if isOwnerCreating();
+      allow read: if isOwnerExisting();
+      allow update: if isOwnerExisting();
+      allow delete: if isOwnerExisting();
+    }
+
+    // 月毎集計データ
+    match /monthly_statistics/{statisticsId} {
+      function signedIn() {
+        return request.auth != null;
+      }
+      // 既存集計データの所有者判定
+      function isOwnerExisting() {
+        return signedIn() && resource.data.ownerUid == request.auth.uid;
+      }
+      // 作成時の所有者判定
+      function isOwnerCreating() {
+        return signedIn() && request.resource.data.ownerUid == request.auth.uid;
+      }
+      // ownerUid は更新不可（不変）
+      function ownerUnchanged() {
+        return request.resource.data.ownerUid == resource.data.ownerUid;
+      }
+
+      allow create: if isOwnerCreating();
+      allow read: if isOwnerExisting();
+      allow update: if isOwnerExisting() && ownerUnchanged();
+      allow delete: if isOwnerExisting();
+    }
+
+    // それ以外は拒否
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }

@@ -55,6 +55,16 @@ class MainActivity : ComponentActivity() {
         
         FirebaseApp.initializeApp(this)
         
+        // App Checkを初期化（デバッグ用）
+        try {
+            com.google.firebase.appcheck.FirebaseAppCheck.getInstance().installAppCheckProviderFactory(
+                com.google.firebase.appcheck.debug.DebugAppCheckProviderFactory.getInstance()
+            )
+            Log.d("MainActivity", "App Check initialized with debug provider")
+        } catch (e: Exception) {
+            Log.w("MainActivity", "Failed to initialize App Check: ${e.message}")
+        }
+        
         // Firestoreのオフライン対応を有効化
         try {
             com.example.seedstockkeeper6.utils.FirestoreUtils.enableOfflinePersistence()

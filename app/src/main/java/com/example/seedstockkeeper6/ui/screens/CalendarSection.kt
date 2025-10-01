@@ -37,42 +37,65 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
     // 現在のカレンダーエントリを取得
     val currentEntry = viewModel.packet.calendar?.firstOrNull() ?: CalendarEntry()
     
+    // カレンダーエントリが変更された時に再計算
+    LaunchedEffect(currentEntry) {
+        // カレンダーエントリが変更された時の処理
+        android.util.Log.d("CalendarSection", "カレンダーエントリ変更検出: $currentEntry")
+    }
+    
+    // 現在の日付を取得
+    val currentDate = java.time.LocalDate.now()
+    val currentYear = currentDate.year
+    val currentMonth = currentDate.monthValue
+    
     // 期間選択の状態変数（初期値を直接設定）
     var sowingStartYear by remember(currentEntry.sowing_start_date) { 
-        mutableStateOf(DateConversionUtils.getYearFromDate(currentEntry.sowing_start_date).toString()) 
+        val year = DateConversionUtils.getYearFromDate(currentEntry.sowing_start_date)
+        mutableStateOf(if (year > 0) year.toString() else currentYear.toString()) 
     }
     var sowingStartMonth by remember(currentEntry.sowing_start_date) { 
-        mutableStateOf(DateConversionUtils.getMonthFromDate(currentEntry.sowing_start_date).toString()) 
+        val month = DateConversionUtils.getMonthFromDate(currentEntry.sowing_start_date)
+        mutableStateOf(if (month > 0) month.toString() else currentMonth.toString()) 
     }
     var sowingStartStage by remember(currentEntry.sowing_start_date) { 
-        mutableStateOf(DateConversionUtils.convertDateToStage(currentEntry.sowing_start_date)) 
+        val stage = DateConversionUtils.convertDateToStage(currentEntry.sowing_start_date)
+        mutableStateOf(if (stage.isNotEmpty()) stage else "上旬") 
     }
     var sowingEndYear by remember(currentEntry.sowing_end_date) { 
-        mutableStateOf(DateConversionUtils.getYearFromDate(currentEntry.sowing_end_date).toString()) 
+        val year = DateConversionUtils.getYearFromDate(currentEntry.sowing_end_date)
+        mutableStateOf(if (year > 0) year.toString() else currentYear.toString()) 
     }
     var sowingEndMonth by remember(currentEntry.sowing_end_date) { 
-        mutableStateOf(DateConversionUtils.getMonthFromDate(currentEntry.sowing_end_date).toString()) 
+        val month = DateConversionUtils.getMonthFromDate(currentEntry.sowing_end_date)
+        mutableStateOf(if (month > 0) month.toString() else currentMonth.toString()) 
     }
     var sowingEndStage by remember(currentEntry.sowing_end_date) { 
-        mutableStateOf(DateConversionUtils.convertDateToStage(currentEntry.sowing_end_date)) 
+        val stage = DateConversionUtils.convertDateToStage(currentEntry.sowing_end_date)
+        mutableStateOf(if (stage.isNotEmpty()) stage else "下旬") 
     }
     var harvestStartYear by remember(currentEntry.harvest_start_date) { 
-        mutableStateOf(DateConversionUtils.getYearFromDate(currentEntry.harvest_start_date).toString()) 
+        val year = DateConversionUtils.getYearFromDate(currentEntry.harvest_start_date)
+        mutableStateOf(if (year > 0) year.toString() else currentYear.toString()) 
     }
     var harvestStartMonth by remember(currentEntry.harvest_start_date) { 
-        mutableStateOf(DateConversionUtils.getMonthFromDate(currentEntry.harvest_start_date).toString()) 
+        val month = DateConversionUtils.getMonthFromDate(currentEntry.harvest_start_date)
+        mutableStateOf(if (month > 0) month.toString() else currentMonth.toString()) 
     }
     var harvestStartStage by remember(currentEntry.harvest_start_date) { 
-        mutableStateOf(DateConversionUtils.convertDateToStage(currentEntry.harvest_start_date)) 
+        val stage = DateConversionUtils.convertDateToStage(currentEntry.harvest_start_date)
+        mutableStateOf(if (stage.isNotEmpty()) stage else "上旬") 
     }
     var harvestEndYear by remember(currentEntry.harvest_end_date) { 
-        mutableStateOf(DateConversionUtils.getYearFromDate(currentEntry.harvest_end_date).toString()) 
+        val year = DateConversionUtils.getYearFromDate(currentEntry.harvest_end_date)
+        mutableStateOf(if (year > 0) year.toString() else currentYear.toString()) 
     }
     var harvestEndMonth by remember(currentEntry.harvest_end_date) { 
-        mutableStateOf(DateConversionUtils.getMonthFromDate(currentEntry.harvest_end_date).toString()) 
+        val month = DateConversionUtils.getMonthFromDate(currentEntry.harvest_end_date)
+        mutableStateOf(if (month > 0) month.toString() else currentMonth.toString()) 
     }
     var harvestEndStage by remember(currentEntry.harvest_end_date) { 
-        mutableStateOf(DateConversionUtils.convertDateToStage(currentEntry.harvest_end_date)) 
+        val stage = DateConversionUtils.convertDateToStage(currentEntry.harvest_end_date)
+        mutableStateOf(if (stage.isNotEmpty()) stage else "下旬") 
     }
     var expirationYear by remember(viewModel.packet.expirationYear) { 
         mutableStateOf(viewModel.packet.expirationYear.toString()) 
@@ -190,14 +213,12 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
                             ) {
                                 Text(
                                     text = if (sowingStartYear == "0" && sowingStartMonth == "0" && sowingStartStage.isEmpty()) {
-                                        "播種開始"
+                                        "不明"
                                     } else {
                                         val year = if (sowingStartYear == "0") "" else "${sowingStartYear}年"
                                         val month = if (sowingStartMonth == "0") "不明" else "${sowingStartMonth}月"
                                         val stage = if (sowingStartStage.isNotEmpty()) {
                                             "(${sowingStartStage})"
-                                        } else if (sowingStartYear == "0" && sowingStartMonth == "0" && sowingStartStage.isEmpty()) {
-                                            "(上旬)"
                                         } else {
                                             "(${sowingStartStage.ifEmpty { "上旬" }})"
                                         }
@@ -221,14 +242,12 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
                             ) {
                                 Text(
                                     text = if (sowingEndYear == "0" && sowingEndMonth == "0" && sowingEndStage.isEmpty()) {
-                                        "播種終了"
+                                        "不明"
                                     } else {
                                         val year = if (sowingEndYear == "0") "" else "${sowingEndYear}年"
                                         val month = if (sowingEndMonth == "0") "不明" else "${sowingEndMonth}月"
                                         val stage = if (sowingEndStage.isNotEmpty()) {
                                             "(${sowingEndStage})"
-                                        } else if (sowingEndYear == "0" && sowingEndMonth == "0" && sowingEndStage.isEmpty()) {
-                                            "(下旬)"
                                         } else {
                                             "(${sowingEndStage.ifEmpty { "下旬" }})"
                                         }
@@ -306,14 +325,12 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
                             ) {
                                 Text(
                                     text = if (harvestStartYear == "0" && harvestStartMonth == "0" && harvestStartStage.isEmpty()) {
-                                        "収穫開始"
+                                        "不明"
                                     } else {
                                         val year = if (harvestStartYear == "0") "" else "${harvestStartYear}年"
                                         val month = if (harvestStartMonth == "0") "不明" else "${harvestStartMonth}月"
                                         val stage = if (harvestStartStage.isNotEmpty()) {
                                             "(${harvestStartStage})"
-                                        } else if (harvestStartYear == "0" && harvestStartMonth == "0" && harvestStartStage.isEmpty()) {
-                                            "(上旬)"
                                         } else {
                                             "(${harvestStartStage.ifEmpty { "上旬" }})"
                                         }
@@ -337,14 +354,12 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
                             ) {
                                 Text(
                                     text = if (harvestEndYear == "0" && harvestEndMonth == "0" && harvestEndStage.isEmpty()) {
-                                        "収穫終了"
+                                        "不明"
                                     } else {
                                         val year = if (harvestEndYear == "0") "" else "${harvestEndYear}年"
                                         val month = if (harvestEndMonth == "0") "不明" else "${harvestEndMonth}月"
                                         val stage = if (harvestEndStage.isNotEmpty()) {
                                             "(${harvestEndStage})"
-                                        } else if (harvestEndYear == "0" && harvestEndMonth == "0" && harvestEndStage.isEmpty()) {
-                                            "(下旬)"
                                         } else {
                                             "(${harvestEndStage.ifEmpty { "下旬" }})"
                                         }

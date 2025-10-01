@@ -16,6 +16,7 @@ import com.example.seedstockkeeper6.data.uriToBitmap
 import com.example.seedstockkeeper6.ml.CalendarDetector
 import com.example.seedstockkeeper6.model.CalendarEntry
 import com.example.seedstockkeeper6.model.SeedPacket
+import com.example.seedstockkeeper6.service.StatisticsService
 import com.example.seedstockkeeper6.util.drawRectOverlay
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.ktx.firestore
@@ -44,6 +45,9 @@ class SeedInputViewModel : ViewModel() {
     var packet by mutableStateOf(SeedPacket())
         private set
     var imageUris = mutableStateListOf<Uri>()
+    
+    // 集計サービス
+    private val statisticsService = StatisticsService()
 
     var ocrTargetIndex by mutableStateOf(-1)
         private set
@@ -237,7 +241,7 @@ class SeedInputViewModel : ViewModel() {
         }
         
         // アプリ起動直後は少し待機
-        kotlinx.coroutines.delay(500)
+        kotlinx.coroutines.delay(500L)
 
         val uri = imageUris[ocrTargetIndex]
         val bmp = try {
@@ -300,7 +304,7 @@ class SeedInputViewModel : ViewModel() {
                 try {
                     if (attempt > 0) {
                         // リトライ前に少し待機
-                        kotlinx.coroutines.delay(1000)
+                        kotlinx.coroutines.delay(1000L)
                         Log.d("OCR_Gemini", "リトライ試行: ${attempt + 1}回目")
                     }
                     result = runGeminiOcr(context, bmp)
@@ -564,9 +568,34 @@ class SeedInputViewModel : ViewModel() {
                             val bytes = baos.toByteArray()
                             val imagePath = "seed_images/${id}_${java.util.UUID.randomUUID()}.jpg"
                             try {
-                                storageRef.child(imagePath).putBytes(bytes).await()
-                                pathsByIndex[index] = imagePath
-                                android.util.Log.d("SaveSeed", "uploaded @ $index : $imagePath (from $uri)")
+                                // アップロード処理（リトライ機能付き）
+                                var uploadSuccess = false
+                                var retryCount = 0
+                                val maxRetries = 3
+                                
+                                while (!uploadSuccess && retryCount < maxRetries) {
+                                    try {
+                                        storageRef.child(imagePath).putBytes(bytes).await()
+                                        uploadSuccess = true
+                                        pathsByIndex[index] = imagePath
+                                        android.util.Log.d("SaveSeed", "uploaded @ $index : $imagePath (from $uri) (attempt ${retryCount + 1})")
+                                    } catch (e: kotlinx.coroutines.CancellationException) {
+                                        android.util.Log.w("SaveSeed", "upload cancelled @ $index : $imagePath", e)
+                                        throw e
+                                    } catch (e: Exception) {
+                                        retryCount++
+                                        android.util.Log.w("SaveSeed", "upload attempt $retryCount failed @ $index : $imagePath", e)
+                                        if (retryCount >= maxRetries) {
+                                            android.util.Log.e("SaveSeed", "upload failed after $maxRetries attempts @ $index : $imagePath", e)
+                                        } else {
+                                            // リトライ前に少し待機
+                                            kotlinx.coroutines.delay(1000L * retryCount)
+                                        }
+                                    }
+                                }
+                            } catch (e: kotlinx.coroutines.CancellationException) {
+                                android.util.Log.w("SaveSeed", "upload cancelled @ $index : $imagePath", e)
+                                throw e
                             } catch (e: Exception) {
                                 android.util.Log.e("SaveSeed", "upload failed @ $index : $imagePath", e)
                             }
@@ -591,9 +620,18 @@ class SeedInputViewModel : ViewModel() {
                     }
                 }
 
-                // 5) Firestore を最終更新（ownerUid を上書きしない merge）
+                // 5) アップロード結果のチェック
                 val finalOrderedPaths = pathsByIndex.mapNotNull { it }
+                val failedUploads = pathsByIndex.count { it == null }
+                
                 android.util.Log.d("SaveSeed", "finalOrderedPaths(size=${finalOrderedPaths.size}): $finalOrderedPaths")
+                android.util.Log.d("SaveSeed", "failedUploads: $failedUploads")
+                
+                // アップロード失敗がある場合の処理
+                if (failedUploads > 0) {
+                    android.util.Log.w("SaveSeed", "Some images failed to upload: $failedUploads out of ${imageUris.size}")
+                    // 一部の画像アップロードが失敗した場合でも、成功した画像は保存する
+                }
 
                 val updatedPacket = packet.copy(
                     documentId = id,
@@ -614,6 +652,16 @@ class SeedInputViewModel : ViewModel() {
 
                 // ViewModel の状態を更新
                 packet = updatedPacket
+                
+                // 集計データを更新
+                try {
+                    android.util.Log.d("SaveSeed", "集計データ更新開始")
+                    updateStatisticsAfterSeedChange(uid)
+                    android.util.Log.d("SaveSeed", "集計データ更新完了")
+                } catch (e: Exception) {
+                    android.util.Log.w("SaveSeed", "集計更新に失敗しましたが、種データの保存は成功", e)
+                }
+                
                 showSnackbar = "保存が完了しました（画像: ${finalOrderedPaths.size}）"
                 onComplete(Result.success(Unit))
             } catch (e: SecurityException) {
@@ -1367,6 +1415,43 @@ class SeedInputViewModel : ViewModel() {
         // 種情報の保存処理
         // 既存のsaveSeedメソッドを呼び出す
         saveSeed(context, onComplete)
+    }
+    
+    /**
+     * 種データ変更後の集計更新処理
+     */
+    private suspend fun updateStatisticsAfterSeedChange(ownerUid: String) {
+        try {
+            android.util.Log.d("StatisticsUpdate", "集計データ更新開始: ownerUid=$ownerUid")
+            
+            // 現在のユーザーの全種データを取得
+            val db = Firebase.firestore
+            val seedsSnapshot = db.collection("seeds")
+                .whereEqualTo("ownerUid", ownerUid)
+                .get().await()
+            
+            val seeds = seedsSnapshot.documents.mapNotNull { doc ->
+                try {
+                    val seed = doc.toObject(SeedPacket::class.java)
+                    seed?.copy(id = doc.id, documentId = doc.id)
+                } catch (e: Exception) {
+                    android.util.Log.w("StatisticsUpdate", "種データ解析エラー: ${doc.id}", e)
+                    null
+                }
+            }
+            
+            android.util.Log.d("StatisticsUpdate", "取得した種データ数: ${seeds.size}")
+            
+            // 集計データを更新
+            val result = statisticsService.updateStatisticsOnSeedChange(ownerUid, seeds)
+            if (result.success) {
+                android.util.Log.d("StatisticsUpdate", "集計データ更新完了: totalSeeds=${result.statistics?.totalSeeds}")
+            } else {
+                android.util.Log.w("StatisticsUpdate", "集計データ更新失敗: ${result.message}")
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("StatisticsUpdate", "集計更新処理エラー", e)
+        }
     }
 
 }

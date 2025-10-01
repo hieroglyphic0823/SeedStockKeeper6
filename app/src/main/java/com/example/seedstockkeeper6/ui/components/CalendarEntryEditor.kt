@@ -112,42 +112,59 @@ fun CalendarEntryEditor(
     onCancel: () -> Unit,
     hideYearSelection: Boolean = false
 ) {
+    // 現在の日付を取得
+    val currentDate = java.time.LocalDate.now()
+    val currentYear = currentDate.year
+    val currentMonth = currentDate.monthValue
+    
     // ローカル状態変数（旬ベースの入力）
     var sowingStartYear by remember(entry) { 
-        mutableStateOf(DateConversionUtils.getYearFromDate(entry.sowing_start_date).toString()) 
+        val year = DateConversionUtils.getYearFromDate(entry.sowing_start_date)
+        mutableStateOf(if (year > 0) year.toString() else currentYear.toString()) 
     }
     var sowingStart by remember(entry) { 
-        mutableStateOf(DateConversionUtils.getMonthFromDate(entry.sowing_start_date).toString()) 
+        val month = DateConversionUtils.getMonthFromDate(entry.sowing_start_date)
+        mutableStateOf(if (month > 0) month.toString() else currentMonth.toString()) 
     }
     var sowingStartStage by remember(entry) { 
-        mutableStateOf(DateConversionUtils.convertDateToStage(entry.sowing_start_date)) 
+        val stage = DateConversionUtils.convertDateToStage(entry.sowing_start_date)
+        mutableStateOf(if (stage.isNotEmpty()) stage else "上旬") 
     }
     var sowingEndYear by remember(entry) { 
-        mutableStateOf(DateConversionUtils.getYearFromDate(entry.sowing_end_date).toString()) 
+        val year = DateConversionUtils.getYearFromDate(entry.sowing_end_date)
+        mutableStateOf(if (year > 0) year.toString() else currentYear.toString()) 
     }
     var sowingEnd by remember(entry) { 
-        mutableStateOf(DateConversionUtils.getMonthFromDate(entry.sowing_end_date).toString()) 
+        val month = DateConversionUtils.getMonthFromDate(entry.sowing_end_date)
+        mutableStateOf(if (month > 0) month.toString() else currentMonth.toString()) 
     }
     var sowingEndStage by remember(entry) { 
-        mutableStateOf(DateConversionUtils.convertDateToStage(entry.sowing_end_date)) 
+        val stage = DateConversionUtils.convertDateToStage(entry.sowing_end_date)
+        mutableStateOf(if (stage.isNotEmpty()) stage else "下旬") 
     }
     var harvestStartYear by remember(entry) { 
-        mutableStateOf(DateConversionUtils.getYearFromDate(entry.harvest_start_date).toString()) 
+        val year = DateConversionUtils.getYearFromDate(entry.harvest_start_date)
+        mutableStateOf(if (year > 0) year.toString() else currentYear.toString()) 
     }
     var harvestStart by remember(entry) { 
-        mutableStateOf(DateConversionUtils.getMonthFromDate(entry.harvest_start_date).toString()) 
+        val month = DateConversionUtils.getMonthFromDate(entry.harvest_start_date)
+        mutableStateOf(if (month > 0) month.toString() else currentMonth.toString()) 
     }
     var harvestStartStage by remember(entry) { 
-        mutableStateOf(DateConversionUtils.convertDateToStage(entry.harvest_start_date)) 
+        val stage = DateConversionUtils.convertDateToStage(entry.harvest_start_date)
+        mutableStateOf(if (stage.isNotEmpty()) stage else "上旬") 
     }
     var harvestEndYear by remember(entry) { 
-        mutableStateOf(DateConversionUtils.getYearFromDate(entry.harvest_end_date).toString()) 
+        val year = DateConversionUtils.getYearFromDate(entry.harvest_end_date)
+        mutableStateOf(if (year > 0) year.toString() else currentYear.toString()) 
     }
     var harvestEnd by remember(entry) { 
-        mutableStateOf(DateConversionUtils.getMonthFromDate(entry.harvest_end_date).toString()) 
+        val month = DateConversionUtils.getMonthFromDate(entry.harvest_end_date)
+        mutableStateOf(if (month > 0) month.toString() else currentMonth.toString()) 
     }
     var harvestEndStage by remember(entry) { 
-        mutableStateOf(DateConversionUtils.convertDateToStage(entry.harvest_end_date)) 
+        val stage = DateConversionUtils.convertDateToStage(entry.harvest_end_date)
+        mutableStateOf(if (stage.isNotEmpty()) stage else "下旬") 
     }
     
     // Expanded state variables for dropdowns
@@ -157,7 +174,6 @@ fun CalendarEntryEditor(
     var harvestEndExpanded by remember { mutableStateOf(false) }
     
     // 年選択オプション
-    val currentYear = java.time.LocalDate.now().year
     val yearOptions = (currentYear - 1..currentYear + 2).map { it.toString() }
 
     // 日付変換と更新処理
@@ -326,14 +342,16 @@ fun CalendarEntryEditor(
                 onDismissRequest = { sowingStartExpanded = false },
                 sheetState = rememberModalBottomSheetState()
             ) {
-                MonthStageSelectionBottomSheet(
+                PeriodSelectionBottomSheet(
                     title = "播種開始",
-                    selectedMonth = sowingStart.toIntOrNull() ?: 0,
+                    selectedYear = sowingStartYear,
+                    selectedMonth = sowingStart,
                     selectedStage = sowingStartStage,
-                    onMonthChange = { sowingStart = it.toString() },
+                    onYearChange = { sowingStartYear = it },
+                    onMonthChange = { sowingStart = it },
                     onStageChange = { sowingStartStage = it },
                     onConfirm = {
-                        updateSowingStart("0", sowingStart, sowingStartStage)
+                        updateSowingStart(sowingStartYear, sowingStart, sowingStartStage)
                         sowingStartExpanded = false
                     },
                     onCancel = { sowingStartExpanded = false }
@@ -347,14 +365,16 @@ fun CalendarEntryEditor(
                 onDismissRequest = { sowingEndExpanded = false },
                 sheetState = rememberModalBottomSheetState()
             ) {
-                MonthStageSelectionBottomSheet(
+                PeriodSelectionBottomSheet(
                     title = "播種終了",
-                    selectedMonth = sowingEnd.toIntOrNull() ?: 0,
+                    selectedYear = sowingEndYear,
+                    selectedMonth = sowingEnd,
                     selectedStage = sowingEndStage,
-                    onMonthChange = { sowingEnd = it.toString() },
+                    onYearChange = { sowingEndYear = it },
+                    onMonthChange = { sowingEnd = it },
                     onStageChange = { sowingEndStage = it },
                     onConfirm = {
-                        updateSowingEnd("0", sowingEnd, sowingEndStage)
+                        updateSowingEnd(sowingEndYear, sowingEnd, sowingEndStage)
                         sowingEndExpanded = false
                     },
                     onCancel = { sowingEndExpanded = false }
@@ -442,14 +462,16 @@ fun CalendarEntryEditor(
                 onDismissRequest = { harvestStartExpanded = false },
                 sheetState = rememberModalBottomSheetState()
             ) {
-                MonthStageSelectionBottomSheet(
+                PeriodSelectionBottomSheet(
                     title = "収穫開始",
-                    selectedMonth = harvestStart.toIntOrNull() ?: 0,
+                    selectedYear = harvestStartYear,
+                    selectedMonth = harvestStart,
                     selectedStage = harvestStartStage,
-                    onMonthChange = { harvestStart = it.toString() },
+                    onYearChange = { harvestStartYear = it },
+                    onMonthChange = { harvestStart = it },
                     onStageChange = { harvestStartStage = it },
                     onConfirm = {
-                        updateHarvestStart("0", harvestStart, harvestStartStage)
+                        updateHarvestStart(harvestStartYear, harvestStart, harvestStartStage)
                         harvestStartExpanded = false
                     },
                     onCancel = { harvestStartExpanded = false },
@@ -464,14 +486,16 @@ fun CalendarEntryEditor(
                 onDismissRequest = { harvestEndExpanded = false },
                 sheetState = rememberModalBottomSheetState()
             ) {
-                MonthStageSelectionBottomSheet(
+                PeriodSelectionBottomSheet(
                     title = "収穫終了",
-                    selectedMonth = harvestEnd.toIntOrNull() ?: 0,
+                    selectedYear = harvestEndYear,
+                    selectedMonth = harvestEnd,
                     selectedStage = harvestEndStage,
-                    onMonthChange = { harvestEnd = it.toString() },
+                    onYearChange = { harvestEndYear = it },
+                    onMonthChange = { harvestEnd = it },
                     onStageChange = { harvestEndStage = it },
                     onConfirm = {
-                        updateHarvestEnd("0", harvestEnd, harvestEndStage)
+                        updateHarvestEnd(harvestEndYear, harvestEnd, harvestEndStage)
                         harvestEndExpanded = false
                     },
                     onCancel = { harvestEndExpanded = false },
@@ -494,7 +518,6 @@ fun ExpirationSelectionBottomSheet(
     onCancel: () -> Unit
 ) {
     val currentYear = java.time.LocalDate.now().year
-    
     Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -518,7 +541,7 @@ fun ExpirationSelectionBottomSheet(
                 Text("年", style = MaterialTheme.typography.bodyMedium)
                 NumberPicker(
                     value = selectedYear.toIntOrNull() ?: currentYear,
-                    range = currentYear..currentYear + 5,
+                    range = currentYear..(currentYear + 5),
                     onValueChange = { onYearChange(it.toString()) },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -624,7 +647,7 @@ fun PeriodSelectionBottomSheet(
                     Text("年", style = MaterialTheme.typography.bodyMedium)
                     NumberPicker(
                         value = selectedYear.toIntOrNull() ?: currentYear,
-                        range = currentYear - 1..currentYear + 2,
+                        range = (currentYear - 1)..(currentYear + 2),
                         onValueChange = { onYearChange(it.toString()) },
                         modifier = Modifier
                             .fillMaxWidth()

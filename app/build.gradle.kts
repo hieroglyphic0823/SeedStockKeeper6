@@ -90,6 +90,8 @@ dependencies {
     implementation(libs.firebase.firestore)
     implementation(libs.firebase.storage)
     implementation(libs.firebase.auth.ktx)
+    implementation("com.google.firebase:firebase-appcheck")
+    implementation("com.google.firebase:firebase-appcheck-debug")
 
     // Google サインイン（Credential Manager + Google ID）
     implementation(libs.androidx.credentials)

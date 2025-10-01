@@ -37,13 +37,25 @@ import com.example.seedstockkeeper6.R
 import com.example.seedstockkeeper6.model.SeedPacket
 import com.example.seedstockkeeper6.model.SukesanMessage
 import com.example.seedstockkeeper6.model.CalendarEntry
+import com.example.seedstockkeeper6.model.MonthlyStatistics
 import com.example.seedstockkeeper6.service.SukesanMessageService
+import com.example.seedstockkeeper6.service.StatisticsService
 import com.example.seedstockkeeper6.model.NotificationHistory
 import com.example.seedstockkeeper6.service.NotificationHistoryService
 import com.example.seedstockkeeper6.viewmodel.SeedListViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+
+/**
+ * 集計データの表示用データクラス
+ */
+data class StatisticsData(
+    val thisMonthSowingCount: Int,
+    val urgentSeedsCount: Int,
+    val totalSeeds: Int,
+    val familyDistribution: List<Pair<String, Int>>
+)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -54,6 +66,13 @@ fun CastleScreen(
     farmOwner: String = "水戸黄門",
     farmName: String = "菜園"
 ) {
+    // 集計サービス
+    val statisticsService = remember { StatisticsService() }
+    
+    // 集計データの状態
+    var monthlyStatistics by remember { mutableStateOf<MonthlyStatistics?>(null) }
+    var isLoadingStatistics by remember { mutableStateOf(false) }
+    
     // データの取得（プレビュー時は固定データ、実装時はViewModelから）
     val seeds = if (isPreview) {
         // プレビュー時：固定の種データを使用
@@ -108,35 +127,92 @@ fun CastleScreen(
     val currentMonth = today.monthValue
     val currentYear = today.year
     
-    // 今月の播種予定種子数
-    val thisMonthSowingSeeds = seeds.filter { seed ->
-        seed.calendar?.any { entry ->
-            val sowingStartMonth = com.example.seedstockkeeper6.utils.DateConversionUtils.getMonthFromDate(entry.sowing_start_date)
-            val sowingStartYear = com.example.seedstockkeeper6.utils.DateConversionUtils.getYearFromDate(entry.sowing_start_date)
-            sowingStartMonth == currentMonth && sowingStartYear == currentYear
-        } ?: false
+    // 集計データの取得（プレビュー時は固定データ、実装時は集計サービスから）
+    val statisticsData = if (isPreview) {
+        // プレビュー時：固定の集計データ
+        StatisticsData(
+            thisMonthSowingCount = 1,
+            urgentSeedsCount = 0,
+            totalSeeds = 2,
+            familyDistribution = listOf(Pair("せり科", 1), Pair("きく科", 1))
+        )
+    } else {
+        // 実装時：集計データを取得
+        LaunchedEffect(seeds.size) { // seedsのサイズが変更された時に再計算
+            if (!isLoadingStatistics) {
+                isLoadingStatistics = true
+                try {
+                    val auth = com.google.firebase.auth.FirebaseAuth.getInstance()
+                    val uid = auth.currentUser?.uid
+                    if (uid != null) {
+                        // まず現在の集計データを取得
+                        monthlyStatistics = statisticsService.getCurrentMonthStatistics(uid)
+                        
+                        // 集計データが古い場合、または種データが変更された場合は再計算
+                        if (monthlyStatistics == null || !monthlyStatistics!!.isValid() || 
+                            monthlyStatistics!!.totalSeeds != seeds.size) {
+                            android.util.Log.d("CastleScreen", "集計データを再計算: seeds.size=${seeds.size}")
+                            val result = statisticsService.updateStatisticsOnSeedChange(uid, seeds)
+                            if (result.success) {
+                                monthlyStatistics = result.statistics
+                                android.util.Log.d("CastleScreen", "集計データ更新完了: totalSeeds=${result.statistics?.totalSeeds}")
+                            }
+                        }
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.e("CastleScreen", "集計データ取得エラー", e)
+                } finally {
+                    isLoadingStatistics = false
+                }
+            }
+        }
+        
+        // 集計データから値を取得、データがない場合は従来の計算を使用
+        if (monthlyStatistics != null) {
+            StatisticsData(
+                thisMonthSowingCount = monthlyStatistics!!.thisMonthSowingCount,
+                urgentSeedsCount = monthlyStatistics!!.urgentSeedsCount,
+                totalSeeds = monthlyStatistics!!.totalSeeds,
+                familyDistribution = monthlyStatistics!!.getTopFamilies(3)
+            )
+        } else {
+            // フォールバック：従来の計算処理
+            val thisMonthSowingSeeds = seeds.filter { seed ->
+                seed.calendar?.any { entry ->
+                    val sowingStartMonth = com.example.seedstockkeeper6.utils.DateConversionUtils.getMonthFromDate(entry.sowing_start_date)
+                    val sowingStartYear = com.example.seedstockkeeper6.utils.DateConversionUtils.getYearFromDate(entry.sowing_start_date)
+                    sowingStartMonth == currentMonth && sowingStartYear == currentYear
+                } ?: false
+            }
+            
+            val urgentSeeds = seeds.filter { seed ->
+                seed.calendar?.any { entry ->
+                    val sowingEndMonth = com.example.seedstockkeeper6.utils.DateConversionUtils.getMonthFromDate(entry.sowing_end_date)
+                    val sowingEndYear = com.example.seedstockkeeper6.utils.DateConversionUtils.getYearFromDate(entry.sowing_end_date)
+                    val sowingEndStage = com.example.seedstockkeeper6.utils.DateConversionUtils.convertDateToStage(entry.sowing_end_date)
+                    sowingEndMonth == currentMonth && sowingEndYear == currentYear && sowingEndStage == "下旬"
+                } ?: false
+            }
+            
+            val currentDate = LocalDate.now()
+            val validSeeds = seeds.filter { seed ->
+                val expirationDate = LocalDate.of(seed.expirationYear, seed.expirationMonth, 1)
+                currentDate.isBefore(expirationDate.plusMonths(1))
+            }
+            val familyDist = validSeeds.groupBy { it.family }
+                .mapValues { it.value.size }
+                .toList()
+                .sortedByDescending { it.second }
+                .take(3)
+            
+            StatisticsData(
+                thisMonthSowingCount = thisMonthSowingSeeds.size,
+                urgentSeedsCount = urgentSeeds.size,
+                totalSeeds = seeds.size,
+                familyDistribution = familyDist
+            )
+        }
     }
-    
-    // まき時終了間近の種子数（今月の下旬まで）
-    val urgentSeeds = seeds.filter { seed ->
-        seed.calendar?.any { entry ->
-            val sowingEndMonth = com.example.seedstockkeeper6.utils.DateConversionUtils.getMonthFromDate(entry.sowing_end_date)
-            val sowingEndYear = com.example.seedstockkeeper6.utils.DateConversionUtils.getYearFromDate(entry.sowing_end_date)
-            val sowingEndStage = com.example.seedstockkeeper6.utils.DateConversionUtils.convertDateToStage(entry.sowing_end_date)
-            sowingEndMonth == currentMonth && sowingEndYear == currentYear && sowingEndStage == "下旬"
-        } ?: false
-    }
-    
-    // 科別分布（有効期限内の種のみ）
-    val currentDate = LocalDate.now()
-    val validSeeds = seeds.filter { seed ->
-        val expirationDate = LocalDate.of(seed.expirationYear, seed.expirationMonth, 1)
-        currentDate.isBefore(expirationDate.plusMonths(1)) // 有効期限の月末まで
-    }
-    val familyDistribution = validSeeds.groupBy { it.family }
-        .mapValues { it.value.size }
-        .toList()
-        .sortedByDescending { it.second }
     
     Column(
         modifier = Modifier
@@ -160,16 +236,16 @@ fun CastleScreen(
         
         // 今月の播種状況
         SowingSummaryCards(
-            thisMonthSowingSeeds = thisMonthSowingSeeds,
-            urgentSeeds = urgentSeeds
+            thisMonthSowingCount = statisticsData.thisMonthSowingCount,
+            urgentSeedsCount = statisticsData.urgentSeedsCount
         )
         
         Spacer(modifier = Modifier.height(24.dp))
         
         // 統計ウィジェット
         StatisticsWidgets(
-            totalSeeds = seeds.size,
-            familyDistribution = familyDistribution
+            totalSeeds = statisticsData.totalSeeds,
+            familyDistribution = statisticsData.familyDistribution
         )
     }
 }
@@ -360,8 +436,8 @@ fun SukesanMessageCard(
 
 @Composable
 fun SowingSummaryCards(
-    thisMonthSowingSeeds: List<SeedPacket>,
-    urgentSeeds: List<SeedPacket>
+    thisMonthSowingCount: Int,
+    urgentSeedsCount: Int
 ) {
     Column(
         verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -391,7 +467,7 @@ fun SowingSummaryCards(
             SummaryCard(
                 icon = Icons.Filled.Inventory,
                 title = "まき時",
-                value = "${thisMonthSowingSeeds.size}",
+                value = "$thisMonthSowingCount",
                 subtitle = "今月",
                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                 contentColor = MaterialTheme.colorScheme.onSurface,
@@ -402,7 +478,7 @@ fun SowingSummaryCards(
             SummaryCard(
                 icon = Icons.Filled.Schedule,
                 title = "終了間近",
-                value = "${urgentSeeds.size}",
+                value = "$urgentSeedsCount",
                 subtitle = "今月",
                 containerColor = MaterialTheme.colorScheme.errorContainer,
                 contentColor = MaterialTheme.colorScheme.onErrorContainer,
@@ -653,7 +729,7 @@ fun CastleScreenPreviewOgin() {
     MaterialTheme {
         CastleScreen(
             navController = rememberNavController(),
-            viewModel = SeedListViewModel(),
+            viewModel = viewModel(),
             isPreview = true,
             farmOwner = "お銀",
             farmName = "田中さんの農園"
@@ -667,7 +743,7 @@ fun CastleScreenPreviewKomon() {
     MaterialTheme {
         CastleScreen(
             navController = rememberNavController(),
-            viewModel = SeedListViewModel(),
+            viewModel = viewModel(),
             isPreview = true,
             farmOwner = "水戸黄門",
             farmName = "菜園"
@@ -681,7 +757,7 @@ fun CastleScreenPreviewHachibei() {
     MaterialTheme {
         CastleScreen(
             navController = rememberNavController(),
-            viewModel = SeedListViewModel(),
+            viewModel = viewModel(),
             isPreview = true,
             farmOwner = "八兵衛",
             farmName = "八兵衛の畑"

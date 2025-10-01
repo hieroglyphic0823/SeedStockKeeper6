@@ -323,10 +323,16 @@ fun SeedCalendarGroupedInternal(
 
             // 栽培期間行の背景色 (有効期限を考慮)
             if (bands.isNotEmpty()) { // groupedBand がないと expirationYear/Month にアクセスできない
-                val expirationForMonthBg = YearMonth.of(
-                    bands.first().expirationYear,
-                    bands.first().expirationMonth
-                ) // 代表として最初のバンドの期限を使う
+                val expirationYear = bands.first().expirationYear
+                val expirationMonth = bands.first().expirationMonth
+                
+                // expirationMonthが0以下の場合は有効期限なしとして扱う
+                val expirationForMonthBg = if (expirationMonth > 0) {
+                    YearMonth.of(expirationYear, expirationMonth)
+                } else {
+                    // 有効期限なしの場合は非常に遠い未来の日付を設定
+                    YearMonth.of(9999, 12)
+                }
                 val targetMonthForBg = YearMonth.of(logicalYear, logicalMonth)
                 if (targetMonthForBg <= expirationForMonthBg) {
                     drawRect(

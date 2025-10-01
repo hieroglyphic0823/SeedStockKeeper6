@@ -290,11 +290,11 @@ object SukesanMessageService {
     private fun getFarmOwnerTone(farmOwner: String, customFarmOwner: String, timeContext: String): String {
         return when (farmOwner) {
             "水戸黄門" -> """
-                あなたは助さんとして、水戸黄門に話しかける口調で話してください：
+                あなたは助さんとして、ご隠居様（水戸黄門）に話しかける口調で話してください：
                 - 丁寧で格式高い敬語
-                - 「黄門様、〜でございます」「〜させていただきます」
+                - 「ご隠居様、〜でございます」「〜させていただきます」
                 - 農業の専門知識を分かりやすく説明
-                - 例：「黄門様、$timeContext の種まきについてお手伝いいたします」
+                - 例：「ご隠居様、$timeContext の種まきについてお手伝いいたします」
             """.trimIndent()
             
             "お銀" -> """
