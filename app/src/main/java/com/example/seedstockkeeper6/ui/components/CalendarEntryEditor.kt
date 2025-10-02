@@ -328,7 +328,7 @@ fun CalendarEntryEditor(
                 contentAlignment = Alignment.Center
             ) {
                 androidx.compose.foundation.Image(
-                    painter = painterResource(id = R.drawable.grain),
+                    painter = painterResource(id = R.drawable.germination),
                     contentDescription = "播種期間",
                     modifier = Modifier.size(18.dp),
                     contentScale = ContentScale.Fit

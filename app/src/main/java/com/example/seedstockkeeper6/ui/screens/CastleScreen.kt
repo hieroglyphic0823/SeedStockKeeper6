@@ -27,6 +27,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import androidx.compose.ui.tooling.preview.Preview
@@ -357,7 +358,7 @@ fun SukesanMessageCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer
+            containerColor = MaterialTheme.colorScheme.secondaryContainer
         ),
         shape = RoundedCornerShape(16.dp)
     ) {
@@ -370,27 +371,6 @@ fun SukesanMessageCard(
             var messageHeight by remember { mutableStateOf(0.dp) }
             val density = LocalDensity.current
             
-            // すけさんアイコン
-            // CoilのImageLoaderを設定（GIFサポート付き）
-            val context = LocalContext.current
-            val imageLoader = remember {
-                ImageLoader.Builder(context)
-                    .components {
-                        add(ImageDecoderDecoder.Factory()) // GIFをサポートするために必要
-                    }
-                    .build()
-            }
-            
-            AsyncImage(
-                model = R.drawable.suke_up_c,
-                contentDescription = "すけさん",
-                imageLoader = imageLoader,
-                modifier = Modifier.size(
-                    width = messageHeight,
-                    height = messageHeight
-                )
-            )
-            
             // 吹き出し部分
             Card(
                 modifier = Modifier
@@ -401,7 +381,7 @@ fun SukesanMessageCard(
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surfaceContainerLow
                 ),
-                shape = RoundedCornerShape(16.dp, 16.dp, 16.dp, 4.dp) // 吹き出しの形
+                shape = RoundedCornerShape(16.dp, 4.dp, 16.dp, 16.dp) // 吹き出しの形（右側に変更）
             ) {
                 Column(
                     modifier = Modifier.padding(16.dp)
@@ -444,8 +424,8 @@ fun SukesanMessageCard(
                                 summaryLines.forEach { line ->
                                     if (line.isNotEmpty()) {
                                         val displayText = when {
-                                            line.contains("今月まき時") -> line.replace("🌱 今月まき時：", "まき時：")
-                                            line.contains("まき時終了間近") -> line.replace("⚠️ まき時終了間近：", "終了間近：")
+                                            line.contains("今月まき時") -> line.replace("🌱 今月まき時：", "🌱 まき時：")
+                                            line.contains("まき時終了間近") -> line.replace("⚠️ まき時終了間近：", "⚠️ 終了間近：")
                                             else -> line
                                         }
                                         Text(
@@ -478,6 +458,27 @@ fun SukesanMessageCard(
                     }
                 }
             }
+            
+            // すけさんアイコン（右側に移動）
+            // CoilのImageLoaderを設定（GIFサポート付き）
+            val context = LocalContext.current
+            val imageLoader = remember {
+                ImageLoader.Builder(context)
+                    .components {
+                        add(ImageDecoderDecoder.Factory()) // GIFをサポートするために必要
+                    }
+                    .build()
+            }
+            
+            AsyncImage(
+                model = R.drawable.suke_up_c,
+                contentDescription = "すけさん",
+                imageLoader = imageLoader,
+                modifier = Modifier.size(
+                    width = messageHeight,
+                    height = messageHeight
+                )
+            )
         }
     }
 }
@@ -512,22 +513,22 @@ fun SowingSummaryCards(
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // 播種予定種子数
-            SummaryCard(
-                icon = Icons.Filled.Inventory,
+            SummaryCardWithEmojiIcon(
+                emoji = "🌱",
                 title = "まき時",
                 value = "$thisMonthSowingCount",
-                subtitle = "今月",
+                subtitle = "",
                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                 contentColor = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.weight(1f)
             )
             
             // まき時終了間近の種子数
-            SummaryCard(
-                icon = Icons.Filled.Schedule,
+            SummaryCardWithEmojiIcon(
+                emoji = "⚠️",
                 title = "終了間近",
                 value = "$urgentSeedsCount",
-                subtitle = "今月",
+                subtitle = "",
                 containerColor = MaterialTheme.colorScheme.errorContainer,
                 contentColor = MaterialTheme.colorScheme.onErrorContainer,
                 modifier = Modifier.weight(1f)
@@ -557,11 +558,11 @@ fun StatisticsWidgets(
             // 登録種子総数
             SummaryCard(
                 icon = Icons.Filled.Analytics,
-                title = "登録種子総数",
+                title = "登録総数",
                 value = "$totalSeeds",
-                subtitle = "件",
-                containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                subtitle = "",
+                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
                 modifier = Modifier.weight(1f)
             )
             
@@ -569,7 +570,7 @@ fun StatisticsWidgets(
             Card(
                 modifier = Modifier.weight(1f),
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.tertiaryContainer
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer
                 ),
                 shape = RoundedCornerShape(12.dp)
             ) {
@@ -583,14 +584,14 @@ fun StatisticsWidgets(
                         Icon(
                             imageVector = Icons.Filled.PieChart,
                             contentDescription = "科別分布",
-                            tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                            tint = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.size(20.dp)
                         )
                         Text(
                             text = "科別分布",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onTertiaryContainer
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                     }
                     
@@ -602,17 +603,161 @@ fun StatisticsWidgets(
                             data = familyDistribution,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(120.dp)
+                                .height(180.dp)
                         )
                     } else {
                         Text(
                             text = "有効期限内の種がありません",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.7f),
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                             textAlign = TextAlign.Center,
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun SummaryCardWithEmojiIcon(
+    emoji: String,
+    title: String,
+    value: String,
+    subtitle: String,
+    containerColor: Color,
+    contentColor: Color,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier,
+        colors = CardDefaults.cardColors(containerColor = containerColor),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // 上段: アイコンとタイトル
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = emoji,
+                    style = MaterialTheme.typography.headlineLarge,
+                    fontSize = 24.sp
+                )
+                
+                Spacer(modifier = Modifier.width(12.dp))
+                
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = contentColor,
+                    textAlign = TextAlign.Center
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            // 下段: 値
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = value,
+                    style = MaterialTheme.typography.headlineLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = contentColor,
+                    textAlign = TextAlign.Center
+                )
+                
+                if (subtitle.isNotEmpty()) {
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = subtitle,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = contentColor.copy(alpha = 0.7f),
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun SummaryCardWithImageIcon(
+    iconResource: Int,
+    title: String,
+    value: String,
+    subtitle: String,
+    containerColor: Color,
+    contentColor: Color,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier,
+        colors = CardDefaults.cardColors(containerColor = containerColor),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // 上段: アイコンとタイトル
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Image(
+                    painter = painterResource(id = iconResource),
+                    contentDescription = title,
+                    modifier = Modifier.size(24.dp),
+                    colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(contentColor)
+                )
+                
+                Spacer(modifier = Modifier.width(12.dp))
+                
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = contentColor,
+                    textAlign = TextAlign.Center
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            // 下段: 値
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = value,
+                    style = MaterialTheme.typography.headlineLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = contentColor,
+                    textAlign = TextAlign.Center
+                )
+                
+                if (subtitle.isNotEmpty()) {
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = subtitle,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = contentColor.copy(alpha = 0.7f),
+                        textAlign = TextAlign.Center
+                    )
                 }
             }
         }
@@ -635,37 +780,59 @@ fun SummaryCard(
         shape = RoundedCornerShape(12.dp)
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = title,
-                tint = contentColor,
-                modifier = Modifier.size(24.dp)
-            )
+            // 上段: アイコンとタイトル
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = title,
+                    tint = contentColor,
+                    modifier = Modifier.size(24.dp)
+                )
+                
+                Spacer(modifier = Modifier.width(12.dp))
+                
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = contentColor,
+                    textAlign = TextAlign.Center
+                )
+            }
             
             Spacer(modifier = Modifier.height(8.dp))
             
-            Text(
-                text = value,
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                color = contentColor
-            )
-            
-            Text(
-                text = title,
-                style = MaterialTheme.typography.bodyMedium,
-                color = contentColor,
-                textAlign = TextAlign.Center
-            )
-            
-            Text(
-                text = subtitle,
-                style = MaterialTheme.typography.labelMedium,
-                color = contentColor.copy(alpha = 0.7f)
-            )
+            // 下段: 値
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = value,
+                    style = MaterialTheme.typography.headlineLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = contentColor,
+                    textAlign = TextAlign.Center
+                )
+                
+                if (subtitle.isNotEmpty()) {
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = subtitle,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = contentColor.copy(alpha = 0.7f),
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
         }
     }
 }
@@ -822,20 +989,21 @@ fun PieChart(
     if (total == 0) return
     
     val colors = listOf(
-        MaterialTheme.colorScheme.primary,
-        MaterialTheme.colorScheme.secondary,
-        MaterialTheme.colorScheme.tertiary,
-        MaterialTheme.colorScheme.error,
-        MaterialTheme.colorScheme.outline
+        Color(0xFF2196F3),  // 鮮やかな青
+        Color(0xFF4CAF50),  // 鮮やかな緑
+        Color(0xFFFF9800),  // 鮮やかなオレンジ
+        Color(0xFF9C27B0),  // 鮮やかな紫
+        Color(0xFFE91E63)   // 鮮やかなピンク
     )
     
-    Box(
+    Column(
         modifier = modifier,
-        contentAlignment = Alignment.Center
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        // 円グラフ
         Canvas(
             modifier = Modifier
-                .fillMaxSize()
+                .size(120.dp)
                 .padding(8.dp)
         ) {
             val canvasWidth = size.width
@@ -866,11 +1034,10 @@ fun PieChart(
             }
         }
         
-        // 凡例
+        Spacer(modifier = Modifier.height(8.dp))
+        
+        // 凡例（円グラフの下に表示）
         Column(
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(8.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             data.take(3).forEachIndexed { index, (family, count) ->
@@ -889,7 +1056,7 @@ fun PieChart(
                     Text(
                         text = "$family ($count)",
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onTertiaryContainer,
+                        color = MaterialTheme.colorScheme.onSurface,
                         maxLines = 1
                     )
                 }

@@ -578,7 +578,7 @@ fun GanttChartRow(
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Image(
-                                        painter = painterResource(id = com.example.seedstockkeeper6.R.drawable.grain),
+                                        painter = painterResource(id = com.example.seedstockkeeper6.R.drawable.germination),
                                         contentDescription = "播種",
                                         modifier = Modifier.size(20.dp), // アイコンサイズを大きく
                                         colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(MaterialTheme.colorScheme.onPrimaryContainer)
