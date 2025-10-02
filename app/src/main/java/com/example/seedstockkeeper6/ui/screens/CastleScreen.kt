@@ -55,6 +55,7 @@ data class StatisticsData(
     val thisMonthSowingCount: Int,
     val urgentSeedsCount: Int,
     val totalSeeds: Int,
+    val expiredSeedsCount: Int,
     val familyDistribution: List<Pair<String, Int>>
 )
 
@@ -135,6 +136,7 @@ fun CastleScreen(
             thisMonthSowingCount = 1,
             urgentSeedsCount = 0,
             totalSeeds = 2,
+            expiredSeedsCount = 0,
             familyDistribution = listOf(Pair("せり科", 1), Pair("きく科", 1))
         )
     } else {
@@ -222,6 +224,7 @@ fun CastleScreen(
                 thisMonthSowingCount = monthlyStatistics!!.thisMonthSowingCount,
                 urgentSeedsCount = monthlyStatistics!!.urgentSeedsCount,
                 totalSeeds = monthlyStatistics!!.totalSeeds,
+                expiredSeedsCount = monthlyStatistics!!.totalSeeds - monthlyStatistics!!.validSeedsCount,
                 familyDistribution = monthlyStatistics!!.getTopFamilies(3)
             )
         } else {
@@ -248,6 +251,10 @@ fun CastleScreen(
                 val expirationDate = LocalDate.of(seed.expirationYear, seed.expirationMonth, 1)
                 currentDate.isBefore(expirationDate.plusMonths(1))
             }
+            val expiredSeeds = seeds.filter { seed ->
+                val expirationDate = LocalDate.of(seed.expirationYear, seed.expirationMonth, 1)
+                currentDate.isAfter(expirationDate.plusMonths(1))
+            }
             val familyDist = validSeeds.groupBy { it.family }
                 .mapValues { it.value.size }
                 .toList()
@@ -258,6 +265,7 @@ fun CastleScreen(
                 thisMonthSowingCount = thisMonthSowingSeeds.size,
                 urgentSeedsCount = urgentSeeds.size,
                 totalSeeds = seeds.size,
+                expiredSeedsCount = expiredSeeds.size,
                 familyDistribution = familyDist
             )
         }
@@ -294,6 +302,7 @@ fun CastleScreen(
         // 統計ウィジェット
         StatisticsWidgets(
             totalSeeds = statisticsData.totalSeeds,
+            expiredSeedsCount = statisticsData.expiredSeedsCount,
             familyDistribution = statisticsData.familyDistribution
         )
     }
@@ -358,7 +367,7 @@ fun SukesanMessageCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.secondaryContainer
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
         ),
         shape = RoundedCornerShape(16.dp)
     ) {
@@ -379,9 +388,9 @@ fun SukesanMessageCard(
                         messageHeight = with(density) { size.height.toDp() }
                     },
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
                 ),
-                shape = RoundedCornerShape(16.dp, 4.dp, 16.dp, 16.dp) // 吹き出しの形（右側に変更）
+                shape = RoundedCornerShape(16.dp, 16.dp, 4.dp, 16.dp) // 吹き出しの形（右下に変更）
             ) {
                 Column(
                     modifier = Modifier.padding(16.dp)
@@ -529,8 +538,8 @@ fun SowingSummaryCards(
                 title = "終了間近",
                 value = "$urgentSeedsCount",
                 subtitle = "",
-                containerColor = MaterialTheme.colorScheme.errorContainer,
-                contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.6f),
+                contentColor = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.6f),
                 modifier = Modifier.weight(1f)
             )
         }
@@ -540,37 +549,68 @@ fun SowingSummaryCards(
 @Composable
 fun StatisticsWidgets(
     totalSeeds: Int,
+    expiredSeedsCount: Int,
     familyDistribution: List<Pair<String, Int>>
 ) {
     Column(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Text(
-            text = "統計",
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onBackground
-        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Analytics,
+                contentDescription = "統計",
+                tint = MaterialTheme.colorScheme.onBackground,
+                modifier = Modifier.size(24.dp)
+            )
+            Text(
+                text = "統計",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+        }
         
         Row(
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // 登録種子総数
-            SummaryCard(
-                icon = Icons.Filled.Analytics,
-                title = "登録総数",
-                value = "$totalSeeds",
-                subtitle = "",
-                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+            // 左側：登録総数と期限切れを縦に並べる
+            Column(
+                verticalArrangement = Arrangement.spacedBy(16.dp),
                 modifier = Modifier.weight(1f)
-            )
+            ) {
+                // 登録種子総数
+                SummaryCard(
+                    icon = Icons.Filled.Analytics,
+                    title = "登録総数",
+                    value = "$totalSeeds",
+                    subtitle = "",
+                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                
+                // 期限切れ種子数
+                SummaryCard(
+                    icon = Icons.Filled.Warning,
+                    title = "期限切れ",
+                    value = "$expiredSeedsCount",
+                    subtitle = "",
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                    contentColor = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
             
-            // 科別分布（上位3科）
+            // 右側：科別分布（縦長表示）
             Card(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight(),
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainer
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer
                 ),
                 shape = RoundedCornerShape(12.dp)
             ) {

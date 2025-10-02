@@ -579,11 +579,28 @@ fun ExpirationSelectionBottomSheet(
             Column(
                 modifier = Modifier.weight(1f)
             ) {
-                Text("年", style = MaterialTheme.typography.bodyMedium)
-                NumberPicker(
-                    value = selectedYear.toIntOrNull() ?: currentYear,
-                    range = currentYear..(currentYear + 5),
-                    onValueChange = { onYearChange(it.toString()) },
+                AndroidView(
+                    factory = { context ->
+                        NumberPicker(context).apply {
+                            minValue = currentYear
+                            maxValue = currentYear + 5
+                            val yearOptions = (currentYear..(currentYear + 5)).map { "${it}年" }.toTypedArray()
+                            setDisplayedValues(yearOptions)
+                            value = selectedYear.toIntOrNull() ?: currentYear
+                            setOnValueChangedListener { _, _, newVal ->
+                                onYearChange((currentYear + newVal - currentYear).toString())
+                            }
+                            // 中央揃えの設定
+                            try {
+                                val field = NumberPicker::class.java.getDeclaredField("mSelectorWheelPaint")
+                                field.isAccessible = true
+                                val paint = field.get(this) as android.graphics.Paint
+                                paint.textAlign = android.graphics.Paint.Align.CENTER
+                            } catch (e: Exception) {
+                                // リフレクションが失敗した場合は無視
+                            }
+                        }
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(120.dp)
@@ -594,11 +611,28 @@ fun ExpirationSelectionBottomSheet(
             Column(
                 modifier = Modifier.weight(1f)
             ) {
-                Text("月", style = MaterialTheme.typography.bodyMedium)
-                NumberPicker(
-                    value = selectedMonth.toIntOrNull() ?: 1,
-                    range = 1..12,
-                    onValueChange = { onMonthChange(it.toString()) },
+                AndroidView(
+                    factory = { context ->
+                        NumberPicker(context).apply {
+                            minValue = 1
+                            maxValue = 12
+                            val monthOptions = (1..12).map { "${it}月" }.toTypedArray()
+                            setDisplayedValues(monthOptions)
+                            value = selectedMonth.toIntOrNull() ?: 1
+                            setOnValueChangedListener { _, _, newVal ->
+                                onMonthChange(newVal.toString())
+                            }
+                            // 中央揃えの設定
+                            try {
+                                val field = NumberPicker::class.java.getDeclaredField("mSelectorWheelPaint")
+                                field.isAccessible = true
+                                val paint = field.get(this) as android.graphics.Paint
+                                paint.textAlign = android.graphics.Paint.Align.CENTER
+                            } catch (e: Exception) {
+                                // リフレクションが失敗した場合は無視
+                            }
+                        }
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(120.dp)
@@ -613,21 +647,26 @@ fun ExpirationSelectionBottomSheet(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
+            Button(
+                onClick = onCancel,
+                modifier = Modifier.weight(1f),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            ) {
+                Text("キャンセル")
+            }
                                         Button(
                 onClick = onConfirm,
                                             modifier = Modifier.weight(1f),
                 enabled = selectedYear != "0" && selectedMonth != "0",
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.tertiaryContainer
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                 )
             ) {
                 Text("OK")
-            }
-            Button(
-                onClick = onCancel,
-                modifier = Modifier.weight(1f)
-            ) {
-                Text("キャンセル")
             }
         }
     }
@@ -666,7 +705,6 @@ fun PeriodSelectionBottomSheet(
         // 年と月を横並びで表示（年選択が無効の場合は月のみ）
         if (hideYearSelection) {
             // 月選択のみ
-            Text("月", style = MaterialTheme.typography.bodyMedium)
             NumberPicker(
                 value = selectedMonth.toIntOrNull() ?: 1,
                 range = 1..12,
@@ -685,7 +723,6 @@ fun PeriodSelectionBottomSheet(
                 Column(
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text("年", style = MaterialTheme.typography.bodyMedium)
                     NumberPicker(
                         value = selectedYear.toIntOrNull() ?: currentYear,
                         range = (currentYear - 1)..(currentYear + 2),
@@ -700,7 +737,6 @@ fun PeriodSelectionBottomSheet(
                 Column(
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text("月", style = MaterialTheme.typography.bodyMedium)
                     NumberPicker(
                         value = selectedMonth.toIntOrNull() ?: 1,
                         range = 1..12,
@@ -714,14 +750,16 @@ fun PeriodSelectionBottomSheet(
         }
         
         // 旬選択
-        Text("旬", style = MaterialTheme.typography.bodyMedium)
-        LazyRow(
+        Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.padding(vertical = 8.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp)
         ) {
-            items(stageOptions) { stage ->
+            stageOptions.forEach { stage ->
                 Button(
                     onClick = { onStageChange(stage) },
+                    modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = if (selectedStage == stage) {
                             if (isHarvestPeriod) 
@@ -755,6 +793,16 @@ fun PeriodSelectionBottomSheet(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
+                    Button(
+                onClick = onCancel,
+                modifier = Modifier.weight(1f),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                    ) {
+                Text("キャンセル")
+                    }
                                     Button(
                 onClick = onConfirm,
                                         modifier = Modifier.weight(1f),
@@ -764,22 +812,12 @@ fun PeriodSelectionBottomSheet(
                     selectedYear != "0" && selectedMonth != "0" && selectedStage.isNotEmpty()
                 },
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                 )
             ) {
                 Text("OK")
             }
-                    Button(
-                onClick = onCancel,
-                modifier = Modifier.weight(1f),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onTertiaryContainer
-                )
-                    ) {
-                Text("キャンセル")
-                    }
                 }
     }
 }
@@ -919,8 +957,8 @@ fun MonthStageSelectionBottomSheet(
                 onClick = onConfirm,
                 modifier = Modifier.weight(1f),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                 )
             ) {
                 Text("OK")
