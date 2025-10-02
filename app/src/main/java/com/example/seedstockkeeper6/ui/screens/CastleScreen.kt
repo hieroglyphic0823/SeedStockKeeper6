@@ -367,7 +367,7 @@ fun SukesanMessageCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer
+            containerColor = MaterialTheme.colorScheme.secondaryContainer
         ),
         shape = RoundedCornerShape(16.dp)
     ) {
@@ -388,7 +388,7 @@ fun SukesanMessageCard(
                         messageHeight = with(density) { size.height.toDp() }
                     },
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerLowest
                 ),
                 shape = RoundedCornerShape(16.dp, 16.dp, 4.dp, 16.dp) // 吹き出しの形（右下に変更）
             ) {
@@ -504,11 +504,10 @@ fun SowingSummaryCards(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Icon(
-                imageVector = Icons.Filled.Spa,
+            Image(
+                painter = painterResource(id = R.drawable.grain),
                 contentDescription = "種",
-                modifier = Modifier.size(20.dp),
-                tint = MaterialTheme.colorScheme.primary
+                modifier = Modifier.size(24.dp)
             )
             Text(
                 text = "今月の種",
@@ -522,24 +521,24 @@ fun SowingSummaryCards(
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // 播種予定種子数
-            SummaryCardWithEmojiIcon(
-                emoji = "🌱",
+            SummaryCardWithImageIcon(
+                iconResource = R.drawable.germination,
                 title = "まき時",
                 value = "$thisMonthSowingCount",
                 subtitle = "",
                 containerColor = MaterialTheme.colorScheme.primaryContainer,
-                contentColor = MaterialTheme.colorScheme.onSurface,
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
                 modifier = Modifier.weight(1f)
             )
             
             // まき時終了間近の種子数
-            SummaryCardWithEmojiIcon(
-                emoji = "⚠️",
+            SummaryCardWithImageIcon(
+                iconResource = R.drawable.diamond_exclamation,
                 title = "終了間近",
                 value = "$urgentSeedsCount",
                 subtitle = "",
-                containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.6f),
-                contentColor = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.6f),
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.weight(1f)
             )
         }
@@ -582,8 +581,7 @@ fun StatisticsWidgets(
                 modifier = Modifier.weight(1f)
             ) {
                 // 登録種子総数
-                SummaryCard(
-                    icon = Icons.Filled.Analytics,
+                SummaryCardWithoutIcon(
                     title = "登録総数",
                     value = "$totalSeeds",
                     subtitle = "",
@@ -593,13 +591,12 @@ fun StatisticsWidgets(
                 )
                 
                 // 期限切れ種子数
-                SummaryCard(
-                    icon = Icons.Filled.Warning,
+                SummaryCardWithoutIcon(
                     title = "期限切れ",
                     value = "$expiredSeedsCount",
                     subtitle = "",
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                    contentColor = MaterialTheme.colorScheme.onSurface,
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -610,7 +607,7 @@ fun StatisticsWidgets(
                     .weight(1f)
                     .fillMaxHeight(),
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
                 ),
                 shape = RoundedCornerShape(12.dp)
             ) {
@@ -619,19 +616,15 @@ fun StatisticsWidgets(
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.Center,
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        Icon(
-                            imageVector = Icons.Filled.PieChart,
-                            contentDescription = "科別分布",
-                            tint = MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier.size(20.dp)
-                        )
                         Text(
                             text = "科別分布",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onSurface
+                            color = MaterialTheme.colorScheme.onSecondaryContainer,
+                            textAlign = TextAlign.Center
                         )
                     }
                     
@@ -643,13 +636,13 @@ fun StatisticsWidgets(
                             data = familyDistribution,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(180.dp)
+                                .height(200.dp)
                         )
                     } else {
                         Text(
                             text = "有効期限内の種がありません",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                            color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f),
                             textAlign = TextAlign.Center,
                             modifier = Modifier.fillMaxWidth()
                         )
@@ -761,15 +754,15 @@ fun SummaryCardWithImageIcon(
                 Image(
                     painter = painterResource(id = iconResource),
                     contentDescription = title,
-                    modifier = Modifier.size(24.dp),
-                    colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(contentColor)
+                    modifier = Modifier.size(24.dp)
                 )
                 
                 Spacer(modifier = Modifier.width(12.dp))
                 
                 Text(
                     text = title,
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
                     color = contentColor,
                     textAlign = TextAlign.Center
                 )
@@ -976,6 +969,64 @@ private fun generateSukesanMessage(
     }
     
     android.util.Log.d("CastleScreen", "--- プレビューメッセージ生成完了 ---")
+}
+
+@Composable
+fun SummaryCardWithoutIcon(
+    title: String,
+    value: String,
+    subtitle: String,
+    containerColor: Color,
+    contentColor: Color,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier,
+        colors = CardDefaults.cardColors(containerColor = containerColor),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // タイトル
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = contentColor,
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // 値
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = value,
+                    style = MaterialTheme.typography.headlineLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = contentColor,
+                    textAlign = TextAlign.Center
+                )
+
+                if (subtitle.isNotEmpty()) {
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = subtitle,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = contentColor.copy(alpha = 0.7f),
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+        }
+    }
 }
 
 @Preview(showBackground = true, showSystemUi = true, name = "お城画面 - お銀")

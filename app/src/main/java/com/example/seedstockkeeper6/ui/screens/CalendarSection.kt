@@ -185,7 +185,7 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
                             contentAlignment = Alignment.Center
                         ) {
                             Image(
-                                painter = painterResource(id = R.drawable.germination),
+                                painter = painterResource(id = R.drawable.grain),
                                 contentDescription = "播種期間",
                                 modifier = Modifier.size(18.dp),
                                 contentScale = ContentScale.Fit,
