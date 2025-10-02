@@ -533,18 +533,28 @@ class SeedInputViewModel : ViewModel() {
         val storageRef = com.google.firebase.ktx.Firebase.storage.reference
 
         viewModelScope.launch(kotlinx.coroutines.Dispatchers.Main) {
+            android.util.Log.d("SaveSeed", "=== 保存処理開始 ===")
+            android.util.Log.d("SaveSeed", "uid: $uid")
+            android.util.Log.d("SaveSeed", "packet.productName: ${packet.productName}")
+            android.util.Log.d("SaveSeed", "imageUris.size: ${imageUris.size}")
+            
             isLoading = true
             isSaving = true
             try {
                 // 1) docId を確定（既存なら流用、無ければ新規発番）
+                android.util.Log.d("SaveSeed", "ドキュメントID確定開始")
                 val target = packet.documentId?.let { db.collection("seeds").document(it) }
                     ?: db.collection("seeds").document()
                 val id = target.id
+                android.util.Log.d("SaveSeed", "ドキュメントID: $id")
 
-                // 2) 所有者を確定（ここで create/update を“先に”確定させる）
+                // 2) 所有者を確定（ここで create/update を"先に"確定させる）
+                android.util.Log.d("SaveSeed", "所有者確認開始")
                 ensureSeedOwnershipOrFail(id, uid)
+                android.util.Log.d("SaveSeed", "所有者確認完了")
 
                 // 3) 画像アップロード（命名: seed_images/{docId}_{UUID}.jpg）
+                android.util.Log.d("SaveSeed", "画像アップロード開始: ${imageUris.size}枚")
                 val pathsByIndex = MutableList(imageUris.size) { null as String? }
                 withContext(kotlinx.coroutines.Dispatchers.IO) {
                     imageUris.forEachIndexed { index, uri ->
@@ -670,10 +680,13 @@ class SeedInputViewModel : ViewModel() {
                 // ここがポイント：同じ ownerUid を必ず送る（ルールの ownerUnchanged を満たす）
                 map["ownerUid"] = uid
 
+                android.util.Log.d("SaveSeed", "Firestore保存開始")
                 target.set(map, com.google.firebase.firestore.SetOptions.merge()).await()
+                android.util.Log.d("SaveSeed", "Firestore保存完了")
 
                 // ViewModel の状態を更新
                 packet = updatedPacket
+                android.util.Log.d("SaveSeed", "ViewModel状態更新完了")
                 
                 // 集計データを更新
                 try {
@@ -684,14 +697,21 @@ class SeedInputViewModel : ViewModel() {
                     android.util.Log.w("SaveSeed", "集計更新に失敗しましたが、種データの保存は成功", e)
                 }
                 
+                android.util.Log.d("SaveSeed", "=== 保存処理完了 ===")
                 showSnackbar = "保存が完了しました（画像: ${finalOrderedPaths.size}）"
                 onComplete(Result.success(Unit))
             } catch (e: SecurityException) {
-                android.util.Log.e("SaveSeed", "ownership error", e)
+                android.util.Log.e("SaveSeed", "=== セキュリティエラー ===", e)
+                android.util.Log.e("SaveSeed", "エラー詳細: ${e.message}")
+                android.util.Log.e("SaveSeed", "スタックトレース: ${e.stackTraceToString()}")
                 showSnackbar = "このデータの所有者ではありません"
                 onComplete(Result.failure(e))
             } catch (e: Exception) {
-                android.util.Log.e("SaveSeed", "failed", e)
+                android.util.Log.e("SaveSeed", "=== 保存処理エラー ===", e)
+                android.util.Log.e("SaveSeed", "エラータイプ: ${e.javaClass.simpleName}")
+                android.util.Log.e("SaveSeed", "エラーメッセージ: ${e.message}")
+                android.util.Log.e("SaveSeed", "ローカライズメッセージ: ${e.localizedMessage}")
+                android.util.Log.e("SaveSeed", "スタックトレース: ${e.stackTraceToString()}")
                 showSnackbar = "保存に失敗しました: ${e.localizedMessage ?: "不明なエラー"}"
                 onComplete(Result.failure(e))
             } finally {
@@ -1455,13 +1475,29 @@ class SeedInputViewModel : ViewModel() {
      */
     private suspend fun updateStatisticsAfterSeedChange(ownerUid: String) {
         try {
-            android.util.Log.d("StatisticsUpdate", "集計データ更新開始: ownerUid=$ownerUid")
+            android.util.Log.d("StatisticsUpdate", "=== 集計データ更新開始 ===")
+            android.util.Log.d("StatisticsUpdate", "ownerUid: $ownerUid")
             
             // 現在のユーザーの全種データを取得
             val db = Firebase.firestore
+            android.util.Log.d("StatisticsUpdate", "Firestore参照取得: seeds collection")
+            
+            android.util.Log.d("StatisticsUpdate", "Firestoreクエリ実行: ownerUid=$ownerUid")
             val seedsSnapshot = db.collection("seeds")
                 .whereEqualTo("ownerUid", ownerUid)
                 .get().await()
+            
+            android.util.Log.d("StatisticsUpdate", "Firestoreクエリ完了: ドキュメント数=${seedsSnapshot.documents.size}")
+            android.util.Log.d("StatisticsUpdate", "クエリ結果詳細:")
+            seedsSnapshot.documents.forEachIndexed { index, doc ->
+                android.util.Log.d("StatisticsUpdate", "  doc[$index]: id=${doc.id}, exists=${doc.exists()}")
+                if (doc.exists()) {
+                    val data = doc.data
+                    android.util.Log.d("StatisticsUpdate", "    productName: ${data?.get("productName")}")
+                    android.util.Log.d("StatisticsUpdate", "    family: ${data?.get("family")}")
+                    android.util.Log.d("StatisticsUpdate", "    ownerUid: ${data?.get("ownerUid")}")
+                }
+            }
             
             val seeds = seedsSnapshot.documents.mapNotNull { doc ->
                 try {
@@ -1473,17 +1509,25 @@ class SeedInputViewModel : ViewModel() {
                 }
             }
             
-            android.util.Log.d("StatisticsUpdate", "取得した種データ数: ${seeds.size}")
+            android.util.Log.d("StatisticsUpdate", "解析完了種データ数: ${seeds.size}")
+            android.util.Log.d("StatisticsUpdate", "種データ詳細: ${seeds.map { "${it.productName}(${it.family})" }}")
             
             // 集計データを更新
+            android.util.Log.d("StatisticsUpdate", "StatisticsService呼び出し開始")
             val result = statisticsService.updateStatisticsOnSeedChange(ownerUid, seeds)
+            
             if (result.success) {
-                android.util.Log.d("StatisticsUpdate", "集計データ更新完了: totalSeeds=${result.statistics?.totalSeeds}")
+                android.util.Log.d("StatisticsUpdate", "=== 集計データ更新完了 ===")
+                android.util.Log.d("StatisticsUpdate", "totalSeeds: ${result.statistics?.totalSeeds}")
+                android.util.Log.d("StatisticsUpdate", "validSeeds: ${result.statistics?.validSeedsCount}")
+                android.util.Log.d("StatisticsUpdate", "thisMonthSowing: ${result.statistics?.thisMonthSowingCount}")
             } else {
-                android.util.Log.w("StatisticsUpdate", "集計データ更新失敗: ${result.message}")
+                android.util.Log.w("StatisticsUpdate", "=== 集計データ更新失敗 ===")
+                android.util.Log.w("StatisticsUpdate", "エラーメッセージ: ${result.message}")
             }
         } catch (e: Exception) {
-            android.util.Log.e("StatisticsUpdate", "集計更新処理エラー", e)
+            android.util.Log.e("StatisticsUpdate", "=== 集計更新処理エラー ===", e)
+            android.util.Log.e("StatisticsUpdate", "エラー詳細: ${e.message}")
         }
     }
 

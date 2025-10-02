@@ -7,8 +7,8 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 data class MonthlyStatistics(
-    val year: Int,
-    val month: Int,
+    val year: Int = 0,
+    val month: Int = 0,
     val totalSeeds: Int = 0,
     val familyDistribution: Map<String, Int> = emptyMap(),
     val thisMonthSowingCount: Int = 0,

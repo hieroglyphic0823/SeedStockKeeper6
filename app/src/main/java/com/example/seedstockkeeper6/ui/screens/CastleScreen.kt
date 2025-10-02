@@ -142,27 +142,75 @@ fun CastleScreen(
             if (!isLoadingStatistics) {
                 isLoadingStatistics = true
                 try {
+                    android.util.Log.d("CastleScreen", "=== 集計データ取得開始 ===")
+                    android.util.Log.d("CastleScreen", "seeds.size: ${seeds.size}")
+                    
                     val auth = com.google.firebase.auth.FirebaseAuth.getInstance()
                     val uid = auth.currentUser?.uid
+                    android.util.Log.d("CastleScreen", "uid: $uid")
+                    
                     if (uid != null) {
                         // まず現在の集計データを取得
+                        android.util.Log.d("CastleScreen", "現在の集計データ取得開始")
                         monthlyStatistics = statisticsService.getCurrentMonthStatistics(uid)
+                        android.util.Log.d("CastleScreen", "現在の集計データ: ${monthlyStatistics?.totalSeeds}")
                         
                         // 集計データが古い場合、または種データが変更された場合は再計算
-                        if (monthlyStatistics == null || !monthlyStatistics!!.isValid() || 
-                            monthlyStatistics!!.totalSeeds != seeds.size) {
-                            android.util.Log.d("CastleScreen", "集計データを再計算: seeds.size=${seeds.size}")
-                            val result = statisticsService.updateStatisticsOnSeedChange(uid, seeds)
-                            if (result.success) {
-                                monthlyStatistics = result.statistics
-                                android.util.Log.d("CastleScreen", "集計データ更新完了: totalSeeds=${result.statistics?.totalSeeds}")
+                        val needsRecalculation = monthlyStatistics == null || 
+                            !monthlyStatistics!!.isValid() || 
+                            monthlyStatistics!!.totalSeeds != seeds.size
+                        
+                        android.util.Log.d("CastleScreen", "再計算必要: $needsRecalculation")
+                        android.util.Log.d("CastleScreen", "monthlyStatistics == null: ${monthlyStatistics == null}")
+                        android.util.Log.d("CastleScreen", "!isValid(): ${monthlyStatistics?.let { !it.isValid() }}")
+                        android.util.Log.d("CastleScreen", "totalSeeds != seeds.size: ${monthlyStatistics?.totalSeeds != seeds.size}")
+                        
+                        if (needsRecalculation) {
+                            // 種データが0件の場合は集計をスキップして既存データを使用
+                            if (seeds.isEmpty()) {
+                                android.util.Log.w("CastleScreen", "種データが0件のため集計をスキップ")
+                                android.util.Log.w("CastleScreen", "既存の集計データを使用: totalSeeds=${monthlyStatistics?.totalSeeds}")
+                                
+                                // 既存の集計データが0件の場合は修正を試行
+                                if (monthlyStatistics?.totalSeeds == 0) {
+                                    android.util.Log.d("CastleScreen", "集計データ修正を試行")
+                                    try {
+                                        val fixResult = statisticsService.fixStatisticsData(uid)
+                                        if (fixResult.success) {
+                                            monthlyStatistics = fixResult.statistics
+                                            android.util.Log.d("CastleScreen", "集計データ修正完了: totalSeeds=${fixResult.statistics?.totalSeeds}")
+                                        } else {
+                                            android.util.Log.w("CastleScreen", "集計データ修正失敗: ${fixResult.message}")
+                                        }
+                                    } catch (e: Exception) {
+                                        android.util.Log.e("CastleScreen", "集計データ修正エラー", e)
+                                    }
+                                }
+                            } else {
+                                android.util.Log.d("CastleScreen", "集計データを再計算: seeds.size=${seeds.size}")
+                                val result = statisticsService.updateStatisticsOnSeedChange(uid, seeds)
+                                if (result.success) {
+                                    monthlyStatistics = result.statistics
+                                    android.util.Log.d("CastleScreen", "=== 集計データ更新完了 ===")
+                                    android.util.Log.d("CastleScreen", "totalSeeds: ${result.statistics?.totalSeeds}")
+                                    android.util.Log.d("CastleScreen", "validSeeds: ${result.statistics?.validSeedsCount}")
+                                    android.util.Log.d("CastleScreen", "thisMonthSowing: ${result.statistics?.thisMonthSowingCount}")
+                                } else {
+                                    android.util.Log.w("CastleScreen", "集計データ更新失敗: ${result.message}")
+                                }
                             }
+                        } else {
+                            android.util.Log.d("CastleScreen", "集計データは最新のため再計算をスキップ")
                         }
+                    } else {
+                        android.util.Log.w("CastleScreen", "uidがnullのため集計データ取得をスキップ")
                     }
                 } catch (e: Exception) {
-                    android.util.Log.e("CastleScreen", "集計データ取得エラー", e)
+                    android.util.Log.e("CastleScreen", "=== 集計データ取得エラー ===", e)
+                    android.util.Log.e("CastleScreen", "エラー詳細: ${e.message}")
                 } finally {
                     isLoadingStatistics = false
+                    android.util.Log.d("CastleScreen", "集計データ取得処理完了")
                 }
             }
         }
