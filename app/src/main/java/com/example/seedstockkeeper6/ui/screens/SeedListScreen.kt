@@ -32,12 +32,18 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.ui.graphics.Color
 import com.example.seedstockkeeper6.ui.components.SwipeToDeleteItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -46,6 +52,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import androidx.navigation.NavBackStackEntry
 import com.example.seedstockkeeper6.model.SeedPacket
 import com.example.seedstockkeeper6.ui.components.FamilyIcon
 import com.example.seedstockkeeper6.util.familyRotationMinYearsLabel
@@ -107,7 +114,8 @@ fun SeedListScreen(
     navController: NavController,
     selectedIds: MutableList<String>,
     viewModel: SeedListViewModel,
-    onDeleteSelected: (List<String>) -> Unit
+    onDeleteSelected: (List<String>) -> Unit,
+    backStackEntry: NavBackStackEntry? = null
 ) {
     Log.d("BootTrace", ">>> SeedListScreen Composable表示")
     val db = Firebase.firestore
@@ -119,6 +127,29 @@ fun SeedListScreen(
     var showThisMonthOnly by remember { mutableStateOf(false) }
     var showExpiredOnly by remember { mutableStateOf(false) }
     var showUrgentOnly by remember { mutableStateOf(false) }
+    var showFilters by remember { mutableStateOf(false) }
+    
+    // URLパラメータの処理
+    LaunchedEffect(backStackEntry) {
+        val filter = backStackEntry?.arguments?.getString("filter")
+        when (filter) {
+            "thisMonth" -> {
+                showThisMonthOnly = true
+                showFilters = true
+                Log.d("SeedListScreen", "まき時フィルターが適用されました")
+            }
+            "urgent" -> {
+                showUrgentOnly = true
+                showFilters = true
+                Log.d("SeedListScreen", "終了間近フィルターが適用されました")
+            }
+            "expired" -> {
+                showExpiredOnly = true
+                showFilters = true
+                Log.d("SeedListScreen", "期限切れフィルターが適用されました")
+            }
+        }
+    }
     
     // 現在のユーザーのUIDを取得
     val auth = Firebase.auth
@@ -154,16 +185,10 @@ fun SeedListScreen(
             }
             
             val matchesExpired = if (showExpiredOnly) {
-                // 期限切れの判定（有効期限が現在日時より前）
-                seed.calendar.any { entry ->
-                    if (entry.expirationYear > 0 && entry.expirationMonth > 0) {
-                        val currentDate = java.time.LocalDate.now()
-                        val expirationDate = java.time.LocalDate.of(entry.expirationYear, entry.expirationMonth, 1)
-                        expirationDate.isBefore(currentDate)
-                    } else {
-                        false
-                    }
-                }
+                // 期限切れの判定（種集計と同じロジック）
+                val currentDate = java.time.LocalDate.now()
+                val expirationDate = java.time.LocalDate.of(seed.expirationYear, seed.expirationMonth, 1)
+                currentDate.isAfter(expirationDate.plusMonths(1).minusDays(1))
             } else {
                 true
             }
@@ -269,85 +294,117 @@ fun SeedListScreen(
             Column(
                 modifier = Modifier.padding(16.dp)
             ) {
-                // フリーワード検索
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = { searchQuery = it },
-                    label = { Text("種を検索") },
-                    placeholder = { Text("商品名、品種、科名で検索") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.outline
-                    )
-                )
-                
-                Spacer(modifier = Modifier.height(12.dp))
-                
-                // フィルター用チェックボックス（横並び）
+                // フリーワード検索とフィルターボタン
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // 今月まける種チェックボックス
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Checkbox(
-                            checked = showThisMonthOnly,
-                            onCheckedChange = { showThisMonthOnly = it },
-                            colors = CheckboxDefaults.colors(
-                                checkedColor = MaterialTheme.colorScheme.primary,
-                                uncheckedColor = MaterialTheme.colorScheme.outline
-                            )
+                    OutlinedTextField(
+                        value = searchQuery,
+                        onValueChange = { searchQuery = it },
+                        label = { Text("種を検索") },
+                        placeholder = { Text("商品名、品種、科名で検索") },
+                        modifier = Modifier.weight(1f),
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outline
                         )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "今月まける",
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
+                    )
                     
-                    // 期限切れチェックボックス
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Checkbox(
-                            checked = showExpiredOnly,
-                            onCheckedChange = { showExpiredOnly = it },
-                            colors = CheckboxDefaults.colors(
-                                checkedColor = MaterialTheme.colorScheme.error,
-                                uncheckedColor = MaterialTheme.colorScheme.outline
-                            )
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "期限切れ",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.error
-                        )
-                    }
+                    Spacer(modifier = Modifier.width(8.dp))
                     
-                    // 終了間近チェックボックス
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
+                    // フィルター表示切り替えボタン
+                    IconButton(
+                        onClick = { showFilters = !showFilters }
                     ) {
-                        Checkbox(
-                            checked = showUrgentOnly,
-                            onCheckedChange = { showUrgentOnly = it },
-                            colors = CheckboxDefaults.colors(
-                                checkedColor = MaterialTheme.colorScheme.tertiary,
-                                uncheckedColor = MaterialTheme.colorScheme.outline
-                            )
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "終了間近",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.tertiary
+                        Icon(
+                            imageVector = if (showFilters) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
+                            contentDescription = if (showFilters) "フィルターを隠す" else "フィルターを表示",
+                            tint = MaterialTheme.colorScheme.primary
                         )
                     }
+                }
+                
+                // フィルター用チェックボックス（条件付き表示）
+                if (showFilters) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    
+                    // レスポンシブレイアウト：画面幅に応じて1行または2行表示
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        // 1行目：「今月まける」「期限切れ」
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            // 今月まける種チェックボックス
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Checkbox(
+                                    checked = showThisMonthOnly,
+                                    onCheckedChange = { showThisMonthOnly = it },
+                                    colors = CheckboxDefaults.colors(
+                                        checkedColor = MaterialTheme.colorScheme.primary,
+                                        uncheckedColor = MaterialTheme.colorScheme.outline
+                                    )
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "今月まける",
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
+                            
+                            // 期限切れチェックボックス
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Checkbox(
+                                    checked = showExpiredOnly,
+                                    onCheckedChange = { showExpiredOnly = it },
+                                    colors = CheckboxDefaults.colors(
+                                        checkedColor = MaterialTheme.colorScheme.error,
+                                        uncheckedColor = MaterialTheme.colorScheme.outline
+                                    )
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "期限切れ",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.error
+                                )
+                            }
+                        }
+                        
+                        // 2行目：「終了間近」
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            // 終了間近チェックボックス
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Checkbox(
+                                    checked = showUrgentOnly,
+                                    onCheckedChange = { showUrgentOnly = it },
+                                    colors = CheckboxDefaults.colors(
+                                        checkedColor = MaterialTheme.colorScheme.tertiary,
+                                        uncheckedColor = MaterialTheme.colorScheme.outline
+                                    )
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "終了間近",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.tertiary
+                                )
+                            }
+                        }
+                }
                 }
             }
         }

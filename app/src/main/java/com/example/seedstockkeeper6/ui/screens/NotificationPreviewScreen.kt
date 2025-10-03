@@ -211,9 +211,6 @@ fun NotificationPreviewScreen(
                         
                         android.util.Log.d("NotificationPreviewScreen", "週次GeminiAPI呼び出し開始")
                         val content = geminiService.generateWeeklyNotificationContent(
-                            region = userSettings["defaultRegion"] ?: "温暖地",
-                            prefecture = userSettings["selectedPrefecture"] ?: "",
-                            seedInfoUrl = getSeedInfoUrl(userSettings),
                             userSeeds = userSeeds,
                             farmOwner = farmOwnerValue,
                             customFarmOwner = userSettings["customFarmOwner"] ?: ""
@@ -274,6 +271,10 @@ fun NotificationPreviewScreen(
                             // タイトルとコンテンツを並行生成
                             val titleDeferred = scope.async {
                                 geminiService.generateMonthlyNotificationTitle(
+                                    region = userSettings["defaultRegion"] ?: "温暖地",
+                                    prefecture = userSettings["selectedPrefecture"] ?: "",
+                                    seedInfoUrl = getSeedInfoUrl(userSettings),
+                                    userSeeds = userSeeds,
                                     currentMonth = currentMonth,
                                     farmOwner = farmOwnerValue,
                                     customFarmOwner = userSettings["customFarmOwner"] ?: ""
@@ -286,11 +287,10 @@ fun NotificationPreviewScreen(
                                     region = userSettings["defaultRegion"] ?: "温暖地",
                                     prefecture = userSettings["selectedPrefecture"] ?: "",
                                     seedInfoUrl = getSeedInfoUrl(userSettings),
-                                    currentMonth = currentMonth,
                                     userSeeds = userSeeds,
+                                    currentMonth = currentMonth,
                                     farmOwner = farmOwnerValue,
-                                    customFarmOwner = userSettings["customFarmOwner"] ?: "",
-                                    userSettings = userSettings
+                                    customFarmOwner = userSettings["customFarmOwner"] ?: ""
                                 )
                             }
                             
@@ -326,13 +326,9 @@ fun NotificationPreviewScreen(
                             val farmOwnerValue = userSettings["farmOwner"] ?: "水戸黄門"
                             android.util.Log.d("NotificationPreviewScreen", "週次プレビューGeminiAPI呼び出し開始")
                             weeklyPreviewContent = geminiService.generateWeeklyNotificationContent(
-                                region = userSettings["defaultRegion"] ?: "温暖地",
-                                prefecture = userSettings["selectedPrefecture"] ?: "",
-                                seedInfoUrl = getSeedInfoUrl(userSettings),
                                 userSeeds = userSeeds,
                                 farmOwner = farmOwnerValue,
-                                customFarmOwner = userSettings["customFarmOwner"] ?: "",
-                                userSettings = userSettings
+                                customFarmOwner = userSettings["customFarmOwner"] ?: ""
                             )
                             weeklyPreviewTitle = "まき時終了の2週間前の種があります"
                             android.util.Log.d("NotificationPreviewScreen", "週次プレビューGeminiAPI呼び出し完了")

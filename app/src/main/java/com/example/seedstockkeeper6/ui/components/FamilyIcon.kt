@@ -85,8 +85,8 @@ fun FamilyIcon(
         val labelText = rotationLabel?.trim().orEmpty()
         if (labelText.isNotEmpty()) {
             Surface(
-                color = MaterialTheme.colorScheme.primaryContainer,
-                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                color = MaterialTheme.colorScheme.secondaryContainer,
+                contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
                 shape = CircleShape, // 丸い形状に変更
                 tonalElevation = 2.dp, // Material3ではエレベーションで区別
                 shadowElevation = 0.dp,

@@ -42,14 +42,15 @@ fun AppNavHost(
                 viewModel = castleViewModel
             )
         }
-        composable("list") {
+        composable("list?filter={filter}") { backStackEntry ->
             Log.d("BootTrace", "Screen: SeedListScreen初期化")
             val listViewModel = viewModel<SeedListViewModel>()
             SeedListScreen(
                 navController = navController,
                 viewModel = listViewModel,
                 selectedIds = selectedIds,
-                onDeleteSelected = onDeleteSelected
+                onDeleteSelected = onDeleteSelected,
+                backStackEntry = backStackEntry
             )
         }
         composable("input/{packet}") { backStackEntry ->

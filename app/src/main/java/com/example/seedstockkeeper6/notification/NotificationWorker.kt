@@ -315,9 +315,6 @@ class WeeklyNotificationWorker(
             
             // GeminiAPIで通知内容を生成
             val notificationContent = geminiService.generateWeeklyNotificationContent(
-                region = region,
-                prefecture = prefecture,
-                seedInfoUrl = seedInfoUrl,
                 userSeeds = userSeeds,
                 farmOwner = farmOwner,
                 customFarmOwner = customFarmOwner

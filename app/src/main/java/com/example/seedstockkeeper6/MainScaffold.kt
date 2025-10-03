@@ -81,7 +81,8 @@ fun MainScaffoldTopAppBar(
     settingsViewModel: SettingsViewModel? = null,
     seedInputViewModel: com.example.seedstockkeeper6.viewmodel.SeedInputViewModel? = null,
     selectedIds: List<String> = emptyList(),
-    onDeleteSelected: () -> Unit = {}
+    onDeleteSelected: () -> Unit = {},
+    farmName: String = ""
 ) {
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -277,7 +278,7 @@ fun MainScaffoldTopAppBar(
                                 tint = Color.Unspecified
                             )
                             Text(
-                                text = "お城",
+                                text = if (farmName.isNotEmpty()) "お城（$farmName）" else "お城",
                                 modifier = Modifier.fillMaxWidth(),
                                 textAlign = TextAlign.Start
                             )
@@ -632,6 +633,14 @@ fun MainScaffold(
     val ctx = LocalContext.current
     val settingsViewModel: SettingsViewModel = viewModel { SettingsViewModel(ctx) }
     
+    // 農園名を取得
+    var farmName by remember { mutableStateOf("") }
+    
+    // 農園名を設定から取得
+    LaunchedEffect(settingsViewModel) {
+        farmName = settingsViewModel.farmName
+    }
+    
     // アプリ起動後の初期化完了フラグ
     var isAppInitialized by remember { mutableStateOf(false) }
     
@@ -661,6 +670,7 @@ fun MainScaffold(
                 settingsViewModel = if (currentRoute == "settings") settingsViewModel else null,
                 seedInputViewModel = if (currentRoute?.startsWith("input") == true) inputViewModel else null,
                 selectedIds = selectedIds,
+                farmName = farmName,
                 onDeleteSelected = {
                     // 選択された種情報を削除
                     val idsToDelete = selectedIds.toList() // コピーを作成

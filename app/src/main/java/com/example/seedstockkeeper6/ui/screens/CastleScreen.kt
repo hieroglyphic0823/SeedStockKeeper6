@@ -3,6 +3,7 @@ package com.example.seedstockkeeper6.ui.screens
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -295,7 +296,8 @@ fun CastleScreen(
         // 今月の播種状況
         SowingSummaryCards(
             thisMonthSowingCount = statisticsData.thisMonthSowingCount,
-            urgentSeedsCount = statisticsData.urgentSeedsCount
+            urgentSeedsCount = statisticsData.urgentSeedsCount,
+            navController = navController
         )
         
         Spacer(modifier = Modifier.height(24.dp))
@@ -304,7 +306,8 @@ fun CastleScreen(
         StatisticsWidgets(
             totalSeeds = statisticsData.totalSeeds,
             expiredSeedsCount = statisticsData.expiredSeedsCount,
-            familyDistribution = statisticsData.familyDistribution
+            familyDistribution = statisticsData.familyDistribution,
+            navController = navController
         )
     }
 }
@@ -496,7 +499,8 @@ fun SukesanMessageCard(
 @Composable
 fun SowingSummaryCards(
     thisMonthSowingCount: Int,
-    urgentSeedsCount: Int
+    urgentSeedsCount: Int,
+    navController: NavController
 ) {
     Column(
         verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -522,17 +526,28 @@ fun SowingSummaryCards(
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // 播種予定種子数
+            val onThisMonthClick = {
+                // 種リスト画面に遷移し、「今月まける」チェックボックスをオンにする
+                navController.navigate("list?filter=thisMonth")
+            }
+            
             SummaryCardWithImageIcon(
                 iconResource = R.drawable.germination,
-                title = "まき時",
+                title = "まきどき",
                 value = "$thisMonthSowingCount",
                 subtitle = "",
                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                 contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                onClick = onThisMonthClick
             )
             
             // まき時終了間近の種子数
+            val onUrgentClick = {
+                // 種リスト画面に遷移し、「終了間近」チェックボックスをオンにする
+                navController.navigate("list?filter=urgent")
+            }
+            
             SummaryCardWithImageIcon(
                 iconResource = R.drawable.diamond_exclamation,
                 title = "終了間近",
@@ -540,7 +555,8 @@ fun SowingSummaryCards(
                 subtitle = "",
                 containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                 contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                onClick = onUrgentClick
             )
         }
     }
@@ -550,7 +566,8 @@ fun SowingSummaryCards(
 fun StatisticsWidgets(
     totalSeeds: Int,
     expiredSeedsCount: Int,
-    familyDistribution: List<Pair<String, Int>>
+    familyDistribution: List<Pair<String, Int>>,
+    navController: NavController
 ) {
     Column(
         verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -592,13 +609,19 @@ fun StatisticsWidgets(
                 )
                 
                 // 期限切れ種子数
+                val onExpiredClick = {
+                    // 種リスト画面に遷移し、「期限切れ」チェックボックスをオンにする
+                    navController.navigate("list?filter=expired")
+                }
+                
                 SummaryCardWithoutIcon(
                     title = "期限切れ",
                     value = "$expiredSeedsCount",
                     subtitle = "",
                     containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                     contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = onExpiredClick
                 )
             }
             
@@ -734,10 +757,11 @@ fun SummaryCardWithImageIcon(
     subtitle: String,
     containerColor: Color,
     contentColor: Color,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null
 ) {
     Card(
-        modifier = modifier,
+        modifier = modifier.clickable { onClick?.invoke() },
         colors = CardDefaults.cardColors(containerColor = containerColor),
         shape = RoundedCornerShape(12.dp)
     ) {
@@ -980,10 +1004,11 @@ fun SummaryCardWithoutIcon(
     subtitle: String,
     containerColor: Color,
     contentColor: Color,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null
 ) {
     Card(
-        modifier = modifier,
+        modifier = modifier.clickable { onClick?.invoke() },
         colors = CardDefaults.cardColors(containerColor = containerColor),
         shape = RoundedCornerShape(12.dp)
     ) {

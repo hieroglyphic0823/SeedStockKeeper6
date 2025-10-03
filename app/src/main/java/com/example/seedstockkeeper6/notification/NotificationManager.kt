@@ -144,7 +144,7 @@ class NotificationManager(private val context: Context) {
         // 動的タイトル生成
         coroutineScope.launch {
             try {
-                val title = geminiService.generateWeeklyNotificationTitle("お銀")
+                val title = geminiService.generateWeeklyNotificationTitle(seedsEndingSoon, "お銀")
                 val content = buildWeeklyNotificationContent(seedsEndingSoon)
         
                 val notification = NotificationCompat.Builder(context, CHANNEL_ID)
@@ -214,7 +214,14 @@ class NotificationManager(private val context: Context) {
         // 和風月名でタイトルを生成（非同期）
         coroutineScope.launch {
             try {
-                val title = geminiService.generateMonthlyNotificationTitle(month, farmOwner)
+                val title = geminiService.generateMonthlyNotificationTitle(
+                    region = "温暖地",
+                    prefecture = "東京都",
+                    seedInfoUrl = "https://example.com/seed-info",
+                    userSeeds = emptyList(),
+                    currentMonth = month,
+                    farmOwner = farmOwner
+                )
                 // 要点を生成
                 val summary = geminiService.extractNotificationSummary(content)
                 
@@ -322,7 +329,7 @@ class NotificationManager(private val context: Context) {
         // 要点を生成
         coroutineScope.launch {
             try {
-                val title = geminiService.generateWeeklyNotificationTitle(farmOwner)
+                val title = geminiService.generateWeeklyNotificationTitle(emptyList(), farmOwner)
                 val summary = geminiService.extractNotificationSummary(content)
                 
                 android.util.Log.d("NotificationManager", "通知タイトル: $title")

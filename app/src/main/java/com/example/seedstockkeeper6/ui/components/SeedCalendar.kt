@@ -555,12 +555,8 @@ fun SeedCalendarGroupedInternal(
                                 with(density) { 24.dp.toPx() } // 播種アイコンは24dp
                             }
                             
-                            // 播種期間の場合はgrainアイコン、収穫期間の場合はharvestアイコン
-                            val iconResource = if (item.itemLabel == "播種") {
-                                R.drawable.grain // grainアイコンに統一
-                            } else {
-                                R.drawable.harvest
-                            }
+                            // 播種期間と収穫期間の両方でgrainアイコンを使用
+                            val iconResource = R.drawable.grain
                             
                             android.util.Log.d("SeedCalendar", "アイコン描画開始: itemLabel=${item.itemLabel}, iconResource=$iconResource, iconSize=$iconSize")
                             
