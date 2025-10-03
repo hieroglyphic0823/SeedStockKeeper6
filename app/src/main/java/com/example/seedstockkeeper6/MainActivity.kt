@@ -116,6 +116,29 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+    
+    override fun onDestroy() {
+        super.onDestroy()
+        try {
+            // 通知マネージャーのクリーンアップ
+            if (::notificationManager.isInitialized) {
+                notificationManager.cancelAllNotifications()
+            }
+            Log.d("MainActivity", "MainActivity destroyed and resources cleaned up")
+        } catch (e: Exception) {
+            Log.w("MainActivity", "Error during cleanup: ${e.message}")
+        }
+    }
+    
+    override fun onPause() {
+        super.onPause()
+        Log.d("MainActivity", "MainActivity paused")
+    }
+    
+    override fun onResume() {
+        super.onResume()
+        Log.d("MainActivity", "MainActivity resumed")
+    }
 }
 
 // システムバーの外観を制御するヘルパーコンポーザブル

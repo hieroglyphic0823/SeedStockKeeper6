@@ -10,11 +10,16 @@ fun normalizeFamilyName(rawFamily: String?): String {
         normalized.contains("マメ") -> "マメ科"
         normalized.contains("セリ") || normalized.contains("せり") -> "セリ科"
         normalized.contains("キク") -> "キク科"
-        normalized.contains("ネギ") || normalized.contains("ヒガンバナ") || normalized.contains("アリウム") -> "ネギ科"
+        normalized.contains("ネギ") || normalized.contains("ヒガンバナ") || normalized.contains("アリウム") -> "ヒガンバナ科"
         normalized.contains("アマランサス") || normalized.contains("ヒユ") -> "アマランサス科"
         normalized.contains("イネ") -> "イネ科"
         normalized.contains("バラ") -> "バラ科"
         normalized.contains("ミカン") || normalized.contains("柑橘") -> "ミカン科"
+        normalized.contains("アカザ") || normalized.contains("ホウレンソウ") -> "アカザ科"
+        normalized.contains("シソ") || normalized.contains("ハーブ") -> "シソ科"
+        normalized.contains("ユリ") && normalized.contains("ネギ") -> "ユリ科（ネギ類）"
+        normalized.contains("ショウガ") -> "ショウガ科"
+        normalized.contains("アオイ") || normalized.contains("オクラ") -> "アオイ科"
         else -> "不明"
     }
 }

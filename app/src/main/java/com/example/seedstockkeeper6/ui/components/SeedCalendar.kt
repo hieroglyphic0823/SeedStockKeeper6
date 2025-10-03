@@ -208,7 +208,7 @@ fun SeedCalendarGroupedInternal(
 
     // AppColors とテーマから必要な値を取得 (Composable 関数のトップレベル)
     val actualTextPaintColor = MaterialTheme.colorScheme.onSurface
-    val actualOutlineColor = MaterialTheme.colorScheme.outline
+    val actualOutlineColor = MaterialTheme.colorScheme.background
     val expiredColor = MaterialTheme.colorScheme.error
     val surfaceContainerLowColor = MaterialTheme.colorScheme.surfaceContainerLow
     val errorContainerColor = MaterialTheme.colorScheme.errorContainer
@@ -255,6 +255,9 @@ fun SeedCalendarGroupedInternal(
     Canvas(
         modifier = modifier.height(with(density) { heightDp.dp })
     ) {
+        // アイコンの位置をクリア
+        iconPositions.clear()
+        
         val canvasWidth = size.width
         val canvasHeight = size.height
         
@@ -559,6 +562,8 @@ fun SeedCalendarGroupedInternal(
                                 R.drawable.harvest
                             }
                             
+                            android.util.Log.d("SeedCalendar", "アイコン描画開始: itemLabel=${item.itemLabel}, iconResource=$iconResource, iconSize=$iconSize")
+                            
                             
                             // アイコンを棒グラフ幅に横に繰り返し表示
                             val iconSpacing = iconSize * 1.5f // アイコン間隔（アイコンサイズの1.5倍）
@@ -631,7 +636,10 @@ fun SeedCalendarGroupedInternal(
                                 }
                                 
                             } catch (e: Exception) {
-                                // アイコンの描画に失敗した場合は無視
+                                // アイコンの描画に失敗した場合はログ出力
+                                android.util.Log.e("SeedCalendar", "アイコンの描画に失敗: ${e.message}")
+                                android.util.Log.e("SeedCalendar", "アイコンリソース: $iconResource")
+                                android.util.Log.e("SeedCalendar", "アイコンサイズ: $iconSize")
                             }
                         }
                     }

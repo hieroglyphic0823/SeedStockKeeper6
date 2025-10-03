@@ -45,10 +45,15 @@ fun FamilyIcon(
         "マメ科" -> R.drawable.bean
         "キク科" -> R.drawable.lettuce
         "セリ科", "せり科" -> R.drawable.carrot
-        "ネギ科" -> R.drawable.onion2
+        "ヒガンバナ科" -> R.drawable.onion2
         "アマランサス科" -> R.drawable.spinach
         "バラ科" -> R.drawable.strawberry
         "ミカン科" -> R.drawable.orange
+        "アカザ科" -> R.drawable.spinach // ホウレンソウなど
+        "シソ科" -> R.drawable.perilla // ハーブ
+        "ユリ科（ネギ類）" -> R.drawable.onion2 // ネギ類
+        "ショウガ科" -> R.drawable.ginger // ショウガ
+        "アオイ科" -> R.drawable.okra // オクラ
         else -> R.drawable.vegetables
     }
 
@@ -119,10 +124,15 @@ fun FamilyIconCircle(
         "マメ科" -> R.drawable.bean
         "キク科" -> R.drawable.lettuce
         "セリ科", "せり科" -> R.drawable.carrot
-        "ネギ科" -> R.drawable.onion2
+        "ヒガンバナ科" -> R.drawable.onion2
         "アマランサス科" -> R.drawable.spinach
         "バラ科" -> R.drawable.strawberry
         "ミカン科" -> R.drawable.orange
+        "アカザ科" -> R.drawable.spinach // ホウレンソウなど
+        "シソ科" -> R.drawable.perilla // ハーブ
+        "ユリ科（ネギ類）" -> R.drawable.onion2 // ネギ類
+        "ショウガ科" -> R.drawable.ginger // ショウガ
+        "アオイ科" -> R.drawable.okra // オクラ
         else -> R.drawable.vegetables
     }
 

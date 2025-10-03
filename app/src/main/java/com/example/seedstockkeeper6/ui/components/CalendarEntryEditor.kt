@@ -1,5 +1,6 @@
 package com.example.seedstockkeeper6.ui.components
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
@@ -545,6 +546,107 @@ fun CalendarEntryEditor(
             }
         }
         
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        // 有効期限セクション
+        var expirationYear by remember { mutableStateOf("0") }
+        var expirationMonth by remember { mutableStateOf("0") }
+        var showExpirationBottomSheet by remember { mutableStateOf(false) }
+        
+        // 有効期限の初期値を設定（OCR結果がある場合はそれを使用、ない場合は一年後の同月）
+        LaunchedEffect(Unit) {
+            val currentDate = java.time.LocalDate.now()
+            val nextYear = currentDate.year + 1
+            val currentMonth = currentDate.monthValue
+            
+            // OCR結果から有効期限を取得
+            val ocrExpirationYear = entry.expirationYear
+            val ocrExpirationMonth = entry.expirationMonth
+            
+            if (ocrExpirationYear > 0 && ocrExpirationMonth > 0) {
+                expirationYear = ocrExpirationYear.toString()
+                expirationMonth = ocrExpirationMonth.toString()
+            } else {
+                // OCR結果がない場合は一年後の同月
+                expirationYear = nextYear.toString()
+                expirationMonth = currentMonth.toString()
+            }
+        }
+        
+        // 有効期限ラベル（アイコン付き）
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.calendar),
+                contentDescription = "有効期限",
+                modifier = Modifier.size(24.dp),
+                contentScale = ContentScale.Fit,
+                colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(MaterialTheme.colorScheme.onSurface)
+            )
+            Text(
+                text = "有効期限",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        }
+        
+        // 有効期限選択ボタン
+        Button(
+            onClick = { showExpirationBottomSheet = true },
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+            ),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Text(
+                text = if (expirationYear == "0" && expirationMonth == "0") {
+                    "有効期限"
+                } else {
+                    "${expirationYear}年${expirationMonth}月"
+                },
+                style = MaterialTheme.typography.bodyLarge,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                maxLines = 1
+            )
+        }
+        
+        // 有効期限選択ボトムシート
+        if (showExpirationBottomSheet) {
+            ModalBottomSheet(
+                onDismissRequest = { showExpirationBottomSheet = false },
+                sheetState = rememberModalBottomSheetState()
+            ) {
+                ExpirationSelectionBottomSheet(
+                    title = "有効期限",
+                    selectedYear = expirationYear,
+                    selectedMonth = expirationMonth,
+                    onYearChange = { expirationYear = it },
+                    onMonthChange = { expirationMonth = it },
+                    onConfirm = {
+                        val yearInt = expirationYear.toIntOrNull() ?: 0
+                        val monthInt = expirationMonth.toIntOrNull() ?: 0
+                        if (yearInt > 0 && monthInt > 0) {
+                            // 有効期限を更新
+                            val updatedEntry = currentEntry.copy(
+                                expirationYear = yearInt,
+                                expirationMonth = monthInt
+                            )
+                            currentEntry = updatedEntry
+                            onUpdate(updatedEntry)
+                            android.util.Log.d("CalendarEntryEditor", "有効期限更新: ${yearInt}年${monthInt}月")
+                        }
+                        showExpirationBottomSheet = false
+                    },
+                    onCancel = { showExpirationBottomSheet = false }
+                )
+            }
+        }
+        
     }
 }
 
@@ -560,16 +662,19 @@ fun ExpirationSelectionBottomSheet(
 ) {
     val currentYear = java.time.LocalDate.now().year
     Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                ) {
-                    Text(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+    ) {
+        Text(
             title,
-                        style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.padding(bottom = 16.dp)
-                    )
-                    
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
+        
+        // Material3のテーマカラーを取得
+        val colorScheme = MaterialTheme.colorScheme
+        
         // 年と月を横並びで表示
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -579,17 +684,34 @@ fun ExpirationSelectionBottomSheet(
             Column(
                 modifier = Modifier.weight(1f)
             ) {
+                
                 AndroidView(
                     factory = { context ->
                         NumberPicker(context).apply {
-                            minValue = currentYear
-                            maxValue = currentYear + 5
+                            minValue = 0
+                            maxValue = 5
                             val yearOptions = (currentYear..(currentYear + 5)).map { "${it}年" }.toTypedArray()
                             setDisplayedValues(yearOptions)
-                            value = selectedYear.toIntOrNull() ?: currentYear
-                            setOnValueChangedListener { _, _, newVal ->
-                                onYearChange((currentYear + newVal - currentYear).toString())
+                            val selectedYearInt = selectedYear.toIntOrNull() ?: currentYear
+                            value = if (selectedYearInt >= currentYear && selectedYearInt <= currentYear + 5) {
+                                selectedYearInt - currentYear
+                            } else {
+                                0
                             }
+                            setOnValueChangedListener { _, _, newVal ->
+                                onYearChange((currentYear + newVal).toString())
+                            }
+                            
+                            // NumberPickerの色をMaterial3のテーマカラーに設定
+                            try {
+                                // テキスト色を設定
+                                setTextColor(colorScheme.onSurface.toArgb())
+                                // 背景色を設定
+                                setBackgroundColor(colorScheme.surface.toArgb())
+                            } catch (e: Exception) {
+                                // 色設定が失敗した場合は無視
+                            }
+                            
                             // 中央揃えの設定
                             try {
                                 val field = NumberPicker::class.java.getDeclaredField("mSelectorWheelPaint")
@@ -622,6 +744,17 @@ fun ExpirationSelectionBottomSheet(
                             setOnValueChangedListener { _, _, newVal ->
                                 onMonthChange(newVal.toString())
                             }
+                            
+                            // NumberPickerの色をMaterial3のテーマカラーに設定
+                            try {
+                                // テキスト色を設定
+                                setTextColor(colorScheme.onSurface.toArgb())
+                                // 背景色を設定
+                                setBackgroundColor(colorScheme.surface.toArgb())
+                            } catch (e: Exception) {
+                                // 色設定が失敗した場合は無視
+                            }
+                            
                             // 中央揃えの設定
                             try {
                                 val field = NumberPicker::class.java.getDeclaredField("mSelectorWheelPaint")
@@ -642,11 +775,11 @@ fun ExpirationSelectionBottomSheet(
         
         Spacer(modifier = Modifier.height(16.dp))
         
-        // 確認・キャンセルボタン
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
+        // 確認・キャンセルボタン（播種期間のボトムシートと同じスタイル）
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
             Button(
                 onClick = onCancel,
                 modifier = Modifier.weight(1f),
@@ -657,9 +790,10 @@ fun ExpirationSelectionBottomSheet(
             ) {
                 Text("キャンセル")
             }
-                                        Button(
+            
+            Button(
                 onClick = onConfirm,
-                                            modifier = Modifier.weight(1f),
+                modifier = Modifier.weight(1f),
                 enabled = selectedYear != "0" && selectedMonth != "0",
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,

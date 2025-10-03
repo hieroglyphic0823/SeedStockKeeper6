@@ -114,15 +114,27 @@ fun RegionSelectionDialog(
                         .padding(20.dp)
                 ) {
                     // 固定ヘッダー部分
-                    Text(
-                        text = "地域確認",
-                        style = MaterialTheme.typography.titleMedium,
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                         modifier = Modifier.padding(bottom = 8.dp)
-                    )
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.calendar),
+                            contentDescription = "種暦",
+                            modifier = Modifier.size(24.dp),
+                            contentScale = ContentScale.Fit
+                        )
+                        Text(
+                            text = "種暦",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
                     
                     // 説明コメント
                     Text(
-                        text = "AIで読み取った期間を確認してください。",
+                        text = "AIで読み取った種暦を確認してください。",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(bottom = 16.dp)
@@ -161,74 +173,7 @@ fun RegionSelectionDialog(
                             }
                         }
 
-                        // OCR結果表示カード（写真と地域選択の間）
-                        item {
-                            val selectedRegionEntry = ocrResult?.calendar?.find { it.region == selectedRegion }
-                            selectedRegionEntry?.let { entry ->
-                                Card(
-                                    colors = CardDefaults.cardColors(
-                                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                                        contentColor = MaterialTheme.colorScheme.onSurface
-                                    ),
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    Column(
-                                        modifier = Modifier.padding(16.dp)
-                                    ) {
-                                        // アイコン + AI読み取り結果をtitleLargeで表示
-                                        Row(
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                            modifier = Modifier.padding(bottom = 8.dp)
-                                        ) {
-                                            Image(
-                                                painter = painterResource(id = R.drawable.star_opc),
-                                                contentDescription = "AI読み取り結果",
-                                                modifier = Modifier.size(24.dp)
-                                            )
-                                            Text(
-                                                "AI読み取り結果",
-                                                style = MaterialTheme.typography.titleMedium
-                                            )
-                                        }
-                                        
-                                        // 地域情報を表示（農園情報のDisplayModeと同じスタイル）
-                                        Surface(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            color = getRegionColor(selectedRegion).copy(alpha = 0.1f),
-                                            shape = MaterialTheme.shapes.medium
-                                        ) {
-                                            Row(
-                                                modifier = Modifier.padding(16.dp),
-                                                verticalAlignment = Alignment.CenterVertically,
-                                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                            ) {
-                                                Box(
-                                                    modifier = Modifier
-                                                        .size(12.dp)
-                                                        .background(
-                                                            color = getRegionColor(selectedRegion),
-                                                            shape = CircleShape
-                                                        )
-                                                )
-                    Text(
-                                                    text = selectedRegion.ifEmpty { "未設定" },
-                                                    style = MaterialTheme.typography.bodyLarge,
-                                                    color = if (selectedRegion.isEmpty()) 
-                                                        MaterialTheme.colorScheme.onSurfaceVariant 
-                                                    else 
-                                                        MaterialTheme.colorScheme.onSurface,
-                                                    fontWeight = androidx.compose.ui.text.font.FontWeight.Medium
-                                                )
-                                            }
-                                        }
-                                        
-                                        // 表示モード（OCR結果では年を表示しない）
-                                        CalendarEntryDisplay(entry = entry, showYear = false)
-                                    }
-                                }
-                            }
-                        }
+                        // AI読み取り結果カードは非表示
 
                         // 編集項目を表示
                         if (selectedRegion.isNotEmpty()) {

@@ -522,7 +522,8 @@ private suspend fun getSeedsForUserOptimized(uid: String, statistics: MonthlySta
                             isThisMonthSowing = true
                         }
                         
-                        if (sowingEndMonth == currentMonth && sowingEndYear == currentYear && sowingEndStage == "下旬") {
+                        // 今月内で播種期間が終了する種（上旬、中旬、下旬すべて対象）
+                        if (sowingEndMonth == currentMonth && sowingEndYear == currentYear) {
                             isEndingThisMonth = true
                         }
                     }

@@ -1310,6 +1310,15 @@ class SeedInputViewModel : ViewModel() {
         if (editingCalendarEntry != null && editingCalendarEntry!!.region == region) {
             Log.d("RegionSelection", "編集された値を使用: $editingCalendarEntry")
             packet = packet.copy(calendar = listOf(editingCalendarEntry!!))
+            
+            // 有効期限が設定されている場合は、パケットの有効期限も更新
+            if (editingCalendarEntry!!.expirationYear > 0 && editingCalendarEntry!!.expirationMonth > 0) {
+                packet = packet.copy(
+                    expirationYear = editingCalendarEntry!!.expirationYear,
+                    expirationMonth = editingCalendarEntry!!.expirationMonth
+                )
+                Log.d("RegionSelection", "有効期限を更新: ${editingCalendarEntry!!.expirationYear}年${editingCalendarEntry!!.expirationMonth}月")
+            }
         } else {
             // 選択された地域でカレンダーエントリを更新
             updateCalendarWithSelectedRegion(region)
@@ -1330,19 +1339,52 @@ class SeedInputViewModel : ViewModel() {
         
         if (selectedRegionEntry != null) {
             // OCR結果から該当地域の情報を適用
-            packet = packet.copy(calendar = listOf(selectedRegionEntry))
-            Log.d("RegionSelection", "OCR結果から地域情報を適用: $region")
+            // 有効期限の年を設定（OCR結果にない場合は現在年+1）
+            val currentDate = java.time.LocalDate.now()
+            val expirationYear = if (selectedRegionEntry.expirationYear > 0) {
+                selectedRegionEntry.expirationYear
+            } else if (packet.expirationYear > 0) {
+                packet.expirationYear
+            } else {
+                currentDate.year + 1 // 一年後の年
+            }
+            
+            val expirationMonth = if (selectedRegionEntry.expirationMonth > 0) {
+                selectedRegionEntry.expirationMonth
+            } else if (packet.expirationMonth > 0) {
+                packet.expirationMonth
+            } else {
+                currentDate.monthValue
+            }
+            
+            val updatedEntry = selectedRegionEntry.copy(
+                expirationYear = expirationYear,
+                expirationMonth = expirationMonth
+            )
+            
+            packet = packet.copy(calendar = listOf(updatedEntry))
+            Log.d("RegionSelection", "OCR結果から地域情報を適用: $region, 有効期限: ${expirationYear}年${expirationMonth}月")
         } else {
             // OCR結果に該当地域がない場合は空のエントリを作成
+            // 有効期限の年を取得（OCR結果から、または現在年+1）
+            val currentDate = java.time.LocalDate.now()
+            val expirationYear = if (packet.expirationYear > 0) {
+                packet.expirationYear
+            } else {
+                currentDate.year + 1 // 一年後の年
+            }
+            
             val newCalendarEntry = CalendarEntry(
                 region = region,
                 sowing_start_date = "",
                 sowing_end_date = "",
                 harvest_start_date = "",
-                harvest_end_date = ""
+                harvest_end_date = "",
+                expirationYear = expirationYear,
+                expirationMonth = if (packet.expirationMonth > 0) packet.expirationMonth else currentDate.monthValue
             )
             packet = packet.copy(calendar = listOf(newCalendarEntry))
-            Log.d("RegionSelection", "新規カレンダーエントリを作成: $region")
+            Log.d("RegionSelection", "新規カレンダーエントリを作成: $region, 有効期限: ${expirationYear}年${if (packet.expirationMonth > 0) packet.expirationMonth else currentDate.monthValue}月")
         }
     }
 

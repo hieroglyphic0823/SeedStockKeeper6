@@ -109,7 +109,7 @@ class StatisticsService {
         Log.d("StatisticsService", "今月播種予定種子数: ${thisMonthSowingSeeds.size}")
         Log.d("StatisticsService", "今月播種予定種子: ${thisMonthSowingSeeds.map { "${it.productName}(${it.variety})" }}")
         
-        // まき時終了間近の種子数（今月の下旬まで）
+        // まき時終了間近の種子数（今月内で播種期間が終了する種）
         val urgentSeeds = seeds.filter { seed ->
             seed.calendar.any { entry ->
                 val sowingEndMonth = com.example.seedstockkeeper6.utils.DateConversionUtils.getMonthFromDate(entry.sowing_end_date)
@@ -118,7 +118,8 @@ class StatisticsService {
                 
                 Log.d("StatisticsService", "終了間近チェック: ${seed.productName}, 播種終了: ${entry.sowing_end_date}(${sowingEndYear}年${sowingEndMonth}月${sowingEndStage})")
                 
-                val isUrgent = sowingEndMonth == month && sowingEndYear == year && sowingEndStage == "下旬"
+                // 今月内で播種期間が終了する種（上旬、中旬、下旬すべて対象）
+                val isUrgent = sowingEndMonth == month && sowingEndYear == year
                 Log.d("StatisticsService", "終了間近判定: $isUrgent")
                 isUrgent
             }

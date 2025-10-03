@@ -32,6 +32,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.ui.graphics.Color
 import com.example.seedstockkeeper6.ui.components.SwipeToDeleteItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -57,6 +58,50 @@ import com.google.gson.Gson
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
+// 種の状態を判定する関数
+fun getSeedStatus(seed: SeedPacket): String {
+    val currentDate = java.time.LocalDate.now()
+    val currentMonth = currentDate.monthValue
+    val currentYear = currentDate.year
+    
+    // 1. 期限切れの判定（最優先）
+    val isExpired = seed.calendar.any { entry ->
+        if (entry.expirationYear > 0 && entry.expirationMonth > 0) {
+            val expirationDate = java.time.LocalDate.of(entry.expirationYear, entry.expirationMonth, 1)
+            expirationDate.isBefore(currentDate)
+        } else {
+            false
+        }
+    }
+    if (isExpired) return "expired"
+    
+    // 2. 終了間近の判定
+    val isUrgent = seed.calendar.any { entry ->
+        val sowingEndMonth = com.example.seedstockkeeper6.utils.DateConversionUtils.getMonthFromDate(entry.sowing_end_date)
+        val sowingEndYear = com.example.seedstockkeeper6.utils.DateConversionUtils.getYearFromDate(entry.sowing_end_date)
+        sowingEndMonth == currentMonth && sowingEndYear == currentYear
+    }
+    if (isUrgent) return "urgent"
+    
+    // 3. 今月まける種の判定
+    val isThisMonth = seed.calendar.any { entry ->
+        if (entry.sowing_start_date.isNotEmpty() && entry.sowing_end_date.isNotEmpty()) {
+            try {
+                val startMonth = entry.sowing_start_date.split("-")[1].toInt()
+                val endMonth = entry.sowing_end_date.split("-")[1].toInt()
+                startMonth <= currentMonth && endMonth >= currentMonth
+            } catch (e: Exception) {
+                false
+            }
+        } else {
+            false
+        }
+    }
+    if (isThisMonth) return "thisMonth"
+    
+    return "normal"
+}
+
 @Composable
 fun SeedListScreen(
     navController: NavController,
@@ -72,6 +117,8 @@ fun SeedListScreen(
     // 検索状態
     var searchQuery by remember { mutableStateOf("") }
     var showThisMonthOnly by remember { mutableStateOf(false) }
+    var showExpiredOnly by remember { mutableStateOf(false) }
+    var showUrgentOnly by remember { mutableStateOf(false) }
     
     // 現在のユーザーのUIDを取得
     val auth = Firebase.auth
@@ -79,7 +126,7 @@ fun SeedListScreen(
     val currentUid = currentUser?.uid
     
     // フィルタリングされた種リスト
-    val filteredSeeds = remember(seeds, searchQuery, showThisMonthOnly) {
+    val filteredSeeds = remember(seeds, searchQuery, showThisMonthOnly, showExpiredOnly, showUrgentOnly) {
         seeds.filter { (_, seed) ->
             val matchesSearch = searchQuery.isEmpty() || 
                 seed.productName.contains(searchQuery, ignoreCase = true) ||
@@ -106,7 +153,37 @@ fun SeedListScreen(
                 true
             }
             
-            matchesSearch && matchesThisMonth
+            val matchesExpired = if (showExpiredOnly) {
+                // 期限切れの判定（有効期限が現在日時より前）
+                seed.calendar.any { entry ->
+                    if (entry.expirationYear > 0 && entry.expirationMonth > 0) {
+                        val currentDate = java.time.LocalDate.now()
+                        val expirationDate = java.time.LocalDate.of(entry.expirationYear, entry.expirationMonth, 1)
+                        expirationDate.isBefore(currentDate)
+                    } else {
+                        false
+                    }
+                }
+            } else {
+                true
+            }
+            
+            val matchesUrgent = if (showUrgentOnly) {
+                // 終了間近の判定（今月内で播種期間が終了する種）
+                val currentDate = java.time.LocalDate.now()
+                val currentMonth = currentDate.monthValue
+                val currentYear = currentDate.year
+                
+                seed.calendar.any { entry ->
+                    val sowingEndMonth = com.example.seedstockkeeper6.utils.DateConversionUtils.getMonthFromDate(entry.sowing_end_date)
+                    val sowingEndYear = com.example.seedstockkeeper6.utils.DateConversionUtils.getYearFromDate(entry.sowing_end_date)
+                    sowingEndMonth == currentMonth && sowingEndYear == currentYear
+                }
+            } else {
+                true
+            }
+            
+            matchesSearch && matchesThisMonth && matchesExpired && matchesUrgent
         }
     }
 
@@ -208,23 +285,69 @@ fun SeedListScreen(
                 
                 Spacer(modifier = Modifier.height(12.dp))
                 
-                // 今月まける種チェックボックス
+                // フィルター用チェックボックス（横並び）
                 Row(
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Checkbox(
-                        checked = showThisMonthOnly,
-                        onCheckedChange = { showThisMonthOnly = it },
-                        colors = CheckboxDefaults.colors(
-                            checkedColor = MaterialTheme.colorScheme.primary,
-                            uncheckedColor = MaterialTheme.colorScheme.outline
+                    // 今月まける種チェックボックス
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Checkbox(
+                            checked = showThisMonthOnly,
+                            onCheckedChange = { showThisMonthOnly = it },
+                            colors = CheckboxDefaults.colors(
+                                checkedColor = MaterialTheme.colorScheme.primary,
+                                uncheckedColor = MaterialTheme.colorScheme.outline
+                            )
                         )
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "今月まける種",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "今月まける",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                    
+                    // 期限切れチェックボックス
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Checkbox(
+                            checked = showExpiredOnly,
+                            onCheckedChange = { showExpiredOnly = it },
+                            colors = CheckboxDefaults.colors(
+                                checkedColor = MaterialTheme.colorScheme.error,
+                                uncheckedColor = MaterialTheme.colorScheme.outline
+                            )
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "期限切れ",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                    
+                    // 終了間近チェックボックス
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Checkbox(
+                            checked = showUrgentOnly,
+                            onCheckedChange = { showUrgentOnly = it },
+                            colors = CheckboxDefaults.colors(
+                                checkedColor = MaterialTheme.colorScheme.tertiary,
+                                uncheckedColor = MaterialTheme.colorScheme.outline
+                            )
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "終了間近",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.tertiary
+                        )
+                    }
                 }
             }
         }
@@ -235,9 +358,9 @@ fun SeedListScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f),
-            verticalArrangement = Arrangement.spacedBy(0.dp), // アイテム間の間隔を0dpに設定
+            verticalArrangement = Arrangement.spacedBy(8.dp), // アイテム間の間隔を8dpに設定
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp), // 上下に8dpのパディングを追加
-            // パフォーマンス最適化
+            // スクロール設定
             userScrollEnabled = true
         ) {
             items(
@@ -250,17 +373,27 @@ fun SeedListScreen(
             // スワイプ可能なリストアイテム
             SwipeToDeleteItem(
                 modifier = Modifier
-                    .padding(horizontal = 16.dp, vertical = 0.dp)
                     .heightIn(min = 80.dp), // 最小高さを設定してスクロール性能を向上
                 onDelete = {
                     // 実際の削除処理を呼び出す
                     onDeleteSelected(listOf(id))
                 }
             ) {
+                // 種の状態を判定
+                val seedStatus = getSeedStatus(seed)
+                val backgroundColor = when (seedStatus) {
+                    "expired" -> MaterialTheme.colorScheme.surfaceContainerHigh
+                    "urgent" -> MaterialTheme.colorScheme.errorContainer
+                    "thisMonth" -> MaterialTheme.colorScheme.primaryContainer
+                    else -> MaterialTheme.colorScheme.surface
+                }
+                
                 // リストアイテム
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .background(backgroundColor)
+                        .padding(16.dp)
                         .clickable {
                             navController.navigate("input/$encodedSeed")
                         },

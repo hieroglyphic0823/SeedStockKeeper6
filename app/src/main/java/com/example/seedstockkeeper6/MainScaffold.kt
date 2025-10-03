@@ -743,7 +743,7 @@ fun MainScaffold(
                 onSaveRequest = {
                     showSaveAnimation = true
                     // 保存処理完了後にアニメーションを非表示にする
-                    kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch {
+                    scope.launch {
                         kotlinx.coroutines.delay(2000) // 2秒間アニメーション表示
                         showSaveAnimation = false
                     }

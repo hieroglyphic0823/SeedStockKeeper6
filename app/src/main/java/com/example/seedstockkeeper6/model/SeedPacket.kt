@@ -106,7 +106,11 @@ data class CalendarEntry(
     
     // 収穫期間（具体的な日付で保存）
     val harvest_start_date: String = "", // "2025-06-11" 形式
-    val harvest_end_date: String = ""    // "2025-06-30" 形式
+    val harvest_end_date: String = "",   // "2025-06-30" 形式
+    
+    // 有効期限（年月で保存）
+    val expirationYear: Int = 0,
+    val expirationMonth: Int = 0
 )
 
 // 拡張関数：日付を期間キーに変換
