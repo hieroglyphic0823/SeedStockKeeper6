@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">たねすけさん</string>
     <string name="default_web_client_id">639347804790-m1llndci906llu8inij5gr6s0g0iv6lj.apps.googleusercontent.com</string>
+    <string name="google_maps_key">AIzaSyDr_WfQfx3TyH0oLDWf8Z7qHX4XHAH5J-E</string>
 </resources>

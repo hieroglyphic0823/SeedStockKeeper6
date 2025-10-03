@@ -18,6 +18,16 @@ class SettingsViewModel(private val context: Context? = null) : ViewModel() {
     var farmName by mutableStateOf("")
         private set
     
+    // 農園位置（座標）
+    var farmLatitude by mutableStateOf(0.0)
+        private set
+    
+    var farmLongitude by mutableStateOf(0.0)
+        private set
+    
+    var farmAddress by mutableStateOf("")
+        private set
+    
     var defaultRegion by mutableStateOf("")
         private set
     
@@ -69,6 +79,12 @@ class SettingsViewModel(private val context: Context? = null) : ViewModel() {
     
     fun updateFarmName(name: String) {
         farmName = name
+    }
+    
+    fun updateFarmLocation(latitude: Double, longitude: Double, address: String = "") {
+        farmLatitude = latitude
+        farmLongitude = longitude
+        farmAddress = address
     }
     
     fun updateDefaultRegion(region: String) {
@@ -123,6 +139,9 @@ class SettingsViewModel(private val context: Context? = null) : ViewModel() {
                 val snapshot = settingsDoc.get().await()
                 if (snapshot.exists()) {
                     farmName = snapshot.getString("farmName") ?: ""
+                    farmLatitude = snapshot.getDouble("farmLatitude") ?: 0.0
+                    farmLongitude = snapshot.getDouble("farmLongitude") ?: 0.0
+                    farmAddress = snapshot.getString("farmAddress") ?: ""
                     defaultRegion = snapshot.getString("defaultRegion") ?: ""
                     selectedPrefecture = snapshot.getString("selectedPrefecture") ?: ""
                     farmOwner = snapshot.getString("farmOwner") ?: "水戸黄門"
@@ -197,6 +216,9 @@ class SettingsViewModel(private val context: Context? = null) : ViewModel() {
                 
                 val settings = mapOf(
                     "farmName" to farmName,
+                    "farmLatitude" to farmLatitude,
+                    "farmLongitude" to farmLongitude,
+                    "farmAddress" to farmAddress,
                     "defaultRegion" to defaultRegion,
                     "selectedPrefecture" to selectedPrefecture,
                     "farmOwner" to farmOwner,

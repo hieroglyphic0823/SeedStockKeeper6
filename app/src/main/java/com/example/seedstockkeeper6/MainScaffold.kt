@@ -178,6 +178,24 @@ fun MainScaffoldTopAppBar(
                         )
                     }
                 }
+                "map_selection" -> {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(id = com.example.seedstockkeeper6.R.drawable.google_maps_icon),
+                            contentDescription = "Googleマップ",
+                            tint = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Text(
+                            text = "Googleマップで農園位置を選択",
+                            modifier = Modifier.fillMaxWidth(),
+                            textAlign = TextAlign.Start
+                        )
+                    }
+                }
                 else -> {
                     if (currentRoute?.startsWith("input") == true) {
                         Row(
@@ -637,8 +655,11 @@ fun MainScaffold(
     var farmName by remember { mutableStateOf("") }
     
     // 農園名を設定から取得
-    LaunchedEffect(settingsViewModel) {
+    LaunchedEffect(Unit) {
+        // 設定の読み込み完了を待つ
+        kotlinx.coroutines.delay(1000)
         farmName = settingsViewModel.farmName
+        Log.d("MainScaffold", "農園名取得: $farmName")
     }
     
     // アプリ起動後の初期化完了フラグ

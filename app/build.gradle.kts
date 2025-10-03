@@ -7,6 +7,7 @@ if (localPropertiesFile.exists()) {
     localProperties.load(localPropertiesFile.inputStream())
 }
 val geminiKey: String = localProperties.getProperty("GEMINI_API_KEY") ?: ""
+val googleMapsKey: String = localProperties.getProperty("GOOGLE_MAPS_API_KEY") ?: ""
 
 plugins {
     alias(libs.plugins.android.application)
@@ -30,6 +31,7 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         buildConfigField("String", "GEMINI_API_KEY", "\"$geminiKey\"")
+        buildConfigField("String", "GOOGLE_MAPS_API_KEY", "\"$googleMapsKey\"")
     }
 
     buildTypes {
@@ -83,6 +85,11 @@ dependencies {
     
     // WorkManager
     implementation("androidx.work:work-runtime-ktx:2.9.0")
+    
+    // Retrofit for Google Weather API
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.11.0")
 
     // Firebase（BoM で統一）
     implementation(platform(libs.firebase.bom))
@@ -100,6 +107,12 @@ dependencies {
     implementation(libs.play.services.auth)
     implementation(libs.play.services.base)
     implementation(libs.play.services.tasks)
+    
+    // Google Maps
+    implementation("com.google.android.gms:play-services-maps:18.2.0")
+    implementation("com.google.android.gms:play-services-location:21.0.1")
+    implementation("com.google.android.libraries.places:places:3.3.0")
+    implementation("com.google.maps.android:maps-compose:4.3.0")
 
     // 画像/AI/その他
     implementation(libs.coil.compose)

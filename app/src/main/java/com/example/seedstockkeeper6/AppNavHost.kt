@@ -98,5 +98,20 @@ fun AppNavHost(
                 navController = navController
             )
         }
+        composable("map_selection") {
+            val settingsViewModel = settingsViewModel ?: viewModel<com.example.seedstockkeeper6.viewmodel.SettingsViewModel>()
+            com.example.seedstockkeeper6.ui.screens.MapSelectionScreen(
+                initialLatitude = if (settingsViewModel.farmLatitude != 0.0) settingsViewModel.farmLatitude else 35.6762,
+                initialLongitude = if (settingsViewModel.farmLongitude != 0.0) settingsViewModel.farmLongitude else 139.6503,
+                onLocationSelected = { latitude, longitude, address ->
+                    // 設定画面に戻って座標を保存
+                    settingsViewModel.updateFarmLocation(latitude, longitude, address)
+                    navController.popBackStack()
+                },
+                onCancel = {
+                    navController.popBackStack()
+                }
+            )
+        }
     }
 }

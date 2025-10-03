@@ -40,8 +40,12 @@ import com.example.seedstockkeeper6.model.SeedPacket
 import com.example.seedstockkeeper6.model.SukesanMessage
 import com.example.seedstockkeeper6.model.CalendarEntry
 import com.example.seedstockkeeper6.model.MonthlyStatistics
+import com.example.seedstockkeeper6.data.WeeklyWeatherData
+import com.example.seedstockkeeper6.data.WeatherData
 import com.example.seedstockkeeper6.service.SukesanMessageService
 import com.example.seedstockkeeper6.service.StatisticsService
+import com.example.seedstockkeeper6.service.WeatherService
+import com.example.seedstockkeeper6.ui.components.WeeklyWeatherCard
 import com.example.seedstockkeeper6.model.NotificationHistory
 import com.example.seedstockkeeper6.service.NotificationHistoryService
 import com.example.seedstockkeeper6.viewmodel.SeedListViewModel
@@ -60,6 +64,7 @@ data class StatisticsData(
     val familyDistribution: List<Pair<String, Int>>
 )
 
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CastleScreen(
@@ -69,12 +74,27 @@ fun CastleScreen(
     farmOwner: String = "水戸黄門",
     farmName: String = "菜園"
 ) {
+    // コンテキストを取得
+    val context = LocalContext.current
+    
     // 集計サービス
     val statisticsService = remember { StatisticsService() }
+    
+    // 天気サービス
+    val weatherService = remember { WeatherService(context) }
     
     // 集計データの状態
     var monthlyStatistics by remember { mutableStateOf<MonthlyStatistics?>(null) }
     var isLoadingStatistics by remember { mutableStateOf(false) }
+    
+    // 天気データの状態
+    var weeklyWeatherData by remember { mutableStateOf<WeeklyWeatherData?>(null) }
+    var isLoadingWeather by remember { mutableStateOf(false) }
+    var weatherError by remember { mutableStateOf<String?>(null) }
+    
+    // 農園位置情報（設定から取得）
+    val farmLatitude = 35.6762 // デフォルト値（東京）
+    val farmLongitude = 139.6503 // デフォルト値（東京）
     
     // データの取得（プレビュー時は固定データ、実装時はViewModelから）
     val seeds = if (isPreview) {
@@ -219,6 +239,24 @@ fun CastleScreen(
             }
         }
         
+        // 天気データの取得
+        LaunchedEffect(farmLatitude, farmLongitude, isPreview) {
+            if (!isPreview) {
+                try {
+                    isLoadingWeather = true
+                    weatherError = null
+                    android.util.Log.d("CastleScreen", "天気予報取得開始: lat=$farmLatitude, lon=$farmLongitude")
+                    weeklyWeatherData = weatherService.getWeeklyWeather(farmLatitude, farmLongitude)
+                    android.util.Log.d("CastleScreen", "天気予報取得完了")
+                } catch (e: Exception) {
+                    android.util.Log.e("CastleScreen", "天気データ取得エラー", e)
+                    weatherError = "天気予報の取得に失敗しました: ${e.message}"
+                } finally {
+                    isLoadingWeather = false
+                }
+            }
+        }
+        
         // 集計データから値を取得、データがない場合は従来の計算を使用
         if (monthlyStatistics != null) {
             StatisticsData(
@@ -281,6 +319,15 @@ fun CastleScreen(
     ) {
         // ヘッダーは削除（AppTopBarのみ残す）
         
+        // 週間天気予報
+        WeeklyWeatherCard(
+            weeklyWeatherData = weeklyWeatherData,
+            isLoading = isLoadingWeather,
+            error = weatherError
+        )
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
         // すけさんからのメッセージ
         SukesanMessageCard(
             seeds = seeds,
@@ -309,6 +356,7 @@ fun CastleScreen(
             familyDistribution = statisticsData.familyDistribution,
             navController = navController
         )
+        
     }
 }
 
@@ -517,7 +565,7 @@ fun SowingSummaryCards(
             Text(
                 text = "今月の種",
                 style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.SemiBold,
+                fontWeight = FontWeight.Normal,
                 color = MaterialTheme.colorScheme.onBackground
             )
         }
@@ -532,7 +580,7 @@ fun SowingSummaryCards(
             }
             
             SummaryCardWithImageIcon(
-                iconResource = R.drawable.germination,
+                iconResource = R.drawable.seed,
                 title = "まきどき",
                 value = "$thisMonthSowingCount",
                 subtitle = "",
@@ -577,7 +625,7 @@ fun StatisticsWidgets(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Icon(
-                imageVector = Icons.Filled.Analytics,
+                painter = painterResource(id = com.example.seedstockkeeper6.R.drawable.chart),
                 contentDescription = "統計",
                 tint = MaterialTheme.colorScheme.onBackground,
                 modifier = Modifier.size(24.dp)
@@ -585,7 +633,7 @@ fun StatisticsWidgets(
             Text(
                 text = "統計",
                 style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.SemiBold,
+                fontWeight = FontWeight.Normal,
                 color = MaterialTheme.colorScheme.onBackground
             )
         }
