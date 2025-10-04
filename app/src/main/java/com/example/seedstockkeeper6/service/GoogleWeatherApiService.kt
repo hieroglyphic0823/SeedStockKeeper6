@@ -14,7 +14,7 @@ import retrofit2.http.Path
 interface GoogleWeatherApiService {
     @POST("v1/locations/{location}:getDailyForecast")
     suspend fun getDailyForecast(
-        @Path("location") location: String, // "latitude,longitude" 形式
+        @Path("location", encoded = true) location: String, // "latitude,longitude" 形式
         @Header("X-Goog-Api-Key") apiKey: String,
         @Header("Content-Type") contentType: String = "application/json",
         @Body body: GoogleWeatherRequestBody = GoogleWeatherRequestBody()
