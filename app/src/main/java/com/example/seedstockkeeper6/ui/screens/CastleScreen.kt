@@ -316,54 +316,62 @@ fun CastleScreen(
         }
     }
     
-    Column(
+    LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .padding(16.dp)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        // ヘッダーは削除（AppTopBarのみ残す）
-        
         // 週間天気予報
-        WeeklyWeatherCard(
-            weeklyWeatherData = weeklyWeatherData,
-            isLoading = isLoadingWeather,
-            error = weatherError
-        )
-        
-        Spacer(modifier = Modifier.height(16.dp))
+        item {
+            WeeklyWeatherCard(
+                weeklyWeatherData = weeklyWeatherData,
+                isLoading = isLoadingWeather,
+                error = weatherError
+            )
+        }
         
         // すけさんからのメッセージ
-        SukesanMessageCard(
-            seeds = seeds,
-            currentMonth = currentMonth,
-            currentYear = currentYear,
-            isPreview = isPreview,
-            farmOwner = farmOwner,
-            farmName = farmName,
-            farmLatitude = farmLatitude,
-            farmLongitude = farmLongitude
-        )
+        item {
+            SukesanMessageCard(
+                seeds = seeds,
+                currentMonth = currentMonth,
+                currentYear = currentYear,
+                isPreview = isPreview,
+                farmOwner = farmOwner,
+                farmName = farmName,
+                farmLatitude = farmLatitude,
+                farmLongitude = farmLongitude
+            )
+        }
         
-        Spacer(modifier = Modifier.height(24.dp))
+        item {
+            Spacer(modifier = Modifier.height(4.dp))
+        }
         
         // 今月の播種状況
-        SowingSummaryCards(
-            thisMonthSowingCount = statisticsData.thisMonthSowingCount,
-            urgentSeedsCount = statisticsData.urgentSeedsCount,
-            navController = navController
-        )
+        item {
+            SowingSummaryCards(
+                thisMonthSowingCount = statisticsData.thisMonthSowingCount,
+                urgentSeedsCount = statisticsData.urgentSeedsCount,
+                navController = navController
+            )
+        }
         
-        Spacer(modifier = Modifier.height(24.dp))
+        item {
+            Spacer(modifier = Modifier.height(4.dp))
+        }
         
         // 統計ウィジェット
-        StatisticsWidgets(
-            totalSeeds = statisticsData.totalSeeds,
-            expiredSeedsCount = statisticsData.expiredSeedsCount,
-            familyDistribution = statisticsData.familyDistribution,
-            navController = navController
-        )
-        
+        item {
+            StatisticsWidgets(
+                totalSeeds = statisticsData.totalSeeds,
+                expiredSeedsCount = statisticsData.expiredSeedsCount,
+                familyDistribution = statisticsData.familyDistribution,
+                navController = navController
+            )
+        }
     }
 }
 
@@ -382,6 +390,7 @@ fun SukesanMessageCard(
 ) {
     var latestNotification by remember { mutableStateOf<NotificationHistory?>(null) }
     var isLoading by remember { mutableStateOf(true) }
+    var showNotificationDialog by remember { mutableStateOf(false) }
 
     // メッセージの取得
     LaunchedEffect(seeds, currentMonth, currentYear, isPreview, farmOwner, farmName, farmLatitude, farmLongitude) {
@@ -433,9 +442,9 @@ fun SukesanMessageCard(
         shape = RoundedCornerShape(16.dp)
     ) {
         Row(
-            modifier = Modifier.padding(20.dp),
+            modifier = Modifier.padding(12.dp),
             verticalAlignment = Alignment.Top,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             // メッセージ部分の高さを取得するためのBox
             var messageHeight by remember { mutableStateOf(0.dp) }
@@ -447,6 +456,11 @@ fun SukesanMessageCard(
                     .weight(1f)
                     .onSizeChanged { size ->
                         messageHeight = with(density) { size.height.toDp() }
+                    }
+                    .clickable { 
+                        if (latestNotification != null) {
+                            showNotificationDialog = true
+                        }
                     },
                 colors = CardDefaults.cardColors(
                     containerColor = Color.White
@@ -454,7 +468,7 @@ fun SukesanMessageCard(
                 shape = RoundedCornerShape(16.dp, 16.dp, 16.dp, 4.dp) // 吹き出しの形
             ) {
                 Column(
-                    modifier = Modifier.padding(16.dp)
+                    modifier = Modifier.padding(12.dp)
                 ) {
                     // 通知内容
                     if (isLoading) {
@@ -474,12 +488,31 @@ fun SukesanMessageCard(
                         }
                     } else if (latestNotification != null) {
                         val notification = latestNotification!!
+                        
+                        // 今月まき時の種をフィルタリング
+                        val thisMonthSowingSeeds = seeds.filter { seed ->
+                            seed.calendar?.any { entry ->
+                                val sowingStartMonth = com.example.seedstockkeeper6.utils.DateConversionUtils.getMonthFromDate(entry.sowing_start_date)
+                                val sowingStartYear = com.example.seedstockkeeper6.utils.DateConversionUtils.getYearFromDate(entry.sowing_start_date)
+                                sowingStartMonth == currentMonth && sowingStartYear == currentYear
+                            } ?: false
+                        }
+                        
+                        // まき時終了間近の種をフィルタリング
+                        val urgentSeeds = seeds.filter { seed ->
+                            seed.calendar?.any { entry ->
+                                val sowingEndMonth = com.example.seedstockkeeper6.utils.DateConversionUtils.getMonthFromDate(entry.sowing_end_date)
+                                val sowingEndYear = com.example.seedstockkeeper6.utils.DateConversionUtils.getYearFromDate(entry.sowing_end_date)
+                                sowingEndMonth == currentMonth && sowingEndYear == currentYear
+                            } ?: false
+                        }
+                        
                         Column {
                             // 通知タイトル（1行）
                             Text(
                                 text = notification.title,
                                 style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.SemiBold,
+                                fontWeight = FontWeight.Normal,
                                 color = Color.Black,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
@@ -487,21 +520,49 @@ fun SukesanMessageCard(
 
                             Spacer(modifier = Modifier.height(8.dp))
 
-                            // 今月まき時
-                            Text(
-                                text = "🌱 今月まき時",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = Color.Black
-                            )
+                            // 今月まき時の種情報
+                            if (thisMonthSowingSeeds.isNotEmpty()) {
+                                val seedNames = thisMonthSowingSeeds.take(3).joinToString("、") { "${it.productName}（${it.variety}）" }
+                                val displayText = if (thisMonthSowingSeeds.size > 3) {
+                                    "$seedNames 他${thisMonthSowingSeeds.size - 3}種類"
+                                } else {
+                                    seedNames
+                                }
+                                Text(
+                                    text = "🌱 今月まき時: $displayText",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = Color.Black
+                                )
+                            } else {
+                                Text(
+                                    text = "🌱 今月まき時: 該当なし",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = Color.Black
+                                )
+                            }
 
                             Spacer(modifier = Modifier.height(4.dp))
 
-                            // まき時終了間近
-                            Text(
-                                text = "⚠️ まき時終了間近",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = Color.Black
-                            )
+                            // まき時終了間近の種情報
+                            if (urgentSeeds.isNotEmpty()) {
+                                val seedNames = urgentSeeds.take(3).joinToString("、") { "${it.productName}（${it.variety}）" }
+                                val displayText = if (urgentSeeds.size > 3) {
+                                    "$seedNames 他${urgentSeeds.size - 3}種類"
+                                } else {
+                                    seedNames
+                                }
+                                Text(
+                                    text = "⚠️ まき時終了間近: $displayText",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = Color.Black
+                                )
+                            } else {
+                                Text(
+                                    text = "⚠️ まき時終了間近: 該当なし",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = Color.Black
+                                )
+                            }
                         }
                     } else {
                         Text(
@@ -530,11 +591,19 @@ fun SukesanMessageCard(
                 contentDescription = "すけさん",
                 imageLoader = imageLoader,
                 modifier = Modifier.size(
-                    width = 20.dp,
+                    width = 60.dp,
                     height = messageHeight
                 )
             )
         }
+    }
+    
+    // 通知詳細ダイアログ
+    if (showNotificationDialog && latestNotification != null) {
+        NotificationDetailDialog(
+            notification = latestNotification!!,
+            onDismiss = { showNotificationDialog = false }
+        )
     }
 }
 
@@ -545,7 +614,7 @@ fun SowingSummaryCards(
     navController: NavController
 ) {
     Column(
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -612,7 +681,7 @@ fun StatisticsWidgets(
     navController: NavController
 ) {
     Column(
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -688,7 +757,7 @@ fun StatisticsWidgets(
                         Text(
                             text = "科別分布",
                             style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold,
+                            fontWeight = FontWeight.Normal,
                             color = MaterialTheme.colorScheme.onSecondaryContainer,
                             textAlign = TextAlign.Center
                         )
@@ -829,7 +898,7 @@ fun SummaryCardWithImageIcon(
                 Text(
                     text = title,
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
+                    fontWeight = FontWeight.Normal,
                     color = contentColor,
                     textAlign = TextAlign.Center
                 )
@@ -1064,7 +1133,7 @@ fun SummaryCardWithoutIcon(
             Text(
                 text = title,
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
+                fontWeight = FontWeight.Normal,
                 color = contentColor,
                 textAlign = TextAlign.Center
             )
@@ -1223,4 +1292,63 @@ fun PieChart(
             }
         }
     }
+}
+
+/**
+ * 通知詳細ダイアログ
+ */
+@Composable
+fun NotificationDetailDialog(
+    notification: NotificationHistory,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = notification.title,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Normal
+            )
+        },
+        text = {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // 通知内容
+                Text(
+                    text = notification.content,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                
+                // 要約がある場合は表示
+                if (notification.summary.isNotEmpty()) {
+                    Text(
+                        text = "要約:",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = notification.summary,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                
+                // 送信日時
+                Text(
+                    text = "送信日時: ${notification.sentAt}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("閉じる")
+            }
+        }
+    )
 }

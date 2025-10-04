@@ -37,7 +37,7 @@ fun WeeklyWeatherCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(
-            modifier = Modifier.padding(4.dp)
+            modifier = Modifier.padding(horizontal = 0.dp, vertical = 4.dp)
         ) {
             
             when {
@@ -67,7 +67,7 @@ private fun WeatherContent(weeklyWeatherData: WeeklyWeatherData) {
     LazyRow(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(2.dp),
-        contentPadding = PaddingValues(horizontal = 4.dp)
+        contentPadding = PaddingValues(horizontal = 2.dp)
     ) {
         // 現在の天気を最初に追加
         item {
