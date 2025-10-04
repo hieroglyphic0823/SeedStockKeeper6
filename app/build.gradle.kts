@@ -8,6 +8,7 @@ if (localPropertiesFile.exists()) {
 }
 val geminiKey: String = localProperties.getProperty("GEMINI_API_KEY") ?: ""
 val googleMapsKey: String = localProperties.getProperty("GOOGLE_MAPS_API_KEY") ?: ""
+val openWeatherKey: String = localProperties.getProperty("OPENWEATHER_API_KEY") ?: ""
 
 plugins {
     alias(libs.plugins.android.application)
@@ -32,6 +33,7 @@ android {
 
         buildConfigField("String", "GEMINI_API_KEY", "\"$geminiKey\"")
         buildConfigField("String", "GOOGLE_MAPS_API_KEY", "\"$googleMapsKey\"")
+        buildConfigField("String", "OPENWEATHER_API_KEY", "\"$openWeatherKey\"")
     }
 
     buildTypes {

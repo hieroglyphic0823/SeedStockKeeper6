@@ -15,7 +15,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.seedstockkeeper6.data.WeatherData
-import com.example.seedstockkeeper6.data.WeatherIconMapper
+import com.example.seedstockkeeper6.data.OpenWeatherIconMapper
 import com.example.seedstockkeeper6.data.WeeklyWeatherData
 import java.text.SimpleDateFormat
 import java.util.*
@@ -30,13 +30,11 @@ fun WeeklyWeatherCard(
     error: String? = null
 ) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp),
+        modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(
             modifier = Modifier.padding(16.dp)
@@ -65,138 +63,97 @@ fun WeeklyWeatherCard(
  */
 @Composable
 private fun WeatherContent(weeklyWeatherData: WeeklyWeatherData) {
-    Column {
-        // 現在の天気
-        CurrentWeatherItem(weeklyWeatherData.currentWeather)
-        
-        Spacer(modifier = Modifier.height(16.dp))
+    // すべて横並びで表示（現在の天気も含む）
+    LazyRow(
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        contentPadding = PaddingValues(horizontal = 4.dp)
+    ) {
+        // 現在の天気を最初に追加
+        item {
+            DailyWeatherItem(weeklyWeatherData.currentWeather, isToday = true)
+        }
         
         // 週間予報
-        LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            contentPadding = PaddingValues(horizontal = 4.dp)
-        ) {
-            items(weeklyWeatherData.dailyForecast) { weatherData ->
-                DailyWeatherItem(weatherData)
-            }
+        items(weeklyWeatherData.dailyForecast) { weatherData ->
+            DailyWeatherItem(weatherData)
         }
     }
 }
 
-/**
- * 現在の天気アイテム
- */
-@Composable
-private fun CurrentWeatherItem(weatherData: WeatherData) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer
-        )
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Text(
-                    text = WeatherIconMapper.getWeatherIcon(weatherData.weather.icon),
-                    fontSize = 32.sp
-                )
-                Column {
-                    Text(
-                        text = "今日",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                    Text(
-                        text = "${weatherData.temperature.current.toInt()}°C",
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                }
-            }
-            
-            Column(
-                horizontalAlignment = Alignment.End
-            ) {
-                Text(
-                    text = weatherData.weather.description,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                )
-                Text(
-                    text = "湿度 ${weatherData.humidity}%",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                )
-                Text(
-                    text = "風速 ${weatherData.windSpeed.toInt()}m/s",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                )
-            }
-        }
-    }
-}
 
 /**
  * 日別天気アイテム
  */
 @Composable
-private fun DailyWeatherItem(weatherData: WeatherData) {
+private fun DailyWeatherItem(weatherData: WeatherData, isToday: Boolean = false) {
     val dateFormat = SimpleDateFormat("M/d", Locale.getDefault())
     val dayFormat = SimpleDateFormat("E", Locale.getDefault())
     
-    Card(
-        modifier = Modifier.width(80.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
+    Column(
+        modifier = Modifier
+            .width(if (isToday) 80.dp else 70.dp)
+            .padding(vertical = 4.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+        // 月日と曜日を横並び
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = dayFormat.format(weatherData.date),
+                text = if (isToday) "今日" else dayFormat.format(weatherData.date),
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                fontWeight = if (isToday) FontWeight.ExtraBold else FontWeight.Normal,
+                color = if (isToday) 
+                    MaterialTheme.colorScheme.primary 
+                else 
+                    MaterialTheme.colorScheme.onSurfaceVariant
             )
-            Text(
-                text = dateFormat.format(weatherData.date),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            
-            Spacer(modifier = Modifier.height(4.dp))
-            
-            Text(
-                text = WeatherIconMapper.getWeatherIcon(weatherData.weather.icon),
-                fontSize = 24.sp
-            )
-            
-            Spacer(modifier = Modifier.height(4.dp))
-            
+            if (!isToday) {
+                Text(
+                    text = dateFormat.format(weatherData.date),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                )
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(4.dp))
+        
+        // 天気アイコン
+        Text(
+            text = OpenWeatherIconMapper.getWeatherIcon(weatherData.weather.icon),
+            fontSize = if (isToday) 24.sp else 20.sp
+        )
+        
+        Spacer(modifier = Modifier.height(4.dp))
+        
+        // 最高気温と最低気温を横並び
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(2.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Text(
                 text = "${weatherData.temperature.max.toInt()}°",
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Bold,
+                color = if (isToday) 
+                    MaterialTheme.colorScheme.primary 
+                else 
+                    MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                text = "/",
+                style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
                 text = "${weatherData.temperature.min.toInt()}°",
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = if (isToday) 
+                    MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
+                else 
+                    MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }

@@ -12,33 +12,34 @@ import java.util.*
 
 /**
  * 天気予報APIサービス
- * Google Weather APIを使用
+ * OpenWeatherMap APIを使用
  */
 class WeatherService(private val context: Context) {
-    
+
     companion object {
         private const val TAG = "WeatherService"
-        private const val BASE_URL = "https://weather.googleapis.com/"
+        private const val BASE_URL = "https://api.openweathermap.org/"
     }
-    
-    private val googleWeatherApi: GoogleWeatherApiService
-    
+
+    private val openWeatherApi: OpenWeatherApiService
+
     init {
         val retrofit = Retrofit.Builder()
             .baseUrl(BASE_URL)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
-        googleWeatherApi = retrofit.create(GoogleWeatherApiService::class.java)
+
+        openWeatherApi = retrofit.create(OpenWeatherApiService::class.java)
     }
     
     /**
-     * Google Maps APIキーを取得
+     * OpenWeatherMap APIキーを取得
      */
     private fun getApiKey(): String {
         return try {
-            // BuildConfigからGoogle Maps APIキーを取得（build.gradleで設定）
-            val apiKey = com.example.seedstockkeeper6.BuildConfig.GOOGLE_MAPS_API_KEY
-            Log.d(TAG, "取得したGoogle Maps APIキー: ${apiKey.take(10)}...")
+            // BuildConfigからOpenWeatherMap APIキーを取得（build.gradleで設定）
+            val apiKey = com.example.seedstockkeeper6.BuildConfig.OPENWEATHER_API_KEY
+            Log.d(TAG, "取得したOpenWeatherMap APIキー: ${apiKey.take(10)}...")
             apiKey
         } catch (e: Exception) {
             Log.e(TAG, "APIキーの取得に失敗しました", e)
@@ -54,51 +55,52 @@ class WeatherService(private val context: Context) {
         return withContext(Dispatchers.IO) {
             try {
                 val apiKey = getApiKey()
-                Log.d(TAG, "Google Weather API取得開始: lat=$latitude, lon=$longitude")
-                
+                Log.d(TAG, "OpenWeatherMap API取得開始: lat=$latitude, lon=$longitude")
+
                 // APIキーが設定されていない場合はnullを返す
                 if (apiKey == "YOUR_API_KEY_HERE" || apiKey.isEmpty()) {
-                    Log.d(TAG, "Google Maps APIキーが設定されていないため、天気予報を取得できません")
-                    Log.d(TAG, "local.propertiesにGOOGLE_MAPS_API_KEYを設定してください")
+                    Log.d(TAG, "OpenWeatherMap APIキーが設定されていないため、天気予報を取得できません")
+                    Log.d(TAG, "local.propertiesにOPENWEATHER_API_KEYを設定してください")
                     return@withContext null
                 }
                 
-                val locationString = "$latitude,$longitude"
-                Log.d(TAG, "Google Weather API呼び出し: location=$locationString")
-                
-                val response = googleWeatherApi.getDailyForecast(locationString, apiKey)
+                Log.d(TAG, "OpenWeatherMap API呼び出し: lat=$latitude, lon=$longitude")
+                Log.d(TAG, "使用するAPIキー: ${apiKey.take(10)}...")
+
+                val response = openWeatherApi.getForecast(latitude, longitude, apiKey)
                 
                 if (response.isSuccessful && response.body() != null) {
                     val forecastResponse = response.body()!!
-                    Log.d(TAG, "Google Weather API成功: ${forecastResponse.dailyForecasts?.size ?: 0}日分のデータ")
-                    
-                    // Googleのデータ形式からアプリのデータ形式に変換
-                    mapToWeeklyWeatherData(forecastResponse.dailyForecasts, latitude, longitude)
+                    Log.d(TAG, "OpenWeatherMap API成功: ${forecastResponse.list?.size ?: 0}件のデータ")
+
+                    // OpenWeatherMapのデータ形式からアプリのデータ形式に変換
+                    mapToWeeklyWeatherData(forecastResponse, latitude, longitude)
                 } else {
                     val errorBody = response.errorBody()?.string()
-                    Log.e(TAG, "Google Weather API エラー: ${response.code()} - $errorBody")
+                    Log.e(TAG, "OpenWeatherMap API エラー: ${response.code()} - $errorBody")
                     null
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Google Weather API取得エラー", e)
+                Log.e(TAG, "OpenWeatherMap API取得エラー", e)
                 null
             }
         }
     }
     
     /**
-     * Google Weather APIのデータをアプリのデータ形式に変換
+     * OpenWeatherMap APIのデータをアプリのデータ形式に変換
      */
     private fun mapToWeeklyWeatherData(
-        dailyForecasts: List<GoogleDailyForecast>?,
+        openWeatherResponse: OpenWeatherResponse,
         latitude: Double,
         longitude: Double
     ): WeeklyWeatherData? {
-        if (dailyForecasts.isNullOrEmpty()) {
+        val weatherList = openWeatherResponse.list
+        if (weatherList.isNullOrEmpty()) {
             Log.w(TAG, "天気予報データが空です")
             return null
         }
-        
+
         try {
             // 地域名を決定
             val location = when {
@@ -110,53 +112,59 @@ class WeatherService(private val context: Context) {
                 latitude > 30.0 -> "中国・四国"
                 else -> "九州"
             }
-            
-            // 現在の天気（最初の日）
-            val firstDay = dailyForecasts[0]
+
+            // 現在の天気（最初のデータ）
+            val firstItem = weatherList[0]
             val currentWeather = WeatherData(
-                date = Date(),
+                date = Date(firstItem.dt * 1000), // Unix timestamp to Date
                 temperature = Temperature(
-                    min = firstDay.temperature.min.toDouble(),
-                    max = firstDay.temperature.max.toDouble(),
-                    current = (firstDay.temperature.min + firstDay.temperature.max) / 2.0
+                    min = firstItem.main.tempMin,
+                    max = firstItem.main.tempMax,
+                    current = firstItem.main.temp
                 ),
                 weather = Weather(
-                    main = "Weather",
-                    description = firstDay.shortForecast ?: "情報なし",
-                    icon = GoogleWeatherIconMapper.getWeatherIcon(firstDay.weatherCode)
+                    main = firstItem.weather.firstOrNull()?.main ?: "情報なし",
+                    description = firstItem.weather.firstOrNull()?.description ?: "情報なし",
+                    icon = OpenWeatherIconMapper.getWeatherIcon(firstItem.weather.firstOrNull()?.icon)
                 ),
-                humidity = 60, // Google Weather APIには湿度情報がないためデフォルト値
-                windSpeed = 2.0, // Google Weather APIには風速情報がないためデフォルト値
-                precipitation = 0.0
+                humidity = firstItem.main.humidity,
+                windSpeed = firstItem.wind?.speed ?: 0.0,
+                precipitation = firstItem.pop ?: 0.0
             )
-            
-            // 週間予報
-            val weeklyForecast = dailyForecasts.map { forecast ->
-                val calendar = Calendar.getInstance()
-                calendar.set(forecast.date.year, forecast.date.month - 1, forecast.date.day)
-                
-                WeatherData(
-                    date = calendar.time,
-                    temperature = Temperature(
-                        min = forecast.temperature.min.toDouble(),
-                        max = forecast.temperature.max.toDouble(),
-                        current = (forecast.temperature.min + forecast.temperature.max) / 2.0
-                    ),
-                    weather = Weather(
-                        main = "Weather",
-                        description = forecast.shortForecast ?: "情報なし",
-                        icon = GoogleWeatherIconMapper.getWeatherIcon(forecast.weatherCode)
-                    ),
-                    humidity = 60,
-                    windSpeed = 2.0,
-                    precipitation = 0.0
-                )
-            }
-            
+
+            // 週間予報（3時間ごとのデータから日別に集約）
+            val dailyForecast = weatherList
+                .filter { it.dt * 1000 > System.currentTimeMillis() } // 未来のデータのみ
+                .groupBy { 
+                    val calendar = Calendar.getInstance()
+                    calendar.timeInMillis = it.dt * 1000
+                    calendar.get(Calendar.DAY_OF_YEAR)
+                }
+                .map { (_, dayItems) ->
+                    val dayItem = dayItems.first() // その日の最初のデータを使用
+            WeatherData(
+                        date = Date(dayItem.dt * 1000),
+                        temperature = Temperature(
+                            min = dayItems.minOf { it.main.tempMin },
+                            max = dayItems.maxOf { it.main.tempMax },
+                            current = dayItem.main.temp
+                        ),
+                        weather = Weather(
+                            main = dayItem.weather.firstOrNull()?.main ?: "情報なし",
+                            description = dayItem.weather.firstOrNull()?.description ?: "情報なし",
+                            icon = OpenWeatherIconMapper.getWeatherIcon(dayItem.weather.firstOrNull()?.icon)
+                        ),
+                        humidity = dayItem.main.humidity,
+                        windSpeed = dayItem.wind?.speed ?: 0.0,
+                        precipitation = dayItem.pop ?: 0.0
+                    )
+                }
+                .take(7) // 最大7日分
+
             return WeeklyWeatherData(
                 location = location,
                 currentWeather = currentWeather,
-                dailyForecast = weeklyForecast
+                dailyForecast = dailyForecast
             )
         } catch (e: Exception) {
             Log.e(TAG, "データ変換エラー", e)
