@@ -57,11 +57,15 @@ class GeminiNotificationService {
             // 参考情報を取得
             val seedInfo = dataProcessor.fetchSeedInfoFromUrl(seedInfoUrl)
             
+            // 今月のおすすめ種情報を取得
+            val recommendedSeeds = dataProcessor.fetchRecommendedSeedsForCurrentMonth(seedInfoUrl, currentMonth)
+            
             // プロンプトを生成
             val prompt = promptGenerator.generateMonthlyPrompt(
                 region = region,
                 prefecture = prefecture,
                 seedInfoUrl = seedInfo,
+                recommendedSeeds = recommendedSeeds,
                 userSeeds = userSeeds,
                 currentMonth = currentMonth,
                 farmOwner = farmOwner,

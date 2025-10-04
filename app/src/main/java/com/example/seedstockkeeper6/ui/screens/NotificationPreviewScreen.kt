@@ -193,6 +193,7 @@ fun NotificationPreviewScreen(
                             farmOwner = farmOwnerValue,
                             region = userSettings["defaultRegion"] ?: "温暖地",
                             prefecture = userSettings["selectedPrefecture"] ?: "",
+                            farmAddress = userSettings["farmAddress"] ?: "",
                             month = java.util.Calendar.getInstance().get(java.util.Calendar.MONTH) + 1,
                             seedCount = userSeeds.size
                         )

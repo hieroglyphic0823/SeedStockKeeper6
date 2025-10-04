@@ -75,6 +75,7 @@ class NotificationPromptGenerator {
         region: String,
         prefecture: String,
         seedInfoUrl: String,
+        recommendedSeeds: String,
         userSeeds: List<SeedPacket>,
         currentMonth: Int,
         farmOwner: String,
@@ -93,18 +94,24 @@ class NotificationPromptGenerator {
             - 地域: $region
             - 都道府県: $prefecture
             
-            【参考情報】
-            $seedInfoUrl
+            【参考情報（おすすめ種情報）】
+            $recommendedSeeds
             
             【ユーザーの種情報】
             $userSeedsText
             
             【指示】
-            1. $monthName にまける種について簡潔なアドバイスを提供（2-3文程度）
-            2. 重要なポイントのみを箇条書きで3つ以内
-            3. 長い説明は避け、要点のみを伝える
+            1. 今月まきどきの種、終了間近の種、おすすめ種の3つの情報を含める
+            2. 各セクションを明確に分けて表示する
+            3. 挨拶は短く簡潔で分かりやすい内容にする
+            4. 重要なポイントのみを箇条書きで3つ以内
             
-            回答は簡潔で分かりやすい内容にしてください。
+            以下の形式で回答してください：
+            🌱 今月まきどきの種: [ユーザーが持っている今月まける種]
+            ⚠️ まき時終了間近: [ユーザーが持っている今月で終わる種]
+            🌟 今月のおすすめ種: [参考情報から推奨される種]
+            
+            各セクションに該当する種がない場合は「該当なし」と表示してください。
         """.trimIndent()
     }
     
@@ -130,7 +137,7 @@ class NotificationPromptGenerator {
             【指示】
             1. 今週まける種について簡潔なアドバイスを提供（2-3文程度）
             2. 重要なポイントのみを箇条書きで3つ以内
-            3. 長い説明は避け、要点のみを伝える
+            3. 挨拶は短く長い説明は避け、要点のみを伝える
             
             回答は簡潔で分かりやすい内容にしてください。
         """.trimIndent()
@@ -185,29 +192,55 @@ class NotificationPromptGenerator {
             return "登録された種はありません。"
         }
         
-        val relevantSeeds = seeds.filter { seed ->
-            seed.calendar?.any { entry ->
+        val thisMonthSeeds = mutableListOf<SeedPacket>()
+        val endingThisMonthSeeds = mutableListOf<SeedPacket>()
+        
+        // 種を分類
+        seeds.forEach { seed ->
+            seed.calendar?.forEach { entry ->
                 val startMonth = parseMonthFromDate(entry.sowing_start_date)
                 val endMonth = parseMonthFromDate(entry.sowing_end_date)
-                startMonth != null && endMonth != null && isMonthInRange(currentMonth, startMonth, endMonth)
-            } ?: false
-        }
-        
-        return if (relevantSeeds.isEmpty()) {
-            "今月まける種は登録されていません。"
-        } else {
-            relevantSeeds.joinToString("\n") { seed ->
-                buildString {
-                    appendLine("・${seed.productName} (${seed.variety})")
-                    appendLine("  科: ${seed.family}")
-                    appendLine("  播種期間: ${seed.calendar?.firstOrNull()?.sowing_start_date} ～ ${seed.calendar?.firstOrNull()?.sowing_end_date}")
-                    appendLine("  収穫期間: ${seed.calendar?.firstOrNull()?.harvest_start_date} ～ ${seed.calendar?.firstOrNull()?.harvest_end_date}")
-                    if (seed.companionPlants.isNotEmpty()) {
-                        appendLine("  コンパニオンプランツ: ${formatCompanionPlants(seed.companionPlants)}")
+                
+                if (startMonth != null && endMonth != null) {
+                    // 今月が播種期間内かチェック
+                    if (isMonthInRange(currentMonth, startMonth, endMonth)) {
+                        thisMonthSeeds.add(seed)
+                    }
+                    // 今月が播種期間の終了月かチェック
+                    if (currentMonth == endMonth) {
+                        endingThisMonthSeeds.add(seed)
                     }
                 }
             }
         }
+        
+        val content = StringBuilder()
+        
+        // 今月まきどきの種
+        if (thisMonthSeeds.isNotEmpty()) {
+            content.appendLine("🌱 今月まきどきの種:")
+            thisMonthSeeds.forEach { seed ->
+                content.appendLine("・${seed.productName} (${seed.variety}) - ${seed.family}")
+            }
+            content.appendLine()
+        } else {
+            content.appendLine("🌱 今月まきどきの種: 該当なし")
+            content.appendLine()
+        }
+        
+        // 終了間近の種
+        if (endingThisMonthSeeds.isNotEmpty()) {
+            content.appendLine("⚠️ まき時終了間近:")
+            endingThisMonthSeeds.forEach { seed ->
+                content.appendLine("・${seed.productName} (${seed.variety}) - ${seed.family}")
+            }
+            content.appendLine()
+        } else {
+            content.appendLine("⚠️ まき時終了間近: 該当なし")
+            content.appendLine()
+        }
+        
+        return content.toString().trim()
     }
     
     /**

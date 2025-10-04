@@ -128,6 +128,71 @@ class NotificationContentFormatter {
     }
     
     /**
+     * 月次通知用の種情報を分類してフォーマット
+     */
+    fun formatMonthlySeedInfo(
+        userSeeds: List<SeedPacket>, 
+        currentMonth: Int,
+        recommendedSeeds: String = ""
+    ): String {
+        val thisMonthSeeds = mutableListOf<SeedPacket>()
+        val endingThisMonthSeeds = mutableListOf<SeedPacket>()
+        
+        // ユーザーの種を分類
+        userSeeds.forEach { seed ->
+            seed.calendar?.forEach { entry ->
+                val startMonth = parseMonthFromDate(entry.sowing_start_date)
+                val endMonth = parseMonthFromDate(entry.sowing_end_date)
+                
+                if (startMonth != null && endMonth != null) {
+                    // 今月が播種期間内かチェック
+                    if (isMonthInRange(currentMonth, startMonth, endMonth)) {
+                        thisMonthSeeds.add(seed)
+                    }
+                    // 今月が播種期間の終了月かチェック
+                    if (currentMonth == endMonth) {
+                        endingThisMonthSeeds.add(seed)
+                    }
+                }
+            }
+        }
+        
+        val content = StringBuilder()
+        
+        // 1. 今月まきどきの種情報
+        if (thisMonthSeeds.isNotEmpty()) {
+            content.appendLine("🌱 今月まきどきの種:")
+            thisMonthSeeds.take(5).forEach { seed ->
+                content.appendLine("• ${seed.productName} (${seed.variety}) - ${seed.family}")
+            }
+            if (thisMonthSeeds.size > 5) {
+                content.appendLine("他 ${thisMonthSeeds.size - 5} 種類")
+            }
+            content.appendLine()
+        }
+        
+        // 2. 終了間近の種情報
+        if (endingThisMonthSeeds.isNotEmpty()) {
+            content.appendLine("⚠️ まき時終了間近:")
+            endingThisMonthSeeds.take(3).forEach { seed ->
+                content.appendLine("• ${seed.productName} (${seed.variety}) - ${seed.family}")
+            }
+            if (endingThisMonthSeeds.size > 3) {
+                content.appendLine("他 ${endingThisMonthSeeds.size - 3} 種類")
+            }
+            content.appendLine()
+        }
+        
+        // 3. おすすめの種情報（農園情報の種情報URLから）
+        if (recommendedSeeds.isNotBlank()) {
+            content.appendLine("🌟 今月のおすすめ種:")
+            content.appendLine(recommendedSeeds)
+        }
+        
+        return content.toString().trim()
+    }
+    
+    /**
      * 週次通知用のユーザー種情報をフォーマット
      */
     fun formatUserSeedsForWeekly(seeds: List<SeedPacket>): String {

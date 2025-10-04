@@ -175,45 +175,7 @@ class MonthlyNotificationWorker(
                     val seed = doc.toObject(SeedPacket::class.java)
                     if (seed != null) {
                         val seedWithId = seed.copy(id = doc.id, documentId = doc.id)
-                        
-                        var isThisMonthSowing = false
-                        var isEndingThisMonth = false
-                        
-                        // 今月関連の種かどうかをチェック
-                        seedWithId.calendar.forEach { entry ->
-                            if (entry.sowing_start_date.isNotEmpty() && entry.sowing_end_date.isNotEmpty()) {
-                                try {
-                                    val startMonth = entry.sowing_start_date.split("-")[1].toInt()
-                                    val endMonth = entry.sowing_end_date.split("-")[1].toInt()
-                                    
-                                    // 今月が播種期間内かチェック
-                                    if (startMonth <= currentMonth && endMonth >= currentMonth) {
-                                        isThisMonthSowing = true
-                                    }
-                                    
-                                    // 今月が播種期間の終了月かチェック
-                                    if (currentMonth == endMonth) {
-                                        isEndingThisMonth = true
-                                    }
-                                } catch (e: Exception) {
-                                    // 日付解析エラーはスキップ
-                                }
-                            }
-                        }
-                        
-                        if (isThisMonthSowing || isEndingThisMonth) {
-                            if (isThisMonthSowing) {
-                                seedsThisMonth.add(seedWithId)
-                                android.util.Log.d("MonthlyNotificationWorker", "今月蒔ける種発見: ${seedWithId.productName}")
-                            }
-                            if (isEndingThisMonth) {
-                                seedsEndingThisMonth.add(seedWithId)
-                                android.util.Log.d("MonthlyNotificationWorker", "今月蒔き時終了の種発見: ${seedWithId.productName}")
-                            }
-                            seedWithId
-                        } else {
-                            null
-                        }
+                        seedWithId
                     } else {
                         android.util.Log.w("MonthlyNotificationWorker", "Failed to convert document ${doc.id} to SeedPacket")
                         null
@@ -224,8 +186,7 @@ class MonthlyNotificationWorker(
                 }
             }
             
-            android.util.Log.d("MonthlyNotificationWorker", "種データ取得完了 - 全件数: ${snapshot.documents.size}, 今月関連: ${seeds.size}")
-            android.util.Log.d("MonthlyNotificationWorker", "今月蒔ける種: ${seedsThisMonth.size}件, 今月蒔き時終了の種: ${seedsEndingThisMonth.size}件")
+            android.util.Log.d("MonthlyNotificationWorker", "種データ取得完了 - 全件数: ${snapshot.documents.size}, 取得件数: ${seeds.size}")
             seeds
         } catch (e: Exception) {
             android.util.Log.e("MonthlyNotificationWorker", "種データの取得に失敗", e)

@@ -32,6 +32,61 @@ class NotificationDataProcessor {
     }
     
     /**
+     * 今月のおすすめ種情報を取得
+     */
+    suspend fun fetchRecommendedSeedsForCurrentMonth(seedInfoUrl: String, currentMonth: Int): String = withContext(Dispatchers.IO) {
+        try {
+            Log.d("NotificationDataProcessor", "今月のおすすめ種情報取得開始: $seedInfoUrl, 月: $currentMonth")
+            
+            // 種情報URLから情報を取得
+            val seedInfo = fetchSeedInfoFromUrl(seedInfoUrl)
+            
+            // 今月のおすすめ種情報を生成（実際の実装では、URLの内容を解析して今月の種情報を抽出）
+            val monthName = getMonthName(currentMonth)
+            val recommendedSeeds = generateRecommendedSeedsForMonth(currentMonth, seedInfo)
+            
+            Log.d("NotificationDataProcessor", "今月のおすすめ種情報生成完了")
+            recommendedSeeds
+        } catch (e: Exception) {
+            Log.e("NotificationDataProcessor", "今月のおすすめ種情報取得に失敗", e)
+            generateDefaultRecommendedSeeds(currentMonth)
+        }
+    }
+    
+    /**
+     * 月別のおすすめ種情報を生成
+     */
+    private fun generateRecommendedSeedsForMonth(month: Int, seedInfo: String): String {
+        val monthName = getMonthName(month)
+        
+        // 実際の実装では、seedInfoの内容を解析して今月の種情報を抽出
+        // ここではデモ用の推奨種情報を生成
+        return when (month) {
+            1 -> "• 春キャベツ - 寒さに強く、春の収穫に最適\n• レタス - 早春の種まきで新鮮なサラダを\n• ホウレンソウ - 栄養豊富で育てやすい"
+            2 -> "• トマト - 夏野菜の定番、苗から育てる\n• ナス - 紫色の美しい実が楽しめる\n• ピーマン - カラフルで栄養価が高い"
+            3 -> "• キュウリ - 夏の定番野菜、つる性\n• オクラ - ネバネバ成分で健康に良い\n• ゴーヤ - 苦味が特徴の夏野菜"
+            4 -> "• カボチャ - 秋の収穫、保存がきく\n• サツマイモ - 甘くて栄養豊富\n• 大根 - 冬の定番野菜"
+            5 -> "• 白菜 - 冬の鍋物に欠かせない\n• ブロッコリー - 栄養価が高い緑黄色野菜\n• カリフラワー - 白い花蕾が美しい"
+            6 -> "• ネギ - 薬味として重宝\n• ニラ - 独特の香りが特徴\n• ニンニク - 香り高い調味料"
+            7 -> "• トウモロコシ - 夏の甘い味覚\n• 枝豆 - ビールのおつまみに最適\n• エダマメ - タンパク質豊富"
+            8 -> "• スイカ - 夏の定番果物\n• メロン - 甘くて香り高い\n• カボチャ - 秋の収穫準備"
+            9 -> "• ダイコン - 冬の定番野菜\n• カブ - 根と葉の両方を楽しめる\n• ニンジン - カロテン豊富な根菜"
+            10 -> "• ハクサイ - 冬の鍋物の主役\n• キャベツ - 一年中楽しめる葉物\n• レタス - サラダの定番"
+            11 -> "• ブロッコリー - 栄養価の高い緑黄色野菜\n• カリフラワー - 白い花蕾が美しい\n• ケール - スーパーフードとして注目"
+            12 -> "• ホウレンソウ - 冬の栄養補給\n• 小松菜 - 寒さに強く育てやすい\n• チンゲンサイ - 中華料理に欠かせない"
+            else -> "• 季節の野菜 - その時期に適した種を選びましょう"
+        }
+    }
+    
+    /**
+     * デフォルトのおすすめ種情報を生成
+     */
+    private fun generateDefaultRecommendedSeeds(month: Int): String {
+        val monthName = getMonthName(month)
+        return "• $monthName の季節に適した野菜の種を選びましょう\n• 地域の気候に合わせた品種を選ぶことが重要です\n• 種まきカレンダーを参考にしてください"
+    }
+    
+    /**
      * 現在の日付を取得
      */
     fun getCurrentDate(): String {

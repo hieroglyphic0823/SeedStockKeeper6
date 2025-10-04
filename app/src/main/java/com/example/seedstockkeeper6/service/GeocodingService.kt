@@ -25,8 +25,8 @@ class GeocodingService(private val context: Context) {
                 android.util.Log.d("GeocodingService", "Places初期化完了")
             } else {
                 android.util.Log.d("GeocodingService", "Placesは既に初期化済みです")
-            }
-            placesClient = Places.createClient(context)
+        }
+        placesClient = Places.createClient(context)
             android.util.Log.d("GeocodingService", "PlacesClient作成完了: ${placesClient != null}")
         } catch (e: Exception) {
             android.util.Log.e("GeocodingService", "Places初期化エラー", e)

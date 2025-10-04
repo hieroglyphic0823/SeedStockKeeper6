@@ -47,43 +47,12 @@ suspend fun loadUserData(
         val seedsThisMonth = mutableListOf<SeedPacket>()
         val seedsEndingThisMonth = mutableListOf<SeedPacket>()
         
-        val filteredSeeds = seedsSnapshot.documents.mapNotNull { doc ->
+        val allSeeds = seedsSnapshot.documents.mapNotNull { doc ->
             try {
                 val seed = doc.toObject(SeedPacket::class.java)
                 if (seed != null) {
                     val seedWithId = seed.copy(id = doc.id, documentId = doc.id)
-                    
-                    var isThisMonthSowing = false
-                    var isEndingThisMonth = false
-                    
-                    // 今月関連の種かどうかをチェック
-                    seedWithId.calendar.forEach { entry ->
-                        if (entry.sowing_start_date.isNotEmpty() && entry.sowing_end_date.isNotEmpty()) {
-                            try {
-                                val startMonth = entry.sowing_start_date.split("-")[1].toInt()
-                                val endMonth = entry.sowing_end_date.split("-")[1].toInt()
-                                
-                                // 今月が播種期間内かチェック
-                                if (startMonth <= currentMonth && endMonth >= currentMonth) {
-                                    isThisMonthSowing = true
-                                }
-                                
-                                // 今月が播種期間の終了月かチェック
-                                if (currentMonth == endMonth) {
-                                    isEndingThisMonth = true
-                                }
-                            } catch (e: Exception) {
-                                // 日付解析エラーはスキップ
-                            }
-                        }
-                    }
-                    
-                    // 今月関連の種のみを返す
-                    if (isThisMonthSowing || isEndingThisMonth) {
-                        seedWithId
-                    } else {
-                        null
-                    }
+                    seedWithId
                 } else {
                     null
                 }
@@ -93,8 +62,8 @@ suspend fun loadUserData(
             }
         }
         
-        android.util.Log.d("NotificationPreviewHelpers", "今月関連の種: ${filteredSeeds.size}件")
-        filteredSeeds
+        android.util.Log.d("NotificationPreviewHelpers", "取得した種データ: ${allSeeds.size}件")
+        allSeeds
     } catch (e: Exception) {
         android.util.Log.e("NotificationPreviewHelpers", "種データ取得エラー", e)
         emptyList()
@@ -102,21 +71,26 @@ suspend fun loadUserData(
     
     // ユーザー設定の取得
     val userSettings = try {
-        val settingsSnapshot = db.collection("users")
+        val settingsDoc = db.collection("users")
             .document(uid)
             .collection("settings")
+            .document("general")
             .get().await()
         
         val settings = mutableMapOf<String, String>()
-        settingsSnapshot.documents.forEach { doc ->
-            val data = doc.data
+        if (settingsDoc.exists()) {
+            val data = settingsDoc.data
             data?.forEach { (key, value) ->
-                if (value is String) {
-                    settings[key] = value
+                when (value) {
+                    is String -> settings[key] = value
+                    is Double -> settings[key] = value.toString()
+                    is Long -> settings[key] = value.toString()
+                    is Boolean -> settings[key] = value.toString()
                 }
             }
         }
         android.util.Log.d("NotificationPreviewHelpers", "ユーザー設定取得成功: $settings")
+        android.util.Log.d("NotificationPreviewHelpers", "farmAddress: ${settings["farmAddress"]}")
         settings
     } catch (e: Exception) {
         android.util.Log.w("NotificationPreviewHelpers", "ユーザー設定取得失敗、デフォルト設定を使用: ${e.message}")
@@ -194,6 +168,7 @@ private fun getDefaultUserSettings(): Map<String, String> {
         "farmOwner" to "水戸黄門",
         "defaultRegion" to "温暖地",
         "selectedPrefecture" to "茨城県",
+        "farmAddress" to "茨城県水戸市",
         "seedInfoUrlProvider" to "サカタのたね",
         "customFarmOwner" to ""
     )
