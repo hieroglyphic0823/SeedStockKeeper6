@@ -320,19 +320,19 @@ fun MainScaffoldTopAppBar(
                             )
                         }
                     } else {
-                        // 種一覧画面のタイトル表示
+                        // 種目録画面のタイトル表示
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             Icon(
                                 painter = painterResource(id = com.example.seedstockkeeper6.R.drawable.list),
-                                contentDescription = "種リスト",
+                                contentDescription = "種目録",
                                 tint = MaterialTheme.colorScheme.onSurface,
                                 modifier = Modifier.size(24.dp)
                             )
                             Text(
-                                text = "種リスト",
+                                text = "種目録",
                                 modifier = Modifier.fillMaxWidth(),
                                 textAlign = TextAlign.Start
                             )
@@ -529,17 +529,17 @@ fun MainScaffoldNavigationBar(
             onClick = { navController.navigate("castle") }
         )
         
-        // 一覧アイコン
+        // 目録アイコン
         NavigationBarItem(
             icon = { 
                 Icon(
                     painter = painterResource(id = com.example.seedstockkeeper6.R.drawable.list),
-                    contentDescription = "一覧",
+                    contentDescription = "目録",
                     tint = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.size(if (currentRoute == "list") 28.dp else 24.dp)
                 )
             },
-            label = { Text("一覧") },
+            label = { Text("目録") },
             selected = currentRoute == "list",
             onClick = { navController.navigate("list") }
         )

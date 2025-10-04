@@ -465,7 +465,7 @@ fun SukesanMessageCard(
                 colors = CardDefaults.cardColors(
                     containerColor = Color.White
                 ),
-                shape = RoundedCornerShape(16.dp, 16.dp, 16.dp, 4.dp) // 吹き出しの形
+                shape = RoundedCornerShape(16.dp, 16.dp, 4.dp, 16.dp) // 吹き出しの形（右下の角を小さく）
             ) {
                 Column(
                     modifier = Modifier.padding(12.dp)

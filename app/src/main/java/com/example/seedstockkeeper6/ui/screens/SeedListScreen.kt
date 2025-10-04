@@ -445,6 +445,11 @@ fun SeedListScreen(
                     else -> MaterialTheme.colorScheme.surface
                 }
                 
+                // 期限切れの種の色をLogで確認
+                if (seedStatus == "expired") {
+                    Log.d("SeedListScreen", "期限切れの種: ${seed.productName}, 背景色: $backgroundColor")
+                }
+                
                 // リストアイテム
                 Row(
                     modifier = Modifier

@@ -7,6 +7,7 @@ import com.google.ai.client.generativeai.GenerativeModel
 import com.google.ai.client.generativeai.type.generationConfig
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.delay
 
 /**
  * Gemini APIを使用した通知生成サービス
@@ -133,16 +134,55 @@ class GeminiNotificationService {
                 タイトルのみを返してください。
             """.trimIndent()
             
-            val response = generativeModel!!.generateContent(prompt)
-            val title = response.text?.trim() ?: contentFormatter.getDefaultMonthlyTitle(currentMonth, farmOwner)
+            // リトライ機能付きでGemini APIを呼び出し
+            val response = generateContentWithRetry(prompt, maxRetries = 2)
+            val title = response?.trim() ?: contentFormatter.getDefaultMonthlyTitle(currentMonth, farmOwner)
             
             Log.d("GeminiNotiService", "月次通知タイトル生成完了: $title")
             title
             
         } catch (e: Exception) {
-            Log.e("GeminiNotiService", "月次通知タイトル生成に失敗", e)
+            Log.e("GeminiNotiService", "月次通知タイトル生成に失敗 (Ask Gemini)", e)
+            
+            // 503エラー（過負荷）の場合は少し待ってからリトライ
+            if (e.message?.contains("503") == true || e.message?.contains("overloaded") == true) {
+                Log.w("GeminiNotiService", "Gemini API過負荷のため、デフォルトタイトルを使用します")
+            }
+            
             contentFormatter.getDefaultMonthlyTitle(currentMonth, farmOwner)
         }
+    }
+    
+    /**
+     * リトライ機能付きでGemini APIを呼び出し
+     */
+    private suspend fun generateContentWithRetry(prompt: String, maxRetries: Int = 2): String? {
+        var lastException: Exception? = null
+        
+        repeat(maxRetries + 1) { attempt ->
+            try {
+                val response = generativeModel!!.generateContent(prompt)
+                return response.text
+            } catch (e: Exception) {
+                lastException = e
+                Log.w("GeminiNotiService", "Gemini API呼び出し失敗 (試行 ${attempt + 1}/${maxRetries + 1}): ${e.message}")
+                
+                // 503エラー（過負荷）の場合は少し待ってからリトライ
+                if (e.message?.contains("503") == true || e.message?.contains("overloaded") == true) {
+                    if (attempt < maxRetries) {
+                        val delayMs = (attempt + 1) * 2000L // 2秒、4秒、6秒...
+                        Log.d("GeminiNotiService", "Gemini API過負荷のため、${delayMs}ms待機してリトライします")
+                        delay(delayMs)
+                    }
+                } else {
+                    // 503以外のエラーは即座に失敗
+                    return@repeat
+                }
+            }
+        }
+        
+        Log.e("GeminiNotiService", "Gemini API呼び出しが${maxRetries + 1}回失敗しました", lastException)
+        return null
     }
     
     /**
