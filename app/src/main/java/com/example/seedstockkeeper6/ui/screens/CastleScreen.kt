@@ -77,6 +77,9 @@ fun CastleScreen(
     // コンテキストを取得
     val context = LocalContext.current
     
+    // 設定ViewModelを取得
+    val settingsViewModel = androidx.lifecycle.viewmodel.compose.viewModel<com.example.seedstockkeeper6.viewmodel.SettingsViewModel>()
+    
     // 集計サービス
     val statisticsService = remember { StatisticsService() }
     
@@ -93,8 +96,8 @@ fun CastleScreen(
     var weatherError by remember { mutableStateOf<String?>(null) }
     
     // 農園位置情報（設定から取得）
-    val farmLatitude = 35.6762 // デフォルト値（東京）
-    val farmLongitude = 139.6503 // デフォルト値（東京）
+    val farmLatitude = if (isPreview) 35.6762 else settingsViewModel.farmLatitude // プレビュー時はデフォルト値、実装時は設定から取得
+    val farmLongitude = if (isPreview) 139.6503 else settingsViewModel.farmLongitude // プレビュー時はデフォルト値、実装時は設定から取得
     
     // データの取得（プレビュー時は固定データ、実装時はViewModelから）
     val seeds = if (isPreview) {
@@ -241,7 +244,7 @@ fun CastleScreen(
         
         // 天気データの取得
         LaunchedEffect(farmLatitude, farmLongitude, isPreview) {
-            if (!isPreview) {
+            if (!isPreview && farmLatitude != 0.0 && farmLongitude != 0.0) {
                 try {
                     isLoadingWeather = true
                     weatherError = null
@@ -254,6 +257,8 @@ fun CastleScreen(
                 } finally {
                     isLoadingWeather = false
                 }
+            } else if (!isPreview && (farmLatitude == 0.0 || farmLongitude == 0.0)) {
+                android.util.Log.d("CastleScreen", "農園設定の緯度経度が未設定のため、天気予報取得をスキップ")
             }
         }
         
@@ -335,7 +340,9 @@ fun CastleScreen(
             currentYear = currentYear,
             isPreview = isPreview,
             farmOwner = farmOwner,
-            farmName = farmName
+            farmName = farmName,
+            farmLatitude = farmLatitude,
+            farmLongitude = farmLongitude
         )
         
         Spacer(modifier = Modifier.height(24.dp))
@@ -369,19 +376,21 @@ fun SukesanMessageCard(
     currentYear: Int,
     isPreview: Boolean = false,
     farmOwner: String = "水戸黄門",
-    farmName: String = "菜園"
+    farmName: String = "菜園",
+    farmLatitude: Double = 35.6762,
+    farmLongitude: Double = 139.6503
 ) {
     var latestNotification by remember { mutableStateOf<NotificationHistory?>(null) }
     var isLoading by remember { mutableStateOf(true) }
-    
+
     // メッセージの取得
-    LaunchedEffect(seeds, currentMonth, currentYear, isPreview, farmOwner, farmName) {
+    LaunchedEffect(seeds, currentMonth, currentYear, isPreview, farmOwner, farmName, farmLatitude, farmLongitude) {
         android.util.Log.d("CastleScreen", "=== 助さんメッセージ取得開始 ===")
         android.util.Log.d("CastleScreen", "プレビューモード: $isPreview")
         android.util.Log.d("CastleScreen", "農園主: $farmOwner, 農園名: $farmName")
         android.util.Log.d("CastleScreen", "現在の月: $currentMonth, 年: $currentYear")
         android.util.Log.d("CastleScreen", "登録種子数: ${seeds.size}")
-        
+
         if (isPreview) {
             android.util.Log.d("CastleScreen", "プレビュー時は固定メッセージを生成")
             // プレビュー時は固定メッセージ
@@ -419,7 +428,7 @@ fun SukesanMessageCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.secondaryContainer
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
         ),
         shape = RoundedCornerShape(16.dp)
     ) {
@@ -431,7 +440,7 @@ fun SukesanMessageCard(
             // メッセージ部分の高さを取得するためのBox
             var messageHeight by remember { mutableStateOf(0.dp) }
             val density = LocalDensity.current
-            
+
             // 吹き出し部分
             Card(
                 modifier = Modifier
@@ -440,9 +449,9 @@ fun SukesanMessageCard(
                         messageHeight = with(density) { size.height.toDp() }
                     },
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerLowest
+                    containerColor = Color.White
                 ),
-                shape = RoundedCornerShape(16.dp, 16.dp, 4.dp, 16.dp) // 吹き出しの形（右下に変更）
+                shape = RoundedCornerShape(16.dp, 16.dp, 16.dp, 4.dp) // 吹き出しの形
             ) {
                 Column(
                     modifier = Modifier.padding(16.dp)
@@ -466,48 +475,33 @@ fun SukesanMessageCard(
                     } else if (latestNotification != null) {
                         val notification = latestNotification!!
                         Column {
-                            // 通知タイトル（1行まで）
+                            // 通知タイトル（1行）
                             Text(
                                 text = notification.title,
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.onSurface,
+                                color = Color.Black,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
-                            
+
                             Spacer(modifier = Modifier.height(8.dp))
-                            
-                            // 簡略表示（まき間近、今月まき時）
-                            if (notification.summary.isNotEmpty()) {
-                                // summaryを解析して「まき時：」「終了間近：」の形式で表示
-                                val summaryLines = notification.summary.split("\n")
-                                summaryLines.forEach { line ->
-                                    if (line.isNotEmpty()) {
-                                        val displayText = when {
-                                            line.contains("今月まき時") -> line.replace("🌱 今月まき時：", "🌱 まき時：")
-                                            line.contains("まき時終了間近") -> line.replace("⚠️ まき時終了間近：", "⚠️ 終了間近：")
-                                            else -> line
-                                        }
-                                        Text(
-                                            text = displayText,
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = MaterialTheme.colorScheme.onSurface,
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis
-                                        )
-                                    }
-                                }
-                            } else {
-                                // summaryがない場合はcontentの最初の部分を表示
-                                Text(
-                                    text = notification.content.take(100) + if (notification.content.length > 100) "..." else "",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                            }
+
+                            // 今月まき時
+                            Text(
+                                text = "🌱 今月まき時",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Color.Black
+                            )
+
+                            Spacer(modifier = Modifier.height(4.dp))
+
+                            // まき時終了間近
+                            Text(
+                                text = "⚠️ まき時終了間近",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Color.Black
+                            )
                         }
                     } else {
                         Text(
@@ -536,7 +530,7 @@ fun SukesanMessageCard(
                 contentDescription = "すけさん",
                 imageLoader = imageLoader,
                 modifier = Modifier.size(
-                    width = messageHeight,
+                    width = 20.dp,
                     height = messageHeight
                 )
             )

@@ -91,7 +91,8 @@ class GeminiNotificationService {
         userSeeds: List<SeedPacket>,
         currentMonth: Int,
         farmOwner: String,
-        customFarmOwner: String = ""
+        customFarmOwner: String = "",
+        farmAddress: String = ""
     ): String = withContext(Dispatchers.IO) {
         try {
             if (generativeModel == null) {
@@ -103,6 +104,8 @@ class GeminiNotificationService {
             val tone = promptGenerator.getFarmOwnerTone(farmOwner, customFarmOwner, monthName)
             val userSeedsText = contentFormatter.formatUserSeeds(userSeeds, currentMonth)
             
+            Log.d("GeminiNotiService", "月次通知タイトル生成パラメータ - region: $region, prefecture: $prefecture, farmAddress: $farmAddress")
+            
             val prompt = """
                 $tone
                 
@@ -111,6 +114,7 @@ class GeminiNotificationService {
                 【地域情報】
                 - 地域: $region
                 - 都道府県: $prefecture
+                - 農園住所: $farmAddress
                 
                 【ユーザーの種情報】
                 $userSeedsText
@@ -118,8 +122,9 @@ class GeminiNotificationService {
                 【指示】
                 1. 親しみやすく、分かりやすいタイトル
                 2. 月名と地域を含める
-                3. 助さんの口調に合わせる
-                4. 20文字以内で簡潔に
+                3. 農園住所の市区町村名を含める（例：福岡市西区草場の風に乗せて）
+                4. 助さんの口調に合わせる
+                5. 20文字以内で簡潔に
                 
                 タイトルのみを返してください。
             """.trimIndent()

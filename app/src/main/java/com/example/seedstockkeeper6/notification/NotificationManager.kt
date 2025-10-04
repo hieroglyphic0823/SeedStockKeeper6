@@ -203,6 +203,7 @@ class NotificationManager(private val context: Context) {
         farmOwner: String = "",
         region: String = "",
         prefecture: String = "",
+        farmAddress: String = "",
         month: Int = Calendar.getInstance().get(Calendar.MONTH) + 1,
         seedCount: Int = 0
     ) {
@@ -215,12 +216,13 @@ class NotificationManager(private val context: Context) {
         coroutineScope.launch {
             try {
                 val title = geminiService.generateMonthlyNotificationTitle(
-                    region = "温暖地",
-                    prefecture = "東京都",
+                    region = region,
+                    prefecture = prefecture,
                     seedInfoUrl = "https://example.com/seed-info",
                     userSeeds = emptyList(),
                     currentMonth = month,
-                    farmOwner = farmOwner
+                    farmOwner = farmOwner,
+                    farmAddress = farmAddress
                 )
                 // 要点を生成
                 val summary = geminiService.extractNotificationSummary(content)

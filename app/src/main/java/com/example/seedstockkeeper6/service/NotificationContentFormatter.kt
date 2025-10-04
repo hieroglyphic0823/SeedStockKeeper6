@@ -16,9 +16,9 @@ class NotificationContentFormatter {
     fun getDefaultMonthlyTitle(currentMonth: Int, farmOwner: String): String {
         val monthName = getJapaneseMonthName(currentMonth)
         return when (farmOwner) {
-            "水戸黄門" -> "ご隠居様、$monthName の種まきについて"
-            "お銀" -> "お銀、$monthName の種まきのご案内"
-            "八兵衛" -> "八兵衛、$monthName の種まきだぞ"
+            "水戸黄門" -> "$monthName の種まきについて"
+            "お銀" -> "$monthName の種まきのご案内"
+            "八兵衛" -> "$monthName の種まきだぞ"
             else -> "$monthName の種まきについて"
         }
     }
@@ -35,12 +35,7 @@ class NotificationContentFormatter {
             • 土づくりと種まきの準備
             • 天候に応じた管理
             
-            【注意事項】
-            • 種まき前の土の状態確認
-            • 適切な深さと間隔での播種
-            • 発芽後の水やり管理
-            
-            詳細な情報は種まきカレンダーをご確認ください。
+            詳細は種まきカレンダーをご確認ください。
         """.trimIndent()
     }
     
@@ -56,12 +51,7 @@ class NotificationContentFormatter {
             • 土の準備と種まき作業
             • 発芽後の管理
             
-            【注意事項】
-            • 天候の変化に注意
-            • 適切な水やり
-            • 害虫・病気の予防
-            
-            詳細な情報は種まきカレンダーをご確認ください。
+            詳細は種まきカレンダーをご確認ください。
         """.trimIndent()
     }
     
@@ -234,22 +224,22 @@ class NotificationContentFormatter {
     }
     
     /**
-     * 日本語の月名を取得
+     * 日本語の月名を取得（和風月名）
      */
     private fun getJapaneseMonthName(month: Int): String {
         return when (month) {
-            1 -> "1月"
-            2 -> "2月"
-            3 -> "3月"
-            4 -> "4月"
-            5 -> "5月"
-            6 -> "6月"
-            7 -> "7月"
-            8 -> "8月"
-            9 -> "9月"
-            10 -> "10月"
-            11 -> "11月"
-            12 -> "12月"
+            1 -> "睦月"
+            2 -> "如月"
+            3 -> "弥生"
+            4 -> "卯月"
+            5 -> "皐月"
+            6 -> "水無月"
+            7 -> "文月"
+            8 -> "葉月"
+            9 -> "長月"
+            10 -> "神無月"
+            11 -> "霜月"
+            12 -> "師走"
             else -> "今月"
         }
     }

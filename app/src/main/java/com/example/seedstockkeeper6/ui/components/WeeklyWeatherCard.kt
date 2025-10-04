@@ -32,12 +32,12 @@ fun WeeklyWeatherCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+            containerColor = Color.White
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier.padding(4.dp)
         ) {
             
             when {
@@ -65,7 +65,8 @@ fun WeeklyWeatherCard(
 private fun WeatherContent(weeklyWeatherData: WeeklyWeatherData) {
     // すべて横並びで表示（現在の天気も含む）
     LazyRow(
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(2.dp),
         contentPadding = PaddingValues(horizontal = 4.dp)
     ) {
         // 現在の天気を最初に追加
@@ -95,6 +96,14 @@ private fun DailyWeatherItem(weatherData: WeatherData, isToday: Boolean = false)
             .padding(vertical = 4.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        // 天気アイコン（最上部）
+        Text(
+            text = OpenWeatherIconMapper.getWeatherIcon(weatherData.weather.icon),
+            fontSize = 20.sp
+        )
+        
+        Spacer(modifier = Modifier.height(4.dp))
+        
         // 月日と曜日を横並び
         Row(
             horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -102,9 +111,8 @@ private fun DailyWeatherItem(weatherData: WeatherData, isToday: Boolean = false)
         ) {
             Text(
                 text = if (isToday) "今日" else dayFormat.format(weatherData.date),
-                style = MaterialTheme.typography.bodySmall,
-                fontWeight = if (isToday) FontWeight.ExtraBold else FontWeight.Normal,
-                color = if (isToday) 
+                style = MaterialTheme.typography.bodyMedium,
+                color = if (isToday)
                     MaterialTheme.colorScheme.primary 
                 else 
                     MaterialTheme.colorScheme.onSurfaceVariant
@@ -112,19 +120,11 @@ private fun DailyWeatherItem(weatherData: WeatherData, isToday: Boolean = false)
             if (!isToday) {
                 Text(
                     text = dateFormat.format(weatherData.date),
-                    style = MaterialTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                 )
             }
         }
-        
-        Spacer(modifier = Modifier.height(4.dp))
-        
-        // 天気アイコン
-        Text(
-            text = OpenWeatherIconMapper.getWeatherIcon(weatherData.weather.icon),
-            fontSize = if (isToday) 24.sp else 20.sp
-        )
         
         Spacer(modifier = Modifier.height(4.dp))
         
@@ -135,12 +135,9 @@ private fun DailyWeatherItem(weatherData: WeatherData, isToday: Boolean = false)
         ) {
             Text(
                 text = "${weatherData.temperature.max.toInt()}°",
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Bold,
-                color = if (isToday) 
-                    MaterialTheme.colorScheme.primary 
-                else 
-                    MaterialTheme.colorScheme.onSurface
+                style = MaterialTheme.typography.bodySmall,
+                fontWeight = FontWeight.Normal,
+                color = Color.Red
             )
             Text(
                 text = "/",
@@ -150,10 +147,8 @@ private fun DailyWeatherItem(weatherData: WeatherData, isToday: Boolean = false)
             Text(
                 text = "${weatherData.temperature.min.toInt()}°",
                 style = MaterialTheme.typography.bodySmall,
-                color = if (isToday) 
-                    MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
-                else 
-                    MaterialTheme.colorScheme.onSurfaceVariant
+                fontWeight = FontWeight.Normal,
+                color = Color.Blue
             )
         }
     }

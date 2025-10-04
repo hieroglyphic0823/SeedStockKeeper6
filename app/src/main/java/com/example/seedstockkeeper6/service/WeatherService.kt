@@ -141,22 +141,35 @@ class WeatherService(private val context: Context) {
                     calendar.get(Calendar.DAY_OF_YEAR)
                 }
                 .map { (_, dayItems) ->
-                    val dayItem = dayItems.first() // その日の最初のデータを使用
-            WeatherData(
-                        date = Date(dayItem.dt * 1000),
+                    // その日の代表的な天気を決定（12時頃のデータを優先、なければ最初のデータ）
+                    val representativeItem = dayItems.find { item ->
+                        val calendar = Calendar.getInstance()
+                        calendar.timeInMillis = item.dt * 1000
+                        val hour = calendar.get(Calendar.HOUR_OF_DAY)
+                        hour in 10..14 // 12時前後のデータを優先
+                    } ?: dayItems.first()
+                    
+                    val weatherIcon = representativeItem.weather.firstOrNull()?.icon ?: "01d"
+                    val weatherMain = representativeItem.weather.firstOrNull()?.main ?: "情報なし"
+                    val weatherDescription = representativeItem.weather.firstOrNull()?.description ?: "情報なし"
+                    
+                    Log.d(TAG, "日別天気データ: 日時=${Date(representativeItem.dt * 1000)}, 天気=$weatherMain, アイコン=$weatherIcon, 説明=$weatherDescription")
+                    
+                    WeatherData(
+                        date = Date(representativeItem.dt * 1000),
                         temperature = Temperature(
                             min = dayItems.minOf { it.main.tempMin },
                             max = dayItems.maxOf { it.main.tempMax },
-                            current = dayItem.main.temp
+                            current = representativeItem.main.temp
                         ),
                         weather = Weather(
-                            main = dayItem.weather.firstOrNull()?.main ?: "情報なし",
-                            description = dayItem.weather.firstOrNull()?.description ?: "情報なし",
-                            icon = OpenWeatherIconMapper.getWeatherIcon(dayItem.weather.firstOrNull()?.icon)
+                            main = weatherMain,
+                            description = weatherDescription,
+                            icon = weatherIcon
                         ),
-                        humidity = dayItem.main.humidity,
-                        windSpeed = dayItem.wind?.speed ?: 0.0,
-                        precipitation = dayItem.pop ?: 0.0
+                        humidity = representativeItem.main.humidity,
+                        windSpeed = representativeItem.wind?.speed ?: 0.0,
+                        precipitation = representativeItem.pop ?: 0.0
                     )
                 }
                 .take(7) // 最大7日分

@@ -134,7 +134,18 @@ fun MapSelectionScreen(
         if (initialLatitude != 35.6762 || initialLongitude != 139.6503) {
             // デフォルトの東京座標でない場合は、保存済みの農園位置として扱う
             selectedLocation = LatLng(initialLatitude, initialLongitude)
-            address = "保存済みの農園位置"
+            
+            // 保存済み位置の住所を取得
+            scope.launch {
+                try {
+                    android.util.Log.d("MapSelectionScreen", "保存済み位置の住所取得開始: lat=$initialLatitude, lng=$initialLongitude")
+                    address = geocodingService.getAddressFromLatLng(LatLng(initialLatitude, initialLongitude))
+                    android.util.Log.d("MapSelectionScreen", "保存済み位置の住所取得完了: $address")
+                } catch (e: Exception) {
+                    android.util.Log.e("MapSelectionScreen", "保存済み位置の住所取得エラー", e)
+                    address = "住所を取得できませんでした: ${e.message}"
+                }
+            }
         }
     }
     
@@ -161,7 +172,16 @@ fun MapSelectionScreen(
                     
                     // 選択位置を更新
                     selectedLocation = latLng
-                    address = geocodingService.getAddressFromLatLng(latLng)
+                    scope.launch {
+                        try {
+                            android.util.Log.d("MapSelectionScreen", "検索結果住所取得開始: lat=${latLng.latitude}, lng=${latLng.longitude}")
+                            address = geocodingService.getAddressFromLatLng(latLng)
+                            android.util.Log.d("MapSelectionScreen", "検索結果住所取得完了: $address")
+                        } catch (e: Exception) {
+                            android.util.Log.e("MapSelectionScreen", "検索結果住所取得エラー", e)
+                            address = "住所を取得できませんでした: ${e.message}"
+                        }
+                    }
                 } else {
                     searchError = "場所が見つかりませんでした"
                 }
@@ -462,9 +482,12 @@ fun MapSelectionScreen(
                     // 逆ジオコーディングで住所を取得
                     scope.launch {
                         try {
+                            android.util.Log.d("MapSelectionScreen", "住所取得開始: lat=${latLng.latitude}, lng=${latLng.longitude}")
                             address = geocodingService.getAddressFromLatLng(latLng)
+                            android.util.Log.d("MapSelectionScreen", "住所取得完了: $address")
                         } catch (e: Exception) {
-                            address = "住所を取得できませんでした"
+                            android.util.Log.e("MapSelectionScreen", "住所取得エラー", e)
+                            address = "住所を取得できませんでした: ${e.message}"
                         } finally {
                             isLoadingAddress = false
                         }

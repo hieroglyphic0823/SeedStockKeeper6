@@ -270,6 +270,8 @@ fun NotificationPreviewScreen(
                             
                             // タイトルとコンテンツを並行生成
                             val titleDeferred = scope.async {
+                                val farmAddressValue = userSettings["farmAddress"] ?: ""
+                                android.util.Log.d("NotificationPreviewScreen", "月次プレビュー生成 - farmAddress: $farmAddressValue")
                                 geminiService.generateMonthlyNotificationTitle(
                                     region = userSettings["defaultRegion"] ?: "温暖地",
                                     prefecture = userSettings["selectedPrefecture"] ?: "",
@@ -277,7 +279,8 @@ fun NotificationPreviewScreen(
                                     userSeeds = userSeeds,
                                     currentMonth = currentMonth,
                                     farmOwner = farmOwnerValue,
-                                    customFarmOwner = userSettings["customFarmOwner"] ?: ""
+                                    customFarmOwner = userSettings["customFarmOwner"] ?: "",
+                                    farmAddress = farmAddressValue
                                 )
                             }
                             
