@@ -46,22 +46,6 @@ class WeatherService(private val context: Context) {
         }
     }
     
-    /**
-     * 現在の天気を取得
-     */
-    suspend fun getCurrentWeather(latitude: Double, longitude: Double): WeatherData? {
-        return withContext(Dispatchers.IO) {
-            try {
-                val apiKey = getApiKey()
-                val url = "$CURRENT_WEATHER_URL?lat=$latitude&lon=$longitude&appid=$apiKey&units=metric&lang=ja"
-                val response = makeHttpRequest(url)
-                response?.let { parseCurrentWeather(it) }
-            } catch (e: Exception) {
-                Log.e(TAG, "Error fetching current weather", e)
-                null
-            }
-        }
-    }
     
     /**
      * 週間天気予報を取得
