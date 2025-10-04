@@ -49,6 +49,7 @@ fun CalendarScreen(
     var searchQuery by remember { mutableStateOf("") }
     var showSowing by remember { mutableStateOf(true) }
     var showHarvest by remember { mutableStateOf(false) }
+    var includeExpired by remember { mutableStateOf(false) } // 期限切れを含むチェックボックス
     
     // データの取得（プレビュー時はViewModelから、実装時はFirebaseから）
     val seeds = if (isPreview) {
@@ -123,15 +124,28 @@ fun CalendarScreen(
         firebaseSeeds
     }
     
-    // 検索フィルタリング
-    val filteredSeeds = remember(seeds, searchQuery) {
+    // 検索フィルタリングと期限切れフィルタリング
+    val filteredSeeds = remember(seeds, searchQuery, includeExpired, isPreview) {
         seeds.filter { seed: SeedPacket ->
             val matchesSearch = searchQuery.isEmpty() || 
                 seed.productName.contains(searchQuery, ignoreCase = true) ||
                 seed.variety.contains(searchQuery, ignoreCase = true) ||
                 seed.family.contains(searchQuery, ignoreCase = true)
             
-            matchesSearch
+            val matchesExpiredFilter = if (includeExpired) {
+                true // 期限切れを含む場合は全て表示
+            } else {
+                // 期限切れを含まない場合は有効期限内の種のみ表示
+                val currentDate = if (isPreview) {
+                    java.time.LocalDate.of(2025, 5, 1) // プレビュー時は2025年5月1日を使用
+                } else {
+                    java.time.LocalDate.now()
+                }
+                val expirationDate = java.time.LocalDate.of(seed.expirationYear, seed.expirationMonth, 1)
+                currentDate.isBefore(expirationDate.plusMonths(1))
+            }
+            
+            matchesSearch && matchesExpiredFilter
         }
     }
     
@@ -190,6 +204,20 @@ fun CalendarScreen(
                     style = MaterialTheme.typography.bodyMedium
                 )
             }
+            
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Checkbox(
+                    checked = includeExpired,
+                    onCheckedChange = { includeExpired = it }
+                )
+                Text(
+                    text = "期限切れを含む",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
         }
         
         // ガントチャート風カレンダー
@@ -243,7 +271,7 @@ fun GanttChartCalendar(
     
     // MaterialTheme.colorSchemeの値を抽出
     val secondaryContainerColor = MaterialTheme.colorScheme.secondaryContainer
-    val outlineColor = MaterialTheme.colorScheme.outline
+    val outlineColor = MaterialTheme.colorScheme.surfaceContainerLowest // 背景色と同じ色に変更
     
     Column {
             // ヘッダー行
@@ -290,8 +318,8 @@ fun GanttChartCalendar(
                 )
                 
                 // 右側：月ヘッダー（横スクロール可能）
-                val outlineColor = MaterialTheme.colorScheme.outline
-                val thinLineColor = outlineColor.copy(alpha = 0.3f)
+                val outlineColor = MaterialTheme.colorScheme.surfaceContainerLowest // 背景色と同じ色に変更
+                val thinLineColor = MaterialTheme.colorScheme.surfaceContainerLowest // 背景色と同じ色に変更
                 val headerBackgroundColor = MaterialTheme.colorScheme.secondaryContainer
                 
                 Box(
@@ -413,7 +441,9 @@ fun GanttChartRow(
     
     // MaterialTheme.colorSchemeの値を抽出
     val surfaceContainerLowColor = MaterialTheme.colorScheme.surfaceContainerLow
-    val outlineColor = MaterialTheme.colorScheme.outline
+    val outlineColor = MaterialTheme.colorScheme.surfaceContainerLowest // 背景色と同じ色に変更
+    val surfaceContainerLowestColor = MaterialTheme.colorScheme.surfaceContainerLowest // 背景色を事前に取得
+    val errorContainerColor = MaterialTheme.colorScheme.errorContainer // 期限切れの月の色
 
     Row(
         modifier = Modifier
@@ -421,9 +451,9 @@ fun GanttChartRow(
             .background(surfaceContainerLowColor)
             .drawWithContent {
                 drawContent()
-                // 下の境界線を描画
+                // 下の境界線を描画（白に変更）
                 drawLine(
-                    color = outlineColor,
+                    color = Color.White,
                     start = androidx.compose.ui.geometry.Offset(0f, size.height),
                     end = androidx.compose.ui.geometry.Offset(size.width, size.height),
                     strokeWidth = 1.dp.toPx()
@@ -461,9 +491,9 @@ fun GanttChartRow(
         }
 
         // 右側：カレンダー部分（横スクロール可能）
-        val gridOutlineColor = MaterialTheme.colorScheme.outline
-        val gridThinLineColor = gridOutlineColor.copy(alpha = 0.3f)
-        val gridBackgroundColor = MaterialTheme.colorScheme.surfaceContainerLowest // カレンダー部の色
+        val gridOutlineColor = MaterialTheme.colorScheme.surfaceContainerLowest // 背景色と同じ色に変更
+        val gridThinLineColor = MaterialTheme.colorScheme.surfaceContainerLowest // 背景色と同じ色に変更
+        val gridBackgroundColor = MaterialTheme.colorScheme.surfaceContainerLow // カレンダー部の色をsurfaceContainerLowに変更
         val sowingBarColor = MaterialTheme.colorScheme.primaryContainer // 播種期間: PrimaryContainer
         val harvestBarColor = MaterialTheme.colorScheme.secondary // 収穫期間: Secondary
         
@@ -484,10 +514,15 @@ fun GanttChartRow(
                 // 月ごとに3分割（上中下）
                 months.forEachIndexed { index, (month, year) ->
                     val monthStartX = index * 3 * cellWidthPx
+                    
+                    // 期限切れの月かどうかを判定
+                    val isExpired = seed.isExpired(month, year, isPreview)
+                    val monthLineColor = if (isExpired) gridBackgroundColor else gridOutlineColor
+                    val monthThinLineColor = if (isExpired) gridBackgroundColor else gridThinLineColor
 
                     // 月の枠線
                     drawLine(
-                        color = gridOutlineColor,
+                        color = monthLineColor,
                         start = androidx.compose.ui.geometry.Offset(monthStartX, 0f),
                         end = androidx.compose.ui.geometry.Offset(monthStartX, size.height),
                         strokeWidth = 1.dp.toPx()
@@ -497,7 +532,7 @@ fun GanttChartRow(
                     for (i in 1..2) {
                         val x = monthStartX + i * cellWidthPx
                         drawLine(
-                            color = gridThinLineColor,
+                            color = monthThinLineColor,
                             start = androidx.compose.ui.geometry.Offset(x, 0f),
                             end = androidx.compose.ui.geometry.Offset(x, size.height),
                             strokeWidth = 0.5.dp.toPx()
@@ -522,15 +557,15 @@ fun GanttChartRow(
                     strokeWidth = 1.dp.toPx()
                 )
                 
-                // 上下の境界線
+                // 上下の境界線（背景色と同じ色に変更）
                 drawLine(
-                    color = gridOutlineColor,
+                    color = surfaceContainerLowestColor,
                     start = androidx.compose.ui.geometry.Offset(0f, 0f),
                     end = androidx.compose.ui.geometry.Offset(size.width, 0f),
                     strokeWidth = 1.dp.toPx()
                 )
                 drawLine(
-                    color = gridOutlineColor,
+                    color = surfaceContainerLowestColor,
                     start = androidx.compose.ui.geometry.Offset(0f, size.height),
                     end = androidx.compose.ui.geometry.Offset(size.width, size.height),
                     strokeWidth = 1.dp.toPx()
@@ -543,10 +578,15 @@ fun GanttChartRow(
             ) {
                 months.forEach { (month, year) ->
                     repeat(3) { periodIndex -> // 0=上旬, 1=中旬, 2=下旬
+                        // 期限切れの判定
+                        val isExpired = seed.isExpired(month, year, isPreview)
+                        val cellBackgroundColor = if (isExpired) errorContainerColor else Color.Transparent
+                        
                         Box(
                             modifier = Modifier
                                 .width(cellWidth)
-                                .height(40.dp),
+                                .height(40.dp)
+                                .background(cellBackgroundColor),
                             contentAlignment = Alignment.Center
                         ) {
                             // 播種期間のバー（デバッグ用ログ付き）
@@ -578,7 +618,7 @@ fun GanttChartRow(
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Image(
-                                        painter = painterResource(id = com.example.seedstockkeeper6.R.drawable.germination),
+                                        painter = painterResource(id = com.example.seedstockkeeper6.R.drawable.grain),
                                         contentDescription = "播種",
                                         modifier = Modifier.size(20.dp), // アイコンサイズを大きく
                                         colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(MaterialTheme.colorScheme.onPrimaryContainer)

@@ -76,6 +76,18 @@ data class SeedPacket(
             isPeriodInRange(harvestStart, harvestEnd, year, month, periodIndex)
         }
     }
+    
+    // 指定された月・年が期限切れかチェック
+    fun isExpired(month: Int, year: Int, isPreview: Boolean = false): Boolean {
+        val currentDate = if (isPreview) {
+            java.time.LocalDate.of(2025, 5, 1) // プレビュー時は2025年5月1日を使用
+        } else {
+            java.time.LocalDate.now()
+        }
+        val expirationDate = java.time.LocalDate.of(expirationYear, expirationMonth, 1)
+        val targetDate = java.time.LocalDate.of(year, month, 1)
+        return targetDate.isAfter(expirationDate)
+    }
 }
 @Serializable
 data class Cultivation(

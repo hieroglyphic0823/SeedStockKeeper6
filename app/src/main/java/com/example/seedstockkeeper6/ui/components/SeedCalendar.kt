@@ -93,8 +93,8 @@ fun SeedCalendarGrouped(
         }
     } ?: today
     
-    // 播種期間から2年分のカレンダー期間を計算
-    val calendarStartDate = LocalDate.of(earliestDate.year, earliestDate.monthValue, 1) // 最も早い日付から開始
+    // 当月から2年分のカレンダー期間を計算
+    val calendarStartDate = LocalDate.of(today.year, today.monthValue, 1) // 当月から開始
     val calendarEndDate = calendarStartDate.plusYears(2).minusMonths(1)
     
     // デバッグログを追加
@@ -105,9 +105,8 @@ fun SeedCalendarGrouped(
     android.util.Log.d("SeedCalendar", "calendarEndDate=$calendarEndDate")
     
     // 現在の月の位置を計算（スクロール初期位置用）
-    // カレンダー開始月が左端に表示されるようにスクロール位置を調整
-    val currentDate = LocalDate.of(today.year, today.monthValue, 1)
-    val monthsFromStart = ChronoUnit.MONTHS.between(calendarStartDate, currentDate).toInt()
+    // 当月から開始するため、常に0から開始
+    val monthsFromStart = 0
     
     // 月幅を統一（実際の表示幅に基づく）
     // 画面幅を取得して12ヶ月分で割る
@@ -555,8 +554,12 @@ fun SeedCalendarGroupedInternal(
                                 with(density) { 24.dp.toPx() } // 播種アイコンは24dp
                             }
                             
-                            // 播種期間と収穫期間の両方でgrainアイコンを使用
-                            val iconResource = R.drawable.grain
+                            // 播種期間はgrain、収穫期間はharvestアイコンを使用
+                            val iconResource = if (item.itemLabel == "収穫") {
+                                R.drawable.harvest
+                            } else {
+                                R.drawable.grain
+                            }
                             
                             android.util.Log.d("SeedCalendar", "アイコン描画開始: itemLabel=${item.itemLabel}, iconResource=$iconResource, iconSize=$iconSize")
                             
