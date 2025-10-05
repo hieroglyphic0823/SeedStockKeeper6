@@ -60,7 +60,8 @@ fun RegionSelectionDialog(
     onUpdateEditing: (com.example.seedstockkeeper6.model.CalendarEntry) -> Unit,
     onSaveEditing: () -> Unit,
     onCancelEditing: () -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onUpdateExpiration: (com.example.seedstockkeeper6.model.CalendarEntry) -> Unit = {} // 有効期限更新のコールバック
 ) {
     android.util.Log.d("RegionSelectionDialog", "RegionSelectionDialog開始: showDialog=$showDialog, regionList=$regionList")
     
@@ -90,6 +91,16 @@ fun RegionSelectionDialog(
             android.util.Log.d("RegionSelectionDialog", "ダイアログ実際の幅: ${dialogActualWidthDp}dp")
             android.util.Log.d("RegionSelectionDialog", "ダイアログ実際の幅(px): ${density.run { dialogActualWidthDp.dp.toPx() }}px")
             android.util.Log.d("RegionSelectionDialog", "ダイアログ幅の割合: ${(dialogActualWidthDp / windowWidthDp * 100).toInt()}%")
+            
+            // OCR結果の有効期限情報をログに表示
+            android.util.Log.d("RegionSelectionDialog", "=== ダイアログ表示時のOCR結果有効期限情報 ===")
+            android.util.Log.d("RegionSelectionDialog", "OCR結果: $ocrResult")
+            ocrResult?.let { result ->
+                android.util.Log.d("RegionSelectionDialog", "パケット有効期限: ${result.expirationYear}年${result.expirationMonth}月")
+                result.calendar?.forEach { entry ->
+                    android.util.Log.d("RegionSelectionDialog", "地域: ${entry.region}, 有効期限: ${entry.expirationYear}年${entry.expirationMonth}月")
+                } ?: android.util.Log.d("RegionSelectionDialog", "カレンダー情報なし")
+            } ?: android.util.Log.d("RegionSelectionDialog", "OCR結果なし")
         }
     }
     
@@ -134,7 +145,7 @@ fun RegionSelectionDialog(
                     
                     // 説明コメント
                     Text(
-                        text = "AIで読み取った種暦を確認してください。",
+                        text = "AI読取結果を確認してください。",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(bottom = 16.dp)
@@ -178,13 +189,28 @@ fun RegionSelectionDialog(
                         // 編集項目を表示
                         if (selectedRegion.isNotEmpty()) {
                             item {
-                                val entryToShow = ocrResult?.calendar?.find { it.region == selectedRegion } ?: com.example.seedstockkeeper6.model.CalendarEntry(
-                                    region = selectedRegion,
-                                    sowing_start_date = "",
-                                    sowing_end_date = "",
-                                    harvest_start_date = "",
-                                    harvest_end_date = ""
-                                )
+                                val entryToShow = ocrResult?.calendar?.find { it.region == selectedRegion } ?: run {
+                                    // OCR結果に該当地域がない場合は、OCR結果の有効期限情報を使用してエントリを作成
+                                    val currentDate = java.time.LocalDate.now()
+                                    val expirationYear = ocrResult?.expirationYear ?: (currentDate.year + 1)
+                                    val expirationMonth = ocrResult?.expirationMonth ?: currentDate.monthValue
+                                    val newEntry = com.example.seedstockkeeper6.model.CalendarEntry(
+                                        region = selectedRegion,
+                                        sowing_start_date = "",
+                                        sowing_end_date = "",
+                                        harvest_start_date = "",
+                                        harvest_end_date = "",
+                                        expirationYear = expirationYear,
+                                        expirationMonth = expirationMonth
+                                    )
+                                    android.util.Log.d("RegionSelectionDialog", "新規エントリ作成: $newEntry")
+                                    newEntry
+                                }
+                                
+                                android.util.Log.d("RegionSelectionDialog", "=== 表示するエントリの有効期限情報 ===")
+                                android.util.Log.d("RegionSelectionDialog", "選択地域: $selectedRegion")
+                                android.util.Log.d("RegionSelectionDialog", "表示エントリ: $entryToShow")
+                                android.util.Log.d("RegionSelectionDialog", "エントリの有効期限: ${entryToShow.expirationYear}年${entryToShow.expirationMonth}月")
                                 
                                 Card(
                                     colors = CardDefaults.cardColors(
@@ -264,18 +290,34 @@ fun RegionSelectionDialog(
                                                                 
                                                                 // 地域変更時にOCR結果で期間を上書き
                                                                 val newRegionEntry = ocrResult?.calendar?.find { it.region == region }
+                                                                android.util.Log.d("RegionSelectionDialog", "=== 地域選択時の有効期限情報 ===")
+                                                                android.util.Log.d("RegionSelectionDialog", "選択地域: $region")
+                                                                android.util.Log.d("RegionSelectionDialog", "OCR結果から取得したエントリ: $newRegionEntry")
+                                                                
                                                                 if (newRegionEntry != null) {
+                                                                    android.util.Log.d("RegionSelectionDialog", "OCR結果の有効期限: ${newRegionEntry.expirationYear}年${newRegionEntry.expirationMonth}月")
                                                                     onUpdateEditing(newRegionEntry)
                                                                     editedEntry = newRegionEntry
+                                                                    // 有効期限情報を種登録画面に反映
+                                                                    onUpdateExpiration(newRegionEntry)
                                                                 } else {
-                                                                    // 新しい地域の場合は空のエントリを作成
-                                                                    editedEntry = com.example.seedstockkeeper6.model.CalendarEntry(
+                                                                    android.util.Log.d("RegionSelectionDialog", "OCR結果に該当地域なし、空のエントリを作成")
+                                                                    // 新しい地域の場合は空のエントリを作成（OCR結果の有効期限情報を使用）
+                                                                    val currentDate = java.time.LocalDate.now()
+                                                                    val expirationYear = ocrResult?.expirationYear ?: (currentDate.year + 1)
+                                                                    val expirationMonth = ocrResult?.expirationMonth ?: currentDate.monthValue
+                                                                    val newEntry = com.example.seedstockkeeper6.model.CalendarEntry(
                                                                         region = region,
                                                                         sowing_start_date = "",
                                                                         sowing_end_date = "",
                                                                         harvest_start_date = "",
-                                                                        harvest_end_date = ""
+                                                                        harvest_end_date = "",
+                                                                        expirationYear = expirationYear,
+                                                                        expirationMonth = expirationMonth
                                                                     )
+                                                                    editedEntry = newEntry
+                                                                    onUpdateEditing(newEntry)
+                                                                    android.util.Log.d("RegionSelectionDialog", "新規エントリの有効期限: ${expirationYear}年${expirationMonth}月")
                                                                 }
                                                             },
                                                             modifier = Modifier
@@ -323,7 +365,13 @@ fun RegionSelectionDialog(
                                                 android.util.Log.d("RegionSelectionDialog", "editedEntry更新: $editedEntry")
                                             },
                                             onSave = { },
-                                            onCancel = { }
+                                            onCancel = { },
+                                            onUpdateExpiration = { updatedEntry ->
+                                                // 有効期限情報を種登録画面に反映
+                                                onUpdateExpiration(updatedEntry)
+                                                android.util.Log.d("RegionSelectionDialog", "有効期限更新: ${updatedEntry.expirationYear}年${updatedEntry.expirationMonth}月")
+                                            },
+                                            ocrResult = ocrResult // OCR結果を渡す
                                         )
                                     }
                                 }
@@ -364,6 +412,8 @@ fun RegionSelectionDialog(
                                     onUpdateEditing(editedEntry!!)
                                     // 編集された値を保存
                                     onSaveEditing()
+                                    // 有効期限情報を種登録画面に反映
+                                    onUpdateExpiration(editedEntry!!)
                                 } else {
                                     android.util.Log.w("RegionSelectionDialog", "editedEntryがnullです")
                                 }

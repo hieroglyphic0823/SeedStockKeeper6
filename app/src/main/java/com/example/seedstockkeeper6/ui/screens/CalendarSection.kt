@@ -582,8 +582,10 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
                 title = "有効期限",
                 selectedYear = expirationYear,
                 selectedMonth = expirationMonth,
+                selectedStage = "", // 有効期限では旬は使用しない
                 onYearChange = { expirationYear = it },
                 onMonthChange = { expirationMonth = it },
+                onStageChange = { }, // 有効期限では旬は使用しない
                 onConfirm = {
                     val yearInt = expirationYear.toIntOrNull() ?: 0
                     val monthInt = expirationMonth.toIntOrNull() ?: 0

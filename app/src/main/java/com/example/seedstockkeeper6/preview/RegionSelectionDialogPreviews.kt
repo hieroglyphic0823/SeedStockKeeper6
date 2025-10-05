@@ -545,7 +545,8 @@ fun OcrRegionSelectionDialogPreview() {
                                 entry = entryToShow,
                                 onUpdate = { },
                                 onSave = { },
-                                onCancel = { }
+                                onCancel = { },
+                                onUpdateExpiration = { } // プレビューでは空のコールバック
                             )
                         }
                     }

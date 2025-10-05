@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -102,43 +103,66 @@ fun CastleScreen(
     // データの取得（プレビュー時は固定データ、実装時はViewModelから）
     val seeds = if (isPreview) {
         // プレビュー時：固定の種データを使用
+        android.util.Log.d("CastleScreen", "プレビュー時: 固定データを使用")
         listOf(
             SeedPacket(
                 id = "preview1",
-                productName = "恋むすめ",
-                variety = "ニンジン",
-                family = "せり科",
+                productName = "食べきりミニ大根",
+                variety = "ころっ娘",
+                family = "アブラナ科",
                 expirationYear = 2026,
                 expirationMonth = 10,
                 calendar = listOf(
                     CalendarEntry(
-                        sowing_start_date = "2025-05-01",
-                        sowing_end_date = "2025-05-31",
-                        harvest_start_date = "2025-08-01",
-                        harvest_end_date = "2025-08-31"
+                        sowing_start_date = "2025-10-01",
+                        sowing_end_date = "2025-10-31",
+                        harvest_start_date = "2025-12-01",
+                        harvest_end_date = "2025-12-31"
                     )
                 )
             ),
             SeedPacket(
                 id = "preview2",
-                productName = "春菊",
-                variety = "中葉春菊",
-                family = "きく科",
+                productName = "一寸そら豆",
+                variety = "ソラマメ",
+                family = "マメ科",
                 expirationYear = 2026,
                 expirationMonth = 10,
                 calendar = listOf(
                     CalendarEntry(
-                        sowing_start_date = "2025-08-20",
-                        sowing_end_date = "2025-09-15",
-                        harvest_start_date = "2025-10-01",
-                        harvest_end_date = "2025-10-31"
+                        sowing_start_date = "2025-10-01",
+                        sowing_end_date = "2025-10-31",
+                        harvest_start_date = "2026-05-01",
+                        harvest_end_date = "2026-05-31"
+                    )
+                )
+            ),
+            SeedPacket(
+                id = "preview3",
+                productName = "サラダタマネギ",
+                variety = "ゆめたま",
+                family = "ユリ科",
+                expirationYear = 2026,
+                expirationMonth = 10,
+                calendar = listOf(
+                    CalendarEntry(
+                        sowing_start_date = "2025-09-01",
+                        sowing_end_date = "2025-10-31",
+                        harvest_start_date = "2026-06-01",
+                        harvest_end_date = "2026-06-30"
                     )
                 )
             )
         )
     } else {
         // 実装時：ViewModelからデータを取得
+        android.util.Log.d("CastleScreen", "実装時: ViewModelからデータを取得")
         viewModel.seeds.value
+    }
+    
+    android.util.Log.d("CastleScreen", "取得した種子数: ${seeds.size}")
+    seeds.forEach { seed ->
+        android.util.Log.d("CastleScreen", "種: ${seed.productName}, カレンダー: ${seed.calendar}")
     }
     
     // 農園名（設定から取得、プレビュー時は固定値）
@@ -489,23 +513,11 @@ fun SukesanMessageCard(
                     } else if (latestNotification != null) {
                         val notification = latestNotification!!
                         
-                        // 今月まき時の種をフィルタリング
-                        val thisMonthSowingSeeds = seeds.filter { seed ->
-                            seed.calendar?.any { entry ->
-                                val sowingStartMonth = com.example.seedstockkeeper6.utils.DateConversionUtils.getMonthFromDate(entry.sowing_start_date)
-                                val sowingStartYear = com.example.seedstockkeeper6.utils.DateConversionUtils.getYearFromDate(entry.sowing_start_date)
-                                sowingStartMonth == currentMonth && sowingStartYear == currentYear
-                            } ?: false
-                        }
+                        // 通知の内容から今月まき時の種と期限切れ間近の種情報を抽出
+                        val (thisMonthSowingSeeds, urgentSeeds) = extractSeedInfoFromNotification(notification.content, seeds)
                         
-                        // まき時終了間近の種をフィルタリング
-                        val urgentSeeds = seeds.filter { seed ->
-                            seed.calendar?.any { entry ->
-                                val sowingEndMonth = com.example.seedstockkeeper6.utils.DateConversionUtils.getMonthFromDate(entry.sowing_end_date)
-                                val sowingEndYear = com.example.seedstockkeeper6.utils.DateConversionUtils.getYearFromDate(entry.sowing_end_date)
-                                sowingEndMonth == currentMonth && sowingEndYear == currentYear
-                            } ?: false
-                        }
+                        android.util.Log.d("CastleScreen", "通知から抽出した今月まき時の種子数: ${thisMonthSowingSeeds.size}")
+                        android.util.Log.d("CastleScreen", "通知から抽出した期限切れ間近の種子数: ${urgentSeeds.size}")
                         
                         Column {
                             // 通知タイトル（1行）
@@ -522,17 +534,25 @@ fun SukesanMessageCard(
 
                             // 今月まき時の種情報
                             if (thisMonthSowingSeeds.isNotEmpty()) {
-                                val seedNames = thisMonthSowingSeeds.take(3).joinToString("、") { "${it.productName}（${it.variety}）" }
+                                val seedNames = thisMonthSowingSeeds.take(3).joinToString("、") { it.productName }
                                 val displayText = if (thisMonthSowingSeeds.size > 3) {
                                     "$seedNames 他${thisMonthSowingSeeds.size - 3}種類"
                                 } else {
                                     seedNames
                                 }
-                                Text(
-                                    text = "🌱 今月まき時: $displayText",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = Color.Black
-                                )
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .horizontalScroll(rememberScrollState())
+                                ) {
+                                    Text(
+                                        text = "🌱 今月まき時: $displayText",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = Color.Black,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Visible
+                                    )
+                                }
                             } else {
                                 Text(
                                     text = "🌱 今月まき時: 該当なし",
@@ -545,17 +565,25 @@ fun SukesanMessageCard(
 
                             // まき時終了間近の種情報
                             if (urgentSeeds.isNotEmpty()) {
-                                val seedNames = urgentSeeds.take(3).joinToString("、") { "${it.productName}（${it.variety}）" }
+                                val seedNames = urgentSeeds.take(3).joinToString("、") { it.productName }
                                 val displayText = if (urgentSeeds.size > 3) {
                                     "$seedNames 他${urgentSeeds.size - 3}種類"
                                 } else {
                                     seedNames
                                 }
-                                Text(
-                                    text = "⚠️ まき時終了間近: $displayText",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = Color.Black
-                                )
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .horizontalScroll(rememberScrollState())
+                                ) {
+                                    Text(
+                                        text = "⚠️ まき時終了間近: $displayText",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = Color.Black,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Visible
+                                    )
+                                }
                             } else {
                                 Text(
                                     text = "⚠️ まき時終了間近: 該当なし",
@@ -1165,6 +1193,107 @@ fun SummaryCardWithoutIcon(
             }
         }
     }
+}
+
+/**
+ * 通知の内容から今月まき時の種と期限切れ間近の種情報を抽出
+ */
+private fun extractSeedInfoFromNotification(notificationContent: String, allSeeds: List<SeedPacket>): Pair<List<SeedPacket>, List<SeedPacket>> {
+    val thisMonthSowingSeeds = mutableListOf<SeedPacket>()
+    val urgentSeeds = mutableListOf<SeedPacket>()
+    
+    android.util.Log.d("CastleScreen", "通知内容全体: $notificationContent")
+    
+    // 通知の内容から種の名前を抽出
+    val thisMonthPattern = "🌱 \\*\\*今月まきどきの種:\\*\\*".toRegex()
+    val urgentPattern = "⚠️ \\*\\*まき時終了間近:\\*\\*".toRegex()
+    
+    android.util.Log.d("CastleScreen", "今月まき時のパターンマッチ: ${thisMonthPattern.find(notificationContent) != null}")
+    android.util.Log.d("CastleScreen", "期限切れ間近のパターンマッチ: ${urgentPattern.find(notificationContent) != null}")
+    
+    // 今月まき時の種を抽出
+    val thisMonthMatch = thisMonthPattern.find(notificationContent)
+    if (thisMonthMatch != null) {
+        val startIndex = thisMonthMatch.range.last + 1
+        // 次のセクション（⚠️ まき時終了間近:）までを取得
+        val nextSectionIndex = notificationContent.indexOf("⚠️", startIndex)
+        val endIndex = if (nextSectionIndex == -1) notificationContent.length else nextSectionIndex
+        val thisMonthText = notificationContent.substring(startIndex, endIndex).trim()
+        
+        android.util.Log.d("CastleScreen", "今月まき時のテキスト: $thisMonthText")
+        
+        if (thisMonthText != "該当なし") {
+            // 種の名前を抽出（『種名』の形式）
+            val seedNamePattern = "『([^』]+)』".toRegex()
+            val matches = seedNamePattern.findAll(thisMonthText)
+            android.util.Log.d("CastleScreen", "今月まき時の正規表現マッチ数: ${matches.count()}")
+            matches.forEach { match ->
+                val seedName = match.groupValues[1].trim()
+                android.util.Log.d("CastleScreen", "抽出した種名: $seedName")
+                
+                // （）と（）内の文字を除去
+                val cleanSeedName = seedName.replace(Regex("\\([^)]*\\)"), "").trim()
+                android.util.Log.d("CastleScreen", "クリーンな種名: $cleanSeedName")
+                
+                // 通知から抽出した種名をそのまま使用（実際の種データとの照合は不要）
+                val extractedSeed = SeedPacket(
+                    id = "extracted_${System.currentTimeMillis()}",
+                    productName = cleanSeedName,
+                    variety = "",
+                    family = "",
+                    expirationYear = 0,
+                    expirationMonth = 0,
+                    calendar = emptyList()
+                )
+                thisMonthSowingSeeds.add(extractedSeed)
+                android.util.Log.d("CastleScreen", "抽出した種を追加: $cleanSeedName")
+            }
+        }
+    }
+    
+    // 期限切れ間近の種を抽出
+    val urgentMatch = urgentPattern.find(notificationContent)
+    if (urgentMatch != null) {
+        val startIndex = urgentMatch.range.last + 1
+        // 次のセクション（🌟 今月のおすすめ種:）までを取得
+        val nextSectionIndex = notificationContent.indexOf("🌟", startIndex)
+        val endIndex = if (nextSectionIndex == -1) notificationContent.length else nextSectionIndex
+        val urgentText = notificationContent.substring(startIndex, endIndex).trim()
+        
+        android.util.Log.d("CastleScreen", "期限切れ間近のテキスト: $urgentText")
+        
+        if (urgentText != "該当なし") {
+            // 種の名前を抽出（『種名』の形式）
+            val seedNamePattern = "『([^』]+)』".toRegex()
+            val matches = seedNamePattern.findAll(urgentText)
+            android.util.Log.d("CastleScreen", "期限切れ間近の正規表現マッチ数: ${matches.count()}")
+            matches.forEach { match ->
+                val seedName = match.groupValues[1].trim()
+                android.util.Log.d("CastleScreen", "抽出した期限切れ間近の種名: $seedName")
+                
+                // （）と（）内の文字を除去
+                val cleanSeedName = seedName.replace(Regex("\\([^)]*\\)"), "").trim()
+                android.util.Log.d("CastleScreen", "クリーンな期限切れ間近の種名: $cleanSeedName")
+                
+                // 通知から抽出した種名をそのまま使用（実際の種データとの照合は不要）
+                val extractedSeed = SeedPacket(
+                    id = "extracted_${System.currentTimeMillis()}",
+                    productName = cleanSeedName,
+                    variety = "",
+                    family = "",
+                    expirationYear = 0,
+                    expirationMonth = 0,
+                    calendar = emptyList()
+                )
+                urgentSeeds.add(extractedSeed)
+                android.util.Log.d("CastleScreen", "抽出した期限切れ間近の種を追加: $cleanSeedName")
+            }
+        }
+    }
+    
+    android.util.Log.d("CastleScreen", "通知内容から抽出: 今月まき時=${thisMonthSowingSeeds.map { it.productName }}, 期限切れ間近=${urgentSeeds.map { it.productName }}")
+    
+    return Pair(thisMonthSowingSeeds, urgentSeeds)
 }
 
 @Preview(showBackground = true, showSystemUi = true, name = "お城画面 - お銀")

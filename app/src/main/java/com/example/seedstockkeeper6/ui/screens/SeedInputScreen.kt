@@ -194,7 +194,8 @@ fun SeedInputScreen(
         onUpdateEditing = { viewModel.updateEditingCalendarEntry(it) },
         onSaveEditing = { viewModel.saveEditingCalendarEntry() },
         onCancelEditing = { viewModel.cancelEditingCalendarEntry() },
-        onDismiss = { viewModel.onRegionSelectionDismiss() }
+        onDismiss = { viewModel.onRegionSelectionDismiss() },
+        onUpdateExpiration = { viewModel.updateExpirationFromCalendarEntry(it) } // 有効期限更新のコールバック
     )
     
     // 画像拡大表示ダイアログ

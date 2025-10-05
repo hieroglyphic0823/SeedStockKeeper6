@@ -341,6 +341,13 @@ class SeedInputViewModel : ViewModel() {
         ocrResult = parsed
         Log.d("RegionSelection", "OCR結果保存: ocrResult=$parsed")
         
+        // OCR結果の有効期限情報をログに表示
+        Log.d("OCR_Expiration", "=== OCR結果の有効期限情報 ===")
+        Log.d("OCR_Expiration", "パケット有効期限: ${parsed.expirationYear}年${parsed.expirationMonth}月")
+        parsed.calendar?.forEach { entry ->
+            Log.d("OCR_Expiration", "地域: ${entry.region}, 有効期限: ${entry.expirationYear}年${entry.expirationMonth}月")
+        } ?: Log.d("OCR_Expiration", "カレンダー情報なし")
+        
         // 地域名を検出して地域選択ダイアログを表示
         val detectedRegions = extractRegionsFromOcrResult(parsed)
         Log.d("RegionSelection", "地域検出結果: detectedRegions=$detectedRegions, isNotEmpty=${detectedRegions.isNotEmpty()}")
@@ -1359,7 +1366,12 @@ class SeedInputViewModel : ViewModel() {
             
             val updatedEntry = selectedRegionEntry.copy(
                 expirationYear = expirationYear,
-                expirationMonth = expirationMonth
+                expirationMonth = expirationMonth,
+                // 播種期間と収穫期間の年も有効期限の年で更新
+                sowing_start_date = calculateDateWithYear(selectedRegionEntry.sowing_start_date, expirationYear),
+                sowing_end_date = calculateDateWithYear(selectedRegionEntry.sowing_end_date, expirationYear),
+                harvest_start_date = calculateDateWithYear(selectedRegionEntry.harvest_start_date, expirationYear),
+                harvest_end_date = calculateDateWithYear(selectedRegionEntry.harvest_end_date, expirationYear)
             )
             
             packet = packet.copy(calendar = listOf(updatedEntry))
@@ -1464,6 +1476,24 @@ class SeedInputViewModel : ViewModel() {
         } ?: run {
             Log.w("Calendar", "editingCalendarEntryがnullのため、保存をスキップ")
         }
+    }
+    
+    // 地域確認ダイアログで有効期限が変更された際に種登録画面の有効期限フィールドに反映する
+    fun updateExpirationFromCalendarEntry(entry: CalendarEntry) {
+        Log.d("Calendar", "updateExpirationFromCalendarEntry開始: $entry")
+        
+        // カレンダーエントリの有効期限情報を種登録画面の有効期限フィールドに反映
+        if (entry.expirationYear > 0) {
+            packet = packet.copy(expirationYear = entry.expirationYear)
+            Log.d("Calendar", "有効期限年を更新: ${entry.expirationYear}")
+        }
+        
+        if (entry.expirationMonth > 0) {
+            packet = packet.copy(expirationMonth = entry.expirationMonth)
+            Log.d("Calendar", "有効期限月を更新: ${entry.expirationMonth}")
+        }
+        
+        Log.d("Calendar", "種登録画面の有効期限更新完了: ${packet.expirationYear}年${packet.expirationMonth}月")
     }
     
     // 月と旬から年を設定して日付を構築するヘルパー関数
