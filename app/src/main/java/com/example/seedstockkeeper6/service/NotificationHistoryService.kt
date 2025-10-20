@@ -27,7 +27,13 @@ class NotificationHistoryService {
         region: String,
         prefecture: String,
         month: Int = 0,
-        seedCount: Int = 0
+        seedCount: Int = 0,
+        thisMonthSeeds: List<String> = emptyList(),
+        endingSoonSeeds: List<String> = emptyList(),
+        recommendedSeeds: List<String> = emptyList(),
+        thisMonthDetails: List<com.example.seedstockkeeper6.model.SeedDetail> = emptyList(),
+        endingSoonDetails: List<com.example.seedstockkeeper6.model.SeedDetail> = emptyList(),
+        recommendedDetails: List<com.example.seedstockkeeper6.model.SeedDetail> = emptyList()
     ): Boolean {
         return try {
             val currentUser = auth.currentUser
@@ -52,7 +58,13 @@ class NotificationHistoryService {
                 region = region,
                 prefecture = prefecture,
                 month = month,
-                seedCount = seedCount
+                seedCount = seedCount,
+                thisMonthSeeds = thisMonthSeeds,
+                endingSoonSeeds = endingSoonSeeds,
+                recommendedSeeds = recommendedSeeds,
+                thisMonthDetails = thisMonthDetails,
+                endingSoonDetails = endingSoonDetails,
+                recommendedDetails = recommendedDetails
             )
             
             Log.d("NotificationHistoryService", "保存する通知履歴: $history")

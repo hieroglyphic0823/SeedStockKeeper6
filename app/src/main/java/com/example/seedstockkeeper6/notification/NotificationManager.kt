@@ -262,7 +262,10 @@ class NotificationManager(private val context: Context) {
                     return@launch
                 }
                 
-                // 通知履歴を保存（要約は文頭の文）
+                // 構造化された種名リストを抽出
+                val extracted = extractNamesForHistory(content)
+                val details = extractDetailsForHistory(content)
+                // 通知履歴を保存（要約は文頭の文 + 構造化種名）
                 historyService.saveNotificationHistory(
                     type = NotificationType.MONTHLY,
                     title = title,
@@ -272,7 +275,13 @@ class NotificationManager(private val context: Context) {
                     region = region,
                     prefecture = prefecture,
                     month = month,
-                    seedCount = seedCount
+                    seedCount = seedCount,
+                    thisMonthSeeds = extracted.first,
+                    endingSoonSeeds = extracted.second,
+                    recommendedSeeds = extracted.third,
+                    thisMonthDetails = details.first,
+                    endingSoonDetails = details.second,
+                    recommendedDetails = details.third
                 )
             } catch (e: Exception) {
                 // フォールバック: デフォルトタイトルで通知
@@ -297,6 +306,9 @@ class NotificationManager(private val context: Context) {
                     return@launch
                 }
                 
+                // 構造化された種名リストを抽出
+                val extractedFallback = extractNamesForHistory(content)
+                val detailsFallback = extractDetailsForHistory(content)
                 // 通知履歴を保存
                 historyService.saveNotificationHistory(
                     type = NotificationType.MONTHLY,
@@ -306,7 +318,13 @@ class NotificationManager(private val context: Context) {
                     region = region,
                     prefecture = prefecture,
                     month = month,
-                    seedCount = seedCount
+                    seedCount = seedCount,
+                    thisMonthSeeds = extractedFallback.first,
+                    endingSoonSeeds = extractedFallback.second,
+                    recommendedSeeds = extractedFallback.third,
+                    thisMonthDetails = detailsFallback.first,
+                    endingSoonDetails = detailsFallback.second,
+                    recommendedDetails = detailsFallback.third
                 )
             }
         }
@@ -371,7 +389,9 @@ class NotificationManager(private val context: Context) {
                     return@launch
                 }
                 
-                // 通知履歴を保存（要約は文頭の文）
+                val extractedWeekly = extractNamesForHistory(content)
+                val detailsWeekly = extractDetailsForHistory(content)
+                // 通知履歴を保存（要約は文頭の文 + 構造化種名）
                 historyService.saveNotificationHistory(
                     type = NotificationType.WEEKLY,
                     title = title,
@@ -380,7 +400,13 @@ class NotificationManager(private val context: Context) {
                     farmOwner = farmOwner,
                     region = region,
                     prefecture = prefecture,
-                    seedCount = seedCount
+                    seedCount = seedCount,
+                    thisMonthSeeds = extractedWeekly.first,
+                    endingSoonSeeds = extractedWeekly.second,
+                    recommendedSeeds = extractedWeekly.third,
+                    thisMonthDetails = detailsWeekly.first,
+                    endingSoonDetails = detailsWeekly.second,
+                    recommendedDetails = detailsWeekly.third
                 )
             } catch (e: Exception) {
                 android.util.Log.e("NotificationManager", "週次通知送信に失敗", e)
@@ -536,6 +562,98 @@ class NotificationManager(private val context: Context) {
         parts += line("まき時終了間近：", ending)
         parts += line("おすすめの種：", recommend)
         return parts.joinToString(separator = "\n")
+    }
+
+    // 履歴保存用にセクションごとの種名のみを抽出
+    private fun extractNamesForHistory(content: String): Triple<List<String>, List<String>, List<String>> {
+        val text = removeJsonCodeBlock(content)
+        val lines = text.lines()
+        fun extract(sectionMarker: String): List<String> {
+            val names = mutableListOf<String>()
+            var i = 0
+            while (i < lines.size) {
+                val line = lines[i].trim()
+                if (line.startsWith(sectionMarker)) {
+                    var j = i + 1
+                    while (j < lines.size) {
+                        val l = lines[j].trim()
+                        if (l.startsWith("🌱") || l.startsWith("⚠️") || l.startsWith("🌟") || l.startsWith("```")) break
+                        if (l.startsWith("• ") || l.startsWith("* ") || l.startsWith("- ")) {
+                            val raw = l.removePrefix("• ").removePrefix("* ").removePrefix("- ").trim()
+                            val inQuote = Regex("『([^』]+)』").find(raw)?.groupValues?.getOrNull(1)
+                            names += (inQuote ?: raw)
+                        }
+                        j++
+                    }
+                    break
+                }
+                i++
+            }
+            return names
+        }
+        val thisMonth = extract("🌱")
+        val ending = extract("⚠️")
+        val recommend = extract("🌟")
+        return Triple(thisMonth, ending, recommend)
+    }
+
+    // JSONオブジェクト {name, desc} を優先的に抽出。なければ本文から隣接行で補完
+    private fun extractDetailsForHistory(content: String): Triple<List<com.example.seedstockkeeper6.model.SeedDetail>, List<com.example.seedstockkeeper6.model.SeedDetail>, List<com.example.seedstockkeeper6.model.SeedDetail>> {
+        val jsonStart = content.indexOf("```json")
+        if (jsonStart != -1) {
+            val jsonEnd = content.indexOf("```", startIndex = jsonStart + 7)
+            if (jsonEnd != -1) {
+                val jsonText = content.substring(jsonStart + 7, jsonEnd).trim()
+                try {
+                    val obj = com.google.gson.JsonParser.parseString(jsonText).asJsonObject
+                    fun arr(key: String): List<com.example.seedstockkeeper6.model.SeedDetail> {
+                        val a = obj.getAsJsonArray(key) ?: return emptyList()
+                        return a.mapNotNull { el ->
+                            try {
+                                val o = el.asJsonObject
+                                com.example.seedstockkeeper6.model.SeedDetail(
+                                    name = o.get("name")?.asString ?: "",
+                                    desc = o.get("desc")?.asString ?: ""
+                                )
+                            } catch (_: Exception) { null }
+                        }
+                    }
+                    return Triple(arr("this_month"), arr("ending_soon"), arr("recommended"))
+                } catch (_: Exception) { /* fall through */ }
+            }
+        }
+        // 本文から抽出（名前 + 次行説明）
+        fun extract(sectionMarker: String): List<com.example.seedstockkeeper6.model.SeedDetail> {
+            val text = removeJsonCodeBlock(content)
+            val lines = text.lines()
+            val results = mutableListOf<com.example.seedstockkeeper6.model.SeedDetail>()
+            var i = 0
+            while (i < lines.size) {
+                val line = lines[i].trim()
+                if (line.startsWith(sectionMarker)) {
+                    var j = i + 1
+                    while (j < lines.size) {
+                        val l = lines[j].trim()
+                        if (l.startsWith("🌱") || l.startsWith("⚠️") || l.startsWith("🌟") || l.startsWith("```")) break
+                        if (l.startsWith("• ") || l.startsWith("* ") || l.startsWith("- ")) {
+                            val raw = l.removePrefix("• ").removePrefix("* ").removePrefix("- ").trim()
+                            val nameInQuote = Regex("『([^』]+)』").find(raw)?.groupValues?.getOrNull(1)
+                            val name = nameInQuote ?: raw
+                            val desc = if (j + 1 < lines.size) {
+                                val next = lines[j + 1].trim()
+                                if (!next.startsWith("• ") && !next.startsWith("* ") && !next.startsWith("- ") && !next.startsWith("🌱") && !next.startsWith("⚠️") && !next.startsWith("🌟") && !next.startsWith("```")) next else ""
+                            } else ""
+                            results += com.example.seedstockkeeper6.model.SeedDetail(name = name, desc = desc)
+                        }
+                        j++
+                    }
+                    break
+                }
+                i++
+            }
+            return results
+        }
+        return Triple(extract("🌱"), extract("⚠️"), extract("🌟"))
     }
     
     private fun createPendingIntent(): PendingIntent {

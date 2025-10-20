@@ -17,7 +17,21 @@ data class NotificationHistory(
     val prefecture: String = "",
     val month: Int = 0, // 月次通知の場合の対象月
     val seedCount: Int = 0, // 対象となった種の数
+    // 構造化された種名リスト
+    val thisMonthSeeds: List<String> = emptyList(),
+    val endingSoonSeeds: List<String> = emptyList(),
+    val recommendedSeeds: List<String> = emptyList(),
+    // 詳細: 種名と説明
+    val thisMonthDetails: List<SeedDetail> = emptyList(),
+    val endingSoonDetails: List<SeedDetail> = emptyList(),
+    val recommendedDetails: List<SeedDetail> = emptyList(),
     val documentId: String? = null // FirestoreのドキュメントID
+)
+
+@Serializable
+data class SeedDetail(
+    val name: String = "",
+    val desc: String = ""
 )
 
 @Serializable

@@ -207,10 +207,19 @@ private fun NotificationHistoryCard(
             }
             
             // カード本体（3行: タイトルの下に「今月まき時」「まき時終了」）
-            val sectionSummary = remember(history.content) { extractSectionSummaries(history.content) }
+            val sectionSummary = remember(history) {
+                if (history.thisMonthSeeds.isNotEmpty() || history.endingSoonSeeds.isNotEmpty()) {
+                    SectionSummary(
+                        thisMonth = history.thisMonthSeeds.firstOrNull() ?: "",
+                        endingSoon = history.endingSoonSeeds.firstOrNull() ?: ""
+                    )
+                } else {
+                    extractSectionSummaries(history.content)
+                }
+            }
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = "🌱 今月: " + (sectionSummary.thisMonth.ifEmpty { "該当なし" }),
+                    text = "今月のまき時: " + (sectionSummary.thisMonth.ifEmpty { "該当なし" }),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
@@ -219,7 +228,7 @@ private fun NotificationHistoryCard(
             }
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = "⚠️ 終了: " + (sectionSummary.endingSoon.ifEmpty { "該当なし" }),
+                    text = "終了間近: " + (sectionSummary.endingSoon.ifEmpty { "該当なし" }),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
@@ -316,19 +325,31 @@ private fun NotificationHistoryCard(
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                     }
+                    val extractedThisMonth = if (history.thisMonthDetails.isNotEmpty()) history.thisMonthDetails.map { it.name to it.desc } else extractSectionItems(display, sectionMarker = "🌱")
+                    val structuredThisMonth = if (history.thisMonthSeeds.isNotEmpty()) history.thisMonthSeeds.map { it to "" } else null
                     RichSection(
                         title = "🌱 今月まきどきの種:",
-                        items = extractSectionItems(display, sectionMarker = "🌱")
+                        items = if (extractedThisMonth.isNotEmpty()) extractedThisMonth else (structuredThisMonth ?: emptyList())
                     )
                     Spacer(modifier = Modifier.height(8.dp))
+                    val extractedEnding = if (history.endingSoonDetails.isNotEmpty()) history.endingSoonDetails.map { it.name to it.desc } else extractSectionItems(display, sectionMarker = "⚠️")
+                    val structuredEnding = if (history.endingSoonSeeds.isNotEmpty()) history.endingSoonSeeds.map { it to "" } else null
                     RichSection(
                         title = "⚠️ まき時終了間近:",
-                        items = extractSectionItems(display, sectionMarker = "⚠️")
+                        items = if (extractedEnding.isNotEmpty()) extractedEnding else (structuredEnding ?: emptyList())
                     )
                     Spacer(modifier = Modifier.height(8.dp))
+                    val extractedRec = if (history.recommendedDetails.isNotEmpty()) history.recommendedDetails.map { it.name to it.desc } else extractSectionItems(display, sectionMarker = "🌟")
+                    val structuredRec = if (history.recommendedSeeds.isNotEmpty()) history.recommendedSeeds.map { it to "" } else null
                     RichSection(
                         title = "🌟 今月のおすすめ種:",
-                        items = extractSectionItems(display, sectionMarker = "🌟")
+                        items = if (extractedRec.isNotEmpty()) extractedRec else (structuredRec ?: emptyList())
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = buildClosingLine(history.farmOwner),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f)
                     )
                 }
             },
@@ -535,6 +556,15 @@ private fun removeJsonCodeBlock(content: String): String {
     if (start == -1) return content
     val end = content.indexOf("```", startIndex = start + 7)
     return if (end == -1) content.substring(0, start).trimEnd() else (content.substring(0, start) + content.substring(end + 3)).trim()
+}
+
+private fun buildClosingLine(farmOwner: String): String {
+    return when (farmOwner) {
+        "水戸黄門" -> "何卒、お健やかにお過ごしくださいますよう。助さん拝"
+        "お銀" -> "どうぞご自愛のうえ、良き菜園日和を。助さんより"
+        "八兵衛" -> "無理せず、うまくやるんだぞ。助さんより"
+        else -> "本日も良き栽培となりますよう。助さんより"
+    }
 }
 
 private fun formatDateTime(dateTimeString: String): String {
