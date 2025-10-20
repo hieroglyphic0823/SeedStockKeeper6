@@ -9,6 +9,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navDeepLink
 import com.example.seedstockkeeper6.model.SeedPacket
 import com.example.seedstockkeeper6.ui.screens.SeedInputScreen
 import com.example.seedstockkeeper6.ui.screens.SeedListScreen
@@ -93,7 +94,12 @@ fun AppNavHost(
                 context = LocalContext.current
             )
         }
-        composable("notification_history") {
+        composable(
+            route = "notification_history",
+            deepLinks = listOf(
+                navDeepLink { uriPattern = "https://seedstockkeeper6/notification_history" }
+            )
+        ) {
             NotificationHistoryScreen(
                 navController = navController
             )

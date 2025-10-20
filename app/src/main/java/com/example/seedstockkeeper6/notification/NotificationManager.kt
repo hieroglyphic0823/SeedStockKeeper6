@@ -539,13 +539,13 @@ class NotificationManager(private val context: Context) {
     }
     
     private fun createPendingIntent(): PendingIntent {
-        val intent = Intent(context, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        // Deep Link で通知履歴画面を直接開く
+        val intent = Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://seedstockkeeper6/notification_history"), context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }
-        
         return PendingIntent.getActivity(
             context,
-            0,
+            1001,
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
