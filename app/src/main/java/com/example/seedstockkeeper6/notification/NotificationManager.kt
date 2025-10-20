@@ -224,24 +224,25 @@ class NotificationManager(private val context: Context) {
                     farmOwner = farmOwner,
                     farmAddress = farmAddress
                 )
-                // 要点を生成
-                val summary = geminiService.extractNotificationSummary(content)
+                // 通知表示用に「文頭＋種名のみの3セクション」に整形
+                val displayContent = buildCondensedContent(content)
+                val summary = displayContent.lineSequence().map { it.trim() }.firstOrNull { it.isNotEmpty() } ?: ""
                 
                 // 通知スタイルを決定（内容に応じて）
-                val notificationStyle = if (content.contains("•") && content.split("•").size > 3) {
+                val notificationStyle = if (displayContent.contains("•") && displayContent.split("•").size > 3) {
                     // リスト形式の内容の場合はInboxStyleを使用
-                    createInboxStyle(content, summary)
+                    createInboxStyle(displayContent, summary)
                 } else {
                     // 通常のテキストの場合はBigTextStyleを使用
                     NotificationCompat.BigTextStyle()
-                        .bigText(content)
+                        .bigText(displayContent)
                         .setSummaryText("詳細を表示するには通知を展開してください")
                 }
                 
                 val notification = NotificationCompat.Builder(context, CHANNEL_ID)
                     .setSmallIcon(R.mipmap.ic_tanesuke_foreground)
                     .setContentTitle(title)
-                    .setContentText(summary) // 要点を表示
+                    .setContentText(summary) // 文頭を表示
                     .setStyle(notificationStyle)
                     .setPriority(NotificationCompat.PRIORITY_HIGH)
                     .setAutoCancel(true)
@@ -261,12 +262,12 @@ class NotificationManager(private val context: Context) {
                     return@launch
                 }
                 
-                // 通知履歴を保存（要点を含む）
+                // 通知履歴を保存（要約は文頭の文）
                 historyService.saveNotificationHistory(
                     type = NotificationType.MONTHLY,
                     title = title,
-                    content = content,
-                    summary = summary, // 要点を追加
+                    content = displayContent,
+                    summary = summary,
                     farmOwner = farmOwner,
                     region = region,
                     prefecture = prefecture,
@@ -332,7 +333,8 @@ class NotificationManager(private val context: Context) {
         coroutineScope.launch {
             try {
                 val title = geminiService.generateWeeklyNotificationTitle(emptyList(), farmOwner)
-                val summary = geminiService.extractNotificationSummary(content)
+                val displayContent = buildCondensedContent(content)
+                val summary = displayContent.lineSequence().map { it.trim() }.firstOrNull { it.isNotEmpty() } ?: ""
                 
                 android.util.Log.d("NotificationManager", "通知タイトル: $title")
                 android.util.Log.d("NotificationManager", "通知内容（最初の100文字）: ${content.take(100)}...")
@@ -340,7 +342,7 @@ class NotificationManager(private val context: Context) {
                 val notification = NotificationCompat.Builder(context, CHANNEL_ID)
                     .setSmallIcon(R.mipmap.ic_tanesuke_foreground)
                     .setContentTitle(title)
-                    .setContentText(summary) // 要点を表示
+                    .setContentText(summary) // 文頭を表示
                     .setStyle(NotificationCompat.BigTextStyle()
                         .bigText(content) // 詳細は展開時に表示
                         .setSummaryText("詳細を表示するには通知を展開してください"))
@@ -369,12 +371,12 @@ class NotificationManager(private val context: Context) {
                     return@launch
                 }
                 
-                // 通知履歴を保存（要点を含む）
+                // 通知履歴を保存（要約は文頭の文）
                 historyService.saveNotificationHistory(
                     type = NotificationType.WEEKLY,
                     title = title,
-                    content = content,
-                    summary = summary, // 要点を追加
+                    content = displayContent,
+                    summary = summary,
                     farmOwner = farmOwner,
                     region = region,
                     prefecture = prefecture,
@@ -475,6 +477,65 @@ class NotificationManager(private val context: Context) {
         }
         
         return inboxStyle
+    }
+    
+    // 通知本文から末尾のJSONコードブロックを取り除く
+    private fun removeJsonCodeBlock(content: String): String {
+        val start = content.indexOf("```json")
+        if (start == -1) return content
+        val end = content.indexOf("```", startIndex = start + 7)
+        return if (end == -1) {
+            content.substring(0, start).trimEnd()
+        } else {
+            (content.substring(0, start) + content.substring(end + 3)).trim()
+        }
+    }
+
+    // 文頭 + 各セクションの「種名のみ」を抽出して通知本文用に整形（ラベル: 名前を区切りで表示）
+    private fun buildCondensedContent(content: String): String {
+        val text = removeJsonCodeBlock(content)
+        val lines = text.lines()
+        val header = lines.firstOrNull { it.trim().isNotEmpty() }?.trim().orEmpty()
+
+        fun extractNames(sectionMarker: String): List<String> {
+            val names = mutableListOf<String>()
+            var i = 0
+            while (i < lines.size) {
+                val line = lines[i].trim()
+                if (line.startsWith(sectionMarker)) {
+                    var j = i + 1
+                    while (j < lines.size) {
+                        val l = lines[j].trim()
+                        if (l.startsWith("🌱") || l.startsWith("⚠️") || l.startsWith("🌟") || l.startsWith("```")) break
+                        if (l.startsWith("• ") || l.startsWith("* ") || l.startsWith("- ")) {
+                            // 行から『…』内 or 先頭の種名部分を抽出
+                            val raw = l.removePrefix("• ").removePrefix("* ").removePrefix("- ").trim()
+                            val inQuote = Regex("『([^』]+)』").find(raw)?.groupValues?.getOrNull(1)
+                            names += (inQuote ?: raw)
+                        }
+                        j++
+                    }
+                    break
+                }
+                i++
+            }
+            return names
+        }
+
+        val thisMonth = extractNames("🌱")
+        val ending = extractNames("⚠️")
+        val recommend = extractNames("🌟")
+
+        fun line(label: String, list: List<String>): String {
+            val body = if (list.isEmpty()) "該当なし" else list.joinToString(separator = "、")
+            return "$label$body"
+        }
+        val parts = mutableListOf<String>()
+        if (header.isNotEmpty()) parts += header
+        parts += line("今月のまき時：", thisMonth)
+        parts += line("まき時終了間近：", ending)
+        parts += line("おすすめの種：", recommend)
+        return parts.joinToString(separator = "\n")
     }
     
     private fun createPendingIntent(): PendingIntent {

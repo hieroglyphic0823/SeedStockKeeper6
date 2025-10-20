@@ -1204,9 +1204,14 @@ private fun extractSeedInfoFromNotification(notificationContent: String, allSeed
     
     android.util.Log.d("CastleScreen", "通知内容全体: $notificationContent")
     
-    // 通知の内容から種の名前を抽出
-    val thisMonthPattern = "🌱 \\*\\*今月まきどきの種:\\*\\*".toRegex()
-    val urgentPattern = "⚠️ \\*\\*まき時終了間近:\\*\\*".toRegex()
+    // まずは機械可読なJSONブロックを優先して抽出
+    parseSeedsFromJsonBlock(notificationContent)?.let { (tm, urgent) ->
+        return tm to urgent
+    }
+
+    // 通知の内容から種の名前を抽出（表記揺れに強い緩和パターン）
+    val thisMonthPattern = Regex("🌱\\s+(?:\\*\\*)?今月まきどきの種:?\\s*(?:\\*\\*)?")
+    val urgentPattern = Regex("⚠️\\s+(?:\\*\\*)?まき時終了間近:?\\s*(?:\\*\\*)?")
     
     android.util.Log.d("CastleScreen", "今月まき時のパターンマッチ: ${thisMonthPattern.find(notificationContent) != null}")
     android.util.Log.d("CastleScreen", "期限切れ間近のパターンマッチ: ${urgentPattern.find(notificationContent) != null}")
@@ -1215,9 +1220,10 @@ private fun extractSeedInfoFromNotification(notificationContent: String, allSeed
     val thisMonthMatch = thisMonthPattern.find(notificationContent)
     if (thisMonthMatch != null) {
         val startIndex = thisMonthMatch.range.last + 1
-        // 次のセクション（⚠️ まき時終了間近:）までを取得
-        val nextSectionIndex = notificationContent.indexOf("⚠️", startIndex)
-        val endIndex = if (nextSectionIndex == -1) notificationContent.length else nextSectionIndex
+        // 次のセクション（⚠️ or 🌟）までを取得
+        val nextIdx1 = notificationContent.indexOf("⚠️", startIndex)
+        val nextIdx2 = notificationContent.indexOf("🌟", startIndex)
+        val endIndex = listOf(nextIdx1, nextIdx2).filter { it >= 0 }.minOrNull() ?: notificationContent.length
         val thisMonthText = notificationContent.substring(startIndex, endIndex).trim()
         
         android.util.Log.d("CastleScreen", "今月まき時のテキスト: $thisMonthText")
@@ -1294,6 +1300,45 @@ private fun extractSeedInfoFromNotification(notificationContent: String, allSeed
     android.util.Log.d("CastleScreen", "通知内容から抽出: 今月まき時=${thisMonthSowingSeeds.map { it.productName }}, 期限切れ間近=${urgentSeeds.map { it.productName }}")
     
     return Pair(thisMonthSowingSeeds, urgentSeeds)
+}
+
+// 通知本文末尾に含まれる機械可読JSONブロックをパース
+private fun parseSeedsFromJsonBlock(content: String): Pair<List<SeedPacket>, List<SeedPacket>>? {
+    val codeStart = content.indexOf("```json")
+    if (codeStart == -1) return null
+    val codeEnd = content.indexOf("```", startIndex = codeStart + 7)
+    if (codeEnd == -1) return null
+    val jsonText = content.substring(codeStart + 7, codeEnd).trim()
+    return try {
+        val jsonObj = com.google.gson.JsonParser.parseString(jsonText).asJsonObject
+        val tm = jsonObj.getAsJsonArray("this_month")?.map { it.asString } ?: emptyList()
+        val urgent = jsonObj.getAsJsonArray("ending_soon")?.map { it.asString } ?: emptyList()
+        val tmPackets = tm.map { name ->
+            SeedPacket(
+                id = "json_" + System.currentTimeMillis(),
+                productName = name,
+                variety = "",
+                family = "",
+                expirationYear = 0,
+                expirationMonth = 0,
+                calendar = emptyList()
+            )
+        }
+        val urgentPackets = urgent.map { name ->
+            SeedPacket(
+                id = "json_" + System.currentTimeMillis(),
+                productName = name,
+                variety = "",
+                family = "",
+                expirationYear = 0,
+                expirationMonth = 0,
+                calendar = emptyList()
+            )
+        }
+        tmPackets to urgentPackets
+    } catch (_: Exception) {
+        null
+    }
 }
 
 @Preview(showBackground = true, showSystemUi = true, name = "お城画面 - お銀")

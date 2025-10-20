@@ -179,7 +179,7 @@ private fun NotificationHistoryCard(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // ヘッダー部分
+            // ヘッダー（タイトルのみ）
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -192,11 +192,6 @@ private fun NotificationHistoryCard(
                         fontWeight = FontWeight.SemiBold,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
-                    )
-                    Text(
-                        text = history.type.displayName,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                     )
                 }
                 
@@ -211,28 +206,23 @@ private fun NotificationHistoryCard(
                 }
             }
             
-            // 送信日時
-            Text(
-                text = formatDateTime(history.sentAt),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-            )
-            
-            // 要点表示（新規追加）
-            if (history.summary.isNotEmpty()) {
+            // カード本体（3行: タイトルの下に「今月まき時」「まき時終了」）
+            val sectionSummary = remember(history.content) { extractSectionSummaries(history.content) }
+            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = history.summary,
+                    text = "🌱 今月: " + (sectionSummary.thisMonth.ifEmpty { "該当なし" }),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
-                    maxLines = 3,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
-            } else {
-                // 要点がない場合は従来のプレビュー表示
+            }
+            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = history.content.take(100) + if (history.content.length > 100) "..." else "",
+                    text = "⚠️ 終了: " + (sectionSummary.endingSoon.ifEmpty { "該当なし" }),
                     style = MaterialTheme.typography.bodyMedium,
-                    maxLines = 3,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
             }
@@ -315,10 +305,30 @@ private fun NotificationHistoryCard(
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     
-                    // 通知内容（全文表示）
-                    Text(
-                        text = history.content,
-                        style = MaterialTheme.typography.bodyMedium
+                    // 通知内容（全文表示・リッチテキスト風）
+                    val display = remember(history.content) { removeJsonCodeBlock(history.content) }
+                    val header = remember(display) { display.lineSequence().map { it.trim() }.firstOrNull { it.isNotEmpty() }.orEmpty() }
+                    if (header.isNotEmpty()) {
+                        Text(
+                            text = header,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                    RichSection(
+                        title = "🌱 今月まきどきの種:",
+                        items = extractSectionItems(display, sectionMarker = "🌱")
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    RichSection(
+                        title = "⚠️ まき時終了間近:",
+                        items = extractSectionItems(display, sectionMarker = "⚠️")
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    RichSection(
+                        title = "🌟 今月のおすすめ種:",
+                        items = extractSectionItems(display, sectionMarker = "🌟")
                     )
                 }
             },
@@ -357,6 +367,174 @@ private fun NotificationHistoryCard(
             }
         )
     }
+}
+
+// 本文から種プレビュー（種名, 説明）を抽出
+private fun extractSeedPreviewItems(content: String, maxItems: Int = 3): List<Pair<String, String>> {
+    // セクション境界を考慮して、「• 」行から『種名』っぽいものと、その次行の簡潔説明を拾う
+    val lines = content.lines()
+    val items = mutableListOf<Pair<String, String>>()
+    var i = 0
+    while (i < lines.size && items.size < maxItems) {
+        val line = lines[i].trim()
+        // 箇条書き・種名候補（記号は「•」「*」「-」のいずれかを許容）
+        if (line.startsWith("• ") || line.startsWith("* ") || line.startsWith("- ")) {
+            val name = line.removePrefix("• ").removePrefix("* ").removePrefix("- ").trim()
+            // 次行を説明文候補として取得（同じ箇条書きでない、かつ見出しでない）
+            val desc = if (i + 1 < lines.size) {
+                val next = lines[i + 1].trim()
+                if (!next.startsWith("• ") && !next.startsWith("* ") && !next.startsWith("- ") && !next.startsWith("🌱") && !next.startsWith("⚠️") && !next.startsWith("🌟") && !next.startsWith("```")) next else ""
+            } else ""
+            if (name.isNotEmpty()) {
+                items += name to desc
+            }
+        }
+        i++
+    }
+    return items
+}
+
+// 「今月まきどき」「まき時終了間近」各セクションの先頭アイテム名を1行サマリに整形
+private data class SectionSummary(val thisMonth: String, val endingSoon: String)
+
+private fun extractSectionSummaries(content: String): SectionSummary {
+    // JSONコードブロックがあれば最優先で使う
+    val jsonStart = content.indexOf("```json")
+    if (jsonStart != -1) {
+        val jsonEnd = content.indexOf("```", startIndex = jsonStart + 7)
+        if (jsonEnd != -1) {
+            val jsonText = content.substring(jsonStart + 7, jsonEnd).trim()
+            try {
+                val obj = com.google.gson.JsonParser.parseString(jsonText).asJsonObject
+                val tm = obj.getAsJsonArray("this_month")?.map { it.asString } ?: emptyList()
+                val es = obj.getAsJsonArray("ending_soon")?.map { it.asString } ?: emptyList()
+                return SectionSummary(
+                    thisMonth = tm.firstOrNull() ?: "",
+                    endingSoon = es.firstOrNull() ?: ""
+                )
+            } catch (_: Exception) {
+                // fall through to text parsing
+            }
+        }
+    }
+    // テキストから抽出（見出し→次の箇条書き1件を拾う）
+    var thisMonth = ""
+    var endingSoon = ""
+    val lines = content.lines()
+    var i = 0
+    while (i < lines.size) {
+        val line = lines[i].trim()
+        if (line.startsWith("🌱")) {
+            // 次の箇条書き行
+            var j = i + 1
+            while (j < lines.size) {
+                val l = lines[j].trim()
+                if (l.startsWith("• ") || l.startsWith("* ") || l.startsWith("- ")) {
+                    thisMonth = l.removePrefix("• ").removePrefix("* ").removePrefix("- ").trim()
+                    break
+                }
+                if (l.startsWith("⚠️") || l.startsWith("🌟") || l.startsWith("```")) break
+                j++
+            }
+        }
+        if (line.startsWith("⚠️")) {
+            var j = i + 1
+            while (j < lines.size) {
+                val l = lines[j].trim()
+                if (l.startsWith("• ") || l.startsWith("* ") || l.startsWith("- ")) {
+                    endingSoon = l.removePrefix("• ").removePrefix("* ").removePrefix("- ").trim()
+                    break
+                }
+                if (l.startsWith("🌟") || l.startsWith("```")) break
+                j++
+            }
+        }
+        i++
+    }
+    return SectionSummary(thisMonth = thisMonth, endingSoon = endingSoon)
+}
+
+@Composable
+private fun RichSection(title: String, items: List<Pair<String, String>>) {
+    Text(
+        text = title,
+        style = MaterialTheme.typography.titleSmall,
+        color = MaterialTheme.colorScheme.onSurface
+    )
+    if (items.isEmpty()) {
+        Text(
+            text = "• 該当なし",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
+        )
+        return
+    }
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        items.forEach { (name, desc) ->
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Top) {
+                Text(
+                    text = "•", // 必要なら他のアイコンへ差し替え可能
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(
+                        text = name,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    if (desc.isNotEmpty()) {
+                        Text(
+                            text = desc,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f)
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+// セクション毎に（種名, 説明）一覧を抽出
+private fun extractSectionItems(content: String, sectionMarker: String): List<Pair<String, String>> {
+    val text = removeJsonCodeBlock(content)
+    val lines = text.lines()
+    val results = mutableListOf<Pair<String, String>>()
+    var i = 0
+    while (i < lines.size) {
+        val line = lines[i].trim()
+        if (line.startsWith(sectionMarker)) {
+            var j = i + 1
+            while (j < lines.size) {
+                val l = lines[j].trim()
+                if (l.startsWith("🌱") || l.startsWith("⚠️") || l.startsWith("🌟") || l.startsWith("```")) break
+                if (l.startsWith("• ") || l.startsWith("* ") || l.startsWith("- ")) {
+                    val raw = l.removePrefix("• ").removePrefix("* ").removePrefix("- ").trim()
+                    val nameInQuote = Regex("『([^』]+)』").find(raw)?.groupValues?.getOrNull(1)
+                    val name = nameInQuote ?: raw
+                    // 説明は次行（箇条書きや見出しでない）を説明として扱う
+                    val desc = if (j + 1 < lines.size) {
+                        val next = lines[j + 1].trim()
+                        if (!next.startsWith("• ") && !next.startsWith("* ") && !next.startsWith("- ") && !next.startsWith("🌱") && !next.startsWith("⚠️") && !next.startsWith("🌟") && !next.startsWith("```")) next else ""
+                    } else ""
+                    results += name to desc
+                }
+                j++
+            }
+        }
+        i++
+    }
+    return results
+}
+
+// JSONコードブロック除去（履歴側にも再利用）
+private fun removeJsonCodeBlock(content: String): String {
+    val start = content.indexOf("```json")
+    if (start == -1) return content
+    val end = content.indexOf("```", startIndex = start + 7)
+    return if (end == -1) content.substring(0, start).trimEnd() else (content.substring(0, start) + content.substring(end + 3)).trim()
 }
 
 private fun formatDateTime(dateTimeString: String): String {

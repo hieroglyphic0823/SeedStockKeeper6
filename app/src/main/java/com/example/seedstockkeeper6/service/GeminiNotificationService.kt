@@ -99,58 +99,11 @@ class GeminiNotificationService {
         customFarmOwner: String = "",
         farmAddress: String = ""
     ): String = withContext(Dispatchers.IO) {
-        try {
-            if (generativeModel == null) {
-                Log.w("GeminiNotiService", "GeminiAPIが利用できません。デフォルトタイトルを返します。")
-                return@withContext contentFormatter.getDefaultMonthlyTitle(currentMonth, farmOwner)
-            }
-            
-            val monthName = dataProcessor.getMonthName(currentMonth)
-            val tone = promptGenerator.getFarmOwnerTone(farmOwner, customFarmOwner, monthName)
-            val userSeedsText = contentFormatter.formatUserSeeds(userSeeds, currentMonth)
-            
-            Log.d("GeminiNotiService", "月次通知タイトル生成パラメータ - region: $region, prefecture: $prefecture, farmAddress: $farmAddress")
-            
-            val prompt = """
-                $tone
-                
-                以下の情報を基に、$monthName の種まきについて、$region の$prefecture での農業アドバイスのタイトルを生成してください。
-
-                【地域情報】
-                - 地域: $region
-                - 都道府県: $prefecture
-                - 農園住所: $farmAddress
-                
-                【ユーザーの種情報】
-                $userSeedsText
-                
-                【指示】
-                1. 親しみやすく、分かりやすいタイトル
-                2. 月名と地域を含める
-                3. 農園住所の市区町村名を含める（例：福岡市西区草場の風に乗せて）
-                4. 助さんの口調に合わせる
-                5. 20文字以内で簡潔に
-                
-                タイトルのみを返してください。
-            """.trimIndent()
-            
-            // リトライ機能付きでGemini APIを呼び出し
-            val response = generateContentWithRetry(prompt, maxRetries = 2)
-            val title = response?.trim() ?: contentFormatter.getDefaultMonthlyTitle(currentMonth, farmOwner)
-            
-            Log.d("GeminiNotiService", "月次通知タイトル生成完了: $title")
-            title
-            
-        } catch (e: Exception) {
-            Log.e("GeminiNotiService", "月次通知タイトル生成に失敗 (Ask Gemini)", e)
-            
-            // 503エラー（過負荷）の場合は少し待ってからリトライ
-            if (e.message?.contains("503") == true || e.message?.contains("overloaded") == true) {
-                Log.w("GeminiNotiService", "Gemini API過負荷のため、デフォルトタイトルを使用します")
-            }
-            
-            contentFormatter.getDefaultMonthlyTitle(currentMonth, farmOwner)
-        }
+        // 仕様変更: 月次タイトルは「和名月 + すけさん便り」に固定
+        val wafuu = getJapaneseMonthName(currentMonth)
+        val title = "${wafuu}すけさん便り"
+        Log.d("GeminiNotiService", "月次通知タイトル（固定フォーマット）: $title")
+        title
     }
     
     /**
@@ -193,41 +146,32 @@ class GeminiNotificationService {
         farmOwner: String,
         customFarmOwner: String = ""
     ): String = withContext(Dispatchers.IO) {
-        try {
-            if (generativeModel == null) {
-                Log.w("GeminiNotiService", "GeminiAPIが利用できません。デフォルトタイトルを返します。")
-                return@withContext "今週の種まきについて"
-            }
-            
-            val tone = promptGenerator.getFarmOwnerTone(farmOwner, customFarmOwner, "今週")
-            val userSeedsText = contentFormatter.formatUserSeedsForWeekly(userSeeds)
-            
-            val prompt = """
-                $tone
-                
-                以下の情報を基に、今週の種まきについてのタイトルを生成してください。
-                
-                【ユーザーの種情報】
-                $userSeedsText
-                
-                【指示】
-                1. 親しみやすく、分かりやすいタイトル
-                2. 今週の種まきに関連する内容
-                3. 助さんの口調に合わせる
-                4. 20文字以内で簡潔に
-                
-                タイトルのみを返してください。
-            """.trimIndent()
-            
-            val response = generativeModel!!.generateContent(prompt)
-            val title = response.text?.trim() ?: "今週の種まきについて"
-            
-            Log.d("GeminiNotiService", "週次通知タイトル生成完了: $title")
-            title
-            
-        } catch (e: Exception) {
-            Log.e("GeminiNotiService", "週次通知タイトル生成に失敗", e)
-            "今週の種まきについて"
+        // 仕様変更: 週次タイトルは「和名月（第n週）すけさん便り」に固定
+        val cal = java.util.Calendar.getInstance()
+        val month = cal.get(java.util.Calendar.MONTH) + 1
+        val week = cal.get(java.util.Calendar.WEEK_OF_MONTH)
+        val wafuu = getJapaneseMonthName(month)
+        val title = "${wafuu}（第${week}週）すけさん便り"
+        Log.d("GeminiNotiService", "週次通知タイトル（固定フォーマット）: $title")
+        title
+    }
+
+    // 和風月名を取得（1..12）
+    private fun getJapaneseMonthName(month: Int): String {
+        return when (month) {
+            1 -> "睦月"
+            2 -> "如月"
+            3 -> "弥生"
+            4 -> "卯月"
+            5 -> "皐月"
+            6 -> "水無月"
+            7 -> "文月"
+            8 -> "葉月"
+            9 -> "長月"
+            10 -> "神無月"
+            11 -> "霜月"
+            12 -> "師走"
+            else -> "今月"
         }
     }
     
