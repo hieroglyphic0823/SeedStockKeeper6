@@ -1367,11 +1367,11 @@ class SeedInputViewModel : ViewModel() {
             val updatedEntry = selectedRegionEntry.copy(
                 expirationYear = expirationYear,
                 expirationMonth = expirationMonth,
-                // 播種期間と収穫期間の年も有効期限の年で更新
-                sowing_start_date = calculateDateWithYear(selectedRegionEntry.sowing_start_date, expirationYear),
-                sowing_end_date = calculateDateWithYear(selectedRegionEntry.sowing_end_date, expirationYear),
-                harvest_start_date = calculateDateWithYear(selectedRegionEntry.harvest_start_date, expirationYear),
-                harvest_end_date = calculateDateWithYear(selectedRegionEntry.harvest_end_date, expirationYear)
+                // 播種期間と収穫期間の年を適切に設定
+                sowing_start_date = calculateDateWithAppropriateYear(selectedRegionEntry.sowing_start_date, expirationYear, currentDate),
+                sowing_end_date = calculateDateWithAppropriateYear(selectedRegionEntry.sowing_end_date, expirationYear, currentDate),
+                harvest_start_date = calculateDateWithAppropriateYear(selectedRegionEntry.harvest_start_date, expirationYear, currentDate),
+                harvest_end_date = calculateDateWithAppropriateYear(selectedRegionEntry.harvest_end_date, expirationYear, currentDate)
             )
             
             packet = packet.copy(calendar = listOf(updatedEntry))
@@ -1425,16 +1425,28 @@ class SeedInputViewModel : ViewModel() {
     }
 
     fun updateEditingCalendarEntry(updatedEntry: CalendarEntry) {
-        Log.d("Calendar", "updateEditingCalendarEntry: $updatedEntry")
+        Log.d("Calendar", "=== updateEditingCalendarEntry ===")
+        Log.d("Calendar", "更新されたエントリ: $updatedEntry")
+        Log.d("Calendar", "播種開始: ${updatedEntry.sowing_start_date}")
+        Log.d("Calendar", "播種終了: ${updatedEntry.sowing_end_date}")
+        Log.d("Calendar", "収穫開始: ${updatedEntry.harvest_start_date}")
+        Log.d("Calendar", "収穫終了: ${updatedEntry.harvest_end_date}")
+        Log.d("Calendar", "有効期限: ${updatedEntry.expirationYear}年${updatedEntry.expirationMonth}月")
         Log.d("Calendar", "更新前のeditingCalendarEntry: $editingCalendarEntry")
         editingCalendarEntry = updatedEntry
         Log.d("Calendar", "更新後のeditingCalendarEntry: $editingCalendarEntry")
     }
 
     fun saveEditingCalendarEntry() {
-        Log.d("Calendar", "saveEditingCalendarEntry開始: editingCalendarEntry=$editingCalendarEntry")
+        Log.d("Calendar", "=== saveEditingCalendarEntry ===")
+        Log.d("Calendar", "保存開始: editingCalendarEntry=$editingCalendarEntry")
         editingCalendarEntry?.let { entry ->
-            Log.d("Calendar", "saveEditingCalendarEntry: $entry")
+            Log.d("Calendar", "保存するエントリ: $entry")
+            Log.d("Calendar", "播種開始: ${entry.sowing_start_date}")
+            Log.d("Calendar", "播種終了: ${entry.sowing_end_date}")
+            Log.d("Calendar", "収穫開始: ${entry.harvest_start_date}")
+            Log.d("Calendar", "収穫終了: ${entry.harvest_end_date}")
+            Log.d("Calendar", "有効期限: ${entry.expirationYear}年${entry.expirationMonth}月")
             
             // 年を有効期限から計算して設定
             val expirationYear = packet.expirationYear
@@ -1468,7 +1480,13 @@ class SeedInputViewModel : ViewModel() {
             
             // パケットのカレンダーも更新
             packet = packet.copy(calendar = listOf(calculatedEntry))
-            Log.d("Calendar", "パケット更新完了: ${packet.calendar}")
+            Log.d("Calendar", "=== パケット更新完了 ===")
+            Log.d("Calendar", "更新されたパケットカレンダー: ${packet.calendar}")
+            Log.d("Calendar", "播種開始: ${calculatedEntry.sowing_start_date}")
+            Log.d("Calendar", "播種終了: ${calculatedEntry.sowing_end_date}")
+            Log.d("Calendar", "収穫開始: ${calculatedEntry.harvest_start_date}")
+            Log.d("Calendar", "収穫終了: ${calculatedEntry.harvest_end_date}")
+            Log.d("Calendar", "有効期限: ${calculatedEntry.expirationYear}年${calculatedEntry.expirationMonth}月")
             
             // 編集状態をクリア
             editingCalendarEntry = null
@@ -1506,6 +1524,29 @@ class SeedInputViewModel : ViewModel() {
             val month = parts[1]
             val day = if (parts.size >= 3) parts[2] else "01"
             return "$year-$month-$day"
+        }
+        
+        return dateString
+    }
+    
+    // 月が現在以降なら現在の年、月が現在以前なら有効期限の年を設定するヘルパー関数
+    private fun calculateDateWithAppropriateYear(dateString: String, expirationYear: Int, currentDate: java.time.LocalDate): String {
+        if (dateString.isEmpty()) return ""
+        
+        // 既存の日付から月と日を抽出
+        val parts = dateString.split("-")
+        if (parts.size >= 2) {
+            val month = parts[1].toIntOrNull() ?: return dateString
+            val day = if (parts.size >= 3) parts[2] else "01"
+            
+            // 月が現在以降なら現在の年、月が現在以前なら有効期限の年
+            val targetYear = if (month >= currentDate.monthValue) {
+                currentDate.year
+            } else {
+                expirationYear
+            }
+            
+            return "$targetYear-$month-$day"
         }
         
         return dateString

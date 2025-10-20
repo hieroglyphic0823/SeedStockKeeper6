@@ -94,12 +94,19 @@ class MainActivity : ComponentActivity() {
                 // テーマが適用された後にシステムバーの外観を制御
                 SystemAppearance(isDarkTheme = isSystemInDarkTheme())
                 
-                Surface(                      // ★ これが"アプリ全体の背景"
+                Surface(
                     modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.surface  // surface を使用
+                    color = MaterialTheme.colorScheme.surface
                 ) {
-                    AuthGate { user ->
-                        MainScaffold(navController = navController, user = user)
+                    var showVideo = androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(true) }
+                    if (showVideo.value) {
+                        com.example.seedstockkeeper6.ui.screens.VideoSplashScreen(
+                            onVideoEnd = { showVideo.value = false }
+                        )
+                    } else {
+                        AuthGate { user ->
+                            MainScaffold(navController = navController, user = user)
+                        }
                     }
                 }
             }

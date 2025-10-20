@@ -61,7 +61,13 @@ object DateConversionUtils {
     fun getMonthFromDate(dateString: String): Int {
         if (dateString.isEmpty()) return 0
         return try {
-            dateString.substring(5, 7).toInt()
+            // YYYY-MM-DD 形式から月を抽出
+            val parts = dateString.split("-")
+            if (parts.size >= 2) {
+                parts[1].toInt()
+            } else {
+                0
+            }
         } catch (e: Exception) {
             0
         }
@@ -73,7 +79,13 @@ object DateConversionUtils {
     fun getYearFromDate(dateString: String): Int {
         if (dateString.isEmpty()) return 0
         return try {
-            dateString.substring(0, 4).toInt()
+            // YYYY-MM-DD 形式から年を抽出
+            val parts = dateString.split("-")
+            if (parts.isNotEmpty()) {
+                parts[0].toInt()
+            } else {
+                0
+            }
         } catch (e: Exception) {
             0
         }

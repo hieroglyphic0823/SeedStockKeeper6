@@ -128,6 +128,11 @@ fun CalendarEntryEditor(
     // ローカル状態変数（旬ベースの入力）
     var sowingStartYear by remember(entry) { 
         val year = DateConversionUtils.getYearFromDate(entry.sowing_start_date)
+        android.util.Log.d("CalendarEntryEditor", "=== 播種開始年の初期値設定 ===")
+        android.util.Log.d("CalendarEntryEditor", "entry.sowing_start_date: ${entry.sowing_start_date}")
+        android.util.Log.d("CalendarEntryEditor", "抽出された年: $year")
+        android.util.Log.d("CalendarEntryEditor", "現在年: $currentYear")
+        android.util.Log.d("CalendarEntryEditor", "使用する年: ${if (year > 0) year.toString() else currentYear.toString()}")
         mutableStateOf(if (year > 0) year.toString() else currentYear.toString()) 
     }
     var sowingStart by remember(entry) { 
@@ -140,6 +145,11 @@ fun CalendarEntryEditor(
     }
     var sowingEndYear by remember(entry) { 
         val year = DateConversionUtils.getYearFromDate(entry.sowing_end_date)
+        android.util.Log.d("CalendarEntryEditor", "=== 播種終了年の初期値設定 ===")
+        android.util.Log.d("CalendarEntryEditor", "entry.sowing_end_date: ${entry.sowing_end_date}")
+        android.util.Log.d("CalendarEntryEditor", "抽出された年: $year")
+        android.util.Log.d("CalendarEntryEditor", "現在年: $currentYear")
+        android.util.Log.d("CalendarEntryEditor", "使用する年: ${if (year > 0) year.toString() else currentYear.toString()}")
         mutableStateOf(if (year > 0) year.toString() else currentYear.toString()) 
     }
     var sowingEnd by remember(entry) { 
@@ -318,6 +328,17 @@ fun CalendarEntryEditor(
     Column(
         modifier = Modifier.padding(top = 8.dp)
     ) {
+        android.util.Log.d("CalendarEntryEditor", "=== CalendarEntryEditorの高さ情報 ===")
+        android.util.Log.d("CalendarEntryEditor", "上部の余白: 8dp")
+        android.util.Log.d("CalendarEntryEditor", "播種期間ラベル: 約32dp (アイコン24dp + テキスト)")
+        android.util.Log.d("CalendarEntryEditor", "播種期間ボタン: 約48dp")
+        android.util.Log.d("CalendarEntryEditor", "播種期間後の余白: 16dp")
+        android.util.Log.d("CalendarEntryEditor", "収穫期間ラベル: 約32dp")
+        android.util.Log.d("CalendarEntryEditor", "収穫期間ボタン: 約48dp")
+        android.util.Log.d("CalendarEntryEditor", "収穫期間後の余白: 16dp")
+        android.util.Log.d("CalendarEntryEditor", "有効期限ラベル: 約32dp")
+        android.util.Log.d("CalendarEntryEditor", "有効期限ボタン: 約48dp")
+        android.util.Log.d("CalendarEntryEditor", "CalendarEntryEditor合計高さ: 約280dp")
         // 播種期間ラベル（アイコン付き）
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -341,14 +362,14 @@ fun CalendarEntryEditor(
             }
             Text(
                 "播種期間",
-                style = MaterialTheme.typography.titleSmall
+                style = MaterialTheme.typography.titleMedium
             )
         }
         
-        // 播種期間（開始・終了を横並び）
+        // 播種期間（開始と終了を横並びで表示）
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // 播種開始
@@ -358,11 +379,15 @@ fun CalendarEntryEditor(
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                )
+                ),
+                shape = RoundedCornerShape(12.dp),
+                contentPadding = PaddingValues(horizontal = 2.dp, vertical = 4.dp)
             ) {
-                Text(
-                    text = if (sowingStart == "0" && sowingStartStage.isEmpty()) {
-                        "播種開始"
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    if (sowingStart == "0" && sowingStartStage.isEmpty()) {
+                        Text("播種開始")
                     } else {
                         val year = if (currentEntry.sowing_start_date.isNotEmpty()) {
                             try {
@@ -373,13 +398,21 @@ fun CalendarEntryEditor(
                         } else {
                             ""
                         }
-                        val yearDisplay = if (year.isNotEmpty() && year != "0000") "${year}年" else ""
-                        "${if (sowingStart == "0") "不明" else sowingStart}月${if (sowingStartStage.isEmpty()) "" else "(${sowingStartStage})"}${if (yearDisplay.isNotEmpty()) " $yearDisplay" else ""}"
+                        val yearDisplay = if (year.isNotEmpty() && year != "0000" && year != "0") "${year}年" else ""
+                        if (yearDisplay.isNotEmpty()) {
+                            Text(yearDisplay)
+                        }
+                        Text("${if (sowingStart == "0") "不明" else sowingStart}月${if (sowingStartStage.isEmpty()) "" else "(${sowingStartStage})"}")
                     }
-                )
+                }
             }
             
-            Text("～", style = MaterialTheme.typography.bodyLarge)
+            // ～表示
+            Text(
+                text = "～",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurface
+            )
             
             // 播種終了
             Button(
@@ -388,11 +421,15 @@ fun CalendarEntryEditor(
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                )
+                ),
+                shape = RoundedCornerShape(12.dp),
+                contentPadding = PaddingValues(horizontal = 2.dp, vertical = 4.dp)
             ) {
-                Text(
-                    text = if (sowingEnd == "0" && sowingEndStage.isEmpty()) {
-                        "播種終了"
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    if (sowingEnd == "0" && sowingEndStage.isEmpty()) {
+                        Text("播種終了")
                     } else {
                         val year = if (currentEntry.sowing_end_date.isNotEmpty()) {
                             try {
@@ -403,10 +440,13 @@ fun CalendarEntryEditor(
                         } else {
                             ""
                         }
-                        val yearDisplay = if (year.isNotEmpty() && year != "0000") "${year}年" else ""
-                        "${if (sowingEnd == "0") "不明" else sowingEnd}月${if (sowingEndStage.isEmpty()) "" else "(${sowingEndStage})"}${if (yearDisplay.isNotEmpty()) " $yearDisplay" else ""}"
+                        val yearDisplay = if (year.isNotEmpty() && year != "0000" && year != "0") "${year}年" else ""
+                        if (yearDisplay.isNotEmpty()) {
+                            Text(yearDisplay)
+                        }
+                        Text("${if (sowingEnd == "0") "不明" else sowingEnd}月${if (sowingEndStage.isEmpty()) "" else "(${sowingEndStage})"}")
                     }
-                )
+                }
             }
         }
         
@@ -448,6 +488,7 @@ fun CalendarEntryEditor(
                         updateSowingStart(year, month, stage)
                     },
                     onStageChange = { stage ->
+                        sowingStartStage = stage
                         val year = if (currentEntry.sowing_start_date.isNotEmpty()) {
                             try {
                                 currentEntry.sowing_start_date.split("-")[0]
@@ -507,6 +548,7 @@ fun CalendarEntryEditor(
                         updateSowingEnd(year, month, stage)
                     },
                     onStageChange = { stage ->
+                        sowingEndStage = stage
                         val year = if (currentEntry.sowing_end_date.isNotEmpty()) {
                             try {
                                 currentEntry.sowing_end_date.split("-")[0]
@@ -553,14 +595,14 @@ fun CalendarEntryEditor(
             }
             Text(
                 "収穫期間",
-                style = MaterialTheme.typography.titleSmall
+                style = MaterialTheme.typography.titleMedium
             )
         }
         
-        // 収穫期間（開始・終了を横並び）
+        // 収穫期間（開始と終了を横並びで表示）
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // 収穫開始
@@ -570,11 +612,15 @@ fun CalendarEntryEditor(
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.secondaryContainer,
                     contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                )
+                ),
+                shape = RoundedCornerShape(12.dp),
+                contentPadding = PaddingValues(horizontal = 2.dp, vertical = 4.dp)
             ) {
-                Text(
-                    text = if (harvestStart == "0" && harvestStartStage.isEmpty()) {
-                        "収穫開始"
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    if (harvestStart == "0" && harvestStartStage.isEmpty()) {
+                        Text("収穫開始")
                     } else {
                         val year = if (currentEntry.harvest_start_date.isNotEmpty()) {
                             try {
@@ -585,13 +631,21 @@ fun CalendarEntryEditor(
                         } else {
                             ""
                         }
-                        val yearDisplay = if (year.isNotEmpty() && year != "0000") "${year}年" else ""
-                        "${if (harvestStart == "0") "不明" else harvestStart}月${if (harvestStartStage.isEmpty()) "" else "(${harvestStartStage})"}${if (yearDisplay.isNotEmpty()) " $yearDisplay" else ""}"
+                        val yearDisplay = if (year.isNotEmpty() && year != "0000" && year != "0") "${year}年" else ""
+                        if (yearDisplay.isNotEmpty()) {
+                            Text(yearDisplay)
+                        }
+                        Text("${if (harvestStart == "0") "不明" else harvestStart}月${if (harvestStartStage.isEmpty()) "" else "(${harvestStartStage})"}")
                     }
-                )
+                }
             }
             
-            Text("～", style = MaterialTheme.typography.bodyLarge)
+            // ～表示
+            Text(
+                text = "～",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurface
+            )
             
             // 収穫終了
             Button(
@@ -600,11 +654,15 @@ fun CalendarEntryEditor(
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.secondaryContainer,
                     contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                )
+                ),
+                shape = RoundedCornerShape(12.dp),
+                contentPadding = PaddingValues(horizontal = 2.dp, vertical = 4.dp)
             ) {
-                Text(
-                    text = if (harvestEnd == "0" && harvestEndStage.isEmpty()) {
-                        "収穫終了"
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    if (harvestEnd == "0" && harvestEndStage.isEmpty()) {
+                        Text("収穫終了")
                     } else {
                         val year = if (currentEntry.harvest_end_date.isNotEmpty()) {
                             try {
@@ -615,10 +673,13 @@ fun CalendarEntryEditor(
                         } else {
                             ""
                         }
-                        val yearDisplay = if (year.isNotEmpty() && year != "0000") "${year}年" else ""
-                        "${if (harvestEnd == "0") "不明" else harvestEnd}月${if (harvestEndStage.isEmpty()) "" else "(${harvestEndStage})"}${if (yearDisplay.isNotEmpty()) " $yearDisplay" else ""}"
+                        val yearDisplay = if (year.isNotEmpty() && year != "0000" && year != "0") "${year}年" else ""
+                        if (yearDisplay.isNotEmpty()) {
+                            Text(yearDisplay)
+                        }
+                        Text("${if (harvestEnd == "0") "不明" else harvestEnd}月${if (harvestEndStage.isEmpty()) "" else "(${harvestEndStage})"}")
                     }
-                )
+                }
             }
         }
         
@@ -660,6 +721,7 @@ fun CalendarEntryEditor(
                         updateHarvestStart(year, month, stage)
                     },
                     onStageChange = { stage ->
+                        harvestStartStage = stage
                         val year = if (currentEntry.harvest_start_date.isNotEmpty()) {
                             try {
                                 currentEntry.harvest_start_date.split("-")[0]
@@ -720,6 +782,7 @@ fun CalendarEntryEditor(
                         updateHarvestEnd(year, month, stage)
                     },
                     onStageChange = { stage ->
+                        harvestEndStage = stage
                         val year = if (currentEntry.harvest_end_date.isNotEmpty()) {
                             try {
                                 currentEntry.harvest_end_date.split("-")[0]
@@ -819,26 +882,33 @@ fun CalendarEntryEditor(
             )
         }
         
-        // 有効期限選択ボタン
-        Button(
-            onClick = { showExpirationBottomSheet = true },
+        // 有効期限（中央揃え）
+        Row(
             modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                contentColor = MaterialTheme.colorScheme.onTertiaryContainer
-            ),
-            shape = RoundedCornerShape(12.dp)
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = if (expirationYear == "0" && expirationMonth == "0") {
-                    "有効期限"
-                } else {
-                    "${expirationYear}年${expirationMonth}月"
-                },
-                style = MaterialTheme.typography.bodyLarge,
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                maxLines = 1
-            )
+            // 有効期限ボタン
+            Button(
+                onClick = { showExpirationBottomSheet = true },
+                modifier = Modifier.fillMaxWidth(0.6f),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+                ),
+                contentPadding = PaddingValues(horizontal = 2.dp, vertical = 4.dp)
+            ) {
+                Text(
+                    text = if (expirationYear == "0" && expirationMonth == "0") {
+                        "有効期限"
+                    } else {
+                        "${expirationYear}年${expirationMonth}月"
+                    },
+                    style = MaterialTheme.typography.bodyLarge,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    maxLines = 1
+                )
+            }
         }
         
         // 有効期限選択ボトムシート
@@ -851,10 +921,8 @@ fun CalendarEntryEditor(
                     title = "有効期限",
                     selectedYear = expirationYear,
                     selectedMonth = expirationMonth,
-                    selectedStage = "", // 有効期限では旬は使用しない
                     onYearChange = { expirationYear = it },
                     onMonthChange = { expirationMonth = it },
-                    onStageChange = { }, // 有効期限では旬は使用しない
                     onConfirm = {
                         val yearInt = expirationYear.toIntOrNull() ?: 0
                         val monthInt = expirationMonth.toIntOrNull() ?: 0
@@ -885,10 +953,8 @@ fun ExpirationSelectionBottomSheet(
     title: String,
     selectedYear: String,
     selectedMonth: String,
-    selectedStage: String,
     onYearChange: (String) -> Unit,
     onMonthChange: (String) -> Unit,
-    onStageChange: (String) -> Unit,
     onConfirm: () -> Unit,
     onCancel: () -> Unit
 ) {
@@ -907,130 +973,93 @@ fun ExpirationSelectionBottomSheet(
         // Material3のテーマカラーを取得
         val colorScheme = MaterialTheme.colorScheme
         
-        // 年、月、旬を縦並びで表示（中央揃え）
-        Column(
+        // 年と月を横並びで表示
+        Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // 年選択
-            Text(
-                text = "年",
-                style = MaterialTheme.typography.titleSmall,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
-            
-            AndroidView(
-                factory = { context ->
-                    NumberPicker(context).apply {
-                        minValue = 0
-                        maxValue = 5
-                        val yearOptions = (currentYear..(currentYear + 5)).map { "${it}年" }.toTypedArray()
-                        setDisplayedValues(yearOptions)
-                        val selectedYearInt = selectedYear.toIntOrNull() ?: currentYear
-                        value = if (selectedYearInt >= currentYear && selectedYearInt <= currentYear + 5) {
-                            selectedYearInt - currentYear
-                        } else {
-                            0
+            Column(
+                modifier = Modifier.weight(1f),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "年",
+                    style = MaterialTheme.typography.titleSmall,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                
+                AndroidView(
+                    factory = { context ->
+                        NumberPicker(context).apply {
+                            minValue = 0
+                            maxValue = 5
+                            val yearOptions = (currentYear..(currentYear + 5)).map { "${it}年" }.toTypedArray()
+                            setDisplayedValues(yearOptions)
+                            val selectedYearInt = selectedYear.toIntOrNull() ?: currentYear
+                            value = if (selectedYearInt >= currentYear && selectedYearInt <= currentYear + 5) {
+                                selectedYearInt - currentYear
+                            } else {
+                                0
+                            }
+                            setOnValueChangedListener { _, _, newVal ->
+                                onYearChange((currentYear + newVal).toString())
+                            }
+                            
+                            // NumberPickerの色をMaterial3のテーマカラーに設定
+                            try {
+                                setTextColor(colorScheme.onSurface.toArgb())
+                                setBackgroundColor(colorScheme.surface.toArgb())
+                            } catch (e: Exception) {
+                                // 色設定が失敗した場合は無視
+                            }
                         }
-                        setOnValueChangedListener { _, _, newVal ->
-                            onYearChange((currentYear + newVal).toString())
-                        }
-                        
-                        // NumberPickerの色をMaterial3のテーマカラーに設定
-                        try {
-                            setTextColor(colorScheme.onSurface.toArgb())
-                            setBackgroundColor(colorScheme.surface.toArgb())
-                        } catch (e: Exception) {
-                            // 色設定が失敗した場合は無視
-                        }
-                    }
-                },
-                modifier = Modifier
-                    .fillMaxWidth(0.6f)
-                    .height(120.dp)
-            )
-            
-            Spacer(modifier = Modifier.height(16.dp))
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(120.dp)
+                )
+            }
             
             // 月選択
-            Text(
-                text = "月",
-                style = MaterialTheme.typography.titleSmall,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
-            
-            AndroidView(
-                factory = { context ->
-                    NumberPicker(context).apply {
-                        minValue = 1
-                        maxValue = 12
-                        val monthOptions = (1..12).map { "${it}月" }.toTypedArray()
-                        setDisplayedValues(monthOptions)
-                        value = selectedMonth.toIntOrNull() ?: 1
-                        setOnValueChangedListener { _, _, newVal ->
-                            onMonthChange(newVal.toString())
-                        }
-                        
-                        // NumberPickerの色をMaterial3のテーマカラーに設定
-                        try {
-                            setTextColor(colorScheme.onSurface.toArgb())
-                            setBackgroundColor(colorScheme.surface.toArgb())
-                        } catch (e: Exception) {
-                            // 色設定が失敗した場合は無視
-                        }
-                    }
-                },
-                modifier = Modifier
-                    .fillMaxWidth(0.6f)
-                    .height(120.dp)
-            )
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            // 旬選択
-            Text(
-                text = "旬",
-                style = MaterialTheme.typography.titleSmall,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
-            
-            AndroidView(
-                factory = { context ->
-                    NumberPicker(context).apply {
-                        minValue = 0
-                        maxValue = 2
-                        setDisplayedValues(arrayOf("上旬", "中旬", "下旬"))
-                        val stageIndex = when (selectedStage) {
-                            "上旬" -> 0
-                            "中旬" -> 1
-                            "下旬" -> 2
-                            else -> 0
-                        }
-                        value = stageIndex
-                        setOnValueChangedListener { _, _, newVal ->
-                            val stage = when (newVal) {
-                                0 -> "上旬"
-                                1 -> "中旬"
-                                2 -> "下旬"
-                                else -> "上旬"
+            Column(
+                modifier = Modifier.weight(1f),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "月",
+                    style = MaterialTheme.typography.titleSmall,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                
+                AndroidView(
+                    factory = { context ->
+                        NumberPicker(context).apply {
+                            minValue = 1
+                            maxValue = 12
+                            val monthOptions = (1..12).map { "${it}月" }.toTypedArray()
+                            setDisplayedValues(monthOptions)
+                            value = selectedMonth.toIntOrNull() ?: 1
+                            setOnValueChangedListener { _, _, newVal ->
+                                onMonthChange(newVal.toString())
                             }
-                            onStageChange(stage)
+                            
+                            // NumberPickerの色をMaterial3のテーマカラーに設定
+                            try {
+                                setTextColor(colorScheme.onSurface.toArgb())
+                                setBackgroundColor(colorScheme.surface.toArgb())
+                            } catch (e: Exception) {
+                                // 色設定が失敗した場合は無視
+                            }
                         }
-                        
-                        // NumberPickerの色をMaterial3のテーマカラーに設定
-                        try {
-                            setTextColor(colorScheme.onSurface.toArgb())
-                            setBackgroundColor(colorScheme.surface.toArgb())
-                        } catch (e: Exception) {
-                            // 色設定が失敗した場合は無視
-                        }
-                    }
-                },
-                modifier = Modifier
-                    .fillMaxWidth(0.6f)
-                    .height(120.dp)
-            )
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(120.dp)
+                )
+            }
         }
+        
         
         Spacer(modifier = Modifier.height(16.dp))
         
@@ -1043,7 +1072,7 @@ fun ExpirationSelectionBottomSheet(
                 onClick = onCancel,
                 modifier = Modifier.weight(1f),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                     contentColor = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             ) {
@@ -1053,7 +1082,6 @@ fun ExpirationSelectionBottomSheet(
             Button(
                 onClick = onConfirm,
                 modifier = Modifier.weight(1f),
-                enabled = selectedYear != "0" && selectedMonth != "0",
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     contentColor = MaterialTheme.colorScheme.onPrimaryContainer
@@ -1096,86 +1124,100 @@ fun PeriodSelectionBottomSheet(
         // Material3のテーマカラーを取得
         val colorScheme = MaterialTheme.colorScheme
         
-        // 年、月、旬を縦並びで表示（中央揃え）
+        // 年と月を横並びで表示
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // 年選択
+            Column(
+                modifier = Modifier.weight(1f),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "年",
+                    style = MaterialTheme.typography.titleSmall,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                
+                AndroidView(
+                    factory = { context ->
+                        NumberPicker(context).apply {
+                            minValue = 0
+                            maxValue = 5
+                            val yearOptions = (currentYear..(currentYear + 5)).map { "${it}年" }.toTypedArray()
+                            setDisplayedValues(yearOptions)
+                            val selectedYearInt = selectedYear.toIntOrNull() ?: currentYear
+                            value = if (selectedYearInt >= currentYear && selectedYearInt <= currentYear + 5) {
+                                selectedYearInt - currentYear
+                            } else {
+                                0
+                            }
+                            setOnValueChangedListener { _, _, newVal ->
+                                onYearChange((currentYear + newVal).toString())
+                            }
+                            
+                            // NumberPickerの色をMaterial3のテーマカラーに設定
+                            try {
+                                setTextColor(colorScheme.onSurface.toArgb())
+                                setBackgroundColor(colorScheme.surface.toArgb())
+                            } catch (e: Exception) {
+                                // 色設定が失敗した場合は無視
+                            }
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(120.dp)
+                )
+            }
+            
+            // 月選択
+            Column(
+                modifier = Modifier.weight(1f),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "月",
+                    style = MaterialTheme.typography.titleSmall,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                
+                AndroidView(
+                    factory = { context ->
+                        NumberPicker(context).apply {
+                            minValue = 1
+                            maxValue = 12
+                            val monthOptions = (1..12).map { "${it}月" }.toTypedArray()
+                            setDisplayedValues(monthOptions)
+                            value = selectedMonth.toIntOrNull() ?: 1
+                            setOnValueChangedListener { _, _, newVal ->
+                                onMonthChange(newVal.toString())
+                            }
+                            
+                            // NumberPickerの色をMaterial3のテーマカラーに設定
+                            try {
+                                setTextColor(colorScheme.onSurface.toArgb())
+                                setBackgroundColor(colorScheme.surface.toArgb())
+                            } catch (e: Exception) {
+                                // 色設定が失敗した場合は無視
+                            }
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(120.dp)
+                )
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        // 旬選択（中央揃え）
         Column(
             modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // 年選択
-            Text(
-                text = "年",
-                style = MaterialTheme.typography.titleSmall,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
-            
-            AndroidView(
-                factory = { context ->
-                    NumberPicker(context).apply {
-                        minValue = 0
-                        maxValue = 5
-                        val yearOptions = (currentYear..(currentYear + 5)).map { "${it}年" }.toTypedArray()
-                        setDisplayedValues(yearOptions)
-                        val selectedYearInt = selectedYear.toIntOrNull() ?: currentYear
-                        value = if (selectedYearInt >= currentYear && selectedYearInt <= currentYear + 5) {
-                            selectedYearInt - currentYear
-                        } else {
-                            0
-                        }
-                        setOnValueChangedListener { _, _, newVal ->
-                            onYearChange((currentYear + newVal).toString())
-                        }
-                        
-                        // NumberPickerの色をMaterial3のテーマカラーに設定
-                        try {
-                            setTextColor(colorScheme.onSurface.toArgb())
-                            setBackgroundColor(colorScheme.surface.toArgb())
-                        } catch (e: Exception) {
-                            // 色設定が失敗した場合は無視
-                        }
-                    }
-                },
-                modifier = Modifier
-                    .fillMaxWidth(0.6f)
-                    .height(120.dp)
-            )
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            // 月選択
-            Text(
-                text = "月",
-                style = MaterialTheme.typography.titleSmall,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
-            
-            AndroidView(
-                factory = { context ->
-                    NumberPicker(context).apply {
-                        minValue = 1
-                        maxValue = 12
-                        val monthOptions = (1..12).map { "${it}月" }.toTypedArray()
-                        setDisplayedValues(monthOptions)
-                        value = selectedMonth.toIntOrNull() ?: 1
-                        setOnValueChangedListener { _, _, newVal ->
-                            onMonthChange(newVal.toString())
-                        }
-                        
-                        // NumberPickerの色をMaterial3のテーマカラーに設定
-                        try {
-                            setTextColor(colorScheme.onSurface.toArgb())
-                            setBackgroundColor(colorScheme.surface.toArgb())
-                        } catch (e: Exception) {
-                            // 色設定が失敗した場合は無視
-                        }
-                    }
-                },
-                modifier = Modifier
-                    .fillMaxWidth(0.6f)
-                    .height(120.dp)
-            )
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
             // 旬選択（ボタン形式）
             Text(
                 text = "旬",

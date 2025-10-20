@@ -37,6 +37,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import com.example.seedstockkeeper6.ui.components.LoadingAnimationVideoPlayer
 import androidx.credentials.CredentialManager
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
@@ -76,53 +77,14 @@ fun AuthGate(
 
 @Composable
 private fun Splash(modifier: Modifier = Modifier) {
-    val context = LocalContext.current
-    
-    // CoilのImageLoaderを設定（GIFサポート付き）
-    val imageLoader = remember {
-        ImageLoader.Builder(context)
-            .components {
-                add(ImageDecoderDecoder.Factory()) // GIFをサポートするために必要
-            }
-            .build()
-    }
-    
-    // tanesuke.gifのスケールアニメーション（種登録画面と同じ設定）
-    val animatedScale by animateFloatAsState(
-        targetValue = 1f,
-        animationSpec = tween(
-            durationMillis = 500,
-            easing = EaseInOutQuart
-        ),
-        label = "scaleAnimation"
-    )
-    
-    // tanesuke.gifの透明度アニメーション（種登録画面と同じ設定）
-    val animatedAlpha by animateFloatAsState(
-        targetValue = 1f,
-        animationSpec = tween(
-            durationMillis = 300,
-            easing = EaseInOutQuart
-        ),
-        label = "alphaAnimation"
-    )
-    
     Box(
         modifier = modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
-    ) { 
-        // tanesuke.gifアニメーション（アプリ起動中表示）
-        AsyncImage(
-            model = com.example.seedstockkeeper6.R.drawable.tanesuke,
-            contentDescription = "アプリ起動中",
-            imageLoader = imageLoader,
-            modifier = Modifier
-                .graphicsLayer(
-                    scaleX = animatedScale,
-                    scaleY = animatedScale,
-                    alpha = animatedAlpha
-                )
-                .size(200.dp)
+    ) {
+        LoadingAnimationVideoPlayer(
+            modifier = Modifier.fillMaxSize(),
+            assetFileName = null,
+            rawResId = com.example.seedstockkeeper6.R.raw.tanesukemovie
         )
     }
 }

@@ -161,6 +161,21 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
 
             // 播種期間と収穫期間の表示
             val calendarEntry = calendarEntries.firstOrNull()
+            android.util.Log.d("CalendarSection", "=== 種登録画面の表示データ ===")
+            android.util.Log.d("CalendarSection", "viewModel.packet.calendar: ${viewModel.packet.calendar}")
+            android.util.Log.d("CalendarSection", "calendarEntries: $calendarEntries")
+            android.util.Log.d("CalendarSection", "calendarEntry: $calendarEntry")
+            if (calendarEntry != null) {
+                android.util.Log.d("CalendarSection", "播種開始: ${calendarEntry.sowing_start_date}")
+                android.util.Log.d("CalendarSection", "播種終了: ${calendarEntry.sowing_end_date}")
+                android.util.Log.d("CalendarSection", "収穫開始: ${calendarEntry.harvest_start_date}")
+                android.util.Log.d("CalendarSection", "収穫終了: ${calendarEntry.harvest_end_date}")
+                android.util.Log.d("CalendarSection", "有効期限: ${calendarEntry.expirationYear}年${calendarEntry.expirationMonth}月")
+                
+                // formatDateRangeの結果もログ出力
+                val harvestPeriod = formatDateRange(calendarEntry.harvest_start_date, calendarEntry.harvest_end_date)
+                android.util.Log.d("CalendarSection", "formatDateRange結果: $harvestPeriod")
+            }
             if (calendarEntry != null) {
             Spacer(modifier = Modifier.height(16.dp))
             
@@ -215,9 +230,11 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
                                 ),
                                 shape = RoundedCornerShape(12.dp)
                             ) {
-                                Text(
-                                    text = if (sowingStartYear == "0" && sowingStartMonth == "0" && sowingStartStage.isEmpty()) {
-                                        "不明"
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    if (sowingStartYear == "0" && sowingStartMonth == "0" && sowingStartStage.isEmpty()) {
+                                        Text("播種開始")
                                     } else {
                                         val year = if (sowingStartYear == "0") "" else "${sowingStartYear}年"
                                         val month = if (sowingStartMonth == "0") "不明" else "${sowingStartMonth}月"
@@ -227,13 +244,23 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
                                             "(${sowingStartStage.ifEmpty { "上旬" }})"
                                         }
                                         
-                                        // 1行で表示
-                                        "$year$month$stage"
-                                    },
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    color = MaterialTheme.colorScheme.onSecondaryContainer,
-                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                                )
+                                        // 年で改行して2行目に月と旬を横並びで表示
+                                        if (year.isNotEmpty()) {
+                                            Text(
+                                                text = year,
+                                                style = MaterialTheme.typography.bodyLarge,
+                                                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                            )
+                                        }
+                                        Text(
+                                            text = "$month$stage",
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                        )
+                                    }
+                                }
                             }
                             Text("～", style = MaterialTheme.typography.bodyLarge)
                             Button(
@@ -244,9 +271,11 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
                                 ),
                                 shape = RoundedCornerShape(12.dp)
                             ) {
-                                Text(
-                                    text = if (sowingEndYear == "0" && sowingEndMonth == "0" && sowingEndStage.isEmpty()) {
-                                        "不明"
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    if (sowingEndYear == "0" && sowingEndMonth == "0" && sowingEndStage.isEmpty()) {
+                                        Text("播種終了")
                                     } else {
                                         val year = if (sowingEndYear == "0") "" else "${sowingEndYear}年"
                                         val month = if (sowingEndMonth == "0") "不明" else "${sowingEndMonth}月"
@@ -256,13 +285,23 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
                                             "(${sowingEndStage.ifEmpty { "下旬" }})"
                                         }
                                         
-                                        // 1行で表示
-                                        "$year$month$stage"
-                                    },
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    color = MaterialTheme.colorScheme.onSecondaryContainer,
-                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                                )
+                                        // 年で改行して2行目に月と旬を横並びで表示
+                                        if (year.isNotEmpty()) {
+                                            Text(
+                                                text = year,
+                                                style = MaterialTheme.typography.bodyLarge,
+                                                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                            )
+                                        }
+                                        Text(
+                                            text = "$month$stage",
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                        )
+                                    }
+                                }
                             }
                         }
                     } else {
@@ -327,9 +366,11 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
                                 ),
                                 shape = RoundedCornerShape(12.dp)
                             ) {
-                                Text(
-                                    text = if (harvestStartYear == "0" && harvestStartMonth == "0" && harvestStartStage.isEmpty()) {
-                                        "不明"
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    if (harvestStartYear == "0" && harvestStartMonth == "0" && harvestStartStage.isEmpty()) {
+                                        Text("収穫開始")
                                     } else {
                                         val year = if (harvestStartYear == "0") "" else "${harvestStartYear}年"
                                         val month = if (harvestStartMonth == "0") "不明" else "${harvestStartMonth}月"
@@ -339,13 +380,23 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
                                             "(${harvestStartStage.ifEmpty { "上旬" }})"
                                         }
                                         
-                                        // 1行で表示
-                                        "$year$month$stage"
-                                    },
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    color = MaterialTheme.colorScheme.onSecondaryContainer,
-                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                                )
+                                        // 年で改行して2行目に月と旬を横並びで表示
+                                        if (year.isNotEmpty()) {
+                                            Text(
+                                                text = year,
+                                                style = MaterialTheme.typography.bodyLarge,
+                                                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                            )
+                                        }
+                                        Text(
+                                            text = "$month$stage",
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                        )
+                                    }
+                                }
                             }
                             Text("～", style = MaterialTheme.typography.bodyMedium)
                             Button(
@@ -356,9 +407,11 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
                                 ),
                                 shape = RoundedCornerShape(12.dp)
                             ) {
-                                Text(
-                                    text = if (harvestEndYear == "0" && harvestEndMonth == "0" && harvestEndStage.isEmpty()) {
-                                        "不明"
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    if (harvestEndYear == "0" && harvestEndMonth == "0" && harvestEndStage.isEmpty()) {
+                                        Text("収穫終了")
                                     } else {
                                         val year = if (harvestEndYear == "0") "" else "${harvestEndYear}年"
                                         val month = if (harvestEndMonth == "0") "不明" else "${harvestEndMonth}月"
@@ -368,13 +421,23 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
                                             "(${harvestEndStage.ifEmpty { "下旬" }})"
                                         }
                                         
-                                        // 1行で表示
-                                        "$year$month$stage"
-                                    },
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    color = MaterialTheme.colorScheme.onSecondaryContainer,
-                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                                )
+                                        // 年で改行して2行目に月と旬を横並びで表示
+                                        if (year.isNotEmpty()) {
+                                            Text(
+                                                text = year,
+                                                style = MaterialTheme.typography.bodyLarge,
+                                                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                            )
+                                        }
+                                        Text(
+                                            text = "$month$stage",
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                        )
+                                    }
+                                }
                             }
                         }
                     } else {
@@ -582,10 +645,8 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
                 title = "有効期限",
                 selectedYear = expirationYear,
                 selectedMonth = expirationMonth,
-                selectedStage = "", // 有効期限では旬は使用しない
                 onYearChange = { expirationYear = it },
                 onMonthChange = { expirationMonth = it },
-                onStageChange = { }, // 有効期限では旬は使用しない
                 onConfirm = {
                     val yearInt = expirationYear.toIntOrNull() ?: 0
                     val monthInt = expirationMonth.toIntOrNull() ?: 0
@@ -615,7 +676,11 @@ private fun getRegionColor(region: String): Color {
 
 // 日付範囲を旬形式でフォーマットするヘルパー関数
 private fun formatDateRange(startDate: String, endDate: String): String {
+    android.util.Log.d("CalendarSection", "=== formatDateRange ===")
+    android.util.Log.d("CalendarSection", "startDate: $startDate, endDate: $endDate")
+    
     if (startDate.isEmpty() && endDate.isEmpty()) {
+        android.util.Log.d("CalendarSection", "両方空のため未設定を返す")
         return "未設定"
     }
     
@@ -623,8 +688,11 @@ private fun formatDateRange(startDate: String, endDate: String): String {
         val year = DateConversionUtils.getYearFromDate(startDate)
         val month = DateConversionUtils.getMonthFromDate(startDate)
         val stage = DateConversionUtils.convertDateToStage(startDate)
-        "${year}年${month}月(${stage})"
+        val result = "${year}年${month}月(${stage})"
+        android.util.Log.d("CalendarSection", "startFormatted: $result (year=$year, month=$month, stage=$stage)")
+        result
     } else {
+        android.util.Log.d("CalendarSection", "startDateが空のため未設定")
         "未設定"
     }
     
@@ -632,14 +700,20 @@ private fun formatDateRange(startDate: String, endDate: String): String {
         val year = DateConversionUtils.getYearFromDate(endDate)
         val month = DateConversionUtils.getMonthFromDate(endDate)
         val stage = DateConversionUtils.convertDateToStage(endDate)
-        "${year}年${month}月(${stage})"
+        val result = "${year}年${month}月(${stage})"
+        android.util.Log.d("CalendarSection", "endFormatted: $result (year=$year, month=$month, stage=$stage)")
+        result
     } else {
+        android.util.Log.d("CalendarSection", "endDateが空のため未設定")
         "未設定"
     }
     
-    return if (startDate.isEmpty() || endDate.isEmpty()) {
+    val finalResult = if (startDate.isEmpty() || endDate.isEmpty()) {
         if (startDate.isEmpty()) endFormatted else startFormatted
     } else {
         "$startFormatted ～ $endFormatted"
     }
+    
+    android.util.Log.d("CalendarSection", "formatDateRange最終結果: $finalResult")
+    return finalResult
 }

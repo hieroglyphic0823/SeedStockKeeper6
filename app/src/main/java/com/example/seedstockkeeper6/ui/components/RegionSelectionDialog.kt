@@ -70,7 +70,7 @@ fun RegionSelectionDialog(
     val density = androidx.compose.ui.platform.LocalDensity.current
     val windowWidthDp = configuration.screenWidthDp
     val windowHeightDp = configuration.screenHeightDp
-    val dialogHeightDp = windowHeightDp * 0.9f
+    val dialogHeightDp = 700f.dp // 高さをさらに増加
     
     // ダイアログの実際の横幅を計算
     val dialogPadding = 16.dp // Cardのpadding
@@ -83,8 +83,8 @@ fun RegionSelectionDialog(
             android.util.Log.d("RegionSelectionDialog", "=== ダイアログサイズ計算 ===")
             android.util.Log.d("RegionSelectionDialog", "ウィンドウ幅: ${windowWidthDp}dp")
             android.util.Log.d("RegionSelectionDialog", "ウィンドウ高: ${windowHeightDp}dp")
-            android.util.Log.d("RegionSelectionDialog", "ダイアログ高(90%): ${dialogHeightDp}dp")
-            android.util.Log.d("RegionSelectionDialog", "ダイアログ高(px): ${density.run { dialogHeightDp.dp.toPx() }}px")
+            android.util.Log.d("RegionSelectionDialog", "ダイアログ高(固定): ${dialogHeightDp}dp")
+            android.util.Log.d("RegionSelectionDialog", "ダイアログ高(px): ${density.run { dialogHeightDp.toPx() }}px")
             android.util.Log.d("RegionSelectionDialog", "Card padding: ${dialogPadding.value}dp")
             android.util.Log.d("RegionSelectionDialog", "Column padding: ${dialogContentPadding.value}dp")
             android.util.Log.d("RegionSelectionDialog", "合計padding: ${totalDialogPadding.value}dp")
@@ -101,6 +101,23 @@ fun RegionSelectionDialog(
                     android.util.Log.d("RegionSelectionDialog", "地域: ${entry.region}, 有効期限: ${entry.expirationYear}年${entry.expirationMonth}月")
                 } ?: android.util.Log.d("RegionSelectionDialog", "カレンダー情報なし")
             } ?: android.util.Log.d("RegionSelectionDialog", "OCR結果なし")
+            
+            // ダイアログ要素の高さ情報をログに表示
+            android.util.Log.d("RegionSelectionDialog", "=== ダイアログ要素の高さ情報 ===")
+            android.util.Log.d("RegionSelectionDialog", "ダイアログ全体の高さ: ${dialogHeightDp}dp (${density.run { dialogHeightDp.toPx() }}px)")
+            android.util.Log.d("RegionSelectionDialog", "Card padding: ${dialogPadding.value}dp")
+            android.util.Log.d("RegionSelectionDialog", "Column padding: ${dialogContentPadding.value}dp")
+            android.util.Log.d("RegionSelectionDialog", "ヘッダー部分の高さ: 約40dp (アイコン24dp + テキスト16dp)")
+            android.util.Log.d("RegionSelectionDialog", "説明テキストの高さ: 約20dp")
+            android.util.Log.d("RegionSelectionDialog", "地域カードの高さ: 約80dp (地域ボタン含む)")
+            android.util.Log.d("RegionSelectionDialog", "CalendarEntryEditorの高さ: 約280dp (播種・収穫・有効期限)")
+            android.util.Log.d("RegionSelectionDialog", "OK・キャンセルボタンの高さ: 約48dp")
+            android.util.Log.d("RegionSelectionDialog", "ボタン上部の余白: 8dp")
+            android.util.Log.d("RegionSelectionDialog", "合計推定高さ: 約700dp")
+            android.util.Log.d("RegionSelectionDialog", "=== 実際の高さ分析 ===")
+            android.util.Log.d("RegionSelectionDialog", "LazyColumnの高さ: 500dp (固定)")
+            android.util.Log.d("RegionSelectionDialog", "ダイアログ高さ: 700dp (固定)")
+            android.util.Log.d("RegionSelectionDialog", "CalendarEntryEditor全体が完全に表示可能")
         }
     }
     
@@ -114,15 +131,18 @@ fun RegionSelectionDialog(
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .fillMaxHeight(0.9f) // 画面の90%の高さに制限
+                    .wrapContentHeight() // 要素に合わせて高さを調整
                     .padding(16.dp),
-                shape = RoundedCornerShape(16.dp)
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                )
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .fillMaxHeight()
-                        .padding(20.dp)
+                        .wrapContentHeight() // 要素に合わせて高さを調整
+                        .padding(16.dp)
                 ) {
                     // 固定ヘッダー部分
                     Row(
@@ -155,7 +175,7 @@ fun RegionSelectionDialog(
                     LazyColumn(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .weight(1f), // 残りのスペースを使用
+                            .height(500.dp), // 高さをさらに増加
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         // 切り抜きされたカレンダー画像を表示
@@ -194,12 +214,14 @@ fun RegionSelectionDialog(
                                     val currentDate = java.time.LocalDate.now()
                                     val expirationYear = ocrResult?.expirationYear ?: (currentDate.year + 1)
                                     val expirationMonth = ocrResult?.expirationMonth ?: currentDate.monthValue
+                                    // OCR結果から該当地域のエントリを取得
+                                    val ocrEntry = ocrResult?.calendar?.find { it.region == selectedRegion }
                                     val newEntry = com.example.seedstockkeeper6.model.CalendarEntry(
                                         region = selectedRegion,
-                                        sowing_start_date = "",
-                                        sowing_end_date = "",
-                                        harvest_start_date = "",
-                                        harvest_end_date = "",
+                                        sowing_start_date = ocrEntry?.sowing_start_date ?: "",
+                                        sowing_end_date = ocrEntry?.sowing_end_date ?: "",
+                                        harvest_start_date = ocrEntry?.harvest_start_date ?: "",
+                                        harvest_end_date = ocrEntry?.harvest_end_date ?: "",
                                         expirationYear = expirationYear,
                                         expirationMonth = expirationMonth
                                     )
@@ -223,46 +245,62 @@ fun RegionSelectionDialog(
                                         modifier = Modifier.padding(16.dp)
                                     ) {
                                         // 地域設定セクション（農園情報画面と同じスタイル）
+                                        android.util.Log.d("RegionSelectionDialog", "=== 地域カードの高さ情報 ===")
+                                        android.util.Log.d("RegionSelectionDialog", "地域カード上部の余白: 16dp")
+                                        android.util.Log.d("RegionSelectionDialog", "地域タイトル部分の高さ: 約40dp (アイコン24dp + テキスト16dp)")
+                                        android.util.Log.d("RegionSelectionDialog", "地域ボタンの高さ: 約48dp")
+                                        android.util.Log.d("RegionSelectionDialog", "地域カード下部の余白: 16dp")
+                                        android.util.Log.d("RegionSelectionDialog", "地域カード合計高さ: 約120dp")
+                                        
                                         var showRegionBottomSheet by remember { mutableStateOf(false) }
                                         
                                         Column(
                                             modifier = Modifier.fillMaxWidth(),
                                             verticalArrangement = Arrangement.spacedBy(12.dp)
                                         ) {
+                                            // 地域タイトルと地域ボタンを横並びで表示
                                             Row(
                                                 verticalAlignment = Alignment.CenterVertically,
-                                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                                modifier = Modifier.fillMaxWidth()
                                             ) {
-                                                androidx.compose.material3.Icon(
-                                                    androidx.compose.material.icons.Icons.Filled.Public,
-                                                    contentDescription = "地域設定",
-                                                    tint = MaterialTheme.colorScheme.onSurface,
-                                                    modifier = Modifier.size(24.dp)
-                                                )
-                                                Text(
-                                                    text = "地域",
-                                                    style = MaterialTheme.typography.titleMedium,
-                                                    fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
-                                                    color = MaterialTheme.colorScheme.onSurface
-                                                )
-                                            }
-                                            
-                                            // 地域選択ボタン（農園情報画面と同じスタイル）
-                                            Button(
-                                                onClick = { showRegionBottomSheet = true },
-                                                modifier = Modifier.fillMaxWidth(),
-                                                colors = ButtonDefaults.buttonColors(
-                                                    containerColor = getRegionColor(selectedRegion),
-                                                    contentColor = Color.White
-                                                ),
-                                                shape = MaterialTheme.shapes.large,
-                                                elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp)
-                                            ) {
-                                                Text(
-                                                    text = selectedRegion.ifEmpty { "地域" },
-                                                    style = MaterialTheme.typography.bodyLarge,
-                                                    fontWeight = androidx.compose.ui.text.font.FontWeight.Medium
-                                                )
+                                                // 地域タイトル
+                                                Row(
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                                    modifier = Modifier.weight(1f)
+                                                ) {
+                                                    androidx.compose.material3.Icon(
+                                                        androidx.compose.material.icons.Icons.Filled.Public,
+                                                        contentDescription = "地域設定",
+                                                        tint = MaterialTheme.colorScheme.onSurface,
+                                                        modifier = Modifier.size(24.dp)
+                                                    )
+                                                    Text(
+                                                        text = "地域",
+                                                        style = MaterialTheme.typography.titleLarge,
+                                                        fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
+                                                        color = MaterialTheme.colorScheme.onSurface
+                                                    )
+                                                }
+                                                
+                                                // 地域選択ボタン（農園情報画面と同じスタイル）
+                                                Button(
+                                                    onClick = { showRegionBottomSheet = true },
+                                                    modifier = Modifier.weight(1f),
+                                                    colors = ButtonDefaults.buttonColors(
+                                                        containerColor = getRegionColor(selectedRegion),
+                                                        contentColor = Color.White
+                                                    ),
+                                                    shape = MaterialTheme.shapes.large,
+                                                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp)
+                                                ) {
+                                                    Text(
+                                                        text = selectedRegion.ifEmpty { "地域" },
+                                                        style = MaterialTheme.typography.bodyLarge,
+                                                        fontWeight = androidx.compose.ui.text.font.FontWeight.Medium
+                                                    )
+                                                }
                                             }
                                         }
                                         
@@ -306,12 +344,14 @@ fun RegionSelectionDialog(
                                                                     val currentDate = java.time.LocalDate.now()
                                                                     val expirationYear = ocrResult?.expirationYear ?: (currentDate.year + 1)
                                                                     val expirationMonth = ocrResult?.expirationMonth ?: currentDate.monthValue
+                                                                    // OCR結果から該当地域のエントリを取得
+                                                                    val ocrEntry = ocrResult?.calendar?.find { it.region == region }
                                                                     val newEntry = com.example.seedstockkeeper6.model.CalendarEntry(
                                                                         region = region,
-                                                                        sowing_start_date = "",
-                                                                        sowing_end_date = "",
-                                                                        harvest_start_date = "",
-                                                                        harvest_end_date = "",
+                                                                        sowing_start_date = ocrEntry?.sowing_start_date ?: "",
+                                                                        sowing_end_date = ocrEntry?.sowing_end_date ?: "",
+                                                                        harvest_start_date = ocrEntry?.harvest_start_date ?: "",
+                                                                        harvest_end_date = ocrEntry?.harvest_end_date ?: "",
                                                                         expirationYear = expirationYear,
                                                                         expirationMonth = expirationMonth
                                                                     )
@@ -327,8 +367,7 @@ fun RegionSelectionDialog(
                                                                 containerColor = getRegionColor(region),
                                                                 contentColor = Color.White
                                                             ),
-                                                            shape = MaterialTheme.shapes.large,
-                                                            elevation = ButtonDefaults.buttonElevation(
+                                                                                                                        elevation = ButtonDefaults.buttonElevation(
                                                                 defaultElevation = if (region == selectedRegion) 4.dp else 2.dp
                                                             ),
                                                             border = if (region == selectedRegion) {
@@ -351,18 +390,58 @@ fun RegionSelectionDialog(
                                             }
                                         }
                                         
-                                        Spacer(modifier = Modifier.height(16.dp))
+                                        // editedEntryがnullの場合は初期化
+                                        if (editedEntry == null) {
+                                            android.util.Log.d("RegionSelectionDialog", "editedEntryがnullのため初期化")
+                                            val regionEntry = ocrResult?.calendar?.find { it.region == selectedRegion }
+                                            if (regionEntry != null) {
+                                                val expirationYear = ocrResult?.expirationYear ?: 0
+                                                val expirationMonth = ocrResult?.expirationMonth ?: 0
+                                                val newRegionEntry = regionEntry.copy(
+                                                    expirationYear = expirationYear,
+                                                    expirationMonth = expirationMonth
+                                                )
+                                                editedEntry = newRegionEntry
+                                                onUpdateEditing(newRegionEntry)
+                                                android.util.Log.d("RegionSelectionDialog", "editedEntry初期化完了: $editedEntry")
+                                            } else {
+                                                val expirationYear = ocrResult?.expirationYear ?: 0
+                                                val expirationMonth = ocrResult?.expirationMonth ?: 0
+                                                val newEntry = com.example.seedstockkeeper6.model.CalendarEntry(
+                                                    region = selectedRegion,
+                                                    sowing_start_date = "",
+                                                    sowing_end_date = "",
+                                                    harvest_start_date = "",
+                                                    harvest_end_date = "",
+                                                    expirationYear = expirationYear,
+                                                    expirationMonth = expirationMonth
+                                                )
+                                                editedEntry = newEntry
+                                                onUpdateEditing(newEntry)
+                                                android.util.Log.d("RegionSelectionDialog", "editedEntry新規作成完了: $editedEntry")
+                                            }
+                                        }
                                         
                                         // 編集項目を表示
                                         CalendarEntryEditor(
                                             entry = entryToShow,
                                             onUpdate = { updatedEntry ->
-                                                android.util.Log.d("RegionSelectionDialog", "CalendarEntryEditor onUpdate: $updatedEntry")
+                                                android.util.Log.d("RegionSelectionDialog", "=== CalendarEntryEditor onUpdate ===")
+                                                android.util.Log.d("RegionSelectionDialog", "更新されたエントリ: $updatedEntry")
+                                                android.util.Log.d("RegionSelectionDialog", "播種開始: ${updatedEntry.sowing_start_date}")
+                                                android.util.Log.d("RegionSelectionDialog", "播種終了: ${updatedEntry.sowing_end_date}")
+                                                android.util.Log.d("RegionSelectionDialog", "収穫開始: ${updatedEntry.harvest_start_date}")
+                                                android.util.Log.d("RegionSelectionDialog", "収穫終了: ${updatedEntry.harvest_end_date}")
+                                                android.util.Log.d("RegionSelectionDialog", "有効期限: ${updatedEntry.expirationYear}年${updatedEntry.expirationMonth}月")
+                                                
+                                                android.util.Log.d("RegionSelectionDialog", "onUpdateEditing呼び出し")
                                                 // 編集内容をViewModelに反映
                                                 onUpdateEditing(updatedEntry)
+                                                
+                                                android.util.Log.d("RegionSelectionDialog", "editedEntry更新")
                                                 // ローカルでも編集された値を保存
                                                 editedEntry = updatedEntry
-                                                android.util.Log.d("RegionSelectionDialog", "editedEntry更新: $editedEntry")
+                                                android.util.Log.d("RegionSelectionDialog", "editedEntry更新完了: $editedEntry")
                                             },
                                             onSave = { },
                                             onCancel = { },
@@ -381,21 +460,29 @@ fun RegionSelectionDialog(
                     
                     // 固定フッター部分（OK・キャンセルボタン）- Column内に配置
                     LaunchedEffect(Unit) {
+                        android.util.Log.d("RegionSelectionDialog", "=== OKボタンの位置情報 ===")
                         android.util.Log.d("RegionSelectionDialog", "OKボタン表示位置: Column内、Card内")
-                        android.util.Log.d("RegionSelectionDialog", "OKボタンパディング: horizontal=0dp, vertical=16dp")
+                        android.util.Log.d("RegionSelectionDialog", "OKボタン上部の余白: 8dp")
+                        android.util.Log.d("RegionSelectionDialog", "OKボタンの高さ: 約48dp")
+                        android.util.Log.d("RegionSelectionDialog", "OKボタン間の余白: 8dp")
+                        android.util.Log.d("RegionSelectionDialog", "OKボタン下部の余白: 16dp (Card padding)")
+                        android.util.Log.d("RegionSelectionDialog", "OKボタン合計高さ: 約72dp (余白含む)")
                     }
                     
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = 16.dp),
+                            .padding(top = 8.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Button(
-                            onClick = onDismiss,
+                            onClick = {
+                                android.util.Log.d("RegionSelectionDialog", "=== キャンセルボタンクリック ===")
+                                onDismiss()
+                            },
                             modifier = Modifier.weight(1f),
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                                 contentColor = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         ) {
@@ -408,12 +495,26 @@ fun RegionSelectionDialog(
                                 android.util.Log.d("RegionSelectionDialog", "editedEntry: $editedEntry")
                                 // 編集された値がある場合は、それを含めて保存
                                 if (editedEntry != null) {
+                                    android.util.Log.d("RegionSelectionDialog", "=== OKボタンクリック時のデータ確認 ===")
                                     android.util.Log.d("RegionSelectionDialog", "editedEntryを保存: $editedEntry")
+                                    android.util.Log.d("RegionSelectionDialog", "播種開始: ${editedEntry!!.sowing_start_date}")
+                                    android.util.Log.d("RegionSelectionDialog", "播種終了: ${editedEntry!!.sowing_end_date}")
+                                    android.util.Log.d("RegionSelectionDialog", "収穫開始: ${editedEntry!!.harvest_start_date}")
+                                    android.util.Log.d("RegionSelectionDialog", "収穫終了: ${editedEntry!!.harvest_end_date}")
+                                    android.util.Log.d("RegionSelectionDialog", "有効期限: ${editedEntry!!.expirationYear}年${editedEntry!!.expirationMonth}月")
+                                    
+                                    android.util.Log.d("RegionSelectionDialog", "onUpdateEditing呼び出し")
                                     onUpdateEditing(editedEntry!!)
+                                    
+                                    android.util.Log.d("RegionSelectionDialog", "onSaveEditing呼び出し")
                                     // 編集された値を保存
                                     onSaveEditing()
+                                    
+                                    android.util.Log.d("RegionSelectionDialog", "onUpdateExpiration呼び出し")
                                     // 有効期限情報を種登録画面に反映
                                     onUpdateExpiration(editedEntry!!)
+                                    
+                                    android.util.Log.d("RegionSelectionDialog", "全てのコールバック呼び出し完了")
                                 } else {
                                     android.util.Log.w("RegionSelectionDialog", "editedEntryがnullです")
                                 }
@@ -422,8 +523,8 @@ fun RegionSelectionDialog(
                             },
                             modifier = Modifier.weight(1f),
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.primary,
-                                contentColor = MaterialTheme.colorScheme.onPrimary
+                                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                             )
                         ) {
                             Text("OK")

@@ -470,6 +470,11 @@ fun SeedCalendarGroupedInternal(
                     val endMonth = getMonthFromDate(r.endDate)
                     val endYear = getYearFromDate(r.endDate)
                     
+                    // 月が0の場合はスキップ
+                    if (startMonth == 0 || endMonth == 0) {
+                        return@forEach
+                    }
+                    
                     // 帯の開始月が有効期限内かで色を決定
                     val bandStartMonthForCheck = YearMonth.of(startYear, startMonth)
                     val actualColor = item.color // 常に基本色を使用（背景色で期限切れを表示）
