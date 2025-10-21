@@ -25,6 +25,7 @@ data class NotificationHistory(
     val thisMonthDetails: List<SeedDetail> = emptyList(),
     val endingSoonDetails: List<SeedDetail> = emptyList(),
     val recommendedDetails: List<SeedDetail> = emptyList(),
+    val closingLine: String = "", // 結びの一言
     val documentId: String? = null // FirestoreのドキュメントID
 )
 

@@ -33,7 +33,8 @@ class NotificationHistoryService {
         recommendedSeeds: List<String> = emptyList(),
         thisMonthDetails: List<com.example.seedstockkeeper6.model.SeedDetail> = emptyList(),
         endingSoonDetails: List<com.example.seedstockkeeper6.model.SeedDetail> = emptyList(),
-        recommendedDetails: List<com.example.seedstockkeeper6.model.SeedDetail> = emptyList()
+        recommendedDetails: List<com.example.seedstockkeeper6.model.SeedDetail> = emptyList(),
+        closingLine: String = ""
     ): Boolean {
         return try {
             val currentUser = auth.currentUser
@@ -64,7 +65,8 @@ class NotificationHistoryService {
                 recommendedSeeds = recommendedSeeds,
                 thisMonthDetails = thisMonthDetails,
                 endingSoonDetails = endingSoonDetails,
-                recommendedDetails = recommendedDetails
+                recommendedDetails = recommendedDetails,
+                closingLine = closingLine
             )
             
             Log.d("NotificationHistoryService", "保存する通知履歴: $history")

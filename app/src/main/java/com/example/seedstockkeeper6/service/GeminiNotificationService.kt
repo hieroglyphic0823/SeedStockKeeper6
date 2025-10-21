@@ -78,6 +78,10 @@ class GeminiNotificationService {
             val content = response.text ?: contentFormatter.getDefaultMonthlyContent(dataProcessor.getMonthName(currentMonth))
             
             Log.d("GeminiNotiService", "月次通知内容生成完了")
+            Log.d("GeminiNotiService", "Gemini APIから返された完全なコンテンツ:")
+            Log.d("GeminiNotiService", "==========================================")
+            Log.d("GeminiNotiService", content)
+            Log.d("GeminiNotiService", "==========================================")
             content
             
         } catch (e: Exception) {
@@ -201,6 +205,10 @@ class GeminiNotificationService {
             val content = response.text ?: contentFormatter.getDefaultWeeklyContent()
             
             Log.d("GeminiNotiService", "週次通知内容生成完了")
+            Log.d("GeminiNotiService", "Gemini APIから返された完全なコンテンツ:")
+            Log.d("GeminiNotiService", "==========================================")
+            Log.d("GeminiNotiService", content)
+            Log.d("GeminiNotiService", "==========================================")
             content
             
         } catch (e: Exception) {

@@ -69,7 +69,16 @@ class MonthlyNotificationWorker(
                 getSeedsForUser(uid)
             }
             
-            // GeminiAPIで通知内容を生成
+            // GeminiAPIで通知タイトルと内容を生成
+            val title = geminiService.generateMonthlyNotificationTitle(
+                region = region,
+                prefecture = prefecture,
+                seedInfoUrl = seedInfoUrl,
+                userSeeds = userSeeds,
+                currentMonth = currentMonth,
+                farmOwner = farmOwner,
+                customFarmOwner = customFarmOwner
+            )
             val notificationContent = geminiService.generateMonthlyNotificationContent(
                 region = region,
                 prefecture = prefecture,
@@ -81,7 +90,15 @@ class MonthlyNotificationWorker(
             )
             
             // 通知を送信
-            notificationManager.sendMonthlyRecommendationNotificationWithContent(notificationContent)
+            notificationManager.sendMonthlyRecommendationNotificationWithContent(
+                title = title,
+                content = notificationContent,
+                farmOwner = farmOwner,
+                region = region,
+                prefecture = prefecture,
+                month = currentMonth,
+                seedCount = userSeeds.size
+            )
             
             Result.success()
         } catch (e: Exception) {
@@ -273,8 +290,14 @@ class WeeklyNotificationWorker(
             
             // ユーザーの種データを取得
             val userSeeds = getSeedsForUser(uid)
+            val currentMonth = java.util.Calendar.getInstance().get(java.util.Calendar.MONTH) + 1
             
-            // GeminiAPIで通知内容を生成
+            // GeminiAPIで通知タイトルと内容を生成
+            val title = geminiService.generateWeeklyNotificationTitle(
+                userSeeds = userSeeds,
+                farmOwner = farmOwner,
+                customFarmOwner = customFarmOwner
+            )
             val notificationContent = geminiService.generateWeeklyNotificationContent(
                 userSeeds = userSeeds,
                 farmOwner = farmOwner,
@@ -282,7 +305,15 @@ class WeeklyNotificationWorker(
             )
             
             // 通知を送信
-            notificationManager.sendWeeklyReminderNotificationWithContent(notificationContent)
+            notificationManager.sendWeeklyReminderNotificationWithContent(
+                title = title,
+                content = notificationContent,
+                farmOwner = farmOwner,
+                region = region,
+                prefecture = prefecture,
+                month = currentMonth,
+                seedCount = userSeeds.size
+            )
             
             Result.success()
         } catch (e: Exception) {

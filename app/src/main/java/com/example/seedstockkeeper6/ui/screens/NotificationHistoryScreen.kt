@@ -5,9 +5,14 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
+import androidx.compose.ui.window.Dialog
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -15,11 +20,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.painterResource
+import androidx.compose.foundation.Image
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.graphics.Color as ComposeColor
 import androidx.navigation.NavController
 import com.example.seedstockkeeper6.model.NotificationHistory
 import com.example.seedstockkeeper6.model.NotificationType
 import com.example.seedstockkeeper6.service.NotificationHistoryService
+import com.example.seedstockkeeper6.R
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
@@ -272,19 +280,53 @@ private fun NotificationHistoryCard(
     if (showDetailDialog) {
         AlertDialog(
             onDismissRequest = { showDetailDialog = false },
-            title = { 
-                Text(
-                    text = history.title,
-                    style = MaterialTheme.typography.headlineSmall
-                ) 
+            modifier = Modifier
+                .onSizeChanged { size ->
+                    android.util.Log.d("NotificationHistoryScreen", "AlertDialog全体サイズ: width=${size.width}, height=${size.height}")
+                }
+                .padding(bottom = 4.dp),
+            title = {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.yabumi),
+                            contentDescription = "矢文",
+                            modifier = Modifier
+                                .size(24.dp)
+                                .padding(end = 8.dp)
+                        )
+                        Text(
+                            text = history.title,
+                            style = MaterialTheme.typography.headlineSmall
+                        )
+                    }
+                    IconButton(
+                        onClick = { showDetailDialog = false }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "閉じる",
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
             },
-            modifier = Modifier.padding(vertical = 4.dp),
             text = {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(max = 650.dp) // 表示領域をさらに拡張
+                        .height(800.dp)
                         .verticalScroll(rememberScrollState())
+                        .onSizeChanged { size ->
+                            android.util.Log.d("NotificationHistoryScreen", "本文Columnサイズ: width=${size.width}, height=${size.height}")
+                        }
                 ) {
                     // メタ情報
                     if (history.farmOwner.isNotEmpty() || history.region.isNotEmpty()) {
@@ -318,6 +360,8 @@ private fun NotificationHistoryCard(
                     
                     // 通知内容（全文表示・リッチテキスト風）
                     val display = remember(history.content) { removeJsonCodeBlock(history.content) }
+                    // 表示する本文をログ出力
+                    android.util.Log.d("NotificationHistoryScreen", "表示する本文: $display")
                     val header = remember(display) { display.lineSequence().map { it.trim() }.firstOrNull { it.isNotEmpty() }.orEmpty() }
                     if (header.isNotEmpty()) {
                         Text(
@@ -342,16 +386,38 @@ private fun NotificationHistoryCard(
                     )
                     Spacer(modifier = Modifier.height(4.dp)) // 余白を縮小
                     val extractedRec = if (history.recommendedDetails.isNotEmpty()) history.recommendedDetails.map { it.name to it.desc } else extractSectionItems(display, sectionMarker = "🌟")
-                    val structuredRec = if (history.recommendedSeeds.isNotEmpty()) history.recommendedSeeds.map { it to "" } else null
+                    val structuredRec = if (history.recommendedSeeds.isNotEmpty() && history.recommendedDetails.isEmpty()) history.recommendedSeeds.map { it to "" } else null
+                    android.util.Log.d("NotificationHistoryScreen", "おすすめの種 - extractedRec: $extractedRec, structuredRec: $structuredRec")
                     RichSection(
                         title = "🌟 今月のおすすめ種",
                         items = if (extractedRec.isNotEmpty()) extractedRec else (structuredRec ?: emptyList())
                     )
                     
-                    // 署名部分を抽出して右寄せで表示
-                    val signature = extractSignature(display)
-                    if (signature.isNotEmpty()) {
+                    // アドバイスと署名部分を表示
+                    android.util.Log.d("NotificationHistoryScreen", "history.closingLine: '${history.closingLine}'")
+                    val advice = if (history.closingLine.isNotEmpty()) {
+                        history.closingLine
+                    } else {
+                        // 既存データから動的に抽出
+                        extractAdviceFromContent(history.content)
+                    }
+                    val signature = when (history.farmOwner) {
+                        "水戸黄門" -> "佐々木助三郎 拝"
+                        "お銀" -> "佐々木助三郎 拝"
+                        "八兵衛" -> "助三郎 より"
+                        else -> "助さんより"
+                    }
+                    android.util.Log.d("NotificationHistoryScreen", "アドバイス: '$advice', 署名: '$signature'")
+                    if (advice.isNotEmpty()) {
                         Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = advice,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f)
+                        )
+                    }
+                    if (signature.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(4.dp))
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.End
@@ -366,10 +432,13 @@ private fun NotificationHistoryCard(
                 }
             },
             confirmButton = {
+                // 空のボタンでスペースを確保
                 TextButton(
-                    onClick = { showDetailDialog = false }
+                    onClick = { showDetailDialog = false },
+                    modifier = Modifier.height(0.dp),
+                    contentPadding = PaddingValues(0.dp)
                 ) {
-                    Text("閉じる")
+                    Text("")
                 }
             }
         )
@@ -585,6 +654,39 @@ private fun extractSignature(content: String): String {
     return ""
 }
 
+    // 通知内容からアドバイスと署名を抽出
+    private fun extractAdviceAndSignature(content: String): Pair<String, String> {
+        val lines = content.lines()
+        var advice = ""
+        var signature = ""
+
+        android.util.Log.d("NotificationHistoryScreen", "extractAdviceAndSignature - 入力内容の行数: ${lines.size}")
+        android.util.Log.d("NotificationHistoryScreen", "extractAdviceAndSignature - 最後の10行:")
+        for (i in maxOf(0, lines.size - 10) until lines.size) {
+            android.util.Log.d("NotificationHistoryScreen", "行${i}: '${lines[i].trim()}'")
+        }
+
+        // 最後の数行からアドバイスと署名を探す
+        for (i in lines.size - 1 downTo maxOf(0, lines.size - 10)) {
+            val line = lines[i].trim()
+
+            // 署名を探す
+            if (line.contains("佐々木助三郎 拝") || line.contains("助三郎 より") || line.contains("助さんより")) {
+                signature = line
+                android.util.Log.d("NotificationHistoryScreen", "署名を発見: '$signature'")
+            }
+            // アドバイスを探す（署名の前の行で、短い文）
+            else if (line.isNotEmpty() && line.length <= 50 && !line.startsWith("🌱") && !line.startsWith("⚠️") && !line.startsWith("🌟") && !line.startsWith("【") && !line.contains("佐々木助三郎") && !line.contains("助三郎") && !line.contains("助さん")) {
+                if (advice.isEmpty()) {
+                    advice = line
+                    android.util.Log.d("NotificationHistoryScreen", "アドバイスを発見: '$advice'")
+                }
+            }
+        }
+
+        return advice to signature
+    }
+
 private fun formatDateTime(dateTimeString: String): String {
     return try {
         val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault()).apply {
@@ -597,4 +699,41 @@ private fun formatDateTime(dateTimeString: String): String {
     } catch (e: Exception) {
         dateTimeString
     }
+}
+
+private fun extractAdviceFromContent(content: String): String {
+    val lines = content.lines()
+    val jsonStartIndex = content.indexOf("```json")
+    val jsonEndIndex = if (jsonStartIndex != -1) content.indexOf("```", jsonStartIndex + 7) else -1
+    
+    // 最後の数行からアドバイス（結びの一言）を探す
+    for (i in lines.size - 1 downTo maxOf(0, lines.size - 25)) {
+        val line = lines[i].trim()
+        
+        // JSONブロック内の行は除外
+        if (jsonStartIndex != -1 && jsonEndIndex != -1) {
+            val lineStartIndex = content.indexOf(line)
+            if (lineStartIndex >= jsonStartIndex && lineStartIndex <= jsonEndIndex) {
+                continue
+            }
+        }
+        
+        // 署名の前の行で、アドバイス文を探す
+        if (line.isNotEmpty() && line.length <= 100 && 
+            !line.startsWith("🌱") && !line.startsWith("⚠️") && !line.startsWith("🌟") && 
+            !line.startsWith("【") && !line.startsWith("```") && !line.startsWith("{") && !line.startsWith("}") &&
+            !line.contains("佐々木助三郎") && !line.contains("助三郎") && !line.contains("助さん") &&
+            !line.contains("\"") && !line.contains("name") && !line.contains("desc") &&
+            !line.contains("```") && !line.contains("json") &&
+            // アドバイスらしい文の条件を拡張
+            (line.contains("ご無理") || line.contains("お祈り") || line.contains("心より") || 
+             line.contains("どうぞ") || line.contains("季節") || line.contains("時節") ||
+             line.contains("温かく") || line.contains("寒さ") || line.contains("作業") ||
+             line.contains("実り") || line.contains("豊作") || line.contains("収穫") ||
+             line.contains("ご自愛") || line.contains("励まれ") || line.contains("肌寒") ||
+             line.contains("秋深") || line.contains("農作業") || line.contains("無理なき"))) {
+            return line
+        }
+    }
+    return ""
 }
