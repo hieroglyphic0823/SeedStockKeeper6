@@ -278,10 +278,12 @@ private fun NotificationHistoryCard(
                     style = MaterialTheme.typography.headlineSmall
                 ) 
             },
+            modifier = Modifier.padding(vertical = 4.dp),
             text = {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .heightIn(max = 650.dp) // 表示領域をさらに拡張
                         .verticalScroll(rememberScrollState())
                 ) {
                     // メタ情報
@@ -303,7 +305,7 @@ private fun NotificationHistoryCard(
                                 )
                             }
                         }
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(4.dp)) // 余白を縮小
                     }
                     
                     // 送信日時
@@ -312,7 +314,7 @@ private fun NotificationHistoryCard(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(4.dp)) // 余白を縮小
                     
                     // 通知内容（全文表示・リッチテキスト風）
                     val display = remember(history.content) { removeJsonCodeBlock(history.content) }
@@ -323,34 +325,44 @@ private fun NotificationHistoryCard(
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurface
                         )
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(4.dp)) // 余白を縮小
                     }
                     val extractedThisMonth = if (history.thisMonthDetails.isNotEmpty()) history.thisMonthDetails.map { it.name to it.desc } else extractSectionItems(display, sectionMarker = "🌱")
                     val structuredThisMonth = if (history.thisMonthSeeds.isNotEmpty()) history.thisMonthSeeds.map { it to "" } else null
                     RichSection(
-                        title = "🌱 今月まきどきの種:",
+                        title = "🌱 今月まきどきの種",
                         items = if (extractedThisMonth.isNotEmpty()) extractedThisMonth else (structuredThisMonth ?: emptyList())
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(4.dp)) // 余白を縮小
                     val extractedEnding = if (history.endingSoonDetails.isNotEmpty()) history.endingSoonDetails.map { it.name to it.desc } else extractSectionItems(display, sectionMarker = "⚠️")
                     val structuredEnding = if (history.endingSoonSeeds.isNotEmpty()) history.endingSoonSeeds.map { it to "" } else null
                     RichSection(
-                        title = "⚠️ まき時終了間近:",
+                        title = "⚠️ まき時終了間近",
                         items = if (extractedEnding.isNotEmpty()) extractedEnding else (structuredEnding ?: emptyList())
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(4.dp)) // 余白を縮小
                     val extractedRec = if (history.recommendedDetails.isNotEmpty()) history.recommendedDetails.map { it.name to it.desc } else extractSectionItems(display, sectionMarker = "🌟")
                     val structuredRec = if (history.recommendedSeeds.isNotEmpty()) history.recommendedSeeds.map { it to "" } else null
                     RichSection(
-                        title = "🌟 今月のおすすめ種:",
+                        title = "🌟 今月のおすすめ種",
                         items = if (extractedRec.isNotEmpty()) extractedRec else (structuredRec ?: emptyList())
                     )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text(
-                        text = buildClosingLine(history.farmOwner),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f)
-                    )
+                    
+                    // 署名部分を抽出して右寄せで表示
+                    val signature = extractSignature(display)
+                    if (signature.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.End
+                        ) {
+                            Text(
+                                text = signature,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f)
+                            )
+                        }
+                    }
                 }
             },
             confirmButton = {
@@ -484,7 +496,7 @@ private fun RichSection(title: String, items: List<Pair<String, String>>) {
     )
     if (items.isEmpty()) {
         Text(
-            text = "• 該当なし",
+            text = "該当なし",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
         )
@@ -492,26 +504,19 @@ private fun RichSection(title: String, items: List<Pair<String, String>>) {
     }
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         items.forEach { (name, desc) ->
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Top) {
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(
-                    text = "•", // 必要なら他のアイコンへ差し替え可能
+                    text = name,
                     style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
-                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                if (desc.isNotEmpty()) {
                     Text(
-                        text = name,
+                        text = desc,
                         style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f)
                     )
-                    if (desc.isNotEmpty()) {
-                        Text(
-                            text = desc,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f)
-                        )
-                    }
                 }
             }
         }
@@ -560,11 +565,24 @@ private fun removeJsonCodeBlock(content: String): String {
 
 private fun buildClosingLine(farmOwner: String): String {
     return when (farmOwner) {
-        "水戸黄門" -> "何卒、お健やかにお過ごしくださいますよう。助さん拝"
-        "お銀" -> "どうぞご自愛のうえ、良き菜園日和を。助さんより"
-        "八兵衛" -> "無理せず、うまくやるんだぞ。助さんより"
+        "水戸黄門" -> "かしこ\n佐々木助三郎 拝"
+        "お銀" -> "ご自愛くだされ\n佐々木助三郎 拝"
+        "八兵衛" -> "しっかり働けよ！\n助三郎 より"
         else -> "本日も良き栽培となりますよう。助さんより"
     }
+}
+
+// 通知内容から署名部分を抽出
+private fun extractSignature(content: String): String {
+    val lines = content.lines()
+    // 最後の数行から署名を探す
+    for (i in lines.size - 1 downTo maxOf(0, lines.size - 5)) {
+        val line = lines[i].trim()
+        if (line.contains("佐々木助三郎 拝") || line.contains("助三郎 より") || line.contains("助さんより")) {
+            return line
+        }
+    }
+    return ""
 }
 
 private fun formatDateTime(dateTimeString: String): String {

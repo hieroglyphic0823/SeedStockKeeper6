@@ -6,7 +6,10 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Typeface
 import android.os.Build
+import android.text.SpannableString
+import android.text.style.StyleSpan
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -112,7 +115,7 @@ class NotificationManager(private val context: Context) {
         val content = buildMonthlyNotificationContent(seedsToSowThisMonth, seasonalRecommendations, seedsEndingThisMonth)
         
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(R.mipmap.ic_tanesuke_foreground)
+            .setSmallIcon(R.drawable.ic_tanesuke_white)
             .setContentTitle(title)
             .setContentText(content)
             .setStyle(NotificationCompat.BigTextStyle().bigText(content))
@@ -148,7 +151,7 @@ class NotificationManager(private val context: Context) {
                 val content = buildWeeklyNotificationContent(seedsEndingSoon)
         
                 val notification = NotificationCompat.Builder(context, CHANNEL_ID)
-                    .setSmallIcon(R.mipmap.ic_tanesuke_foreground)
+                    .setSmallIcon(R.drawable.ic_tanesuke_white)
                     .setContentTitle(title)
                     .setContentText(content)
                     .setStyle(NotificationCompat.BigTextStyle().bigText(content))
@@ -173,7 +176,7 @@ class NotificationManager(private val context: Context) {
                 val content = buildWeeklyNotificationContent(seedsEndingSoon)
                 
                 val notification = NotificationCompat.Builder(context, CHANNEL_ID)
-                    .setSmallIcon(R.mipmap.ic_tanesuke_foreground)
+                    .setSmallIcon(R.drawable.ic_tanesuke_white)
                     .setContentTitle(fallbackTitle)
                     .setContentText(content)
                     .setStyle(NotificationCompat.BigTextStyle().bigText(content))
@@ -226,21 +229,21 @@ class NotificationManager(private val context: Context) {
                 )
                 // 通知表示用に「文頭＋種名のみの3セクション」に整形
                 val displayContent = buildCondensedContent(content)
-                val summary = displayContent.lineSequence().map { it.trim() }.firstOrNull { it.isNotEmpty() } ?: ""
+                val summary = displayContent.toString().lineSequence().map { it.trim() }.firstOrNull { it.isNotEmpty() } ?: ""
                 
                 // 通知スタイルを決定（内容に応じて）
-                val notificationStyle = if (displayContent.contains("•") && displayContent.split("•").size > 3) {
+                val notificationStyle = if (displayContent.toString().contains("•") && displayContent.toString().split("•").size > 3) {
                     // リスト形式の内容の場合はInboxStyleを使用
-                    createInboxStyle(displayContent, summary)
+                    createInboxStyle(displayContent.toString(), summary)
                 } else {
                     // 通常のテキストの場合はBigTextStyleを使用
                     NotificationCompat.BigTextStyle()
-                        .bigText(displayContent)
+                        .bigText(displayContent.toString())
                         .setSummaryText("詳細を表示するには通知を展開してください")
                 }
                 
                 val notification = NotificationCompat.Builder(context, CHANNEL_ID)
-                    .setSmallIcon(R.mipmap.ic_tanesuke_foreground)
+                    .setSmallIcon(R.drawable.ic_tanesuke_white)
                     .setContentTitle(title)
                     .setContentText(summary) // 文頭を表示
                     .setStyle(notificationStyle)
@@ -269,7 +272,7 @@ class NotificationManager(private val context: Context) {
                 historyService.saveNotificationHistory(
                     type = NotificationType.MONTHLY,
                     title = title,
-                    content = displayContent,
+                    content = displayContent.toString(),
                     summary = summary,
                     farmOwner = farmOwner,
                     region = region,
@@ -288,7 +291,7 @@ class NotificationManager(private val context: Context) {
                 val fallbackTitle = "今月の種まきおすすめ"
                 
                 val notification = NotificationCompat.Builder(context, CHANNEL_ID)
-                    .setSmallIcon(R.mipmap.ic_tanesuke_foreground)
+                    .setSmallIcon(R.drawable.ic_tanesuke_white)
                     .setContentTitle(fallbackTitle)
                     .setContentText(content)
                     .setStyle(NotificationCompat.BigTextStyle().bigText(content))
@@ -352,17 +355,17 @@ class NotificationManager(private val context: Context) {
             try {
                 val title = geminiService.generateWeeklyNotificationTitle(emptyList(), farmOwner)
                 val displayContent = buildCondensedContent(content)
-                val summary = displayContent.lineSequence().map { it.trim() }.firstOrNull { it.isNotEmpty() } ?: ""
+                val summary = displayContent.toString().lineSequence().map { it.trim() }.firstOrNull { it.isNotEmpty() } ?: ""
                 
                 android.util.Log.d("NotificationManager", "通知タイトル: $title")
                 android.util.Log.d("NotificationManager", "通知内容（最初の100文字）: ${content.take(100)}...")
                 
                 val notification = NotificationCompat.Builder(context, CHANNEL_ID)
-                    .setSmallIcon(R.mipmap.ic_tanesuke_foreground)
+                    .setSmallIcon(R.drawable.ic_tanesuke_white)
                     .setContentTitle(title)
                     .setContentText(summary) // 文頭を表示
                     .setStyle(NotificationCompat.BigTextStyle()
-                        .bigText(content) // 詳細は展開時に表示
+                        .bigText(displayContent) // 詳細は展開時に表示
                         .setSummaryText("詳細を表示するには通知を展開してください"))
                     .setPriority(NotificationCompat.PRIORITY_HIGH)
                     .setAutoCancel(true)
@@ -395,7 +398,7 @@ class NotificationManager(private val context: Context) {
                 historyService.saveNotificationHistory(
                     type = NotificationType.WEEKLY,
                     title = title,
-                    content = displayContent,
+                    content = displayContent.toString(),
                     summary = summary,
                     farmOwner = farmOwner,
                     region = region,
@@ -518,7 +521,7 @@ class NotificationManager(private val context: Context) {
     }
 
     // 文頭 + 各セクションの「種名のみ」を抽出して通知本文用に整形（ラベル: 名前を区切りで表示）
-    private fun buildCondensedContent(content: String): String {
+    private fun buildCondensedContent(content: String): SpannableString {
         val text = removeJsonCodeBlock(content)
         val lines = text.lines()
         val header = lines.firstOrNull { it.trim().isNotEmpty() }?.trim().orEmpty()
@@ -558,10 +561,28 @@ class NotificationManager(private val context: Context) {
         }
         val parts = mutableListOf<String>()
         if (header.isNotEmpty()) parts += header
-        parts += line("今月のまき時：", thisMonth)
-        parts += line("まき時終了間近：", ending)
-        parts += line("おすすめの種：", recommend)
-        return parts.joinToString(separator = "\n")
+        parts += line("【今月のまき時】", thisMonth)
+        parts += line("【まき時終了間近】", ending)
+        parts += line("【おすすめの種】", recommend)
+        
+        val fullText = parts.joinToString(separator = "\n")
+        val spannableString = SpannableString(fullText)
+        
+        // ラベル部分を太文字にする
+        val labels = listOf("【今月のまき時】", "【まき時終了間近】", "【おすすめの種】")
+        labels.forEach { label ->
+            val startIndex = fullText.indexOf(label)
+            if (startIndex != -1) {
+                spannableString.setSpan(
+                    StyleSpan(Typeface.BOLD),
+                    startIndex,
+                    startIndex + label.length,
+                    SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE
+                )
+            }
+        }
+        
+        return spannableString
     }
 
     // 履歴保存用にセクションごとの種名のみを抽出
