@@ -85,14 +85,18 @@ class NotificationContentBuilder {
     
     fun buildCondensedContent(content: String): SpannableString {
         val lines = content.lines()
-        val greeting = lines.firstOrNull { it.isNotBlank() } ?: ""
+        val nonEmptyLines = lines.filter { it.isNotBlank() }
         
-        val spannableString = SpannableString(greeting)
+        // 最大10行まで表示（通知の制限を考慮）
+        val displayLines = nonEmptyLines.take(10)
+        val fullContent = displayLines.joinToString("\n")
+        
+        val spannableString = SpannableString(fullContent)
         
         // セクションラベルを太字にする
-        val sectionLabels = listOf("【今月のまき時】", "【まき時終了間近】", "【おすすめの種】")
+        val sectionLabels = listOf("🌱", "⚠️", "🌟", "【今月のまき時】", "【まき時終了間近】", "【おすすめの種】")
         sectionLabels.forEach { label ->
-            val startIndex = greeting.indexOf(label)
+            val startIndex = fullContent.indexOf(label)
             if (startIndex != -1) {
                 spannableString.setSpan(
                     StyleSpan(Typeface.BOLD),
@@ -106,3 +110,4 @@ class NotificationContentBuilder {
         return spannableString
     }
 }
+

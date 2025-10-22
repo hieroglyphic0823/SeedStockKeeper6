@@ -187,13 +187,22 @@ private fun NotificationHistoryCard(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // ヘッダー（タイトルのみ）
+            // ヘッダー（タイトルとアイコン）
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(modifier = Modifier.weight(1f)) {
+                Row(
+                    modifier = Modifier.weight(1f),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.yabumi3),
+                        contentDescription = "矢文",
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = history.title,
                         style = MaterialTheme.typography.titleMedium,
@@ -227,7 +236,7 @@ private fun NotificationHistoryCard(
             }
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = "今月のまき時: " + (sectionSummary.thisMonth.ifEmpty { "該当なし" }),
+                    text = "今月のまき時 " + (sectionSummary.thisMonth.ifEmpty { "該当なし" }),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
@@ -236,7 +245,7 @@ private fun NotificationHistoryCard(
             }
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = "終了間近: " + (sectionSummary.endingSoon.ifEmpty { "該当なし" }),
+                    text = "終了間近 " + (sectionSummary.endingSoon.ifEmpty { "該当なし" }),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
@@ -286,21 +295,19 @@ private fun NotificationHistoryCard(
                 }
                 .padding(bottom = 4.dp),
             title = {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                Box(
+                    modifier = Modifier.fillMaxWidth()
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.fillMaxWidth()
                     ) {
                         Image(
-                            painter = painterResource(id = R.drawable.yabumi),
+                            painter = painterResource(id = R.drawable.yabumi3),
                             contentDescription = "矢文",
                             modifier = Modifier
                                 .size(24.dp)
-                                .padding(end = 8.dp)
+                                .padding(end = 4.dp)
                         )
                         Text(
                             text = history.title,
@@ -308,7 +315,8 @@ private fun NotificationHistoryCard(
                         )
                     }
                     IconButton(
-                        onClick = { showDetailDialog = false }
+                        onClick = { showDetailDialog = false },
+                        modifier = Modifier.align(Alignment.TopEnd)
                     ) {
                         Icon(
                             imageVector = Icons.Default.Close,
@@ -328,36 +336,6 @@ private fun NotificationHistoryCard(
                             android.util.Log.d("NotificationHistoryScreen", "本文Columnサイズ: width=${size.width}, height=${size.height}")
                         }
                 ) {
-                    // メタ情報
-                    if (history.farmOwner.isNotEmpty() || history.region.isNotEmpty()) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(16.dp)
-                        ) {
-                            if (history.farmOwner.isNotEmpty()) {
-                                Text(
-                                    text = "👤 ${history.farmOwner}",
-                                    style = MaterialTheme.typography.bodySmall
-                                )
-                            }
-                            if (history.region.isNotEmpty()) {
-                                Text(
-                                    text = "📍 ${history.region}",
-                                    style = MaterialTheme.typography.bodySmall
-                                )
-                            }
-                        }
-                        Spacer(modifier = Modifier.height(4.dp)) // 余白を縮小
-                    }
-                    
-                    // 送信日時
-                    Text(
-                        text = formatDateTime(history.sentAt),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                    )
-                    Spacer(modifier = Modifier.height(4.dp)) // 余白を縮小
-                    
                     // 通知内容（全文表示・リッチテキスト風）
                     val display = remember(history.content) { removeJsonCodeBlock(history.content) }
                     // 表示する本文をログ出力
@@ -429,6 +407,38 @@ private fun NotificationHistoryCard(
                             )
                         }
                     }
+                    
+                    // メタ情報（末尾に移動）
+                    Spacer(modifier = Modifier.height(16.dp))
+                    if (history.farmOwner.isNotEmpty() || history.region.isNotEmpty()) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            if (history.farmOwner.isNotEmpty()) {
+                                Text(
+                                    text = "👤 ${history.farmOwner}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                                )
+                            }
+                            if (history.region.isNotEmpty()) {
+                                Text(
+                                    text = "📍 ${history.region}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(4.dp))
+                    }
+                    
+                    // 送信日時（末尾に移動）
+                    Text(
+                        text = formatDateTime(history.sentAt),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                    )
                 }
             },
             confirmButton = {
@@ -608,11 +618,14 @@ private fun extractSectionItems(content: String, sectionMarker: String): List<Pa
                 if (l.startsWith("• ") || l.startsWith("* ") || l.startsWith("- ")) {
                     val raw = l.removePrefix("• ").removePrefix("* ").removePrefix("- ").trim()
                     val nameInQuote = Regex("『([^』]+)』").find(raw)?.groupValues?.getOrNull(1)
-                    val name = nameInQuote ?: raw
+                    val name = (nameInQuote ?: raw).replace("：", "").trim()
                     // 説明は次行（箇条書きや見出しでない）を説明として扱う
                     val desc = if (j + 1 < lines.size) {
                         val next = lines[j + 1].trim()
-                        if (!next.startsWith("• ") && !next.startsWith("* ") && !next.startsWith("- ") && !next.startsWith("🌱") && !next.startsWith("⚠️") && !next.startsWith("🌟") && !next.startsWith("```")) next else ""
+                        if (!next.startsWith("• ") && !next.startsWith("* ") && !next.startsWith("- ") && !next.startsWith("🌱") && !next.startsWith("⚠️") && !next.startsWith("🌟") && !next.startsWith("```")) {
+                            // 説明文の先頭の「：」を削除
+                            next.removePrefix("：").trim()
+                        } else ""
                     } else ""
                     results += name to desc
                 }
