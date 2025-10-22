@@ -97,7 +97,8 @@ class MonthlyNotificationWorker(
                 region = region,
                 prefecture = prefecture,
                 month = currentMonth,
-                seedCount = userSeeds.size
+                seedCount = userSeeds.size,
+                userId = uid
             )
             
             Result.success()
@@ -312,7 +313,8 @@ class WeeklyNotificationWorker(
                 region = region,
                 prefecture = prefecture,
                 month = currentMonth,
-                seedCount = userSeeds.size
+                seedCount = userSeeds.size,
+                userId = uid
             )
             
             Result.success()

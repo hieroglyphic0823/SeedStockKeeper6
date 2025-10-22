@@ -3,6 +3,7 @@ package com.example.seedstockkeeper6.service
 import android.util.Log
 import com.example.seedstockkeeper6.model.NotificationHistory
 import com.example.seedstockkeeper6.model.NotificationType
+import com.example.seedstockkeeper6.model.NotificationData
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
@@ -21,7 +22,6 @@ class NotificationHistoryService {
     suspend fun saveNotificationHistory(
         type: NotificationType,
         title: String,
-        content: String,
         summary: String = "", // 要点を追加
         farmOwner: String,
         region: String,
@@ -51,7 +51,6 @@ class NotificationHistoryService {
             val history = NotificationHistory(
                 type = type,
                 title = title,
-                content = content,
                 summary = summary, // 要点を追加
                 sentAt = now,
                 userId = currentUser.uid,
@@ -146,6 +145,83 @@ class NotificationHistoryService {
             
         } catch (e: Exception) {
             Log.e("NotificationHistoryService", "通知履歴の取得に失敗", e)
+            emptyList()
+        }
+    }
+    
+    /**
+     * JSON形式の通知データを保存
+     */
+    suspend fun saveNotificationData(notificationData: NotificationData): Boolean {
+        return try {
+            val currentUser = auth.currentUser
+            Log.d("NotificationHistoryService", "JSON通知データ保存開始 - currentUser: ${currentUser?.uid}")
+            if (currentUser == null) {
+                Log.w("NotificationHistoryService", "ユーザーが認証されていません")
+                return false
+            }
+            
+            // 通知データをそのままFirebaseに保存
+            val docRef = db.collection("notificationData")
+                .add(notificationData)
+                .await()
+            
+            Log.d("NotificationHistoryService", "JSON通知データを保存しました: ${docRef.id}")
+            true
+            
+        } catch (e: Exception) {
+            Log.e("NotificationHistoryService", "JSON通知データの保存に失敗", e)
+            false
+        }
+    }
+    
+    /**
+     * ユーザーのJSON形式通知データを取得
+     */
+    suspend fun getUserNotificationData(limit: Int = 50): List<NotificationData> {
+        return try {
+            val currentUser = auth.currentUser
+            Log.d("NotificationHistoryService", "JSON通知データ取得開始 - currentUser: ${currentUser?.uid}")
+            
+            if (currentUser == null) {
+                Log.w("NotificationHistoryService", "ユーザーが認証されていません")
+                return emptyList()
+            }
+            
+            val snapshot = db.collection("notificationData")
+                .whereEqualTo("userId", currentUser.uid)
+                .limit(limit.toLong())
+                .get()
+                .await()
+            
+            Log.d("NotificationHistoryService", "JSON通知データ取得完了 - 取得ドキュメント数: ${snapshot.documents.size}")
+            
+            val notificationDataList = snapshot.documents.mapNotNull { doc ->
+                try {
+                    doc.toObject(NotificationData::class.java)
+                } catch (e: Exception) {
+                    Log.w("NotificationHistoryService", "JSON通知データの解析に失敗: ${doc.id}", e)
+                    null
+                }
+            }
+            
+            // 日時順にソート
+            val sortedData = notificationDataList.sortedByDescending { data ->
+                try {
+                    val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault()).apply {
+                        timeZone = TimeZone.getTimeZone("UTC")
+                    }
+                    format.parse(data.sentAt)?.time ?: 0L
+                } catch (e: Exception) {
+                    0L
+                }
+            }
+            
+            Log.d("NotificationHistoryService", "JSON通知データを取得しました: ${sortedData.size}件")
+            sortedData
+            
+        } catch (e: Exception) {
+            Log.e("NotificationHistoryService", "JSON通知データの取得に失敗", e)
             emptyList()
         }
     }

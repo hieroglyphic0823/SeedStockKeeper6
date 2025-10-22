@@ -47,7 +47,8 @@ import com.example.seedstockkeeper6.service.SukesanMessageService
 import com.example.seedstockkeeper6.service.StatisticsService
 import com.example.seedstockkeeper6.service.WeatherService
 import com.example.seedstockkeeper6.ui.components.WeeklyWeatherCard
-import com.example.seedstockkeeper6.model.NotificationHistory
+import com.example.seedstockkeeper6.model.NotificationData
+import com.example.seedstockkeeper6.model.SeedInfo
 import com.example.seedstockkeeper6.service.NotificationHistoryService
 import com.example.seedstockkeeper6.viewmodel.SeedListViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -412,7 +413,7 @@ fun SukesanMessageCard(
     farmLatitude: Double = 35.6762,
     farmLongitude: Double = 139.6503
 ) {
-    var latestNotification by remember { mutableStateOf<NotificationHistory?>(null) }
+    var latestNotification by remember { mutableStateOf<NotificationData?>(null) }
     var isLoading by remember { mutableStateOf(true) }
     var showNotificationDialog by remember { mutableStateOf(false) }
 
@@ -427,14 +428,31 @@ fun SukesanMessageCard(
         if (isPreview) {
             android.util.Log.d("CastleScreen", "プレビュー時は固定メッセージを生成")
             // プレビュー時は固定メッセージ
-            latestNotification = NotificationHistory(
+            latestNotification = NotificationData(
                 id = "preview",
                 title = "弥生の風に乗せて――春の種まきの候、菜園より",
-                content = "お銀、菜園の弥生は1種類の種の播種時期です。恋むすめ（ニンジン）の栽培を楽しんでくださいね。",
-                summary = "まき時：恋むすめ（ニンジン）\n終了間近：春菊（中葉春菊）",
+                summary = "お銀、菜園の弥生は1種類の種の播種時期です。恋むすめ（ニンジン）の栽培を楽しんでくださいね。",
+                farmOwner = farmOwner,
+                region = "温暖地",
+                prefecture = "東京都",
+                month = currentMonth,
+                thisMonthSeeds = listOf(
+                    SeedInfo(
+                        name = "恋むすめ",
+                        variety = "ニンジン",
+                        description = "春の種まきに最適な品種です"
+                    )
+                ),
+                endingSoonSeeds = listOf(
+                    SeedInfo(
+                        name = "春菊",
+                        variety = "中葉春菊",
+                        description = "まき時終了間近です"
+                    )
+                ),
                 sentAt = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE) + "T12:00:00.000Z",
                 userId = "preview",
-                type = com.example.seedstockkeeper6.model.NotificationType.MONTHLY
+                seedCount = 1
             )
             android.util.Log.d("CastleScreen", "プレビュー通知設定完了")
             isLoading = false
@@ -442,9 +460,9 @@ fun SukesanMessageCard(
             android.util.Log.d("CastleScreen", "実装時は通知履歴から最新を取得")
             try {
                 val historyService = NotificationHistoryService()
-                val histories = historyService.getUserNotificationHistory(limit = 1)
-                if (histories.isNotEmpty()) {
-                    latestNotification = histories.first()
+                val notificationDataList = historyService.getUserNotificationData(limit = 1)
+                if (notificationDataList.isNotEmpty()) {
+                    latestNotification = notificationDataList.first()
                     android.util.Log.d("CastleScreen", "最新通知取得成功: ${latestNotification?.title}")
                 } else {
                     android.util.Log.w("CastleScreen", "通知履歴が空です")
@@ -514,7 +532,7 @@ fun SukesanMessageCard(
                         val notification = latestNotification!!
                         
                         // 通知の内容から今月まき時の種と期限切れ間近の種情報を抽出
-                        val (thisMonthSowingSeeds, urgentSeeds) = extractSeedInfoFromNotification(notification.content, seeds)
+                        val (thisMonthSowingSeeds, urgentSeeds) = extractSeedInfoFromNotificationData(notification, seeds)
                         
                         android.util.Log.d("CastleScreen", "通知から抽出した今月まき時の種子数: ${thisMonthSowingSeeds.size}")
                         android.util.Log.d("CastleScreen", "通知から抽出した期限切れ間近の種子数: ${urgentSeeds.size}")
@@ -1198,6 +1216,31 @@ fun SummaryCardWithoutIcon(
 /**
  * 通知の内容から今月まき時の種と期限切れ間近の種情報を抽出
  */
+private fun extractSeedInfoFromNotificationData(notificationData: NotificationData, allSeeds: List<SeedPacket>): Pair<List<SeedPacket>, List<SeedPacket>> {
+    val thisMonthSowingSeeds = mutableListOf<SeedPacket>()
+    val urgentSeeds = mutableListOf<SeedPacket>()
+    
+    android.util.Log.d("CastleScreen", "通知データから抽出開始")
+    
+    // 今月まきどきの種を抽出
+    notificationData.thisMonthSeeds.forEach { seedInfo ->
+        val matchingSeed = allSeeds.find { it.productName == seedInfo.name }
+        if (matchingSeed != null) {
+            thisMonthSowingSeeds.add(matchingSeed)
+        }
+    }
+    
+    // 終了間近の種を抽出
+    notificationData.endingSoonSeeds.forEach { seedInfo ->
+        val matchingSeed = allSeeds.find { it.productName == seedInfo.name }
+        if (matchingSeed != null) {
+            urgentSeeds.add(matchingSeed)
+        }
+    }
+    
+    return thisMonthSowingSeeds to urgentSeeds
+}
+
 private fun extractSeedInfoFromNotification(notificationContent: String, allSeeds: List<SeedPacket>): Pair<List<SeedPacket>, List<SeedPacket>> {
     val thisMonthSowingSeeds = mutableListOf<SeedPacket>()
     val urgentSeeds = mutableListOf<SeedPacket>()
@@ -1473,7 +1516,7 @@ fun PieChart(
  */
 @Composable
 fun NotificationDetailDialog(
-    notification: NotificationHistory,
+    notification: NotificationData,
     onDismiss: () -> Unit
 ) {
     AlertDialog(
@@ -1491,7 +1534,7 @@ fun NotificationDetailDialog(
             ) {
                 // 通知内容
                 Text(
-                    text = notification.content,
+                    text = notification.summary,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface
                 )

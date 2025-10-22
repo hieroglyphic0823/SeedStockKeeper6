@@ -2,6 +2,7 @@ package com.example.seedstockkeeper6.notification
 
 import android.content.Context
 import com.example.seedstockkeeper6.model.SeedPacket
+import com.example.seedstockkeeper6.model.NotificationData
 import com.example.seedstockkeeper6.service.GeminiNotificationService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -15,6 +16,7 @@ class NotificationManager(private val context: Context) {
     private val contentExtractor = NotificationContentExtractor()
     private val sender = NotificationSender(context, contentBuilder, contentExtractor)
     private val geminiService = GeminiNotificationService()
+    private val dataConverter = NotificationDataConverter()
     private val coroutineScope = CoroutineScope(Dispatchers.IO)
     
     companion object {
@@ -63,7 +65,7 @@ class NotificationManager(private val context: Context) {
     }
     
     /**
-     * Gemini AIで生成したコンテンツで月次通知を送信
+     * Gemini AIで生成したコンテンツで月次通知を送信（新しいJSON形式）
      */
     fun sendMonthlyRecommendationNotificationWithContent(
         title: String,
@@ -72,15 +74,27 @@ class NotificationManager(private val context: Context) {
         region: String,
         prefecture: String,
         month: Int,
-        seedCount: Int
+        seedCount: Int,
+        userId: String = ""
     ) {
-        sender.sendMonthlyRecommendationNotificationWithContent(
-            title, content, farmOwner, region, prefecture, month, seedCount
+        // テキスト内容をNotificationDataに変換
+        val notificationData = dataConverter.convertTextToNotificationData(
+            title = title,
+            content = content,
+            farmOwner = farmOwner,
+            region = region,
+            prefecture = prefecture,
+            month = month,
+            notificationType = "MONTHLY",
+            userId = userId
         )
+        
+        // 新しいJSON形式で通知を送信
+        sender.sendNotificationFromData(notificationData)
     }
     
     /**
-     * Gemini AIで生成したコンテンツで週次通知を送信
+     * Gemini AIで生成したコンテンツで週次通知を送信（新しいJSON形式）
      */
     fun sendWeeklyReminderNotificationWithContent(
         title: String,
@@ -89,11 +103,23 @@ class NotificationManager(private val context: Context) {
         region: String,
         prefecture: String,
         month: Int,
-        seedCount: Int
+        seedCount: Int,
+        userId: String = ""
     ) {
-        sender.sendWeeklyReminderNotificationWithContent(
-            title, content, farmOwner, region, prefecture, month, seedCount
+        // テキスト内容をNotificationDataに変換
+        val notificationData = dataConverter.convertTextToNotificationData(
+            title = title,
+            content = content,
+            farmOwner = farmOwner,
+            region = region,
+            prefecture = prefecture,
+            month = month,
+            notificationType = "WEEKLY",
+            userId = userId
         )
+        
+        // 新しいJSON形式で通知を送信
+        sender.sendNotificationFromData(notificationData)
     }
     
     /**

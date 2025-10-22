@@ -40,7 +40,8 @@ import com.example.seedstockkeeper6.model.CalendarEntry
 import com.example.seedstockkeeper6.model.MonthlyStatistics
 import com.example.seedstockkeeper6.service.SukesanMessageService
 import com.example.seedstockkeeper6.service.StatisticsService
-import com.example.seedstockkeeper6.model.NotificationHistory
+import com.example.seedstockkeeper6.model.NotificationData
+import com.example.seedstockkeeper6.model.SeedInfo
 import com.example.seedstockkeeper6.service.NotificationHistoryService
 import com.example.seedstockkeeper6.viewmodel.SeedListViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -125,14 +126,31 @@ fun CastleScreenPreviewContent(
     )
     
     // プレビュー用の通知データ
-    val previewNotification = NotificationHistory(
+    val previewNotification = NotificationData(
         id = "preview",
         title = "弥生の風に乗せて――春の種まきの候、菜園より",
-        content = "お銀、菜園の弥生は1種類の種の播種時期です。恋むすめ（ニンジン）の栽培を楽しんでくださいね。",
-        summary = "まき時：恋むすめ（ニンジン）\n終了間近：春菊（中葉春菊）",
+        summary = "お銀、菜園の弥生は1種類の種の播種時期です。恋むすめ（ニンジン）の栽培を楽しんでくださいね。",
+        farmOwner = farmOwner,
+        region = "温暖地",
+        prefecture = "東京都",
+        month = 5,
+        thisMonthSeeds = listOf(
+            SeedInfo(
+                name = "恋むすめ",
+                variety = "ニンジン",
+                description = "春の種まきに最適な品種です"
+            )
+        ),
+        endingSoonSeeds = listOf(
+            SeedInfo(
+                name = "春菊",
+                variety = "中葉春菊",
+                description = "まき時終了間近です"
+            )
+        ),
         sentAt = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE) + "T12:00:00.000Z",
         userId = "preview",
-        type = com.example.seedstockkeeper6.model.NotificationType.MONTHLY
+        seedCount = 1
     )
     
     // プレビュー用の日付
@@ -159,7 +177,7 @@ fun CastleScreenPreviewContent(
 fun CastleScreenContent(
     seeds: List<SeedPacket>,
     statisticsData: StatisticsData,
-    notification: NotificationHistory?,
+    notification: NotificationData?,
     currentMonth: Int,
     currentYear: Int,
     farmOwner: String,
@@ -397,7 +415,7 @@ fun StatisticItem(
  */
 @Composable
 fun SukesanMessageCard(
-    notification: NotificationHistory,
+    notification: NotificationData,
     farmOwner: String
 ) {
     Card(
@@ -443,7 +461,7 @@ fun SukesanMessageCard(
             Spacer(modifier = Modifier.height(8.dp))
             
             Text(
-                text = notification.content,
+                text = notification.summary,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSecondaryContainer
             )

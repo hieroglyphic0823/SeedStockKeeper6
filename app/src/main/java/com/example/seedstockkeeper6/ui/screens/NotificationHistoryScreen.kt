@@ -26,7 +26,9 @@ import androidx.compose.ui.graphics.Color as ComposeColor
 import androidx.navigation.NavController
 import com.example.seedstockkeeper6.model.NotificationHistory
 import com.example.seedstockkeeper6.model.NotificationType
+import com.example.seedstockkeeper6.model.NotificationData
 import com.example.seedstockkeeper6.service.NotificationHistoryService
+import com.example.seedstockkeeper6.notification.NotificationContentGenerator
 import com.example.seedstockkeeper6.R
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -38,24 +40,25 @@ fun NotificationHistoryScreen(
     navController: NavController
 ) {
     val historyService = remember { NotificationHistoryService() }
+    val contentGenerator = remember { NotificationContentGenerator() }
     val scope = rememberCoroutineScope()
-    var histories by remember { mutableStateOf<List<NotificationHistory>>(emptyList()) }
+    var notificationDataList by remember { mutableStateOf<List<NotificationData>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
     var errorMessage by remember { mutableStateOf("") }
     
-    // 通知履歴を読み込み
+    // 通知データを読み込み
     LaunchedEffect(Unit) {
         try {
-            android.util.Log.d("NotificationHistoryScreen", "通知履歴読み込み開始")
+            android.util.Log.d("NotificationHistoryScreen", "通知データ読み込み開始")
             isLoading = true
             errorMessage = ""
-            val result = historyService.getUserNotificationHistory()
-            android.util.Log.d("NotificationHistoryScreen", "通知履歴読み込み完了 - 取得件数: ${result.size}")
-            android.util.Log.d("NotificationHistoryScreen", "取得した履歴: $result")
-            histories = result
+            val result = historyService.getUserNotificationData()
+            android.util.Log.d("NotificationHistoryScreen", "通知データ読み込み完了 - 取得件数: ${result.size}")
+            android.util.Log.d("NotificationHistoryScreen", "取得したデータ: $result")
+            notificationDataList = result
         } catch (e: Exception) {
-            android.util.Log.e("NotificationHistoryScreen", "通知履歴の読み込みに失敗", e)
-            errorMessage = "通知履歴の読み込みに失敗しました: ${e.message}"
+            android.util.Log.e("NotificationHistoryScreen", "通知データの読み込みに失敗", e)
+            errorMessage = "通知データの読み込みに失敗しました: ${e.message}"
         } finally {
             isLoading = false
         }
@@ -108,9 +111,9 @@ fun NotificationHistoryScreen(
                     }
                 }
             }
-            // 通知履歴リスト
-            else if (histories.isEmpty()) {
-                android.util.Log.d("NotificationHistoryScreen", "空の履歴を表示 - histories.isEmpty() = true")
+            // 通知データリスト
+            else if (notificationDataList.isEmpty()) {
+                android.util.Log.d("NotificationHistoryScreen", "空のデータを表示 - notificationDataList.isEmpty() = true")
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
@@ -139,22 +142,15 @@ fun NotificationHistoryScreen(
                 }
             }
             else {
-                android.util.Log.d("NotificationHistoryScreen", "履歴リストを表示 - 件数: ${histories.size}")
+                android.util.Log.d("NotificationHistoryScreen", "データリストを表示 - 件数: ${notificationDataList.size}")
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    items(histories) { history ->
-                        NotificationHistoryCard(
-                            history = history,
-                            onDelete = { documentId ->
-                                scope.launch {
-                                    val success = historyService.deleteNotificationHistory(documentId)
-                                    if (success) {
-                                        // 削除成功時はリストから除外
-                                        histories = histories.filter { it.documentId != documentId }
-                                    }
-                                }
-                            }
+                    items(notificationDataList) { notificationData ->
+                        NotificationDataCard(
+                            notificationData = notificationData,
+                            contentGenerator = contentGenerator,
+                            onDelete = { /* TODO: 削除機能を実装 */ }
                         )
                     }
                 }
@@ -165,9 +161,10 @@ fun NotificationHistoryScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun NotificationHistoryCard(
-    history: NotificationHistory,
-    onDelete: (String) -> Unit
+private fun NotificationDataCard(
+    notificationData: NotificationData,
+    contentGenerator: NotificationContentGenerator,
+    onDelete: () -> Unit
 ) {
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showDetailDialog by remember { mutableStateOf(false) }
@@ -175,10 +172,11 @@ private fun NotificationHistoryCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = when (history.type) {
-                NotificationType.MONTHLY -> MaterialTheme.colorScheme.primaryContainer
-                NotificationType.WEEKLY -> MaterialTheme.colorScheme.secondaryContainer
-                NotificationType.CUSTOM -> MaterialTheme.colorScheme.tertiaryContainer
+            containerColor = when (notificationData.notificationType) {
+                "MONTHLY" -> MaterialTheme.colorScheme.primaryContainer
+                "WEEKLY" -> MaterialTheme.colorScheme.secondaryContainer
+                "CUSTOM" -> MaterialTheme.colorScheme.tertiaryContainer
+                else -> MaterialTheme.colorScheme.primaryContainer
             }
         ),
         onClick = { showDetailDialog = true }
@@ -204,7 +202,7 @@ private fun NotificationHistoryCard(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = history.title,
+                        text = notificationData.title,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                         maxLines = 1,
@@ -224,15 +222,11 @@ private fun NotificationHistoryCard(
             }
             
             // カード本体（3行: タイトルの下に「今月まき時」「まき時終了」）
-            val sectionSummary = remember(history) {
-                if (history.thisMonthSeeds.isNotEmpty() || history.endingSoonSeeds.isNotEmpty()) {
-                    SectionSummary(
-                        thisMonth = history.thisMonthSeeds.firstOrNull() ?: "",
-                        endingSoon = history.endingSoonSeeds.firstOrNull() ?: ""
-                    )
-                } else {
-                    extractSectionSummaries(history.content)
-                }
+            val sectionSummary = remember(notificationData) {
+                SectionSummary(
+                    thisMonth = notificationData.thisMonthSeeds.firstOrNull()?.name ?: "",
+                    endingSoon = notificationData.endingSoonSeeds.firstOrNull()?.name ?: ""
+                )
             }
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Text(
@@ -254,28 +248,28 @@ private fun NotificationHistoryCard(
             }
             
             // メタ情報
-            if (history.farmOwner.isNotEmpty() || history.region.isNotEmpty()) {
+            if (notificationData.farmOwner.isNotEmpty() || notificationData.region.isNotEmpty()) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    if (history.farmOwner.isNotEmpty()) {
+                    if (notificationData.farmOwner.isNotEmpty()) {
                         Text(
-                            text = "👤 ${history.farmOwner}",
+                            text = "👤 ${notificationData.farmOwner}",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                         )
                     }
-                    if (history.region.isNotEmpty()) {
+                    if (notificationData.region.isNotEmpty()) {
                         Text(
-                            text = "📍 ${history.region}",
+                            text = "📍 ${notificationData.region}",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                         )
                     }
-                    if (history.seedCount > 0) {
+                    if (notificationData.seedCount > 0) {
                         Text(
-                            text = "🌱 ${history.seedCount}種類",
+                            text = "🌱 ${notificationData.seedCount}種類",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                         )
@@ -310,7 +304,7 @@ private fun NotificationHistoryCard(
                                 .padding(end = 4.dp)
                         )
                         Text(
-                            text = history.title,
+                            text = notificationData.title,
                             style = MaterialTheme.typography.headlineSmall
                         )
                     }
@@ -336,72 +330,71 @@ private fun NotificationHistoryCard(
                             android.util.Log.d("NotificationHistoryScreen", "本文Columnサイズ: width=${size.width}, height=${size.height}")
                         }
                 ) {
-                    // 通知内容（全文表示・リッチテキスト風）
-                    val display = remember(history.content) { removeJsonCodeBlock(history.content) }
-                    // 表示する本文をログ出力
-                    android.util.Log.d("NotificationHistoryScreen", "表示する本文: $display")
-                    val header = remember(display) { display.lineSequence().map { it.trim() }.firstOrNull { it.isNotEmpty() }.orEmpty() }
-                    if (header.isNotEmpty()) {
+                    // 通知内容（JSONデータから生成）
+                    val content = remember(notificationData) { contentGenerator.generateContent(notificationData) }
+                    android.util.Log.d("NotificationHistoryScreen", "表示する本文: $content")
+                    
+                    // ヘッダー
+                    if (notificationData.summary.isNotEmpty()) {
                         Text(
-                            text = header,
+                            text = notificationData.summary,
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurface
                         )
-                        Spacer(modifier = Modifier.height(4.dp)) // 余白を縮小
+                        Spacer(modifier = Modifier.height(4.dp))
                     }
-                    val extractedThisMonth = if (history.thisMonthDetails.isNotEmpty()) history.thisMonthDetails.map { it.name to it.desc } else extractSectionItems(display, sectionMarker = "🌱")
-                    val structuredThisMonth = if (history.thisMonthSeeds.isNotEmpty()) history.thisMonthSeeds.map { it to "" } else null
-                    RichSection(
-                        title = "🌱 今月まきどきの種",
-                        items = if (extractedThisMonth.isNotEmpty()) extractedThisMonth else (structuredThisMonth ?: emptyList())
-                    )
-                    Spacer(modifier = Modifier.height(4.dp)) // 余白を縮小
-                    val extractedEnding = if (history.endingSoonDetails.isNotEmpty()) history.endingSoonDetails.map { it.name to it.desc } else extractSectionItems(display, sectionMarker = "⚠️")
-                    val structuredEnding = if (history.endingSoonSeeds.isNotEmpty()) history.endingSoonSeeds.map { it to "" } else null
-                    RichSection(
-                        title = "⚠️ まき時終了間近",
-                        items = if (extractedEnding.isNotEmpty()) extractedEnding else (structuredEnding ?: emptyList())
-                    )
-                    Spacer(modifier = Modifier.height(4.dp)) // 余白を縮小
-                    val extractedRec = if (history.recommendedDetails.isNotEmpty()) history.recommendedDetails.map { it.name to it.desc } else extractSectionItems(display, sectionMarker = "🌟")
-                    val structuredRec = if (history.recommendedSeeds.isNotEmpty() && history.recommendedDetails.isEmpty()) history.recommendedSeeds.map { it to "" } else null
-                    android.util.Log.d("NotificationHistoryScreen", "おすすめの種 - extractedRec: $extractedRec, structuredRec: $structuredRec")
-                    RichSection(
-                        title = "🌟 今月のおすすめ種",
-                        items = if (extractedRec.isNotEmpty()) extractedRec else (structuredRec ?: emptyList())
-                    )
+                    
+                    // 今月まきどきの種
+                    if (notificationData.thisMonthSeeds.isNotEmpty()) {
+                        RichSection(
+                            title = "🌱 今月まきどきの種",
+                            items = notificationData.thisMonthSeeds.map { it.name to it.description }
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                    }
+                    
+                    // 終了間近の種
+                    if (notificationData.endingSoonSeeds.isNotEmpty()) {
+                        RichSection(
+                            title = "⚠️ まき時終了間近",
+                            items = notificationData.endingSoonSeeds.map { it.name to it.description }
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                    }
+                    
+                    // おすすめの種
+                    if (notificationData.recommendedSeeds.isNotEmpty()) {
+                        RichSection(
+                            title = "🌟 今月のおすすめ種",
+                            items = notificationData.recommendedSeeds.map { it.name to it.description }
+                        )
+                    }
                     
                     // アドバイスと署名部分を表示
-                    android.util.Log.d("NotificationHistoryScreen", "history.closingLine: '${history.closingLine}'")
-                    val advice = if (history.closingLine.isNotEmpty()) {
-                        history.closingLine
-                    } else {
-                        // 既存データから動的に抽出
-                        extractAdviceFromContent(history.content)
-                    }
-                    val signature = when (history.farmOwner) {
-                        "水戸黄門" -> "佐々木助三郎 拝"
-                        "お銀" -> "佐々木助三郎 拝"
-                        "八兵衛" -> "助三郎 より"
-                        else -> "助さんより"
-                    }
-                    android.util.Log.d("NotificationHistoryScreen", "アドバイス: '$advice', 署名: '$signature'")
-                    if (advice.isNotEmpty()) {
+                    if (notificationData.advice.isNotEmpty()) {
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = advice,
+                            text = notificationData.advice,
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f)
                         )
                     }
-                    if (signature.isNotEmpty()) {
+                    if (notificationData.closingLine.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = notificationData.closingLine,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f)
+                        )
+                    }
+                    if (notificationData.signature.isNotEmpty()) {
                         Spacer(modifier = Modifier.height(4.dp))
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.End
                         ) {
                             Text(
-                                text = signature,
+                                text = notificationData.signature,
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f)
                             )
@@ -410,21 +403,21 @@ private fun NotificationHistoryCard(
                     
                     // メタ情報（末尾に移動）
                     Spacer(modifier = Modifier.height(16.dp))
-                    if (history.farmOwner.isNotEmpty() || history.region.isNotEmpty()) {
+                    if (notificationData.farmOwner.isNotEmpty() || notificationData.region.isNotEmpty()) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
-                            if (history.farmOwner.isNotEmpty()) {
+                            if (notificationData.farmOwner.isNotEmpty()) {
                                 Text(
-                                    text = "👤 ${history.farmOwner}",
+                                    text = "👤 ${notificationData.farmOwner}",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                                 )
                             }
-                            if (history.region.isNotEmpty()) {
+                            if (notificationData.region.isNotEmpty()) {
                                 Text(
-                                    text = "📍 ${history.region}",
+                                    text = "📍 ${notificationData.region}",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                                 )
@@ -435,7 +428,7 @@ private fun NotificationHistoryCard(
                     
                     // 送信日時（末尾に移動）
                     Text(
-                        text = formatDateTime(history.sentAt),
+                        text = formatDateTime(notificationData.sentAt),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                     )
@@ -464,7 +457,7 @@ private fun NotificationHistoryCard(
                 TextButton(
                     onClick = {
                         showDeleteDialog = false
-                        history.documentId?.let { onDelete(it) }
+                        onDelete()
                     }
                 ) {
                     Text("削除")
@@ -750,3 +743,4 @@ private fun extractAdviceFromContent(content: String): String {
     }
     return ""
 }
+
