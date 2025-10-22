@@ -43,11 +43,6 @@ class NotificationContentGenerator {
             content.append("\n")
         }
         
-        // アドバイス
-        if (notificationData.advice.isNotEmpty()) {
-            content.append(notificationData.advice).append("\n\n")
-        }
-        
         // 結びの文
         if (notificationData.closingLine.isNotEmpty()) {
             content.append(notificationData.closingLine).append("\n")
@@ -67,25 +62,25 @@ class NotificationContentGenerator {
     fun generateCondensedContent(notificationData: NotificationData): String {
         val content = StringBuilder()
         
-        // ヘッダー
-        if (notificationData.summary.isNotEmpty()) {
-            content.append(notificationData.summary).append("\n\n")
-        }
-        
         // 今月まきどきの種（最大3つまで）
         if (notificationData.thisMonthSeeds.isNotEmpty()) {
             content.append("🌱 今月まきどきの種:\n")
             notificationData.thisMonthSeeds.take(3).forEach { seed ->
-                content.append("• ${seed.name} (${seed.variety})\n")
+                content.append(" ${seed.name} (${seed.variety})\n")
             }
             content.append("\n")
         }
         
         // 終了間近の種（最大3つまで）
         if (notificationData.endingSoonSeeds.isNotEmpty()) {
-            content.append("⚠️ 終了間近:\n")
+            content.append("終了間近:\n")
             notificationData.endingSoonSeeds.take(3).forEach { seed ->
-                content.append("• ${seed.name} (${seed.variety})\n")
+                val expirationInfo = if (seed.expirationYear > 0 && seed.expirationMonth > 0) {
+                    " - 有効期限: ${seed.expirationYear}年${seed.expirationMonth}月"
+                } else {
+                    ""
+                }
+                content.append(" ${seed.name} (${seed.variety})${expirationInfo}\n")
             }
             content.append("\n")
         }
@@ -94,7 +89,7 @@ class NotificationContentGenerator {
         if (notificationData.recommendedSeeds.isNotEmpty()) {
             content.append("🌟 今月のおすすめ種:\n")
             notificationData.recommendedSeeds.take(3).forEach { seed ->
-                content.append("• ${seed.name} (${seed.variety})\n")
+                content.append(" ${seed.name} (${seed.variety})\n")
             }
         }
         
@@ -106,7 +101,7 @@ class NotificationContentGenerator {
      */
     fun generateSummary(notificationData: NotificationData): String {
         return when (notificationData.notificationType) {
-            "MONTHLY" -> "今月の種まき情報をお知らせします"
+            "MONTHLY" -> "種まきのタイミングをお知らせします"
             "WEEKLY" -> "種まき期限のお知らせ"
             "CUSTOM" -> "種まきに関するお知らせ"
             else -> "種まき通知"

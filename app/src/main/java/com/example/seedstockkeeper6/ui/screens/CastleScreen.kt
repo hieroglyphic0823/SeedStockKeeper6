@@ -531,26 +531,38 @@ fun SukesanMessageCard(
                     } else if (latestNotification != null) {
                         val notification = latestNotification!!
                         
-                        // 通知の内容から今月まき時の種と期限切れ間近の種情報を抽出
+                        // 通知の内容からまきどきの種と期限切れ間近の種情報を抽出
                         val (thisMonthSowingSeeds, urgentSeeds) = extractSeedInfoFromNotificationData(notification, seeds)
                         
-                        android.util.Log.d("CastleScreen", "通知から抽出した今月まき時の種子数: ${thisMonthSowingSeeds.size}")
+                        android.util.Log.d("CastleScreen", "通知から抽出したまきどきの種子数: ${thisMonthSowingSeeds.size}")
                         android.util.Log.d("CastleScreen", "通知から抽出した期限切れ間近の種子数: ${urgentSeeds.size}")
                         
                         Column {
                             // 通知タイトル（1行）
-                            Text(
-                                text = notification.title,
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Normal,
-                                color = Color.Black,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Image(
+                                    painter = painterResource(id = R.drawable.yabumi_red),
+                                    contentDescription = "矢文",
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = notification.title,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Normal,
+                                    color = Color.Black,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
 
                             Spacer(modifier = Modifier.height(8.dp))
 
-                            // 今月まき時の種情報
+                            // まきどきの種情報
                             if (thisMonthSowingSeeds.isNotEmpty()) {
                                 val seedNames = thisMonthSowingSeeds.take(3).joinToString("、") { it.productName }
                                 val displayText = if (thisMonthSowingSeeds.size > 3) {
@@ -564,7 +576,7 @@ fun SukesanMessageCard(
                                         .horizontalScroll(rememberScrollState())
                                 ) {
                                     Text(
-                                        text = "🌱 今月まき時: $displayText",
+                                        text = "🌱 まきどき: $displayText",
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = Color.Black,
                                         maxLines = 1,
@@ -573,7 +585,7 @@ fun SukesanMessageCard(
                                 }
                             } else {
                                 Text(
-                                    text = "🌱 今月まき時: 該当なし",
+                                    text = "🌱 まきどき: 該当なし",
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = Color.Black
                                 )
@@ -595,7 +607,7 @@ fun SukesanMessageCard(
                                         .horizontalScroll(rememberScrollState())
                                 ) {
                                     Text(
-                                        text = "⚠️ まき時終了間近: $displayText",
+                                        text = "終了間近: $displayText",
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = Color.Black,
                                         maxLines = 1,
@@ -604,7 +616,7 @@ fun SukesanMessageCard(
                                 }
                             } else {
                                 Text(
-                                    text = "⚠️ まき時終了間近: 該当なし",
+                                    text = "終了間近: 該当なし",
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = Color.Black
                                 )
@@ -706,7 +718,7 @@ fun SowingSummaryCards(
             }
             
             SummaryCardWithImageIcon(
-                iconResource = R.drawable.diamond_exclamation,
+                iconResource = R.drawable.crisis,
                 title = "終了間近",
                 value = "$urgentSeedsCount",
                 subtitle = "",
@@ -1214,7 +1226,7 @@ fun SummaryCardWithoutIcon(
 }
 
 /**
- * 通知の内容から今月まき時の種と期限切れ間近の種情報を抽出
+ * 通知の内容からまきどきの種と期限切れ間近の種情報を抽出
  */
 private fun extractSeedInfoFromNotificationData(notificationData: NotificationData, allSeeds: List<SeedPacket>): Pair<List<SeedPacket>, List<SeedPacket>> {
     val thisMonthSowingSeeds = mutableListOf<SeedPacket>()
@@ -1256,10 +1268,10 @@ private fun extractSeedInfoFromNotification(notificationContent: String, allSeed
     val thisMonthPattern = Regex("🌱\\s+(?:\\*\\*)?今月まきどきの種:?\\s*(?:\\*\\*)?")
     val urgentPattern = Regex("⚠️\\s+(?:\\*\\*)?まき時終了間近:?\\s*(?:\\*\\*)?")
     
-    android.util.Log.d("CastleScreen", "今月まき時のパターンマッチ: ${thisMonthPattern.find(notificationContent) != null}")
+    android.util.Log.d("CastleScreen", "まきどきのパターンマッチ: ${thisMonthPattern.find(notificationContent) != null}")
     android.util.Log.d("CastleScreen", "期限切れ間近のパターンマッチ: ${urgentPattern.find(notificationContent) != null}")
     
-    // 今月まき時の種を抽出
+    // まきどきの種を抽出
     val thisMonthMatch = thisMonthPattern.find(notificationContent)
     if (thisMonthMatch != null) {
         val startIndex = thisMonthMatch.range.last + 1
@@ -1269,13 +1281,13 @@ private fun extractSeedInfoFromNotification(notificationContent: String, allSeed
         val endIndex = listOf(nextIdx1, nextIdx2).filter { it >= 0 }.minOrNull() ?: notificationContent.length
         val thisMonthText = notificationContent.substring(startIndex, endIndex).trim()
         
-        android.util.Log.d("CastleScreen", "今月まき時のテキスト: $thisMonthText")
+        android.util.Log.d("CastleScreen", "まきどきのテキスト: $thisMonthText")
         
         if (thisMonthText != "該当なし") {
             // 種の名前を抽出（『種名』の形式）
             val seedNamePattern = "『([^』]+)』".toRegex()
             val matches = seedNamePattern.findAll(thisMonthText)
-            android.util.Log.d("CastleScreen", "今月まき時の正規表現マッチ数: ${matches.count()}")
+            android.util.Log.d("CastleScreen", "まきどきの正規表現マッチ数: ${matches.count()}")
             matches.forEach { match ->
                 val seedName = match.groupValues[1].trim()
                 android.util.Log.d("CastleScreen", "抽出した種名: $seedName")
@@ -1340,7 +1352,7 @@ private fun extractSeedInfoFromNotification(notificationContent: String, allSeed
         }
     }
     
-    android.util.Log.d("CastleScreen", "通知内容から抽出: 今月まき時=${thisMonthSowingSeeds.map { it.productName }}, 期限切れ間近=${urgentSeeds.map { it.productName }}")
+    android.util.Log.d("CastleScreen", "通知内容から抽出: まきどき=${thisMonthSowingSeeds.map { it.productName }}, 期限切れ間近=${urgentSeeds.map { it.productName }}")
     
     return Pair(thisMonthSowingSeeds, urgentSeeds)
 }

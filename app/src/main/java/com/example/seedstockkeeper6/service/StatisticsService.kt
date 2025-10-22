@@ -139,7 +139,7 @@ class StatisticsService {
             ownerUid = ownerUid
         )
         
-        Log.d("StatisticsService", "集計完了: 総数=${statistics.totalSeeds}, 今月まき時=${statistics.thisMonthSowingCount}, 終了間近=${statistics.urgentSeedsCount}")
+        Log.d("StatisticsService", "集計完了: 総数=${statistics.totalSeeds}, まきどき=${statistics.thisMonthSowingCount}, 終了間近=${statistics.urgentSeedsCount}")
         
         return statistics
     }

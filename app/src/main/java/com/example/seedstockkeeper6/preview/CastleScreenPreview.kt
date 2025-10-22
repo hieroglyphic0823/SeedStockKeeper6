@@ -325,7 +325,7 @@ fun StatisticsCard(
                 )
                 
                 StatisticItem(
-                    label = "今月まき時",
+                    label = "まきどき",
                     value = statisticsData.thisMonthSowingCount.toString(),
                     icon = Icons.Filled.Schedule
                 )

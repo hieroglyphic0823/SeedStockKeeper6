@@ -366,7 +366,7 @@ fun SimpleNotificationPreviewScreen(navController: NavController) {
                                     fontWeight = FontWeight.SemiBold
                                 )
                                 Text(
-                                    text = "🌱 今月まき時の種:\n• 恋むすめ (ニンジン)\n• サラダミックス (レタス)\n\n🌟 季節のおすすめ:\n• 春野菜の種まきシーズンです\n• トマト、ナス、ピーマンの準備を始めましょう\n• レタス、キャベツの種まきが最適です\n\n⚠️ まき時終了間近:\n• 春菊 (中葉春菊)",
+                                    text = "🌱 まきどきの種:\n• 恋むすめ (ニンジン)\n• サラダミックス (レタス)\n\n🌟 季節のおすすめ:\n• 春野菜の種まきシーズンです\n• トマト、ナス、ピーマンの準備を始めましょう\n• レタス、キャベツの種まきが最適です\n\n⚠️ まき時終了間近:\n• 春菊 (中葉春菊)",
                                     style = MaterialTheme.typography.bodyLarge,
                                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
                                 )

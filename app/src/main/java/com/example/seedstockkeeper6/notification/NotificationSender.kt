@@ -32,6 +32,7 @@ class NotificationSender(
     }
     
     fun sendMonthlyRecommendationNotification(
+        title: String,
         seedsThisMonth: List<SeedPacket>,
         seedsEndingSoon: List<SeedPacket>,
         recommendedSeeds: List<SeedPacket>,
@@ -46,9 +47,9 @@ class NotificationSender(
         
         val notification = NotificationCompat.Builder(context, NotificationChannelManager.CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_tanesuke_white)
-            .setContentTitle("今月の種まき情報")
-            .setContentText("種まきのタイミングをお知らせします")
-            .setStyle(contentBuilder.createInboxStyle(content, "今月の種まき情報"))
+            .setContentTitle(title)
+            .setContentText(title)
+            .setStyle(contentBuilder.createInboxStyle(content, title))
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setContentIntent(createPendingIntent())
             .setAutoCancel(true)
@@ -65,7 +66,7 @@ class NotificationSender(
         coroutineScope.launch {
             historyService.saveNotificationHistory(
                 type = NotificationType.MONTHLY,
-                title = "今月の種まき情報",
+                title = title,
                 summary = content.lines().firstOrNull { it.isNotBlank() } ?: "",
                 farmOwner = farmOwner,
                 region = region,
@@ -79,14 +80,14 @@ class NotificationSender(
         }
     }
     
-    fun sendWeeklyReminderNotification(seedsEndingSoon: List<SeedPacket>) {
+    fun sendWeeklyReminderNotification(title: String, seedsEndingSoon: List<SeedPacket>) {
         val content = contentBuilder.buildWeeklyNotificationContent(seedsEndingSoon)
         
         val notification = NotificationCompat.Builder(context, NotificationChannelManager.CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_tanesuke_white)
-            .setContentTitle("種まき期限のお知らせ")
-            .setContentText("まき時終了間近の種があります")
-            .setStyle(contentBuilder.createInboxStyle(content, "種まき期限のお知らせ"))
+            .setContentTitle(title)
+            .setContentText(title)
+            .setStyle(contentBuilder.createInboxStyle(content, title))
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setContentIntent(createPendingIntent())
             .setAutoCancel(true)
@@ -103,7 +104,7 @@ class NotificationSender(
         coroutineScope.launch {
             historyService.saveNotificationHistory(
                 type = NotificationType.WEEKLY,
-                title = "種まき期限のお知らせ",
+                title = title,
                 summary = content.lines().firstOrNull { it.isNotBlank() } ?: "",
                 farmOwner = "",
                 region = "",

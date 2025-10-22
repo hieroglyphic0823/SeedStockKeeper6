@@ -105,17 +105,22 @@ class NotificationPromptGenerator {
             【指示】
             1. 文頭に、農園主「$farmOwner」に対応した一言あいさつを入れる
             2. 「今月まきどき」「終了間近」「おすすめ」の3セクションに分けてリスト表示する
-            3. 各種については「今、なぜまくべきか」「注意点」など、簡潔に説明（必ず40文字以内の1文）
+            3. 各種については「今、なぜまくべきか」「注意点」など、簡潔に説明（必ず50文字以内の1文）
             4. 全体はくどくなりすぎないように。文量を抑え、読みやすく親しみやすく。
             5. キャラクターに応じた言葉遣いにする（以下参照）
             6. 種名は必ず『』で囲んで表示する（例：『恋むすめ』『ニンジン』）
+            
+            【各セクションの内容】
+            - 「今月まきどき」: ユーザーが登録している種で今月が播種期間の種
+            - 「終了間近」: ユーザーが登録している種で今月が播種期間の終了月の種
+            - 「おすすめ」: 【参考情報（おすすめ種情報）】で提供された種から、地域・季節に適したものを選択（最低1つは必ず含める）
 
             【重要】回答は必ず以下のJSON形式で出力してください：
 
             ```json
             {
               "notificationType": "MONTHLY",
-              "title": "今月の種まき情報",
+              "title": "${getJapaneseMonthName(currentMonth)}すけさん便り",
               "summary": "農園主への挨拶文",
               "farmOwner": "$farmOwner",
               "region": "$region",
@@ -132,7 +137,9 @@ class NotificationPromptGenerator {
                 {
                   "name": "種名",
                   "variety": "品種名", 
-                  "description": "説明文（40文字以内）"
+                  "description": "説明文（40文字以内）",
+                  "expirationYear": 2026,
+                  "expirationMonth": 10
                 }
               ],
               "recommendedSeeds": [
@@ -142,7 +149,6 @@ class NotificationPromptGenerator {
                   "description": "説明文（40文字以内）"
                 }
               ],
-              "advice": "アドバイス文",
               "closingLine": "結びの文",
               "signature": "署名"
             }
@@ -158,17 +164,14 @@ class NotificationPromptGenerator {
             - その他の場合:
               「$farmOwner 殿、$monthName の作物について進言申し上げまする。」
 
-            【アドバイス（adviceフィールドに設定）】
-            農園主のキャラクターと季節・天候に合った一言アドバイスを1行で生成してください：
+            【結びの文（closingLineフィールドに設定）】
+            農園主のキャラクターと季節・天候に合った励ましのメッセージ（36文字以内）を農園主のキャラクターに応じて生成してください：
             - 農園主（「水戸黄門」「お銀」「八兵衛」のいずれか）に応じた言葉遣い
             - $monthName を反映した内容
             - 例：
               - 「ご無理なさらず、温かくして作業なされませ。」
               - 「寒さに気をつけて、土と向き合ってくだされ。」
               - 「防寒大事だぞ！明日も気張ってこーぜ！」
-
-            【結びの文（closingLineフィールドに設定）】
-            この月の農作業を励ますメッセージ（36文字以内）を農園主のキャラクターに応じて生成してください。
 
             【署名（signatureフィールドに設定）】
             農園主に応じた署名を使用してください：
@@ -369,7 +372,14 @@ class NotificationPromptGenerator {
         if (endingThisMonthSeeds.isNotEmpty()) {
             content.appendLine("⚠️ 終了間近:")
             endingThisMonthSeeds.forEach { seed ->
-                content.appendLine("・${seed.productName} (${seed.variety}) - ${seed.family}")
+                val expirationInfo = seed.calendar?.firstOrNull()?.let { entry ->
+                    if (entry.expirationYear > 0 && entry.expirationMonth > 0) {
+                        " - 有効期限: ${entry.expirationYear}年${entry.expirationMonth}月"
+                    } else {
+                        ""
+                    }
+                } ?: ""
+                content.appendLine("・${seed.productName} (${seed.variety}) - ${seed.family}${expirationInfo}")
             }
             content.appendLine()
         } else {
@@ -484,5 +494,26 @@ class NotificationPromptGenerator {
         val firstDayOfYear = date.withDayOfYear(1)
         val dayOfYear = date.dayOfYear
         return ((dayOfYear - firstDayOfYear.dayOfWeek.value + 6) / 7) + 1
+    }
+    
+    /**
+     * 日本語の月名を取得（和風月名）
+     */
+    private fun getJapaneseMonthName(month: Int): String {
+        return when (month) {
+            1 -> "睦月"
+            2 -> "如月"
+            3 -> "弥生"
+            4 -> "卯月"
+            5 -> "皐月"
+            6 -> "水無月"
+            7 -> "文月"
+            8 -> "葉月"
+            9 -> "長月"
+            10 -> "神無月"
+            11 -> "霜月"
+            12 -> "師走"
+            else -> "今月"
+        }
     }
 }

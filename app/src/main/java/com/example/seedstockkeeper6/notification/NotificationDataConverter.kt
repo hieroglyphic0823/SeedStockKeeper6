@@ -86,7 +86,6 @@ class NotificationDataConverter {
             thisMonthSeeds = parseSeedInfoArray(jsonObject.getAsJsonArray("thisMonthSeeds")),
             endingSoonSeeds = parseSeedInfoArray(jsonObject.getAsJsonArray("endingSoonSeeds")),
             recommendedSeeds = parseSeedInfoArray(jsonObject.getAsJsonArray("recommendedSeeds")),
-            advice = jsonObject.get("advice")?.asString ?: "",
             closingLine = jsonObject.get("closingLine")?.asString ?: "",
             signature = jsonObject.get("signature")?.asString ?: "",
             sentAt = getCurrentTimestamp(),
@@ -117,7 +116,6 @@ class NotificationDataConverter {
         val endingSoonSeeds = extractSeedsFromSection(content, "⚠️")
         val recommendedSeeds = extractSeedsFromSection(content, "🌟")
         
-        val advice = extractAdviceFromContent(content)
         val closingLine = extractClosingLineFromContent(content)
         val signature = extractSignatureFromContent(content)
         
@@ -133,7 +131,6 @@ class NotificationDataConverter {
             thisMonthSeeds = thisMonthSeeds,
             endingSoonSeeds = endingSoonSeeds,
             recommendedSeeds = recommendedSeeds,
-            advice = advice,
             closingLine = closingLine,
             signature = signature,
             sentAt = getCurrentTimestamp(),
@@ -169,7 +166,6 @@ class NotificationDataConverter {
             thisMonthSeeds = emptyList(),
             endingSoonSeeds = emptyList(),
             recommendedSeeds = emptyList(),
-            advice = "",
             closingLine = "",
             signature = "",
             sentAt = getCurrentTimestamp(),
@@ -254,23 +250,6 @@ class NotificationDataConverter {
         return null
     }
     
-    /**
-     * アドバイスを抽出
-     */
-    private fun extractAdviceFromContent(content: String): String {
-        val lines = content.lines()
-        for (line in lines) {
-            val trimmed = line.trim()
-            if (trimmed.isNotEmpty() && 
-                !trimmed.startsWith("🌱") && !trimmed.startsWith("⚠️") && !trimmed.startsWith("🌟") &&
-                !trimmed.startsWith("*") && !trimmed.startsWith("•") && !trimmed.startsWith("-") &&
-                !trimmed.contains("佐々木助三郎") && !trimmed.contains("助三郎") && !trimmed.contains("助さん") &&
-                trimmed.length > 10 && trimmed.length < 100) {
-                return trimmed
-            }
-        }
-        return ""
-    }
     
     /**
      * 結びの文を抽出
@@ -314,7 +293,9 @@ class NotificationDataConverter {
                 SeedInfo(
                     name = obj.get("name")?.asString ?: "",
                     variety = obj.get("variety")?.asString ?: "",
-                    description = obj.get("description")?.asString ?: ""
+                    description = obj.get("description")?.asString ?: "",
+                    expirationYear = obj.get("expirationYear")?.asInt ?: 0,
+                    expirationMonth = obj.get("expirationMonth")?.asInt ?: 0
                 )
             } catch (e: Exception) {
                 Log.w("NotificationDataConverter", "SeedInfo解析に失敗", e)

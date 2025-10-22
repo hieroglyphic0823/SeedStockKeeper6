@@ -15,7 +15,6 @@ data class NotificationData(
     val thisMonthSeeds: List<SeedInfo> = emptyList(),
     val endingSoonSeeds: List<SeedInfo> = emptyList(),
     val recommendedSeeds: List<SeedInfo> = emptyList(),
-    val advice: String = "",
     val closingLine: String = "",
     val signature: String = "",
     val sentAt: String = "",
@@ -30,5 +29,7 @@ data class NotificationData(
 data class SeedInfo(
     val name: String = "",
     val variety: String = "",
-    val description: String = ""
+    val description: String = "",
+    val expirationYear: Int = 0,
+    val expirationMonth: Int = 0
 )

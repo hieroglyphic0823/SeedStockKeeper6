@@ -343,7 +343,7 @@ object SukesanMessageService {
                 
                 val status = when {
                     isUrgent -> "【まき時終了間近】"
-                    isCurrentMonth -> "【今月まき時】"
+                    isCurrentMonth -> "【まきどき】"
                     else -> ""
                 }
                 

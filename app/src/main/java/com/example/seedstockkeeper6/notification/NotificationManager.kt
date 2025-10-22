@@ -45,6 +45,7 @@ class NotificationManager(private val context: Context) {
      * 月1回のおすすめ通知を送信
      */
     fun sendMonthlyRecommendationNotification(
+        title: String,
         seedsThisMonth: List<SeedPacket>,
         seedsEndingSoon: List<SeedPacket>,
         recommendedSeeds: List<SeedPacket>,
@@ -54,7 +55,7 @@ class NotificationManager(private val context: Context) {
         month: Int
     ) {
         sender.sendMonthlyRecommendationNotification(
-            seedsThisMonth, seedsEndingSoon, recommendedSeeds,
+            title, seedsThisMonth, seedsEndingSoon, recommendedSeeds,
             farmOwner, region, prefecture, month
         )
     }
@@ -62,8 +63,8 @@ class NotificationManager(private val context: Context) {
     /**
      * 週1回のリマインダー通知を送信
      */
-    fun sendWeeklyReminderNotification(seedsEndingSoon: List<SeedPacket>) {
-        sender.sendWeeklyReminderNotification(seedsEndingSoon)
+    fun sendWeeklyReminderNotification(title: String, seedsEndingSoon: List<SeedPacket>) {
+        sender.sendWeeklyReminderNotification(title, seedsEndingSoon)
     }
     
     /**

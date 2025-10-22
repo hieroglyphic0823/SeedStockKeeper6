@@ -221,7 +221,7 @@ private fun NotificationDataCard(
                 }
             }
             
-            // カード本体（3行: タイトルの下に「今月まき時」「まき時終了」）
+            // カード本体（3行: タイトルの下に「まきどき」「まき時終了」）
             val sectionSummary = remember(notificationData) {
                 SectionSummary(
                     thisMonth = notificationData.thisMonthSeeds.firstOrNull()?.name ?: "",
@@ -229,6 +229,12 @@ private fun NotificationDataCard(
                 )
             }
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Image(
+                    painter = painterResource(id = R.drawable.seed),
+                    contentDescription = "まきどき",
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(modifier = Modifier.width(4.dp))
                 Text(
                     text = "今月のまき時 " + (sectionSummary.thisMonth.ifEmpty { "該当なし" }),
                     style = MaterialTheme.typography.bodyMedium,
@@ -238,6 +244,11 @@ private fun NotificationDataCard(
                 )
             }
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "⚠️",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Spacer(modifier = Modifier.width(4.dp))
                 Text(
                     text = "終了間近 " + (sectionSummary.endingSoon.ifEmpty { "該当なし" }),
                     style = MaterialTheme.typography.bodyMedium,
@@ -356,7 +367,7 @@ private fun NotificationDataCard(
                     // 終了間近の種
                     if (notificationData.endingSoonSeeds.isNotEmpty()) {
                         RichSection(
-                            title = "⚠️ まき時終了間近",
+                            title = "⚠️ 終了間近",
                             items = notificationData.endingSoonSeeds.map { it.name to it.description }
                         )
                         Spacer(modifier = Modifier.height(4.dp))
@@ -370,17 +381,9 @@ private fun NotificationDataCard(
                         )
                     }
                     
-                    // アドバイスと署名部分を表示
-                    if (notificationData.advice.isNotEmpty()) {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = notificationData.advice,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f)
-                        )
-                    }
+                    // 結びの文を表示
                     if (notificationData.closingLine.isNotEmpty()) {
-                        Spacer(modifier = Modifier.height(4.dp))
+                        Spacer(modifier = Modifier.height(8.dp))
                         Text(
                             text = notificationData.closingLine,
                             style = MaterialTheme.typography.bodyMedium,
