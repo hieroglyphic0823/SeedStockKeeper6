@@ -144,10 +144,15 @@ class NotificationSender(
      * JSON形式の通知データから通知を送信
      */
     fun sendNotificationFromData(notificationData: NotificationData) {
+        android.util.Log.d("NotificationSender", "sendNotificationFromData開始")
+        android.util.Log.d("NotificationSender", "NotificationData - id: ${notificationData.id}, userId: ${notificationData.userId}, title: ${notificationData.title}")
+        
         // 通知文を生成
         val content = contentGenerator.generateContent(notificationData)
         val condensedContent = contentGenerator.generateCondensedContent(notificationData)
         val summary = contentGenerator.generateSummary(notificationData)
+        
+        android.util.Log.d("NotificationSender", "通知文生成完了 - summary: $summary")
         
         val notification = NotificationCompat.Builder(context, NotificationChannelManager.CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_tanesuke_white)
@@ -174,15 +179,22 @@ class NotificationSender(
                 else -> MONTHLY_NOTIFICATION_ID
             }
             notificationManager.notify(notificationId, notification)
+            android.util.Log.d("NotificationSender", "通知表示完了 - notificationId: $notificationId")
         } else {
             android.util.Log.w("NotificationSender", "通知が無効になっています")
         }
         
         // JSON形式の通知データをFirebaseに保存
         coroutineScope.launch {
+            android.util.Log.d("NotificationSender", "Firebase保存開始")
             val success = historyService.saveNotificationData(notificationData)
             android.util.Log.d("NotificationSender", "JSON通知データ保存結果: $success")
+            if (!success) {
+                android.util.Log.e("NotificationSender", "Firebase保存に失敗しました")
+            }
         }
+        
+        android.util.Log.d("NotificationSender", "sendNotificationFromData完了")
     }
 }
 

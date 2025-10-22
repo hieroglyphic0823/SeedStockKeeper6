@@ -25,22 +25,36 @@ class NotificationDataConverter {
         notificationType: String = "MONTHLY",
         userId: String = ""
     ): NotificationData {
+        Log.d("NotificationDataConverter", "convertTextToNotificationData開始")
+        Log.d("NotificationDataConverter", "パラメータ - title: $title, userId: $userId, notificationType: $notificationType")
+        Log.d("NotificationDataConverter", "content長: ${content.length}, content先頭100文字: ${content.take(100)}")
+        
         return try {
             // まず、内容にJSONブロックが含まれているかチェック
             val jsonStart = content.indexOf("```json")
+            Log.d("NotificationDataConverter", "JSONブロック検索 - jsonStart: $jsonStart")
+            
             if (jsonStart != -1) {
                 val jsonEnd = content.indexOf("```", jsonStart + 7)
+                Log.d("NotificationDataConverter", "JSONブロック検索 - jsonEnd: $jsonEnd")
+                
                 if (jsonEnd != -1) {
                     val jsonText = content.substring(jsonStart + 7, jsonEnd).trim()
+                    Log.d("NotificationDataConverter", "JSONテキスト抽出完了 - 長さ: ${jsonText.length}")
                     return parseJsonToNotificationData(jsonText, title, farmOwner, region, prefecture, month, notificationType, userId)
                 }
             }
             
             // JSONブロックがない場合は、テキストから構造化データを抽出
-            extractFromTextContent(title, content, farmOwner, region, prefecture, month, notificationType, userId)
+            Log.d("NotificationDataConverter", "テキストから構造化データを抽出")
+            val result = extractFromTextContent(title, content, farmOwner, region, prefecture, month, notificationType, userId)
+            Log.d("NotificationDataConverter", "テキスト抽出完了 - id: ${result.id}, userId: ${result.userId}")
+            result
             
         } catch (e: Exception) {
             Log.e("NotificationDataConverter", "変換に失敗、デフォルトデータを返します", e)
+            Log.e("NotificationDataConverter", "エラー詳細: ${e.message}")
+            e.printStackTrace()
             createDefaultNotificationData(title, content, farmOwner, region, prefecture, month, notificationType, userId)
         }
     }

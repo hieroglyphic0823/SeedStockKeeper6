@@ -56,6 +56,23 @@ service cloud.firestore {
       allow create: if isOwnerCreating();
     }
 
+    // 通知データ（JSON形式）
+    match /notificationData/{document} {
+      function signedIn() {
+        return request.auth != null;
+      }
+      // 自分の通知データのみアクセス可能
+      function isOwner() {
+        return signedIn() && resource.data.userId == request.auth.uid;
+      }
+      function isOwnerCreating() {
+        return signedIn() && request.resource.data.userId == request.auth.uid;
+      }
+
+      allow read, write: if isOwner();
+      allow create: if isOwnerCreating();
+    }
+
     // たねすけさんからのメッセージ（改善版）
     match /users/{userId}/messages/{messageId} {
       function signedIn() {

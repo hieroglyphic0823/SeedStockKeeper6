@@ -197,6 +197,10 @@ fun NotificationPreviewScreen(
                             return@launch
                         }
                         
+                        // 現在のユーザーIDを取得
+                        val currentUserId = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid
+                        android.util.Log.d("NotificationPreviewScreen", "現在のユーザーID: $currentUserId")
+                        
                         notificationManager.sendMonthlyRecommendationNotificationWithContent(
                             title = title,
                             content = content,
@@ -204,7 +208,8 @@ fun NotificationPreviewScreen(
                             region = userSettings["defaultRegion"] ?: "温暖地",
                             prefecture = userSettings["selectedPrefecture"] ?: "",
                             month = java.util.Calendar.getInstance().get(java.util.Calendar.MONTH) + 1,
-                            seedCount = userSeeds.size
+                            seedCount = userSeeds.size,
+                            userId = currentUserId ?: "unknown_user"
                         )
                         android.util.Log.d("NotificationPreviewScreen", "通知送信完了")
                     } catch (e: Exception) {

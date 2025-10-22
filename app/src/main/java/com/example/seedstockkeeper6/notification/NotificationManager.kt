@@ -4,6 +4,7 @@ import android.content.Context
 import com.example.seedstockkeeper6.model.SeedPacket
 import com.example.seedstockkeeper6.model.NotificationData
 import com.example.seedstockkeeper6.service.GeminiNotificationService
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -18,6 +19,7 @@ class NotificationManager(private val context: Context) {
     private val geminiService = GeminiNotificationService()
     private val dataConverter = NotificationDataConverter()
     private val coroutineScope = CoroutineScope(Dispatchers.IO)
+    private val auth = FirebaseAuth.getInstance()
     
     companion object {
         const val CHANNEL_ID = NotificationChannelManager.CHANNEL_ID
@@ -77,6 +79,9 @@ class NotificationManager(private val context: Context) {
         seedCount: Int,
         userId: String = ""
     ) {
+        android.util.Log.d("NotificationManager", "sendMonthlyRecommendationNotificationWithContent開始")
+        android.util.Log.d("NotificationManager", "パラメータ - title: $title, userId: $userId, farmOwner: $farmOwner")
+        
         // テキスト内容をNotificationDataに変換
         val notificationData = dataConverter.convertTextToNotificationData(
             title = title,
@@ -89,8 +94,12 @@ class NotificationManager(private val context: Context) {
             userId = userId
         )
         
+        android.util.Log.d("NotificationManager", "NotificationData変換完了 - id: ${notificationData.id}, userId: ${notificationData.userId}")
+        
         // 新しいJSON形式で通知を送信
         sender.sendNotificationFromData(notificationData)
+        
+        android.util.Log.d("NotificationManager", "sendMonthlyRecommendationNotificationWithContent完了")
     }
     
     /**
@@ -168,7 +177,8 @@ class NotificationManager(private val context: Context) {
                     region = "暖地",
                     prefecture = "福岡県",
                     month = currentMonth,
-                    seedCount = 0
+                    seedCount = 0,
+                    userId = auth.currentUser?.uid ?: "test_user"
                 )
                 android.util.Log.d("NotificationManager", "テスト月次通知送信完了")
             } catch (e: Exception) {
@@ -201,7 +211,8 @@ class NotificationManager(private val context: Context) {
                     region = "暖地",
                     prefecture = "福岡県",
                     month = currentMonth,
-                    seedCount = 0
+                    seedCount = 0,
+                    userId = auth.currentUser?.uid ?: "test_user"
                 )
                 android.util.Log.d("NotificationManager", "テスト週次通知送信完了")
             } catch (e: Exception) {

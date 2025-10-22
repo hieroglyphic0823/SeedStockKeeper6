@@ -155,22 +155,31 @@ class NotificationHistoryService {
     suspend fun saveNotificationData(notificationData: NotificationData): Boolean {
         return try {
             val currentUser = auth.currentUser
-            Log.d("NotificationHistoryService", "JSON通知データ保存開始 - currentUser: ${currentUser?.uid}")
+            Log.d("NotificationHistoryService", "JSON通知データ保存開始")
+            Log.d("NotificationHistoryService", "currentUser: ${currentUser?.uid}")
+            Log.d("NotificationHistoryService", "notificationData.userId: ${notificationData.userId}")
+            Log.d("NotificationHistoryService", "notificationData.id: ${notificationData.id}")
+            Log.d("NotificationHistoryService", "notificationData.title: ${notificationData.title}")
+            
             if (currentUser == null) {
                 Log.w("NotificationHistoryService", "ユーザーが認証されていません")
                 return false
             }
             
             // 通知データをそのままFirebaseに保存
+            Log.d("NotificationHistoryService", "Firebase保存処理開始")
             val docRef = db.collection("notificationData")
                 .add(notificationData)
                 .await()
             
             Log.d("NotificationHistoryService", "JSON通知データを保存しました: ${docRef.id}")
+            Log.d("NotificationHistoryService", "保存されたドキュメントID: ${docRef.id}")
             true
             
         } catch (e: Exception) {
             Log.e("NotificationHistoryService", "JSON通知データの保存に失敗", e)
+            Log.e("NotificationHistoryService", "エラー詳細: ${e.message}")
+            e.printStackTrace()
             false
         }
     }
