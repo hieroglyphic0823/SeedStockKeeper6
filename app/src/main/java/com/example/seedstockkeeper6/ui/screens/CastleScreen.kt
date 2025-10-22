@@ -604,8 +604,15 @@ fun SukesanMessageCard(
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .horizontalScroll(rememberScrollState())
+                                        .horizontalScroll(rememberScrollState()),
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
+                                    Image(
+                                        painter = painterResource(id = R.drawable.crisis),
+                                        contentDescription = "危機",
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
                                     Text(
                                         text = "終了間近: $displayText",
                                         style = MaterialTheme.typography.bodyMedium,
@@ -615,11 +622,21 @@ fun SukesanMessageCard(
                                     )
                                 }
                             } else {
-                                Text(
-                                    text = "終了間近: 該当なし",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = Color.Black
-                                )
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Image(
+                                        painter = painterResource(id = R.drawable.crisis),
+                                        contentDescription = "危機",
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(
+                                        text = "終了間近: 該当なし",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = Color.Black
+                                    )
+                                }
                             }
                         }
                     } else {
@@ -940,10 +957,22 @@ fun SummaryCardWithImageIcon(
                 .fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // 上段: アイコンとタイトル
+            // 上段: タイトルのみ
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Normal,
+                color = contentColor,
+                textAlign = TextAlign.Center
+            )
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            // 下段: アイコンと値
             Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Image(
                     painter = painterResource(id = iconResource),
@@ -951,24 +980,8 @@ fun SummaryCardWithImageIcon(
                     modifier = Modifier.size(24.dp)
                 )
                 
-                Spacer(modifier = Modifier.width(12.dp))
+                Spacer(modifier = Modifier.width(8.dp))
                 
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Normal,
-                    color = contentColor,
-                    textAlign = TextAlign.Center
-                )
-            }
-            
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            // 下段: 値
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center
-            ) {
                 Text(
                     text = value,
                     style = MaterialTheme.typography.headlineLarge,

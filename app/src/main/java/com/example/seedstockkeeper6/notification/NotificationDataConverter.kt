@@ -116,6 +116,9 @@ class NotificationDataConverter {
         val endingSoonSeeds = extractSeedsFromSection(content, "⚠️")
         val recommendedSeeds = extractSeedsFromSection(content, "🌟")
         
+        Log.d("NotificationDataConverter", "抽出結果 - 今月まきどき: ${thisMonthSeeds.size}個, 終了間近: ${endingSoonSeeds.size}個, おすすめ: ${recommendedSeeds.size}個")
+        Log.d("NotificationDataConverter", "おすすめの種: ${recommendedSeeds.map { it.name }}")
+        
         val closingLine = extractClosingLineFromContent(content)
         val signature = extractSignatureFromContent(content)
         
@@ -187,13 +190,18 @@ class NotificationDataConverter {
         for (line in lines) {
             val trimmedLine = line.trim()
             
+            // セクションマーカーで始まる行を検出（🌟 今月のおすすめ種: のような形式も対応）
             if (trimmedLine.startsWith(sectionMarker)) {
                 inSection = true
                 continue
             }
             
             if (inSection) {
-                if (trimmedLine.startsWith("🌱") || trimmedLine.startsWith("⚠️") || trimmedLine.startsWith("🌟") || trimmedLine.startsWith("```")) {
+                // 他のセクションが始まったら終了（ただし、同じマーカーの場合は除外）
+                if ((trimmedLine.startsWith("🌱") && sectionMarker != "🌱") || 
+                    (trimmedLine.startsWith("⚠️") && sectionMarker != "⚠️") || 
+                    (trimmedLine.startsWith("🌟") && sectionMarker != "🌟") || 
+                    trimmedLine.startsWith("```")) {
                     break
                 }
                 

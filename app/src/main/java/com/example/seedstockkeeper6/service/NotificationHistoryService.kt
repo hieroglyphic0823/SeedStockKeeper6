@@ -271,4 +271,41 @@ class NotificationHistoryService {
             false
         }
     }
+    
+    /**
+     * 通知データを削除
+     */
+    suspend fun deleteNotificationData(documentId: String): Boolean {
+        return try {
+            val currentUser = auth.currentUser
+            if (currentUser == null) {
+                Log.w("NotificationHistoryService", "ユーザーが認証されていません")
+                return false
+            }
+            
+            // 自分の通知データのみ削除可能
+            val doc = db.collection("notificationData")
+                .document(documentId)
+                .get()
+                .await()
+            
+            val notificationData = doc.toObject(NotificationData::class.java)
+            if (notificationData?.userId != currentUser.uid) {
+                Log.w("NotificationHistoryService", "他のユーザーの通知データは削除できません")
+                return false
+            }
+            
+            db.collection("notificationData")
+                .document(documentId)
+                .delete()
+                .await()
+            
+            Log.d("NotificationHistoryService", "通知データを削除しました: $documentId")
+            true
+            
+        } catch (e: Exception) {
+            Log.e("NotificationHistoryService", "通知データの削除に失敗", e)
+            false
+        }
+    }
 }

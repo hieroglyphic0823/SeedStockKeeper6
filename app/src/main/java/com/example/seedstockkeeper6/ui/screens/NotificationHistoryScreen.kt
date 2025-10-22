@@ -5,6 +5,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.clickable
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.material.icons.Icons
@@ -45,6 +46,8 @@ fun NotificationHistoryScreen(
     var notificationDataList by remember { mutableStateOf<List<NotificationData>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
     var errorMessage by remember { mutableStateOf("") }
+    var deletingDocumentId by remember { mutableStateOf<String?>(null) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
     
     // 通知データを読み込み
     LaunchedEffect(Unit) {
@@ -150,12 +153,63 @@ fun NotificationHistoryScreen(
                         NotificationDataCard(
                             notificationData = notificationData,
                             contentGenerator = contentGenerator,
-                            onDelete = { /* TODO: 削除機能を実装 */ }
+                            onDelete = { 
+                                deletingDocumentId = notificationData.documentId
+                                showDeleteDialog = true
+                            }
                         )
                     }
                 }
             }
         }
+    }
+    
+    // 削除確認ダイアログ
+    if (showDeleteDialog && deletingDocumentId != null) {
+        AlertDialog(
+            onDismissRequest = { 
+                showDeleteDialog = false
+                deletingDocumentId = null
+            },
+            title = { Text("通知履歴を削除") },
+            text = { Text("この通知履歴を削除しますか？") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        scope.launch {
+                            try {
+                                val success = historyService.deleteNotificationData(deletingDocumentId!!)
+                                if (success) {
+                                    // 削除成功時はリストからも削除
+                                    notificationDataList = notificationDataList.filter { 
+                                        it.documentId != deletingDocumentId 
+                                    }
+                                    android.util.Log.d("NotificationHistoryScreen", "通知データを削除しました")
+                                } else {
+                                    android.util.Log.e("NotificationHistoryScreen", "通知データの削除に失敗しました")
+                                }
+                            } catch (e: Exception) {
+                                android.util.Log.e("NotificationHistoryScreen", "削除処理でエラーが発生", e)
+                            }
+                        }
+                        showDeleteDialog = false
+                        deletingDocumentId = null
+                    }
+                ) {
+                    Text("削除")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { 
+                        showDeleteDialog = false
+                        deletingDocumentId = null
+                    }
+                ) {
+                    Text("キャンセル")
+                }
+            }
+        )
     }
 }
 
@@ -166,7 +220,6 @@ private fun NotificationDataCard(
     contentGenerator: NotificationContentGenerator,
     onDelete: () -> Unit
 ) {
-    var showDeleteDialog by remember { mutableStateOf(false) }
     var showDetailDialog by remember { mutableStateOf(false) }
     
     Card(
@@ -210,14 +263,18 @@ private fun NotificationDataCard(
                     )
                 }
                 
-                IconButton(
-                    onClick = { showDeleteDialog = true }
+                Box(
+                    modifier = Modifier.clickable { onDelete() }
                 ) {
-                    Icon(
-                        Icons.Filled.Delete,
-                        contentDescription = "削除",
-                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                    )
+                    IconButton(
+                        onClick = { onDelete() }
+                    ) {
+                        Icon(
+                            Icons.Filled.Delete,
+                            contentDescription = "削除",
+                            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        )
+                    }
                 }
             }
             
@@ -244,9 +301,10 @@ private fun NotificationDataCard(
                 )
             }
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = "⚠️",
-                    style = MaterialTheme.typography.bodyMedium
+                Image(
+                    painter = painterResource(id = R.drawable.warning),
+                    contentDescription = "終了間近",
+                    modifier = Modifier.size(16.dp)
                 )
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
@@ -367,8 +425,9 @@ private fun NotificationDataCard(
                     // 終了間近の種
                     if (notificationData.endingSoonSeeds.isNotEmpty()) {
                         RichSection(
-                            title = "⚠️ 終了間近",
-                            items = notificationData.endingSoonSeeds.map { it.name to it.description }
+                            title = "終了間近",
+                            items = notificationData.endingSoonSeeds.map { it.name to it.description },
+                            iconResource = R.drawable.warning
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                     }
@@ -450,31 +509,6 @@ private fun NotificationDataCard(
         )
     }
     
-    // 削除確認ダイアログ
-    if (showDeleteDialog) {
-        AlertDialog(
-            onDismissRequest = { showDeleteDialog = false },
-            title = { Text("通知履歴を削除") },
-            text = { Text("この通知履歴を削除しますか？") },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        showDeleteDialog = false
-                        onDelete()
-                    }
-                ) {
-                    Text("削除")
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = { showDeleteDialog = false }
-                ) {
-                    Text("キャンセル")
-                }
-            }
-        )
-    }
 }
 
 // 本文から種プレビュー（種名, 説明）を抽出
@@ -563,12 +597,24 @@ private fun extractSectionSummaries(content: String): SectionSummary {
 }
 
 @Composable
-private fun RichSection(title: String, items: List<Pair<String, String>>) {
-    Text(
-        text = title,
-        style = MaterialTheme.typography.titleSmall,
-        color = MaterialTheme.colorScheme.onSurface
-    )
+private fun RichSection(title: String, items: List<Pair<String, String>>, iconResource: Int? = null) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        if (iconResource != null) {
+            Image(
+                painter = painterResource(id = iconResource),
+                contentDescription = title,
+                modifier = Modifier.size(16.dp)
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+        }
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+    }
     if (items.isEmpty()) {
         Text(
             text = "該当なし",

@@ -27,7 +27,7 @@ class NotificationContentGenerator {
         
         // 終了間近の種
         if (notificationData.endingSoonSeeds.isNotEmpty()) {
-            content.append("⚠️ 終了間近:\n")
+            content.append("終了間近:\n")
             notificationData.endingSoonSeeds.forEach { seed ->
                 content.append("*   『${seed.name} (${seed.variety})』: ${seed.description}\n")
             }
@@ -101,10 +101,10 @@ class NotificationContentGenerator {
      */
     fun generateSummary(notificationData: NotificationData): String {
         return when (notificationData.notificationType) {
-            "MONTHLY" -> "種まきのタイミングをお知らせします"
-            "WEEKLY" -> "種まき期限のお知らせ"
-            "CUSTOM" -> "種まきに関するお知らせ"
-            else -> "種まき通知"
+            "MONTHLY" -> notificationData.title
+            "WEEKLY" -> notificationData.title
+            "CUSTOM" -> notificationData.title
+            else -> notificationData.title
         }
     }
 }
