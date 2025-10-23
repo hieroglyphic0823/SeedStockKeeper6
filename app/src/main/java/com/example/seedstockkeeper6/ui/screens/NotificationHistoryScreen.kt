@@ -24,6 +24,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.foundation.Image
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.graphics.Color as ComposeColor
+import androidx.compose.animation.core.*
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.navigation.NavController
 import com.example.seedstockkeeper6.model.NotificationHistory
 import com.example.seedstockkeeper6.model.NotificationType
@@ -266,10 +268,25 @@ private fun NotificationDataCard(
                     modifier = Modifier.weight(1f),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    val infiniteTransition = rememberInfiniteTransition(label = "rotation")
+                    val rotation by infiniteTransition.animateFloat(
+                        initialValue = 0f,
+                        targetValue = 360f,
+                        animationSpec = infiniteRepeatable(
+                            animation = tween(2000, easing = LinearEasing),
+                            repeatMode = RepeatMode.Restart
+                        ),
+                        label = "rotation"
+                    )
+                    
                     Image(
-                        painter = painterResource(id = R.drawable.yabumi3),
+                        painter = painterResource(id = R.drawable.yabumi_red2),
                         contentDescription = "矢文",
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier
+                            .size(24.dp)
+                            .graphicsLayer {
+                                rotationZ = rotation
+                            }
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
@@ -304,14 +321,8 @@ private fun NotificationDataCard(
                 )
             }
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Image(
-                    painter = painterResource(id = R.drawable.seed),
-                    contentDescription = "まきどき",
-                    modifier = Modifier.size(16.dp)
-                )
-                Spacer(modifier = Modifier.width(4.dp))
                 Text(
-                    text = "今月のまき時 " + (sectionSummary.thisMonth.ifEmpty { "該当なし" }),
+                    text = "🌱まきどき " + (sectionSummary.thisMonth.ifEmpty { "該当なし" }),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
@@ -319,14 +330,8 @@ private fun NotificationDataCard(
                 )
             }
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Image(
-                    painter = painterResource(id = R.drawable.warning),
-                    contentDescription = "終了間近",
-                    modifier = Modifier.size(16.dp)
-                )
-                Spacer(modifier = Modifier.width(4.dp))
                 Text(
-                    text = "終了間近 " + (sectionSummary.endingSoon.ifEmpty { "該当なし" }),
+                    text = "⏳期限間近 " + (sectionSummary.endingSoon.ifEmpty { "該当なし" }),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
@@ -334,33 +339,16 @@ private fun NotificationDataCard(
                 )
             }
             
-            // メタ情報
-            if (notificationData.farmOwner.isNotEmpty() || notificationData.region.isNotEmpty()) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    if (notificationData.farmOwner.isNotEmpty()) {
-                        Text(
-                            text = "👤 ${notificationData.farmOwner}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                        )
-                    }
-                    if (notificationData.region.isNotEmpty()) {
-                        Text(
-                            text = "📍 ${notificationData.region}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                        )
-                    }
-                    if (notificationData.seedCount > 0) {
-                        Text(
-                            text = "🌱 ${notificationData.seedCount}種類",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                        )
-                    }
+            // 今月おすすめ
+            if (notificationData.recommendedSeeds.isNotEmpty()) {
+                Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "🎯 今月のおすすめ " + (notificationData.recommendedSeeds.firstOrNull()?.name ?: "該当なし"),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
                 }
             }
         }
@@ -383,26 +371,44 @@ private fun NotificationDataCard(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.fillMaxWidth()
                     ) {
+                        // 回転アニメーション付きのyabumi_red2アイコン
+                        val infiniteTransition = rememberInfiniteTransition(label = "rotation")
+                        val rotation by infiniteTransition.animateFloat(
+                            initialValue = 0f,
+                            targetValue = 360f,
+                            animationSpec = infiniteRepeatable(
+                                animation = tween(2000, easing = LinearEasing),
+                                repeatMode = RepeatMode.Restart
+                            ),
+                            label = "rotation"
+                        )
+                        
                         Image(
-                            painter = painterResource(id = R.drawable.yabumi3),
+                            painter = painterResource(id = R.drawable.yabumi_red2),
                             contentDescription = "矢文",
                             modifier = Modifier
                                 .size(24.dp)
                                 .padding(end = 4.dp)
+                                .graphicsLayer {
+                                    rotationZ = rotation
+                                }
                         )
                         Text(
                             text = notificationData.title,
-                            style = MaterialTheme.typography.headlineSmall
+                            style = MaterialTheme.typography.titleLarge
                         )
                     }
                     IconButton(
                         onClick = { showDetailDialog = false },
-                        modifier = Modifier.align(Alignment.TopEnd)
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .height(IntrinsicSize.Min)
                     ) {
                         Icon(
                             imageVector = Icons.Default.Close,
                             contentDescription = "閉じる",
-                            tint = MaterialTheme.colorScheme.onSurface
+                            tint = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.size(24.dp)
                         )
                     }
                 }
@@ -434,7 +440,7 @@ private fun NotificationDataCard(
                     // 今月まきどきの種
                     if (notificationData.thisMonthSeeds.isNotEmpty()) {
                         RichSection(
-                            title = "🌱 今月まきどきの種",
+                            title = "🌱まきどき",
                             items = notificationData.thisMonthSeeds.map { it.name to it.description }
                         )
                         Spacer(modifier = Modifier.height(4.dp))
@@ -443,9 +449,8 @@ private fun NotificationDataCard(
                     // 終了間近の種
                     if (notificationData.endingSoonSeeds.isNotEmpty()) {
                         RichSection(
-                            title = "終了間近",
-                            items = notificationData.endingSoonSeeds.map { it.name to it.description },
-                            iconResource = R.drawable.warning
+                            title = "⏳期限間近",
+                            items = notificationData.endingSoonSeeds.map { it.name to it.description }
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                     }
@@ -453,7 +458,7 @@ private fun NotificationDataCard(
                     // おすすめの種
                     if (notificationData.recommendedSeeds.isNotEmpty()) {
                         RichSection(
-                            title = "🌟 今月のおすすめ種",
+                            title = "🎯 今月のおすすめ",
                             items = notificationData.recommendedSeeds.map { it.name to it.description }
                         )
                     }

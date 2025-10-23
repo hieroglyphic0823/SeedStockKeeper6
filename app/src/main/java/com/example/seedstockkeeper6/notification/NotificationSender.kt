@@ -152,12 +152,13 @@ class NotificationSender(
         val content = contentGenerator.generateContent(notificationData)
         val condensedContent = contentGenerator.generateCondensedContent(notificationData)
         val summary = contentGenerator.generateSummary(notificationData)
+        val titleWithIcon = contentGenerator.generateTitleWithIcon(notificationData)
         
         android.util.Log.d("NotificationSender", "通知文生成完了 - summary: $summary")
         
         val notification = NotificationCompat.Builder(context, NotificationChannelManager.CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_tanesuke_white)
-            .setContentTitle(notificationData.title)
+            .setContentTitle(titleWithIcon)
             .setContentText(summary)
             .setStyle(NotificationCompat.BigTextStyle()
                 .bigText(condensedContent)

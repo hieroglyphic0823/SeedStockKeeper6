@@ -619,7 +619,7 @@ fun MainScaffoldNavigationBar(
         NavigationBarItem(
             icon = { 
                 Icon(
-                    painter = painterResource(id = com.example.seedstockkeeper6.R.drawable.yabumi3),
+                    painter = painterResource(id = com.example.seedstockkeeper6.R.drawable.yabumi0),
                     contentDescription = "通知履歴",
                     tint = ComposeColor.Unspecified,
                     modifier = Modifier.size(if (currentRoute == "notification_history") 28.dp else 24.dp)

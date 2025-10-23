@@ -27,7 +27,7 @@ class NotificationContentGenerator {
         
         // 終了間近の種
         if (notificationData.endingSoonSeeds.isNotEmpty()) {
-            content.append("終了間近:\n")
+            content.append("⏳期限間近:\n")
             notificationData.endingSoonSeeds.forEach { seed ->
                 content.append("*   『${seed.name} (${seed.variety})』: ${seed.description}\n")
             }
@@ -36,7 +36,7 @@ class NotificationContentGenerator {
         
         // おすすめの種
         if (notificationData.recommendedSeeds.isNotEmpty()) {
-            content.append("🌟 今月のおすすめ:\n")
+            content.append("🎯 今月のおすすめ:\n")
             notificationData.recommendedSeeds.forEach { seed ->
                 content.append("*   『${seed.name} (${seed.variety})』: ${seed.description}\n")
             }
@@ -73,7 +73,7 @@ class NotificationContentGenerator {
         
         // 終了間近の種（最大3つまで）
         if (notificationData.endingSoonSeeds.isNotEmpty()) {
-            content.append("⚠️ 終了間近:\n")
+            content.append("⏳期限間近:\n")
             notificationData.endingSoonSeeds.take(3).forEach { seed ->
                 val expirationInfo = if (seed.expirationYear > 0 && seed.expirationMonth > 0) {
                     " - 有効期限: ${seed.expirationYear}年${seed.expirationMonth}月"
@@ -87,13 +87,20 @@ class NotificationContentGenerator {
         
         // おすすめの種（最大3つまで）
         if (notificationData.recommendedSeeds.isNotEmpty()) {
-            content.append("🌟 今月のおすすめ:\n")
+            content.append("🎯 今月のおすすめ:\n")
             notificationData.recommendedSeeds.take(3).forEach { seed ->
                 content.append(" ${seed.name} (${seed.variety})\n")
             }
         }
         
         return content.toString()
+    }
+    
+    /**
+     * 通知タイトルにアイコンを追加
+     */
+    fun generateTitleWithIcon(notificationData: NotificationData): String {
+        return notificationData.title
     }
     
     /**

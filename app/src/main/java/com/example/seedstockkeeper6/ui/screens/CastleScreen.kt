@@ -30,6 +30,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.animation.core.*
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import androidx.compose.ui.tooling.preview.Preview
@@ -543,15 +545,31 @@ fun SukesanMessageCard(
                                 verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier.fillMaxWidth()
                             ) {
+                                // 回転アニメーション付きのyabumi_red2アイコン
+                                val infiniteTransition = rememberInfiniteTransition(label = "rotation")
+                                val rotation by infiniteTransition.animateFloat(
+                                    initialValue = 0f,
+                                    targetValue = 360f,
+                                    animationSpec = infiniteRepeatable(
+                                        animation = tween(2000, easing = LinearEasing),
+                                        repeatMode = RepeatMode.Restart
+                                    ),
+                                    label = "rotation"
+                                )
+                                
                                 Image(
-                                    painter = painterResource(id = R.drawable.yabumi_red),
-                                    contentDescription = "矢文",
-                                    modifier = Modifier.size(20.dp)
+                                    painter = painterResource(id = R.drawable.yabumi_shinshyu),
+                                    contentDescription = "風車",
+                                    modifier = Modifier
+                                        .size(24.dp)
+                                        .graphicsLayer {
+                                            rotationZ = rotation
+                                        }
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
                                     text = notification.title,
-                                    style = MaterialTheme.typography.titleMedium,
+                                    style = MaterialTheme.typography.titleSmall,
                                     fontWeight = FontWeight.Normal,
                                     color = Color.Black,
                                     maxLines = 1,
@@ -607,14 +625,8 @@ fun SukesanMessageCard(
                                         .horizontalScroll(rememberScrollState()),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Image(
-                                        painter = painterResource(id = R.drawable.crisis),
-                                        contentDescription = "危機",
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(4.dp))
                                     Text(
-                                        text = "終了間近: $displayText",
+                                        text = "⏳期限間近: $displayText",
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = Color.Black,
                                         maxLines = 1,
@@ -625,14 +637,8 @@ fun SukesanMessageCard(
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Image(
-                                        painter = painterResource(id = R.drawable.crisis),
-                                        contentDescription = "危機",
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(4.dp))
                                     Text(
-                                        text = "終了間近: 該当なし",
+                                        text = "⏳期限間近: 該当なし",
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = Color.Black
                                     )
@@ -717,8 +723,8 @@ fun SowingSummaryCards(
                 navController.navigate("list?filter=thisMonth")
             }
             
-            SummaryCardWithImageIcon(
-                iconResource = R.drawable.seed,
+            SummaryCardWithEmojiIcon(
+                emojiIcon = "🌱",
                 title = "まきどき",
                 value = "$thisMonthSowingCount",
                 subtitle = "",
@@ -734,9 +740,9 @@ fun SowingSummaryCards(
                 navController.navigate("list?filter=urgent")
             }
             
-            SummaryCardWithImageIcon(
-                iconResource = R.drawable.crisis,
-                title = "終了間近",
+            SummaryCardWithEmojiIcon(
+                emojiIcon = "⏳",
+                title = "期限間近",
                 value = "$urgentSeedsCount",
                 subtitle = "",
                 containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
@@ -927,6 +933,82 @@ fun SummaryCardWithEmojiIcon(
                         text = subtitle,
                         style = MaterialTheme.typography.labelMedium,
                         color = contentColor.copy(alpha = 0.7f),
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun SummaryCardWithEmojiIcon(
+    emojiIcon: String,
+    title: String,
+    value: String,
+    subtitle: String,
+    containerColor: Color,
+    contentColor: Color,
+    modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null
+) {
+    Card(
+        modifier = modifier.clickable { onClick?.invoke() },
+        colors = CardDefaults.cardColors(containerColor = containerColor),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // 上段: タイトルのみ
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Normal,
+                color = contentColor,
+                textAlign = TextAlign.Center
+            )
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            // 下段: 絵文字アイコンと値
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = emojiIcon,
+                    style = MaterialTheme.typography.headlineLarge,
+                    modifier = Modifier
+                        .size(48.dp, 105.dp)
+                        .onSizeChanged { size ->
+                            android.util.Log.d("CastleScreen", "絵文字サイズ - emoji: $emojiIcon, width: ${size.width}, height: ${size.height}")
+                        }
+                )
+                
+                Spacer(modifier = Modifier.width(8.dp))
+                
+                Text(
+                    text = value,
+                    style = MaterialTheme.typography.headlineLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = contentColor,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.onSizeChanged { size ->
+                        android.util.Log.d("CastleScreen", "SummaryCardWithEmojiIcon数字サイズ - value: $value, width: ${size.width}, height: ${size.height}")
+                    }
+                )
+                
+                if (subtitle.isNotEmpty()) {
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = subtitle,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = contentColor,
                         textAlign = TextAlign.Center
                     )
                 }
