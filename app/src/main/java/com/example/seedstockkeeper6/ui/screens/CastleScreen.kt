@@ -982,9 +982,12 @@ fun SummaryCardWithEmojiIcon(
             ) {
                 Text(
                     text = emojiIcon,
-                    style = MaterialTheme.typography.headlineLarge,
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = contentColor,
+                    textAlign = TextAlign.Center,
                     modifier = Modifier
-                        .size(48.dp, 105.dp)
+                        .width(48.dp)
                         .onSizeChanged { size ->
                             android.util.Log.d("CastleScreen", "絵文字サイズ - emoji: $emojiIcon, width: ${size.width}, height: ${size.height}")
                         }
