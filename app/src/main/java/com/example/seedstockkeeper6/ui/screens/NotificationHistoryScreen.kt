@@ -8,6 +8,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.clickable
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
@@ -26,6 +27,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.graphics.Color as ComposeColor
 import androidx.compose.animation.core.*
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.boundsInWindow
 import androidx.navigation.NavController
 import com.example.seedstockkeeper6.model.NotificationHistory
 import com.example.seedstockkeeper6.model.NotificationType
@@ -265,7 +267,7 @@ private fun NotificationDataCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1f, fill = false),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     val infiniteTransition = rememberInfiniteTransition(label = "rotation")
@@ -279,15 +281,21 @@ private fun NotificationDataCard(
                         label = "rotation"
                     )
                     
-                    Image(
-                        painter = painterResource(id = R.drawable.yabumi_red2),
-                        contentDescription = "矢文",
-                        modifier = Modifier
-                            .size(24.dp)
-                            .graphicsLayer {
-                                rotationZ = rotation
-                            }
-                    )
+                    // Boxで囲んでサイズを固定し、内部で中央揃えにする
+                    Box(
+                        modifier = Modifier.size(24.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.yabumi_shinshyu),
+                            contentDescription = "矢文",
+                            modifier = Modifier
+                                .graphicsLayer {
+                                    rotationZ = rotation
+                                }
+                        )
+                    }
+                    
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = notificationData.title,
@@ -316,8 +324,8 @@ private fun NotificationDataCard(
             // カード本体（3行: タイトルの下に「まきどき」「まき時終了」）
             val sectionSummary = remember(notificationData) {
                 SectionSummary(
-                    thisMonth = notificationData.thisMonthSeeds.firstOrNull()?.name ?: "",
-                    endingSoon = notificationData.endingSoonSeeds.firstOrNull()?.name ?: ""
+                    thisMonth = notificationData.thisMonthSeeds.take(3).joinToString("、") { it.name },
+                    endingSoon = notificationData.endingSoonSeeds.take(3).joinToString("、") { it.name }
                 )
             }
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -371,7 +379,7 @@ private fun NotificationDataCard(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        // 回転アニメーション付きのyabumi_red2アイコン
+                        // 回転アニメーション付きのyabumi_shinshyuアイコン
                         val infiniteTransition = rememberInfiniteTransition(label = "rotation")
                         val rotation by infiniteTransition.animateFloat(
                             initialValue = 0f,
@@ -384,32 +392,54 @@ private fun NotificationDataCard(
                         )
                         
                         Image(
-                            painter = painterResource(id = R.drawable.yabumi_red2),
+                            painter = painterResource(id = R.drawable.yabumi_shinshyu),
                             contentDescription = "矢文",
                             modifier = Modifier
                                 .size(24.dp)
-                                .padding(end = 4.dp)
+                                .onSizeChanged { size ->
+                                    android.util.Log.d("NotificationHistoryScreen", "アイコンサイズ - width: ${size.width}, height: ${size.height}")
+                                }
+                                .onGloballyPositioned { coordinates ->
+                                    android.util.Log.d("NotificationHistoryScreen", "アイコン位置 - x: ${coordinates.boundsInWindow().topLeft.x}, y: ${coordinates.boundsInWindow().topLeft.y}")
+                                }
                                 .graphicsLayer {
                                     rotationZ = rotation
                                 }
                         )
+                        
+                        // アイコンとタイトルの間にスペースを追加
+                        Spacer(modifier = Modifier.width(8.dp))
+                        
                         Text(
                             text = notificationData.title,
-                            style = MaterialTheme.typography.titleLarge
+                            style = MaterialTheme.typography.titleMedium,
+                            modifier = Modifier
+                                .weight(1f)
+                                .onSizeChanged { size ->
+                                    android.util.Log.d("NotificationHistoryScreen", "タイトルサイズ - width: ${size.width}, height: ${size.height}")
+                                }
+                                .onGloballyPositioned { coordinates ->
+                                    android.util.Log.d("NotificationHistoryScreen", "タイトル位置 - x: ${coordinates.boundsInWindow().topLeft.x}, y: ${coordinates.boundsInWindow().topLeft.y}")
+                                }
                         )
-                    }
-                    IconButton(
-                        onClick = { showDetailDialog = false },
-                        modifier = Modifier
-                            .align(Alignment.TopEnd)
-                            .height(IntrinsicSize.Min)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = "閉じる",
-                            tint = MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier.size(24.dp)
-                        )
+                        
+                        IconButton(
+                            onClick = { showDetailDialog = false },
+                            modifier = Modifier
+                                .onSizeChanged { size ->
+                                    android.util.Log.d("NotificationHistoryScreen", "×ボタンサイズ - width: ${size.width}, height: ${size.height}")
+                                }
+                                .onGloballyPositioned { coordinates ->
+                                    android.util.Log.d("NotificationHistoryScreen", "×ボタン位置 - x: ${coordinates.boundsInWindow().topLeft.x}, y: ${coordinates.boundsInWindow().topLeft.y}")
+                                }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "閉じる",
+                                tint = MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
                     }
                 }
             },

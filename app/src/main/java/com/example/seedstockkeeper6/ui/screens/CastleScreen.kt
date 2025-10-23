@@ -545,7 +545,7 @@ fun SukesanMessageCard(
                                 verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier.fillMaxWidth()
                             ) {
-                                // 回転アニメーション付きのyabumi_red2アイコン
+                                // 回転アニメーション付きのyabumi_shinshyuアイコン
                                 val infiniteTransition = rememberInfiniteTransition(label = "rotation")
                                 val rotation by infiniteTransition.animateFloat(
                                     initialValue = 0f,
