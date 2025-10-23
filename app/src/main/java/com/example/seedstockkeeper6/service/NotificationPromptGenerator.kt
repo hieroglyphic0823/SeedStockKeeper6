@@ -105,7 +105,7 @@ $userSeedsText
 【指示】
 1. 文頭に、農園主「$farmOwner」に対応した一言あいさつを入れる
 2. 「今月まきどき」「終了間近」「おすすめ」の3セクションに分けてリスト表示する
-3. 各種については「今、なぜまくべきか」「注意点」など、簡潔に説明（必ず60文字以内の1文）
+3. 各種については「今、なぜまくべきか」「注意点」など、簡潔に説明（必ず50文字以内の1文）
 4. 全体はくどくなりすぎないように。文量を抑え、読みやすく親しみやすく。
 5. キャラクターに応じた言葉遣いにする（以下参照）
 
@@ -128,14 +128,14 @@ $userSeedsText
     {
       "name": "種名",
       "variety": "品種名",
-      "description": "説明文（60文字以内）"
+      "description": "説明文（50文字以内）"
     }
   ],
   "endingSoonSeeds": [
     {
       "name": "種名",
       "variety": "品種名",
-      "description": "説明文（60文字以内）",
+      "description": "説明文（50文字以内）",
       "expirationYear": 2026,
       "expirationMonth": 10
     }
@@ -144,12 +144,12 @@ $userSeedsText
     {
       "name": "種名",
       "variety": "品種名",
-      "description": "説明文（60文字以内）"
+      "description": "説明文（50文字以内）"
     },
     {
       "name": "種名2",
       "variety": "品種名2",
-      "description": "説明文（60文字以内）"
+      "description": "説明文（50文字以内）"
     }
   ],
   "closingLine": "結びの文",

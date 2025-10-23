@@ -40,6 +40,7 @@ import java.util.*
 fun NotificationHistoryScreen(
     navController: NavController
 ) {
+    android.util.Log.d("NotificationHistoryScreen", "NotificationHistoryScreenが描画開始されました")
     val historyService = remember { NotificationHistoryService() }
     val contentGenerator = remember { NotificationContentGenerator() }
     val scope = rememberCoroutineScope()
@@ -59,11 +60,13 @@ fun NotificationHistoryScreen(
             android.util.Log.d("NotificationHistoryScreen", "通知データ読み込み完了 - 取得件数: ${result.size}")
             android.util.Log.d("NotificationHistoryScreen", "取得したデータ: $result")
             notificationDataList = result
+            android.util.Log.d("NotificationHistoryScreen", "notificationDataListを更新しました - 件数: ${notificationDataList.size}")
         } catch (e: Exception) {
             android.util.Log.e("NotificationHistoryScreen", "通知データの読み込みに失敗", e)
             errorMessage = "通知データの読み込みに失敗しました: ${e.message}"
         } finally {
             isLoading = false
+            android.util.Log.d("NotificationHistoryScreen", "読み込み完了 - isLoading: $isLoading, errorMessage: $errorMessage")
         }
     }
     
@@ -150,12 +153,15 @@ fun NotificationHistoryScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     items(notificationDataList) { notificationData ->
+                        android.util.Log.d("NotificationHistoryScreen", "NotificationDataCardを描画中 - documentId: ${notificationData.documentId}, title: ${notificationData.title}")
                         NotificationDataCard(
                             notificationData = notificationData,
                             contentGenerator = contentGenerator,
                             onDelete = { 
+                                android.util.Log.d("NotificationHistoryScreen", "onDeleteコールバックが呼ばれました - documentId: ${notificationData.documentId}")
                                 deletingDocumentId = notificationData.documentId
                                 showDeleteDialog = true
+                                android.util.Log.d("NotificationHistoryScreen", "削除ダイアログ状態を更新 - showDeleteDialog: $showDeleteDialog, deletingDocumentId: $deletingDocumentId")
                             }
                         )
                     }
@@ -165,7 +171,9 @@ fun NotificationHistoryScreen(
     }
     
     // 削除確認ダイアログ
+    android.util.Log.d("NotificationHistoryScreen", "削除ダイアログ条件チェック - showDeleteDialog: $showDeleteDialog, deletingDocumentId: $deletingDocumentId")
     if (showDeleteDialog && deletingDocumentId != null) {
+        android.util.Log.d("NotificationHistoryScreen", "削除確認ダイアログを表示します")
         AlertDialog(
             onDismissRequest = { 
                 showDeleteDialog = false
@@ -176,24 +184,32 @@ fun NotificationHistoryScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        scope.launch {
-                            try {
-                                val success = historyService.deleteNotificationData(deletingDocumentId!!)
-                                if (success) {
-                                    // 削除成功時はリストからも削除
-                                    notificationDataList = notificationDataList.filter { 
-                                        it.documentId != deletingDocumentId 
-                                    }
-                                    android.util.Log.d("NotificationHistoryScreen", "通知データを削除しました")
-                                } else {
-                                    android.util.Log.e("NotificationHistoryScreen", "通知データの削除に失敗しました")
-                                }
-                            } catch (e: Exception) {
-                                android.util.Log.e("NotificationHistoryScreen", "削除処理でエラーが発生", e)
-                            }
-                        }
+                        android.util.Log.d("NotificationHistoryScreen", "削除確認ボタンがクリックされました - documentId: $deletingDocumentId")
+                        val documentId = deletingDocumentId
                         showDeleteDialog = false
                         deletingDocumentId = null
+                        android.util.Log.d("NotificationHistoryScreen", "削除ダイアログを閉じました")
+                        
+                        if (documentId != null) {
+                            scope.launch {
+                                try {
+                                    val success = historyService.deleteNotificationData(documentId)
+                                    if (success) {
+                                        // 削除成功時はリストからも削除
+                                        notificationDataList = notificationDataList.filter { 
+                                            it.documentId != documentId 
+                                        }
+                                        android.util.Log.d("NotificationHistoryScreen", "通知データを削除しました")
+                                    } else {
+                                        android.util.Log.e("NotificationHistoryScreen", "通知データの削除に失敗しました")
+                                    }
+                                } catch (e: Exception) {
+                                    android.util.Log.e("NotificationHistoryScreen", "削除処理でエラーが発生", e)
+                                }
+                            }
+                        } else {
+                            android.util.Log.e("NotificationHistoryScreen", "削除対象のdocumentIdがnullです")
+                        }
                     }
                 ) {
                     Text("削除")
@@ -202,6 +218,7 @@ fun NotificationHistoryScreen(
             dismissButton = {
                 TextButton(
                     onClick = { 
+                        android.util.Log.d("NotificationHistoryScreen", "キャンセルボタンがクリックされました")
                         showDeleteDialog = false
                         deletingDocumentId = null
                     }
@@ -220,6 +237,7 @@ private fun NotificationDataCard(
     contentGenerator: NotificationContentGenerator,
     onDelete: () -> Unit
 ) {
+    android.util.Log.d("NotificationHistoryScreen", "NotificationDataCard関数が呼ばれました - documentId: ${notificationData.documentId}")
     var showDetailDialog by remember { mutableStateOf(false) }
     
     Card(
@@ -263,18 +281,18 @@ private fun NotificationDataCard(
                     )
                 }
                 
-                Box(
-                    modifier = Modifier.clickable { onDelete() }
-                ) {
-                    IconButton(
-                        onClick = { onDelete() }
-                    ) {
-                        Icon(
-                            Icons.Filled.Delete,
-                            contentDescription = "削除",
-                            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                        )
+                IconButton(
+                    onClick = { 
+                        android.util.Log.d("NotificationHistoryScreen", "削除ボタンがクリックされました - documentId: ${notificationData.documentId}")
+                        onDelete() 
                     }
+                ) {
+                    android.util.Log.d("NotificationHistoryScreen", "削除アイコンを描画中 - documentId: ${notificationData.documentId}")
+                    Icon(
+                        Icons.Filled.Delete,
+                        contentDescription = "削除",
+                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                    )
                 }
             }
             

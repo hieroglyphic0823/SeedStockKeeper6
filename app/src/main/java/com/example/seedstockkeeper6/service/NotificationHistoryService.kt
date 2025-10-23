@@ -207,7 +207,16 @@ class NotificationHistoryService {
             
             val notificationDataList = snapshot.documents.mapNotNull { doc ->
                 try {
-                    doc.toObject(NotificationData::class.java)
+                    val notificationData = doc.toObject(NotificationData::class.java)
+                    if (notificationData != null) {
+                        // FirestoreのドキュメントIDを設定
+                        val updatedNotificationData = notificationData.copy(documentId = doc.id)
+                        Log.d("NotificationHistoryService", "通知データを取得 - documentId: ${doc.id}, title: ${updatedNotificationData.title}")
+                        updatedNotificationData
+                    } else {
+                        Log.w("NotificationHistoryService", "通知データがnullです: ${doc.id}")
+                        null
+                    }
                 } catch (e: Exception) {
                     Log.w("NotificationHistoryService", "JSON通知データの解析に失敗: ${doc.id}", e)
                     null

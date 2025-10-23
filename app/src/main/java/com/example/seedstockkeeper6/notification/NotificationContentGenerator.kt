@@ -18,7 +18,7 @@ class NotificationContentGenerator {
         
         // 今月まきどきの種
         if (notificationData.thisMonthSeeds.isNotEmpty()) {
-            content.append("🌱 今月まきどきの種:\n")
+            content.append("🌱まきどき\n")
             notificationData.thisMonthSeeds.forEach { seed ->
                 content.append("*   『${seed.name} (${seed.variety})』: ${seed.description}\n")
             }
@@ -36,7 +36,7 @@ class NotificationContentGenerator {
         
         // おすすめの種
         if (notificationData.recommendedSeeds.isNotEmpty()) {
-            content.append("🌟 今月のおすすめ種:\n")
+            content.append("🌟 今月のおすすめ:\n")
             notificationData.recommendedSeeds.forEach { seed ->
                 content.append("*   『${seed.name} (${seed.variety})』: ${seed.description}\n")
             }
@@ -64,7 +64,7 @@ class NotificationContentGenerator {
         
         // 今月まきどきの種（最大3つまで）
         if (notificationData.thisMonthSeeds.isNotEmpty()) {
-            content.append("🌱 今月まきどきの種:\n")
+            content.append("🌱まきどき\n")
             notificationData.thisMonthSeeds.take(3).forEach { seed ->
                 content.append(" ${seed.name} (${seed.variety})\n")
             }
@@ -73,7 +73,7 @@ class NotificationContentGenerator {
         
         // 終了間近の種（最大3つまで）
         if (notificationData.endingSoonSeeds.isNotEmpty()) {
-            content.append("終了間近:\n")
+            content.append("⚠️ 終了間近:\n")
             notificationData.endingSoonSeeds.take(3).forEach { seed ->
                 val expirationInfo = if (seed.expirationYear > 0 && seed.expirationMonth > 0) {
                     " - 有効期限: ${seed.expirationYear}年${seed.expirationMonth}月"
@@ -87,7 +87,7 @@ class NotificationContentGenerator {
         
         // おすすめの種（最大3つまで）
         if (notificationData.recommendedSeeds.isNotEmpty()) {
-            content.append("🌟 今月のおすすめ種:\n")
+            content.append("🌟 今月のおすすめ:\n")
             notificationData.recommendedSeeds.take(3).forEach { seed ->
                 content.append(" ${seed.name} (${seed.variety})\n")
             }
@@ -101,10 +101,24 @@ class NotificationContentGenerator {
      */
     fun generateSummary(notificationData: NotificationData): String {
         return when (notificationData.notificationType) {
-            "MONTHLY" -> notificationData.title
-            "WEEKLY" -> notificationData.title
-            "CUSTOM" -> notificationData.title
-            else -> notificationData.title
+            "MONTHLY" -> {
+                val thisMonthNames = notificationData.thisMonthSeeds.take(3).map { it.name }
+                if (thisMonthNames.isNotEmpty()) {
+                    "🌱まきどき：${thisMonthNames.joinToString("、")}"
+                } else {
+                    "今月の種まき情報"
+                }
+            }
+            "WEEKLY" -> {
+                val endingNames = notificationData.endingSoonSeeds.take(3).map { it.name }
+                if (endingNames.isNotEmpty()) {
+                    "⚠️期限間近：${endingNames.joinToString("、")}"
+                } else {
+                    "種まき期限のお知らせ"
+                }
+            }
+            "CUSTOM" -> "カスタム通知"
+            else -> "種まきのお知らせ"
         }
     }
 }
