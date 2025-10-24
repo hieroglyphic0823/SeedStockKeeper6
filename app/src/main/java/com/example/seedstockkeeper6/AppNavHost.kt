@@ -28,7 +28,8 @@ fun AppNavHost(
     selectedIds: MutableList<String>,
     settingsViewModel: com.example.seedstockkeeper6.viewmodel.SettingsViewModel? = null,
     onSaveRequest: () -> Unit = {}, // MainScaffoldからの保存リクエストコールバック
-    onDeleteSelected: (List<String>) -> Unit = {} // 削除処理コールバック
+    onDeleteSelected: (List<String>) -> Unit = {}, // 削除処理コールバック
+    onRefreshUnreadCount: () -> Unit = {} // 未読通知数更新コールバック
 ) {
     NavHost(
         navController = navController,
@@ -91,7 +92,8 @@ fun AppNavHost(
         composable("notification_preview") {
             NotificationPreviewScreen(
                 navController = navController,
-                context = LocalContext.current
+                context = LocalContext.current,
+                onRefreshUnreadCount = onRefreshUnreadCount
             )
         }
         composable(
@@ -101,7 +103,8 @@ fun AppNavHost(
             )
         ) {
             NotificationHistoryScreen(
-                navController = navController
+                navController = navController,
+                onRefreshUnreadCount = onRefreshUnreadCount
             )
         }
         composable("map_selection") {

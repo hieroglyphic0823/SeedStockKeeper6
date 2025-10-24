@@ -454,7 +454,8 @@ fun SukesanMessageCard(
                 ),
                 sentAt = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE) + "T12:00:00.000Z",
                 userId = "preview",
-                seedCount = 1
+                seedCount = 1,
+                isRead = 0 // プレビューでは未読として表示
             )
             android.util.Log.d("CastleScreen", "プレビュー通知設定完了")
             isLoading = false

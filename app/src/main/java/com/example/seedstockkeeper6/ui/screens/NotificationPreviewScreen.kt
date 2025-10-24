@@ -27,11 +27,12 @@ import androidx.activity.compose.LocalActivity
 @Composable
 fun NotificationPreviewScreen(
     navController: NavController,
-    context: android.content.Context
+    context: android.content.Context,
+    onRefreshUnreadCount: () -> Unit = {}
 ) {
     android.util.Log.d("NotificationPreviewScreen", "NotificationPreviewScreen composable開始")
     
-    val notificationManager = remember { NotificationManager(context) }
+    val notificationManager = remember { NotificationManager(context, onRefreshUnreadCount) }
     val notificationScheduler = remember { NotificationScheduler(context) }
     val geminiService = remember { GeminiNotificationService() }
     val historyService = remember { NotificationHistoryService() }
@@ -212,6 +213,8 @@ fun NotificationPreviewScreen(
                             userId = currentUserId ?: "unknown_user"
                         )
                         android.util.Log.d("NotificationPreviewScreen", "通知送信完了")
+                        // 通知作成後に未読数を更新
+                        onRefreshUnreadCount()
                     } catch (e: Exception) {
                         android.util.Log.e("NotificationPreviewScreen", "月次通知送信エラー", e)
                     }
@@ -257,6 +260,8 @@ fun NotificationPreviewScreen(
                             seedCount = userSeeds.size
                         )
                         android.util.Log.d("NotificationPreviewScreen", "週次通知送信完了")
+                        // 通知作成後に未読数を更新
+                        onRefreshUnreadCount()
                     } catch (e: Exception) {
                         android.util.Log.e("NotificationPreviewScreen", "週次通知送信エラー", e)
                     }

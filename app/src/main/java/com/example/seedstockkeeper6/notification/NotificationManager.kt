@@ -10,12 +10,15 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.util.Calendar
 
-class NotificationManager(private val context: Context) {
+class NotificationManager(
+    private val context: Context,
+    private val onRefreshUnreadCount: () -> Unit = {}
+) {
     
     private val channelManager = NotificationChannelManager(context)
     private val contentBuilder = NotificationContentBuilder()
     private val contentExtractor = NotificationContentExtractor()
-    private val sender = NotificationSender(context, contentBuilder, contentExtractor)
+    private val sender = NotificationSender(context, contentBuilder, contentExtractor, onRefreshUnreadCount)
     private val geminiService = GeminiNotificationService()
     private val dataConverter = NotificationDataConverter()
     private val coroutineScope = CoroutineScope(Dispatchers.IO)

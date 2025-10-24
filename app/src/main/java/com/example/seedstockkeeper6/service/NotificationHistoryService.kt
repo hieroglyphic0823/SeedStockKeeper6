@@ -317,4 +317,69 @@ class NotificationHistoryService {
             false
         }
     }
+    
+    /**
+     * 通知データの既読フラグを更新
+     */
+    suspend fun markNotificationAsRead(documentId: String): Boolean {
+        return try {
+            val currentUser = auth.currentUser
+            if (currentUser == null) {
+                Log.w("NotificationHistoryService", "ユーザーが認証されていません")
+                return false
+            }
+            
+            // 自分の通知データのみ更新可能
+            val doc = db.collection("notificationData")
+                .document(documentId)
+                .get()
+                .await()
+            
+            val notificationData = doc.toObject(NotificationData::class.java)
+            if (notificationData?.userId != currentUser.uid) {
+                Log.w("NotificationHistoryService", "他のユーザーの通知データは更新できません")
+                return false
+            }
+            
+            // 既読フラグを1に更新
+            db.collection("notificationData")
+                .document(documentId)
+                .update("isRead", 1)
+                .await()
+            
+            Log.d("NotificationHistoryService", "通知データを既読にしました: $documentId")
+            true
+            
+        } catch (e: Exception) {
+            Log.e("NotificationHistoryService", "通知データの既読更新に失敗", e)
+            false
+        }
+    }
+    
+    /**
+     * 未読通知数を取得
+     */
+    suspend fun getUnreadNotificationCount(): Int {
+        return try {
+            val currentUser = auth.currentUser
+            if (currentUser == null) {
+                Log.w("NotificationHistoryService", "ユーザーが認証されていません")
+                return 0
+            }
+            
+            val snapshot = db.collection("notificationData")
+                .whereEqualTo("userId", currentUser.uid)
+                .whereEqualTo("isRead", 0)
+                .get()
+                .await()
+            
+            val unreadCount = snapshot.documents.size
+            Log.d("NotificationHistoryService", "未読通知数: $unreadCount")
+            unreadCount
+            
+        } catch (e: Exception) {
+            Log.e("NotificationHistoryService", "未読通知数の取得に失敗", e)
+            0
+        }
+    }
 }

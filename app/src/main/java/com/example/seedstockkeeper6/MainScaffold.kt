@@ -10,9 +10,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.background
 import androidx.compose.foundation.Image
 import androidx.compose.ui.graphics.Color as ComposeColor
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.sp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
@@ -508,6 +511,7 @@ fun MainScaffoldNavigationBar(
     isInputScreen: Boolean,
     inputViewModel: SeedInputViewModel?,
     settingsViewModel: SettingsViewModel,
+    unreadNotificationCount: Int,
     onSaveRequest: () -> Unit
 ) {
     NavigationBar(
@@ -618,12 +622,34 @@ fun MainScaffoldNavigationBar(
         // 通知アイコン（yabumi - 矢文）
         NavigationBarItem(
             icon = { 
-                Icon(
-                    painter = painterResource(id = com.example.seedstockkeeper6.R.drawable.yabumi0),
-                    contentDescription = "通知履歴",
-                    tint = ComposeColor.Unspecified,
-                    modifier = Modifier.size(if (currentRoute == "notification_history") 28.dp else 24.dp)
-                )
+                Box {
+                    Icon(
+                        painter = painterResource(id = com.example.seedstockkeeper6.R.drawable.yabumi0),
+                        contentDescription = "通知履歴",
+                        tint = ComposeColor.Unspecified,
+                        modifier = Modifier.size(if (currentRoute == "notification_history") 28.dp else 24.dp)
+                    )
+                    // 未読通知バッジ
+                    if (unreadNotificationCount > 0) {
+                        Box(
+                            modifier = Modifier
+                                .size(18.dp)
+                                .offset(x = 8.dp, y = (-4).dp)
+                                .background(
+                                    color = MaterialTheme.colorScheme.error,
+                                    shape = androidx.compose.foundation.shape.CircleShape
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = if (unreadNotificationCount > 99) "99+" else unreadNotificationCount.toString(),
+                                color = MaterialTheme.colorScheme.onError,
+                                style = MaterialTheme.typography.labelSmall,
+                                fontSize = 10.sp
+                            )
+                        }
+                    }
+                }
             },
             label = { Text("通知") },
             selected = currentRoute == "notification_history",
@@ -651,6 +677,10 @@ fun MainScaffold(
     val ctx = LocalContext.current
     val settingsViewModel: SettingsViewModel = viewModel { SettingsViewModel(ctx) }
     
+    // 未読通知数
+    var unreadNotificationCount by remember { mutableStateOf(0) }
+    val historyService = remember { com.example.seedstockkeeper6.service.NotificationHistoryService() }
+    
     // 農園名を取得
     var farmName by remember { mutableStateOf("") }
     
@@ -660,6 +690,28 @@ fun MainScaffold(
         kotlinx.coroutines.delay(1000)
         farmName = settingsViewModel.farmName
         Log.d("MainScaffold", "農園名取得: $farmName")
+    }
+    
+    // 未読通知数を取得（画面が表示されるたびに更新）
+    LaunchedEffect(currentRoute) {
+        try {
+            unreadNotificationCount = historyService.getUnreadNotificationCount()
+            Log.d("MainScaffold", "未読通知数: $unreadNotificationCount")
+        } catch (e: Exception) {
+            Log.e("MainScaffold", "未読通知数の取得に失敗", e)
+        }
+    }
+    
+    // 未読通知数を更新する関数
+    val refreshUnreadCount: () -> Unit = {
+        scope.launch {
+            try {
+                unreadNotificationCount = historyService.getUnreadNotificationCount()
+                Log.d("MainScaffold", "未読通知数を更新: $unreadNotificationCount")
+            } catch (e: Exception) {
+                Log.e("MainScaffold", "未読通知数の更新に失敗", e)
+            }
+        }
     }
     
     // アプリ起動後の初期化完了フラグ
@@ -758,6 +810,7 @@ fun MainScaffold(
                     isInputScreen = isInputScreen,
                     inputViewModel = inputViewModel,
                     settingsViewModel = settingsViewModel,
+                    unreadNotificationCount = unreadNotificationCount,
                     onSaveRequest = {
                         navController.popBackStack()
                     }
@@ -771,6 +824,7 @@ fun MainScaffold(
                 modifier = Modifier.padding(padding),
                 selectedIds = selectedIds,
                 settingsViewModel = settingsViewModel,
+                onRefreshUnreadCount = refreshUnreadCount,
                 onSaveRequest = {
                     showSaveAnimation = true
                     // 保存処理完了後にアニメーションを非表示にする

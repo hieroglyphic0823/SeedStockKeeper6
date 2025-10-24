@@ -19,7 +19,8 @@ import kotlinx.coroutines.launch
 class NotificationSender(
     private val context: Context,
     private val contentBuilder: NotificationContentBuilder,
-    private val contentExtractor: NotificationContentExtractor
+    private val contentExtractor: NotificationContentExtractor,
+    private val onRefreshUnreadCount: () -> Unit = {}
 ) {
     
     private val historyService = NotificationHistoryService()
@@ -191,7 +192,11 @@ class NotificationSender(
             android.util.Log.d("NotificationSender", "Firebase保存開始")
             val success = historyService.saveNotificationData(notificationData)
             android.util.Log.d("NotificationSender", "JSON通知データ保存結果: $success")
-            if (!success) {
+            if (success) {
+                // 通知作成後に未読数を更新
+                onRefreshUnreadCount()
+                android.util.Log.d("NotificationSender", "未読通知数を更新しました")
+            } else {
                 android.util.Log.e("NotificationSender", "Firebase保存に失敗しました")
             }
         }

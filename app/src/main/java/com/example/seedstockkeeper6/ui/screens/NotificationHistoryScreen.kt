@@ -39,10 +39,168 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 
+// プレビュー用のデモデータ
+@Composable
+fun createPreviewNotificationData(): List<NotificationData> {
+    return listOf(
+        NotificationData(
+            id = "preview1",
+            title = "弥生の風に乗せて――春の種まきの候、菜園より",
+            summary = "お銀、菜園の弥生は1種類の種の播種時期です。恋むすめ（ニンジン）の栽培を楽しんでくださいね。",
+            farmOwner = "お銀",
+            region = "温暖地",
+            prefecture = "東京都",
+            month = 3,
+            thisMonthSeeds = listOf(
+                com.example.seedstockkeeper6.model.SeedInfo(
+                    name = "恋むすめ",
+                    variety = "ニンジン",
+                    description = "春の種まきに最適な品種です"
+                )
+            ),
+            endingSoonSeeds = listOf(
+                com.example.seedstockkeeper6.model.SeedInfo(
+                    name = "春菊",
+                    variety = "中葉春菊",
+                    description = "まき時終了間近です"
+                )
+            ),
+            sentAt = "2024-03-15T12:00:00.000Z",
+            userId = "preview",
+            seedCount = 1,
+            isRead = 0 // 未読
+        ),
+        NotificationData(
+            id = "preview2",
+            title = "卯月の雨に潤う――新緑の種まきの候、菜園より",
+            summary = "お銀、菜園の卯月は2種類の種の播種時期です。レタスとネギの栽培を楽しんでくださいね。",
+            farmOwner = "お銀",
+            region = "温暖地",
+            prefecture = "東京都",
+            month = 4,
+            thisMonthSeeds = listOf(
+                com.example.seedstockkeeper6.model.SeedInfo(
+                    name = "レタス",
+                    variety = "サニーレタス",
+                    description = "春の種まきに最適な品種です"
+                ),
+                com.example.seedstockkeeper6.model.SeedInfo(
+                    name = "ネギ",
+                    variety = "九条ネギ",
+                    description = "春の種まきに最適な品種です"
+                )
+            ),
+            endingSoonSeeds = emptyList(),
+            sentAt = "2024-04-15T12:00:00.000Z",
+            userId = "preview",
+            seedCount = 2,
+            isRead = 1 // 既読
+        )
+    )
+}
+
+// プレビュー用のNotificationHistoryScreen
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun NotificationHistoryScreenPreview() {
+    val contentGenerator = remember { NotificationContentGenerator() }
+    val scope = rememberCoroutineScope()
+    val previewData = createPreviewNotificationData()
+    var notificationDataList by remember { mutableStateOf(previewData) }
+    var deletingDocumentId by remember { mutableStateOf<String?>(null) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    
+    Scaffold(
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // ヘッダー
+            Text(
+                text = "通知履歴",
+                style = MaterialTheme.typography.headlineMedium,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+            
+            // 通知データリスト
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                items(notificationDataList) { notificationData ->
+                    NotificationDataCard(
+                        notificationData = notificationData,
+                        contentGenerator = contentGenerator,
+                        historyService = NotificationHistoryService(),
+                        onDelete = { 
+                            deletingDocumentId = notificationData.documentId
+                            showDeleteDialog = true
+                        },
+                        onMarkAsRead = { documentId ->
+                            // プレビューではローカルのリストのみ更新
+                            notificationDataList = notificationDataList.map { data ->
+                                if (data.documentId == documentId) {
+                                    data.copy(isRead = 1)
+                                } else {
+                                    data
+                                }
+                            }
+                        }
+                    )
+                }
+            }
+        }
+    }
+    
+    // 削除確認ダイアログ
+    if (showDeleteDialog && deletingDocumentId != null) {
+        AlertDialog(
+            onDismissRequest = { 
+                showDeleteDialog = false
+                deletingDocumentId = null
+            },
+            title = { Text("通知履歴を削除") },
+            text = { Text("この通知履歴を削除しますか？") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val documentId = deletingDocumentId
+                        showDeleteDialog = false
+                        deletingDocumentId = null
+                        
+                        if (documentId != null) {
+                            // プレビューではローカルのリストから削除
+                            notificationDataList = notificationDataList.filter { 
+                                it.documentId != documentId 
+                            }
+                        }
+                    }
+                ) {
+                    Text("削除")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { 
+                        showDeleteDialog = false
+                        deletingDocumentId = null
+                    }
+                ) {
+                    Text("キャンセル")
+                }
+            }
+        )
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NotificationHistoryScreen(
-    navController: NavController
+    navController: NavController,
+    onRefreshUnreadCount: () -> Unit = {}
 ) {
     android.util.Log.d("NotificationHistoryScreen", "NotificationHistoryScreenが描画開始されました")
     val historyService = remember { NotificationHistoryService() }
@@ -161,11 +319,35 @@ fun NotificationHistoryScreen(
                         NotificationDataCard(
                             notificationData = notificationData,
                             contentGenerator = contentGenerator,
+                            historyService = historyService,
                             onDelete = { 
                                 android.util.Log.d("NotificationHistoryScreen", "onDeleteコールバックが呼ばれました - documentId: ${notificationData.documentId}")
                                 deletingDocumentId = notificationData.documentId
                                 showDeleteDialog = true
                                 android.util.Log.d("NotificationHistoryScreen", "削除ダイアログ状態を更新 - showDeleteDialog: $showDeleteDialog, deletingDocumentId: $deletingDocumentId")
+                            },
+                            onMarkAsRead = { documentId ->
+                                android.util.Log.d("NotificationHistoryScreen", "onMarkAsReadコールバックが呼ばれました - documentId: $documentId")
+                                scope.launch {
+                                    try {
+                                        val success = historyService.markNotificationAsRead(documentId)
+                                        if (success) {
+                                            // ローカルのリストも更新
+                                            notificationDataList = notificationDataList.map { data ->
+                                                if (data.documentId == documentId) {
+                                                    data.copy(isRead = 1)
+                                                } else {
+                                                    data
+                                                }
+                                            }
+                                            android.util.Log.d("NotificationHistoryScreen", "通知を既読にしました")
+                                            // 未読通知数を更新
+                                            onRefreshUnreadCount()
+                                        }
+                                    } catch (e: Exception) {
+                                        android.util.Log.e("NotificationHistoryScreen", "既読更新でエラーが発生", e)
+                                    }
+                                }
                             }
                         )
                     }
@@ -239,10 +421,21 @@ fun NotificationHistoryScreen(
 private fun NotificationDataCard(
     notificationData: NotificationData,
     contentGenerator: NotificationContentGenerator,
-    onDelete: () -> Unit
+    historyService: NotificationHistoryService,
+    onDelete: () -> Unit,
+    onMarkAsRead: (String) -> Unit
 ) {
     android.util.Log.d("NotificationHistoryScreen", "NotificationDataCard関数が呼ばれました - documentId: ${notificationData.documentId}")
     var showDetailDialog by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+    
+    // 詳細ダイアログが表示された時に既読フラグを更新
+    LaunchedEffect(showDetailDialog) {
+        if (showDetailDialog && notificationData.isRead == 0 && notificationData.documentId != null) {
+            android.util.Log.d("NotificationHistoryScreen", "詳細ダイアログ表示 - 既読フラグを更新します")
+            onMarkAsRead(notificationData.documentId)
+        }
+    }
     
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -300,7 +493,7 @@ private fun NotificationDataCard(
                     Text(
                         text = notificationData.title,
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
+                        fontWeight = if (notificationData.isRead == 0) FontWeight.Bold else FontWeight.Normal,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
