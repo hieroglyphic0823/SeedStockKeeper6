@@ -132,19 +132,14 @@ fun NotificationHistoryScreen(
     
     Scaffold(
     ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            // ローディング状態
-            if (isLoading) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
+        // ローディング状態
+        if (isLoading) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues),
+                contentAlignment = Alignment.Center
+            ) {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -154,8 +149,15 @@ fun NotificationHistoryScreen(
                     }
                 }
             }
-            // エラーメッセージ
-            else if (errorMessage.isNotEmpty()) {
+        // エラーメッセージ
+        else if (errorMessage.isNotEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .padding(16.dp),
+                contentAlignment = Alignment.Center
+            ) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)
@@ -177,12 +179,15 @@ fun NotificationHistoryScreen(
                     }
                 }
             }
-            // 通知データリスト
-            else if (notificationDataList.isEmpty()) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
+        }
+        // 通知データリストが空の場合
+        else if (notificationDataList.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues),
+                contentAlignment = Alignment.Center
+            ) {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -205,11 +210,16 @@ fun NotificationHistoryScreen(
                         )
                     }
                 }
-            }
-            else {
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
+        }
+        // 通知データがある場合
+        else {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp) // ← カード間の余白
+            ) {
                     items(notificationDataList) { notificationData ->
                         NotificationDataCard(
                             notificationData = notificationData,
@@ -242,7 +252,6 @@ fun NotificationHistoryScreen(
                         )
                     }
                 }
-            }
         }
     }
     
@@ -358,7 +367,7 @@ private fun NotificationDataCard(
                             else -> MaterialTheme.colorScheme.surface
                         }
                     )
-                    .padding(16.dp)
+                    .padding(horizontal = 16.dp, vertical = 4.dp)// ← タイトル上下の余白
                     .onSizeChanged { size ->
                         android.util.Log.d("NotificationHistoryScreen", "タイトル行サイズ: width=${size.width}, height=${size.height}")
                     }
@@ -426,7 +435,12 @@ private fun NotificationDataCard(
             // カード本体（3行: タイトルの下に「まきどき」「まき時終了」）
             Column(
                 modifier = Modifier
-                    .background(MaterialTheme.colorScheme.surfaceContainerLowest)
+                    .background(
+                        when (notificationData.notificationType) {
+                            "MONTHLY" -> MaterialTheme.colorScheme.surfaceContainerLowest
+                            else -> MaterialTheme.colorScheme.surfaceContainerLowest
+                        }
+                    )
                     .padding(horizontal = 16.dp, vertical = 8.dp)
                     .onSizeChanged { size ->
                         android.util.Log.d("NotificationHistoryScreen", "カード本体サイズ: width=${size.width}, height=${size.height}")
@@ -509,7 +523,12 @@ private fun NotificationDataCard(
                 .onSizeChanged { size ->
                 }
                 .padding(bottom = 4.dp),
-            containerColor = MaterialTheme.colorScheme.surface,
+            containerColor = when (notificationData.notificationType) {
+                "MONTHLY" -> MaterialTheme.colorScheme.surfaceContainerLowest
+                "WEEKLY" -> MaterialTheme.colorScheme.surfaceContainerLowest
+                "CUSTOM" -> MaterialTheme.colorScheme.surfaceContainerLowest
+                else -> MaterialTheme.colorScheme.surface
+            },
             title = {
                 Box(
                     modifier = Modifier.fillMaxWidth()
