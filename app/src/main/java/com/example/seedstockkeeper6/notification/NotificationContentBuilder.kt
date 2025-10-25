@@ -49,8 +49,7 @@ class NotificationContentBuilder {
         
         content.append("⚠️ まき時終了間近の種があります:\n\n")
         seedsEndingSoon.forEach { seed ->
-            content.append("• ${seed.productName} (${seed.variety})\n")
-            content.append("  有効期限: ${seed.expirationYear}年${seed.expirationMonth}月\n\n")
+            content.append("• ${seed.productName} (${seed.variety}) (${seed.expirationYear}/${seed.expirationMonth})\n")
         }
         
         content.append("早めに種まきを完了させてください。")

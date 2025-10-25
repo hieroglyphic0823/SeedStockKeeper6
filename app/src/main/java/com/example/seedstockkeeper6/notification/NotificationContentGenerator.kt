@@ -76,7 +76,7 @@ class NotificationContentGenerator {
             content.append("⏳期限間近:\n")
             notificationData.endingSoonSeeds.take(3).forEach { seed ->
                 val expirationInfo = if (seed.expirationYear > 0 && seed.expirationMonth > 0) {
-                    " - 有効期限: ${seed.expirationYear}年${seed.expirationMonth}月"
+                    " (${seed.expirationYear}/${seed.expirationMonth})"
                 } else {
                     ""
                 }

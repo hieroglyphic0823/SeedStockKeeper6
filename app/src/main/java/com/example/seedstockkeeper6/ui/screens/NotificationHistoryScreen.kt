@@ -366,6 +366,8 @@ fun NotificationHistoryScreen(
                                         notificationDataList = notificationDataList.filter { 
                                             it.documentId != documentId 
                                         }
+                                        // 未読通知数を更新
+                                        onRefreshUnreadCount()
                                     } else {
                                     }
                                 } catch (e: Exception) {
@@ -490,7 +492,14 @@ private fun NotificationDataCard(
             val sectionSummary = remember(notificationData) {
                 SectionSummary(
                     thisMonth = notificationData.thisMonthSeeds.take(3).joinToString("、") { it.name },
-                    endingSoon = notificationData.endingSoonSeeds.take(3).joinToString("、") { it.name }
+                    endingSoon = notificationData.endingSoonSeeds.take(3).joinToString("、") { seed ->
+                        val expirationInfo = if (seed.expirationYear > 0 && seed.expirationMonth > 0) {
+                            " (${seed.expirationYear}/${seed.expirationMonth})"
+                        } else {
+                            ""
+                        }
+                        "${seed.name}${expirationInfo}"
+                    }
                 )
             }
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -634,9 +643,19 @@ private fun NotificationDataCard(
                     
                     // 終了間近の種
                     if (notificationData.endingSoonSeeds.isNotEmpty()) {
-                        RichSection(
+                        val endingSoonItems = notificationData.endingSoonSeeds.map { seed ->
+                            val expirationInfo = if (seed.expirationYear > 0 && seed.expirationMonth > 0) {
+                                " (${seed.expirationYear}/${seed.expirationMonth})"
+                            } else {
+                                ""
+                            }
+                            val nameWithExpiration = "${seed.name}${expirationInfo}"
+                            android.util.Log.d("NotificationHistoryScreen", "期限間近の種: $nameWithExpiration")
+                            nameWithExpiration to seed.description
+                        }
+                        RichSectionWithExpiration(
                             title = "⏳期限間近",
-                            items = notificationData.endingSoonSeeds.map { it.name to it.description }
+                            items = endingSoonItems
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                     }
@@ -803,6 +822,54 @@ private fun extractSectionSummaries(content: String): SectionSummary {
         i++
     }
     return SectionSummary(thisMonth = thisMonth, endingSoon = endingSoon)
+}
+
+@Composable
+private fun RichSectionWithExpiration(title: String, items: List<Pair<String, String>>, iconResource: Int? = null) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        if (iconResource != null) {
+            Image(
+                painter = painterResource(id = iconResource),
+                contentDescription = title,
+                modifier = Modifier.size(16.dp)
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+        }
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+    }
+    if (items.isEmpty()) {
+        Text(
+            text = "該当なし",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
+        )
+        return
+    }
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        items.forEach { (nameWithExpiration, desc) ->
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(
+                    text = nameWithExpiration,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                if (desc.isNotEmpty()) {
+                    Text(
+                        text = desc,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f)
+                    )
+                }
+            }
+        }
+    }
 }
 
 @Composable
