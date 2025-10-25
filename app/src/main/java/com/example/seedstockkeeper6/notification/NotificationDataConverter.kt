@@ -81,7 +81,8 @@ class NotificationDataConverter {
             userId = jsonObject.get("userId")?.asString ?: userId,
             seedCount = calculateSeedCount(jsonObject),
             priority = jsonObject.get("priority")?.asString ?: "DEFAULT",
-            channelId = jsonObject.get("channelId")?.asString ?: "seed_notifications"
+            channelId = jsonObject.get("channelId")?.asString ?: "seed_notifications",
+            isRead = 0 // 未読として明示的に設定
         )
     }
     
@@ -127,7 +128,8 @@ class NotificationDataConverter {
             userId = userId,
             seedCount = thisMonthSeeds.size + endingSoonSeeds.size + recommendedSeeds.size,
             priority = "DEFAULT",
-            channelId = "seed_notifications"
+            channelId = "seed_notifications",
+            isRead = 0 // 未読として明示的に設定
         )
     }
     
@@ -162,7 +164,8 @@ class NotificationDataConverter {
             userId = userId,
             seedCount = 0,
             priority = "DEFAULT",
-            channelId = "seed_notifications"
+            channelId = "seed_notifications",
+            isRead = 0 // 未読として明示的に設定
         )
     }
     

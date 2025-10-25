@@ -184,8 +184,8 @@ class NotificationSender(
         coroutineScope.launch {
             val success = historyService.saveNotificationData(notificationData)
             if (success) {
-                // 通知作成後に未読数を更新
-                onRefreshUnreadCount()
+                // 通知作成後に未読数を更新（NotificationPreviewScreenで既に呼ばれるため、ここでは呼ばない）
+                // onRefreshUnreadCount()
             } else {
             }
         }

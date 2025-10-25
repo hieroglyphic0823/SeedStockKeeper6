@@ -12,6 +12,12 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.background
 import androidx.compose.foundation.Image
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Color as ComposeColor
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.sp
@@ -513,6 +519,8 @@ fun MainScaffoldNavigationBar(
     unreadNotificationCount: Int,
     onSaveRequest: () -> Unit
 ) {
+    // 回転アニメーション用の状態
+    var isRotating by remember { mutableStateOf(false) }
     NavigationBar(
         containerColor = MaterialTheme.colorScheme.surfaceContainer,
         contentColor = MaterialTheme.colorScheme.onSurface
@@ -622,37 +630,54 @@ fun MainScaffoldNavigationBar(
         NavigationBarItem(
             icon = { 
                 Box {
+                    val rotationAngle by animateFloatAsState(
+                        targetValue = if (isRotating) 360f else 0f,
+                        animationSpec = tween(durationMillis = 500),
+                        finishedListener = { isRotating = false }
+                    )
+                    
                     Icon(
                         painter = painterResource(id = com.example.seedstockkeeper6.R.drawable.yabumi0),
                         contentDescription = "通知履歴",
                         tint = ComposeColor.Unspecified,
-                        modifier = Modifier.size(if (currentRoute == "notification_history") 28.dp else 24.dp)
+                        modifier = Modifier
+                            .size(if (currentRoute == "notification_history") 28.dp else 24.dp)
+                            .graphicsLayer {
+                                rotationZ = rotationAngle
+                            }
                     )
                     // 未読通知バッジ
                     if (unreadNotificationCount > 0) {
+                        android.util.Log.d("MainScaffold", "未読バッジ表示: $unreadNotificationCount")
                         Box(
                             modifier = Modifier
                                 .size(18.dp)
-                                .offset(x = 8.dp, y = (-4).dp)
+                                .offset(x = 16.dp, y = (-8).dp)
                                 .background(
-                                    color = MaterialTheme.colorScheme.error,
+                                    color = MaterialTheme.colorScheme.tertiary,
                                     shape = androidx.compose.foundation.shape.CircleShape
                                 ),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
                                 text = if (unreadNotificationCount > 99) "99+" else unreadNotificationCount.toString(),
-                                color = MaterialTheme.colorScheme.onError,
+                                color = MaterialTheme.colorScheme.onTertiary,
                                 style = MaterialTheme.typography.labelSmall,
                                 fontSize = 10.sp
                             )
                         }
+                    } else {
+                        android.util.Log.d("MainScaffold", "未読バッジ非表示: $unreadNotificationCount")
                     }
                 }
             },
             label = { Text("通知") },
             selected = currentRoute == "notification_history",
-            onClick = { navController.navigate("notification_history") }
+            onClick = { 
+                // 回転アニメーションを開始
+                isRotating = true
+                navController.navigate("notification_history") 
+            }
         )
     }
 }
@@ -693,16 +718,21 @@ fun MainScaffold(
     LaunchedEffect(currentRoute) {
         try {
             unreadNotificationCount = historyService.getUnreadNotificationCount()
+            android.util.Log.d("MainScaffold", "未読通知数取得: $unreadNotificationCount (ルート: $currentRoute)")
         } catch (e: Exception) {
+            android.util.Log.e("MainScaffold", "未読通知数取得エラー", e)
         }
     }
+    
     
     // 未読通知数を更新する関数
     val refreshUnreadCount: () -> Unit = {
         scope.launch {
             try {
                 unreadNotificationCount = historyService.getUnreadNotificationCount()
+                android.util.Log.d("MainScaffold", "未読通知数更新: $unreadNotificationCount")
             } catch (e: Exception) {
+                android.util.Log.e("MainScaffold", "未読通知数更新エラー", e)
             }
         }
     }

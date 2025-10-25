@@ -24,7 +24,7 @@ data class NotificationData(
     val priority: String = "DEFAULT",
     val channelId: String = "seed_notifications",
     val documentId: String? = null, // FirestoreのドキュメントID
-    @PropertyName("isRead")
+    @PropertyName("read")
     val isRead: Int = 0 // 既読フラグ（0: 未読, 1: 既読）
 )
 

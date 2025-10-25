@@ -199,9 +199,13 @@ fun NotificationPreviewScreen(
                             seedCount = userSeeds.size,
                             userId = currentUserId ?: "unknown_user"
                         )
-                        // 通知作成後に未読数を更新
+                        // 通知作成後に少し遅延してから未読数を更新
+                        android.util.Log.d("NotificationPreviewScreen", "月次通知作成完了、未読数更新を開始")
+                        kotlinx.coroutines.delay(1000)
                         onRefreshUnreadCount()
+                        android.util.Log.d("NotificationPreviewScreen", "未読数更新完了")
                     } catch (e: Exception) {
+                        android.util.Log.e("NotificationPreviewScreen", "月次通知作成エラー", e)
                     }
                 }
             },
@@ -237,9 +241,13 @@ fun NotificationPreviewScreen(
                             month = java.util.Calendar.getInstance().get(java.util.Calendar.MONTH) + 1,
                             seedCount = userSeeds.size
                         )
-                        // 通知作成後に未読数を更新
+                        // 通知作成後に少し遅延してから未読数を更新
+                        android.util.Log.d("NotificationPreviewScreen", "週次通知作成完了、未読数更新を開始")
+                        kotlinx.coroutines.delay(1000)
                         onRefreshUnreadCount()
+                        android.util.Log.d("NotificationPreviewScreen", "未読数更新完了")
                     } catch (e: Exception) {
+                        android.util.Log.e("NotificationPreviewScreen", "週次通知作成エラー", e)
                     }
                 }
             }

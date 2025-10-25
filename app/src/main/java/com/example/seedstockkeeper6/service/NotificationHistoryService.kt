@@ -138,17 +138,23 @@ class NotificationHistoryService {
             val currentUser = auth.currentUser
             
             if (currentUser == null) {
+                android.util.Log.e("NotificationHistoryService", "ユーザーがログインしていません")
                 return false
             }
+            
+            android.util.Log.d("NotificationHistoryService", "通知データ保存開始 - タイトル: ${notificationData.title}, isRead: ${notificationData.isRead}")
             
             // 通知データをそのままFirebaseに保存
             val docRef = db.collection("notificationData")
                 .add(notificationData)
                 .await()
             
+            android.util.Log.d("NotificationHistoryService", "通知データ保存完了 - ドキュメントID: ${docRef.id}")
+            
             true
             
         } catch (e: Exception) {
+            android.util.Log.e("NotificationHistoryService", "通知データ保存エラー", e)
             e.printStackTrace()
             false
         }
@@ -296,7 +302,7 @@ class NotificationHistoryService {
             // 既読フラグを1に更新
             db.collection("notificationData")
                 .document(documentId)
-                .update(mapOf("isRead" to 1))
+                .update(mapOf("read" to 1))
                 .await()
             
             true
@@ -313,19 +319,61 @@ class NotificationHistoryService {
         return try {
             val currentUser = auth.currentUser
             if (currentUser == null) {
+                android.util.Log.d("NotificationHistoryService", "ユーザーがログインしていません")
                 return 0
             }
             
-            val snapshot = db.collection("notificationData")
+            android.util.Log.d("NotificationHistoryService", "未読通知数取得開始 - ユーザーID: ${currentUser.uid}")
+            
+            // まず、すべての通知を取得して詳細を確認
+            val allSnapshot = db.collection("notificationData")
                 .whereEqualTo("userId", currentUser.uid)
-                .whereEqualTo("isRead", 0)
                 .get()
                 .await()
             
-            val unreadCount = snapshot.documents.size
+            android.util.Log.d("NotificationHistoryService", "全通知数: ${allSnapshot.documents.size}")
+            
+            // 各ドキュメントの詳細をログ出力
+            allSnapshot.documents.forEachIndexed { index, doc ->
+                val data = doc.toObject(com.example.seedstockkeeper6.model.NotificationData::class.java)
+                val rawData = doc.data
+                android.util.Log.d("NotificationHistoryService", "通知$index: ID=${data?.id}, isRead=${data?.isRead} (raw read: ${rawData?.get("read")}), title=${data?.title}")
+            }
+            
+            // アプリケーション側で未読通知をフィルタリング
+            val unreadNotifications = allSnapshot.documents.filter { doc ->
+                val data = doc.toObject(com.example.seedstockkeeper6.model.NotificationData::class.java)
+                val rawData = doc.data
+                val readValue = rawData?.get("read") // Firebaseのフィールド名は"read"
+                
+                // readが0またはnull（未読）の場合
+                when (readValue) {
+                    is Long -> readValue == 0L
+                    is Int -> readValue == 0
+                    is Double -> readValue == 0.0
+                    is Float -> readValue == 0.0f
+                    null -> true // nullの場合は未読として扱う
+                    else -> {
+                        android.util.Log.w("NotificationHistoryService", "予期しないread型: ${readValue?.javaClass?.simpleName}")
+                        true // 予期しない型の場合は未読として扱う
+                    }
+                }
+            }
+            
+            val unreadCount = unreadNotifications.size
+            android.util.Log.d("NotificationHistoryService", "未読通知数: $unreadCount (フィルタリング後)")
+            
+            // 未読通知の詳細をログ出力
+            unreadNotifications.forEachIndexed { index, doc ->
+                val data = doc.toObject(com.example.seedstockkeeper6.model.NotificationData::class.java)
+                val rawData = doc.data
+                android.util.Log.d("NotificationHistoryService", "未読通知$index: ID=${data?.id}, isRead=${data?.isRead} (raw read: ${rawData?.get("read")}), title=${data?.title}")
+            }
+            
             unreadCount
             
         } catch (e: Exception) {
+            android.util.Log.e("NotificationHistoryService", "未読通知数取得エラー", e)
             0
         }
     }
