@@ -58,7 +58,6 @@ class NotificationScheduler(private val context: Context) {
             monthlyWorkRequest
         )
         
-        android.util.Log.d("NotificationScheduler", "月次通知をスケジュール: ${calendar.time}")
     }
     
     /**
@@ -102,7 +101,6 @@ class NotificationScheduler(private val context: Context) {
             weeklyWorkRequest
         )
         
-        android.util.Log.d("NotificationScheduler", "週次通知をスケジュール: ${calendar.time} (${selectedWeekday})")
     }
     
     /**
@@ -111,7 +109,6 @@ class NotificationScheduler(private val context: Context) {
     fun cancelNotifications() {
         workManager.cancelUniqueWork(MONTHLY_WORK_NAME)
         workManager.cancelUniqueWork(WEEKLY_WORK_NAME)
-        android.util.Log.d("NotificationScheduler", "すべての通知をキャンセル")
     }
     
     /**
@@ -119,7 +116,6 @@ class NotificationScheduler(private val context: Context) {
      */
     fun cancelMonthlyNotification() {
         workManager.cancelUniqueWork(MONTHLY_WORK_NAME)
-        android.util.Log.d("NotificationScheduler", "月次通知をキャンセル")
     }
     
     /**
@@ -127,7 +123,6 @@ class NotificationScheduler(private val context: Context) {
      */
     fun cancelWeeklyNotification() {
         workManager.cancelUniqueWork(WEEKLY_WORK_NAME)
-        android.util.Log.d("NotificationScheduler", "週次通知をキャンセル")
     }
     
     /**

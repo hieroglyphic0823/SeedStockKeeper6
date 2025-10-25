@@ -40,11 +40,6 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
     // カレンダーエントリが変更された時に再計算
     LaunchedEffect(currentEntry) {
         // カレンダーエントリが変更された時の処理
-        android.util.Log.d("Calendar", "カレンダーエントリ変更検出: $currentEntry")
-        android.util.Log.d("Calendar", "播種開始日: ${currentEntry.sowing_start_date}")
-        android.util.Log.d("Calendar", "播種終了日: ${currentEntry.sowing_end_date}")
-        android.util.Log.d("Calendar", "収穫開始日: ${currentEntry.harvest_start_date}")
-        android.util.Log.d("Calendar", "収穫終了日: ${currentEntry.harvest_end_date}")
     }
     
     // 現在の日付を取得
@@ -161,20 +156,10 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
 
             // 播種期間と収穫期間の表示
             val calendarEntry = calendarEntries.firstOrNull()
-            android.util.Log.d("CalendarSection", "=== 種登録画面の表示データ ===")
-            android.util.Log.d("CalendarSection", "viewModel.packet.calendar: ${viewModel.packet.calendar}")
-            android.util.Log.d("CalendarSection", "calendarEntries: $calendarEntries")
-            android.util.Log.d("CalendarSection", "calendarEntry: $calendarEntry")
             if (calendarEntry != null) {
-                android.util.Log.d("CalendarSection", "播種開始: ${calendarEntry.sowing_start_date}")
-                android.util.Log.d("CalendarSection", "播種終了: ${calendarEntry.sowing_end_date}")
-                android.util.Log.d("CalendarSection", "収穫開始: ${calendarEntry.harvest_start_date}")
-                android.util.Log.d("CalendarSection", "収穫終了: ${calendarEntry.harvest_end_date}")
-                android.util.Log.d("CalendarSection", "有効期限: ${calendarEntry.expirationYear}年${calendarEntry.expirationMonth}月")
                 
                 // formatDateRangeの結果もログ出力
                 val harvestPeriod = formatDateRange(calendarEntry.harvest_start_date, calendarEntry.harvest_end_date)
-                android.util.Log.d("CalendarSection", "formatDateRange結果: $harvestPeriod")
             }
             if (calendarEntry != null) {
             Spacer(modifier = Modifier.height(16.dp))
@@ -676,11 +661,8 @@ private fun getRegionColor(region: String): Color {
 
 // 日付範囲を旬形式でフォーマットするヘルパー関数
 private fun formatDateRange(startDate: String, endDate: String): String {
-    android.util.Log.d("CalendarSection", "=== formatDateRange ===")
-    android.util.Log.d("CalendarSection", "startDate: $startDate, endDate: $endDate")
     
     if (startDate.isEmpty() && endDate.isEmpty()) {
-        android.util.Log.d("CalendarSection", "両方空のため未設定を返す")
         return "未設定"
     }
     
@@ -689,10 +671,8 @@ private fun formatDateRange(startDate: String, endDate: String): String {
         val month = DateConversionUtils.getMonthFromDate(startDate)
         val stage = DateConversionUtils.convertDateToStage(startDate)
         val result = "${year}年${month}月(${stage})"
-        android.util.Log.d("CalendarSection", "startFormatted: $result (year=$year, month=$month, stage=$stage)")
         result
     } else {
-        android.util.Log.d("CalendarSection", "startDateが空のため未設定")
         "未設定"
     }
     
@@ -701,10 +681,8 @@ private fun formatDateRange(startDate: String, endDate: String): String {
         val month = DateConversionUtils.getMonthFromDate(endDate)
         val stage = DateConversionUtils.convertDateToStage(endDate)
         val result = "${year}年${month}月(${stage})"
-        android.util.Log.d("CalendarSection", "endFormatted: $result (year=$year, month=$month, stage=$stage)")
         result
     } else {
-        android.util.Log.d("CalendarSection", "endDateが空のため未設定")
         "未設定"
     }
     
@@ -714,6 +692,5 @@ private fun formatDateRange(startDate: String, endDate: String): String {
         "$startFormatted ～ $endFormatted"
     }
     
-    android.util.Log.d("CalendarSection", "formatDateRange最終結果: $finalResult")
     return finalResult
 }

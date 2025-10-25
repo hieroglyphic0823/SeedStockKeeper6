@@ -98,11 +98,6 @@ fun SeedCalendarGrouped(
     val calendarEndDate = calendarStartDate.plusYears(2).minusMonths(1)
     
     // デバッグログを追加
-    android.util.Log.d("SeedCalendar", "カレンダー期間計算:")
-    android.util.Log.d("SeedCalendar", "allStartDates=$allStartDates")
-    android.util.Log.d("SeedCalendar", "earliestDate=$earliestDate")
-    android.util.Log.d("SeedCalendar", "calendarStartDate=$calendarStartDate")
-    android.util.Log.d("SeedCalendar", "calendarEndDate=$calendarEndDate")
     
     // 現在の月の位置を計算（スクロール初期位置用）
     // 当月から開始するため、常に0から開始
@@ -277,8 +272,6 @@ fun SeedCalendarGroupedInternal(
         val totalMonths = ChronoUnit.MONTHS.between(startDate, endDate).toInt() + 1
         
         // デバッグログを追加
-        android.util.Log.d("SeedCalendar", "SeedCalendarGroupedInternal: calendarStartDate=$calendarStartDate, calendarEndDate=$calendarEndDate")
-        android.util.Log.d("SeedCalendar", "SeedCalendarGroupedInternal: startDate=$startDate, endDate=$endDate, totalMonths=$totalMonths")
         
         // 実際の表示幅に基づいて月幅を計算
         val colW = gridW / 12f // 12ヶ月分の幅で計算（表示範囲は12ヶ月分）
@@ -490,11 +483,6 @@ fun SeedCalendarGroupedInternal(
                     var endX = gridLeft + colW * (endMonthIndexInCalendar + getDateOffsetInMonth(r.endDate))
                     
                     // デバッグログを追加
-                    android.util.Log.d("SeedCalendar", "帯の位置計算: itemLabel=${item.itemLabel}, startDate=${r.startDate}, endDate=${r.endDate}")
-                    android.util.Log.d("SeedCalendar", "startYear=$startYear, startMonth=$startMonth, endYear=$endYear, endMonth=$endMonth")
-                    android.util.Log.d("SeedCalendar", "startDate=$startDate, startDateForRange=$startDateForRange, endDateForRange=$endDateForRange")
-                    android.util.Log.d("SeedCalendar", "startMonthIndexInCalendar=$startMonthIndexInCalendar, endMonthIndexInCalendar=$endMonthIndexInCalendar")
-                    android.util.Log.d("SeedCalendar", "startX=$startX, endX=$endX, colW=$colW")
 
                     // 年をまたぐ帯の場合のX座標補正
                     if (startYear < endYear || (startYear == endYear && startMonth > endMonth)) { // 年をまたいでいる
@@ -566,7 +554,6 @@ fun SeedCalendarGroupedInternal(
                                 R.drawable.grain
                             }
                             
-                            android.util.Log.d("SeedCalendar", "アイコン描画開始: itemLabel=${item.itemLabel}, iconResource=$iconResource, iconSize=$iconSize")
                             
                             
                             // アイコンを棒グラフ幅に横に繰り返し表示
@@ -641,9 +628,6 @@ fun SeedCalendarGroupedInternal(
                                 
                             } catch (e: Exception) {
                                 // アイコンの描画に失敗した場合はログ出力
-                                android.util.Log.e("SeedCalendar", "アイコンの描画に失敗: ${e.message}")
-                                android.util.Log.e("SeedCalendar", "アイコンリソース: $iconResource")
-                                android.util.Log.e("SeedCalendar", "アイコンサイズ: $iconSize")
                             }
                         }
                     }

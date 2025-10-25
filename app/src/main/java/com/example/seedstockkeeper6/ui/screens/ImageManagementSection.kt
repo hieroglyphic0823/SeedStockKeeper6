@@ -1,7 +1,6 @@
 package com.example.seedstockkeeper6.ui.screens
 
 import android.net.Uri
-import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -94,7 +93,6 @@ fun ImageManagementSection(viewModel: SeedInputViewModel) {
                     downloadUrl = try {
                         storageRef.downloadUrl.await().toString()
                     } catch (e: Exception) {
-                        Log.e("ImageLoad", "URL取得失敗: $uri", e)
                         null
                     }
                 } else {
@@ -138,7 +136,6 @@ fun ImageManagementSection(viewModel: SeedInputViewModel) {
                                 try {
                                     Firebase.storage.reference.child(path).delete().await()
                                 } catch (e: Exception) {
-                                    Log.e("SeedInputScreen", "削除失敗: $path", e)
                                 }
                             }
                             viewModel.removeImage(index)

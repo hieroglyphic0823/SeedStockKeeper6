@@ -18,18 +18,12 @@ class GeocodingService(private val context: Context) {
     
     private fun initializePlaces() {
         try {
-            android.util.Log.d("GeocodingService", "Places初期化開始")
         if (!Places.isInitialized()) {
-                android.util.Log.d("GeocodingService", "Placesが初期化されていません。初期化を開始します。")
             Places.initialize(context, "AIzaSyDr_WfQfx3TyH0oLDWf8Z7qHX4XHAH5J-E")
-                android.util.Log.d("GeocodingService", "Places初期化完了")
             } else {
-                android.util.Log.d("GeocodingService", "Placesは既に初期化済みです")
         }
         placesClient = Places.createClient(context)
-            android.util.Log.d("GeocodingService", "PlacesClient作成完了: ${placesClient != null}")
         } catch (e: Exception) {
-            android.util.Log.e("GeocodingService", "Places初期化エラー", e)
             placesClient = null
         }
     }
@@ -38,7 +32,6 @@ class GeocodingService(private val context: Context) {
      * 緯度経度から住所を取得する（Android標準Geocoderを利用）
      */
     suspend fun getAddressFromLatLng(latLng: LatLng): String {
-        android.util.Log.d("GeocodingService", "Places APIによる住所取得開始: lat=${latLng.latitude}, lng=${latLng.longitude}")
 
         try {
             // Android標準のGeocoderを使用
@@ -63,35 +56,14 @@ class GeocodingService(private val context: Context) {
             }
             
             if (addresses.isNullOrEmpty()) {
-                android.util.Log.w("GeocodingService", "Geocoderから住所が見つかりませんでした。")
                 return "住所情報が見つかりません"
             }
 
-            android.util.Log.d("GeocodingService", "取得した住所候補数: ${addresses.size}")
             
             // 最も詳細な情報を含む住所を選択
             val address = selectMostDetailedAddress(addresses)
-            android.util.Log.d("GeocodingService", "選択された住所候補: ${addresses.indexOf(address) + 1}番目")
             
             // デバッグ用：Addressオブジェクトの全情報をログ出力
-            android.util.Log.d("GeocodingService", "=== Address詳細情報 ===")
-            android.util.Log.d("GeocodingService", "adminArea (都道府県): ${address.adminArea}")
-            android.util.Log.d("GeocodingService", "locality (市区町村): ${address.locality}")
-            android.util.Log.d("GeocodingService", "subLocality (区): ${address.subLocality}")
-            android.util.Log.d("GeocodingService", "thoroughfare (通り名・地名): ${address.thoroughfare}")
-            android.util.Log.d("GeocodingService", "subThoroughfare (番地): ${address.subThoroughfare}")
-            android.util.Log.d("GeocodingService", "featureName (特徴名): ${address.featureName}")
-            android.util.Log.d("GeocodingService", "premises (建物名): ${address.premises}")
-            android.util.Log.d("GeocodingService", "postalCode (郵便番号): ${address.postalCode}")
-            android.util.Log.d("GeocodingService", "countryName (国名): ${address.countryName}")
-            android.util.Log.d("GeocodingService", "countryCode (国コード): ${address.countryCode}")
-            android.util.Log.d("GeocodingService", "getAddressLine(0): ${address.getAddressLine(0)}")
-            android.util.Log.d("GeocodingService", "getAddressLine(1): ${address.getAddressLine(1)}")
-            android.util.Log.d("GeocodingService", "getAddressLine(2): ${address.getAddressLine(2)}")
-            android.util.Log.d("GeocodingService", "getAddressLine(3): ${address.getAddressLine(3)}")
-            android.util.Log.d("GeocodingService", "getAddressLine(4): ${address.getAddressLine(4)}")
-            android.util.Log.d("GeocodingService", "getMaxAddressLineIndex(): ${address.maxAddressLineIndex}")
-            android.util.Log.d("GeocodingService", "=== Address詳細情報終了 ===")
             
             // より詳細な住所情報を構築
             val addressParts = mutableListOf<String>()
@@ -140,11 +112,9 @@ class GeocodingService(private val context: Context) {
             
             // もし上記で十分な情報が得られない場合は、getAddressLineを使用
             if (addressParts.size < 3) {
-                android.util.Log.d("GeocodingService", "基本情報が不十分、getAddressLineを使用")
                 for (i in 0..address.maxAddressLineIndex) {
                     val addressLine = address.getAddressLine(i)
                     if (!addressLine.isNullOrBlank()) {
-                        android.util.Log.d("GeocodingService", "AddressLine[$i]: $addressLine")
                         // 既存の情報と重複しない場合のみ追加
                         if (!addressParts.any { addressLine.contains(it) }) {
                             addressParts.add(addressLine)
@@ -164,16 +134,10 @@ class GeocodingService(private val context: Context) {
             addressParts.addAll(enhancedAddressParts)
 
             val resultAddress = addressParts.joinToString("")
-            android.util.Log.d("GeocodingService", "Geocoderによる住所取得成功: $resultAddress")
-            android.util.Log.d("GeocodingService", "住所パーツ数: ${addressParts.size}")
-            android.util.Log.d("GeocodingService", "住所パーツ詳細: $addressParts")
             
             return if (resultAddress.isNotBlank()) resultAddress else "住所情報が不明です"
             
         } catch (e: Exception) {
-            android.util.Log.e("GeocodingService", "Geocoderによる住所取得中にエラーが発生しました", e)
-            android.util.Log.e("GeocodingService", "エラー詳細: ${e.message}")
-            android.util.Log.e("GeocodingService", "エラータイプ: ${e.javaClass.simpleName}")
             return "住所取得に失敗しました"
         }
     }
@@ -182,7 +146,6 @@ class GeocodingService(private val context: Context) {
      * 最も詳細な情報を含む住所を選択
      */
     private fun selectMostDetailedAddress(addresses: List<android.location.Address>): android.location.Address {
-        android.util.Log.d("GeocodingService", "住所候補の詳細度を評価中...")
         
         var bestAddress = addresses[0]
         var maxScore = 0
@@ -203,22 +166,13 @@ class GeocodingService(private val context: Context) {
             // getAddressLineの数も考慮
             score += address.maxAddressLineIndex + 1
             
-            android.util.Log.d("GeocodingService", "候補${index + 1}のスコア: $score")
-            android.util.Log.d("GeocodingService", "  - adminArea: ${address.adminArea}")
-            android.util.Log.d("GeocodingService", "  - locality: ${address.locality}")
-            android.util.Log.d("GeocodingService", "  - subLocality: ${address.subLocality}")
-            android.util.Log.d("GeocodingService", "  - thoroughfare: ${address.thoroughfare}")
-            android.util.Log.d("GeocodingService", "  - subThoroughfare: ${address.subThoroughfare}")
-            android.util.Log.d("GeocodingService", "  - maxAddressLineIndex: ${address.maxAddressLineIndex}")
             
             if (score > maxScore) {
                 maxScore = score
                 bestAddress = address
-                android.util.Log.d("GeocodingService", "新しい最適候補: 候補${index + 1} (スコア: $score)")
             }
         }
         
-        android.util.Log.d("GeocodingService", "最終選択: スコア $maxScore")
         return bestAddress
     }
     
@@ -226,7 +180,6 @@ class GeocodingService(private val context: Context) {
      * 住所パーツを最適化（重複除去、無意味な情報の排除）
      */
     private fun optimizeAddressParts(addressParts: List<String>): List<String> {
-        android.util.Log.d("GeocodingService", "住所パーツ最適化開始: $addressParts")
         
         val optimizedParts = mutableListOf<String>()
         val seenParts = mutableSetOf<String>()
@@ -238,7 +191,6 @@ class GeocodingService(private val context: Context) {
                 part == "日本" ||
                 part == "市区町村" ||
                 part.length < 2) {
-                android.util.Log.d("GeocodingService", "スキップ: $part")
                 continue
             }
             
@@ -246,13 +198,10 @@ class GeocodingService(private val context: Context) {
             if (!seenParts.contains(part)) {
                 optimizedParts.add(part)
                 seenParts.add(part)
-                android.util.Log.d("GeocodingService", "追加: $part")
             } else {
-                android.util.Log.d("GeocodingService", "重複スキップ: $part")
             }
         }
         
-        android.util.Log.d("GeocodingService", "最適化完了: $optimizedParts")
         return optimizedParts
     }
     
@@ -260,7 +209,6 @@ class GeocodingService(private val context: Context) {
      * 座標に基づく地域名の補完
      */
     private fun enhanceAddressWithCoordinates(addressParts: List<String>, latLng: LatLng): List<String> {
-        android.util.Log.d("GeocodingService", "座標ベース地域名補完開始: lat=${latLng.latitude}, lng=${latLng.longitude}")
         
         val enhancedParts = addressParts.toMutableList()
         
@@ -271,7 +219,6 @@ class GeocodingService(private val context: Context) {
             val areaName = "草場"
             if (!enhancedParts.contains(areaName)) {
                 enhancedParts.add(areaName)
-                android.util.Log.d("GeocodingService", "座標ベース地域名追加: $areaName")
             }
         } else if (latLng.latitude >= 33.60 && latLng.latitude <= 33.65 && 
                    latLng.longitude >= 130.20 && latLng.longitude <= 130.25) {
@@ -279,46 +226,39 @@ class GeocodingService(private val context: Context) {
             val areaName = "草場"
             if (!enhancedParts.contains(areaName)) {
                 enhancedParts.add(areaName)
-                android.util.Log.d("GeocodingService", "座標ベース地域名追加（フォールバック）: $areaName")
             }
         } else if (latLng.latitude >= 33.58 && latLng.latitude <= 33.63 && 
                    latLng.longitude >= 130.15 && latLng.longitude <= 130.20) {
             val areaName = "今宿"
             if (!enhancedParts.contains(areaName)) {
                 enhancedParts.add(areaName)
-                android.util.Log.d("GeocodingService", "座標ベース地域名追加: $areaName")
             }
         } else if (latLng.latitude >= 33.65 && latLng.latitude <= 33.70 && 
                    latLng.longitude >= 130.30 && latLng.longitude <= 130.40) {
             val areaName = "姪浜"
             if (!enhancedParts.contains(areaName)) {
                 enhancedParts.add(areaName)
-                android.util.Log.d("GeocodingService", "座標ベース地域名追加: $areaName")
             }
         } else if (latLng.latitude >= 33.50 && latLng.latitude <= 33.58 && 
                    latLng.longitude >= 130.10 && latLng.longitude <= 130.20) {
             val areaName = "小田部"
             if (!enhancedParts.contains(areaName)) {
                 enhancedParts.add(areaName)
-                android.util.Log.d("GeocodingService", "座標ベース地域名追加: $areaName")
             }
         } else if (latLng.latitude >= 33.60 && latLng.latitude <= 33.68 && 
                    latLng.longitude >= 130.18 && latLng.longitude <= 130.25) {
             val areaName = "野方"
             if (!enhancedParts.contains(areaName)) {
                 enhancedParts.add(areaName)
-                android.util.Log.d("GeocodingService", "座標ベース地域名追加: $areaName")
             }
         } else if (latLng.latitude >= 33.55 && latLng.latitude <= 33.62 && 
                    latLng.longitude >= 130.20 && latLng.longitude <= 130.30) {
             val areaName = "愛宕"
             if (!enhancedParts.contains(areaName)) {
                 enhancedParts.add(areaName)
-                android.util.Log.d("GeocodingService", "座標ベース地域名追加: $areaName")
             }
         }
         
-        android.util.Log.d("GeocodingService", "座標ベース地域名補完完了: $enhancedParts")
         return enhancedParts
     }
     
@@ -326,14 +266,11 @@ class GeocodingService(private val context: Context) {
      * アドレスコンポーネントから詳細な住所を構築
      */
     private fun buildDetailedAddressFromComponents(addressComponents: com.google.android.libraries.places.api.model.AddressComponents?): String {
-        android.util.Log.d("GeocodingService", "アドレスコンポーネント解析開始")
         if (addressComponents == null) {
-            android.util.Log.w("GeocodingService", "アドレスコンポーネントがnullです")
             return ""
         }
         
         val components = addressComponents.asList()
-        android.util.Log.d("GeocodingService", "アドレスコンポーネント数: ${components.size}")
         val addressParts = mutableListOf<String>()
         
         for ((index, component) in components.withIndex()) {
@@ -341,43 +278,34 @@ class GeocodingService(private val context: Context) {
             val longName = component.name
             val shortName = component.shortName
             
-            android.util.Log.d("GeocodingService", "コンポーネント[$index]: longName=$longName, shortName=$shortName, types=$types")
             
             when {
                 types.contains("administrative_area_level_1") -> {
                     // 都道府県
                     addressParts.add(longName)
-                    android.util.Log.d("GeocodingService", "都道府県を追加: $longName")
                 }
                 types.contains("locality") -> {
                     // 市区町村
                     addressParts.add(longName)
-                    android.util.Log.d("GeocodingService", "市区町村を追加: $longName")
                 }
                 types.contains("sublocality") -> {
                     // 区
                     addressParts.add(longName)
-                    android.util.Log.d("GeocodingService", "区を追加: $longName")
                 }
                 types.contains("sublocality_level_1") -> {
                     // 地区
                     addressParts.add(longName)
-                    android.util.Log.d("GeocodingService", "地区を追加: $longName")
                 }
                 types.contains("street_number") -> {
                     // 番地
                     addressParts.add(longName)
-                    android.util.Log.d("GeocodingService", "番地を追加: $longName")
                 }
                 else -> {
-                    android.util.Log.d("GeocodingService", "未対応のタイプ: $types")
                 }
             }
         }
         
         val detailedAddress = addressParts.joinToString("")
-        android.util.Log.d("GeocodingService", "詳細住所構築完了: $detailedAddress")
-        android.util.Log.d("GeocodingService", "住所パーツ数: ${addressParts.size}")
         return detailedAddress
     }
     
@@ -385,8 +313,6 @@ class GeocodingService(private val context: Context) {
      * 座標から簡易的な住所を生成
      */
     private fun generateAddressFromCoordinates(latitude: Double, longitude: Double): String {
-        android.util.Log.d("GeocodingService", "簡易住所生成開始: lat=$latitude, lng=$longitude")
-        android.util.Log.d("GeocodingService", "座標詳細: 緯度=${String.format("%.6f", latitude)}, 経度=${String.format("%.6f", longitude)}")
         return try {
             // より詳細な地域判定
             val prefecture = when {
@@ -437,14 +363,10 @@ class GeocodingService(private val context: Context) {
                 else -> "市区町村"
             }
             
-            android.util.Log.d("GeocodingService", "都道府県判定: $prefecture")
-            android.util.Log.d("GeocodingService", "市区町村判定: $city")
             
             val result = "$prefecture$city"
-            android.util.Log.d("GeocodingService", "簡易住所生成完了: $result")
             result
         } catch (e: Exception) {
-            android.util.Log.e("GeocodingService", "簡易住所生成エラー", e)
             "位置: ${String.format("%.4f", latitude)}, ${String.format("%.4f", longitude)}"
         }
     }
@@ -460,7 +382,6 @@ class GeocodingService(private val context: Context) {
                 else -> null
             }
         } catch (e: Exception) {
-            android.util.Log.e("GeocodingService", "座標取得エラー", e)
             null
         }
     }

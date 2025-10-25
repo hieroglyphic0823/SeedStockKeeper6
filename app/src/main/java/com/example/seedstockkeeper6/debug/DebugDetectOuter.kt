@@ -7,7 +7,6 @@ import android.graphics.DashPathEffect
 import android.graphics.Paint
 import android.graphics.Rect
 import android.graphics.RectF
-import android.util.Log
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.objects.DetectedObject
 import com.google.mlkit.vision.objects.ObjectDetection
@@ -84,7 +83,7 @@ class SeedOuterDebugDetector {
 
         val results = runCatching {
             objectDetector.process(InputImage.fromBitmap(bitmap, 0)).await()
-        }.onFailure { Log.e(TAG, "MLKit failed", it) }.getOrNull() ?: return emptyList()
+        }.onFailure { /* MLKit failed */ }.getOrNull() ?: return emptyList()
 
         val cands = results.mapNotNull { obj ->
             val bb = obj.boundingBox

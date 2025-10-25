@@ -26,7 +26,6 @@ import androidx.compose.runtime.collectAsState
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
-import android.util.Log
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -55,9 +54,7 @@ fun CalendarScreen(
     val seeds = if (isPreview) {
         // プレビュー時：ViewModelからデータを取得
         val previewSeeds = viewModel.seeds.value
-        android.util.Log.d("CalendarScreen", "プレビュー時データ取得: ${previewSeeds.size}件")
         previewSeeds.forEach { seed ->
-            android.util.Log.d("CalendarScreen", "プレビュー商品: ${seed.productName}")
         }
         previewSeeds
     } else if (viewModel.seeds.value.isNotEmpty()) {
@@ -79,17 +76,13 @@ fun CalendarScreen(
                         .whereEqualTo("ownerUid", currentUid)
                         .addSnapshotListener { snapshot, error ->
                             if (error != null) {
-                                Log.w("CalendarScreen", "Listen failed: ${error.message}")
                                 // エラーハンドリングを改善
                                 when (error.code) {
                                     com.google.firebase.firestore.FirebaseFirestoreException.Code.UNAVAILABLE -> {
-                                        Log.w("CalendarScreen", "Network unavailable, using cached data")
                                     }
                                     com.google.firebase.firestore.FirebaseFirestoreException.Code.DEADLINE_EXCEEDED -> {
-                                        Log.w("CalendarScreen", "Request timeout, using cached data")
                                     }
                                     else -> {
-                                        Log.e("CalendarScreen", "Firestore error: ${error.code} - ${error.message}")
                                     }
                                 }
                                 return@addSnapshotListener
@@ -100,7 +93,6 @@ fun CalendarScreen(
                                     try {
                                         doc.toObject(SeedPacket::class.java)?.copy(id = doc.id)
                                     } catch (e: Exception) {
-                                        Log.w("CalendarScreen", "Failed to convert document ${doc.id} to SeedPacket", e)
                                         null
                                     }
                                 }
@@ -108,7 +100,6 @@ fun CalendarScreen(
                             }
                         }
                 } catch (e: Exception) {
-                    Log.e("CalendarScreen", "Error setting up Firestore listener: ${e.message}")
                 }
             }
             
@@ -116,7 +107,6 @@ fun CalendarScreen(
                 try {
                     registration?.remove()
                 } catch (e: Exception) {
-                    Log.w("CalendarScreen", "Error removing listener: ${e.message}")
                 }
             }
         }
@@ -601,7 +591,6 @@ fun GanttChartRow(
                                     2 -> "下旬(21-31日)"
                                     else -> "不明"
                                 }
-                                android.util.Log.d("CalendarScreen", "播種期間チェック: ${seed.productName}, ${year}年${month}月${periodName}, isSowingInPeriod=$isSowingInPeriod, shouldShowSowing=$shouldShowSowing")
                             }
                             
                             if (shouldShowSowing) {

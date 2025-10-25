@@ -1,6 +1,5 @@
 package com.example.seedstockkeeper6.service
 
-import android.util.Log
 import com.example.seedstockkeeper6.model.SeedPacket
 import java.text.SimpleDateFormat
 import java.util.*

@@ -163,7 +163,6 @@ fun NotificationPreviewCard(
             
             // プレビュー内容表示
             if (showMonthlyPreview) {
-                android.util.Log.d("NotificationPreviewComponents", "月次プレビュー表示 - title: $monthlyPreviewTitle, content: $monthlyPreviewContent")
                 NotificationPreviewContentCard(
                     title = if (monthlyPreviewTitle.isNotEmpty()) monthlyPreviewTitle else "月次通知プレビュー",
                     content = monthlyPreviewContent,
@@ -190,7 +189,6 @@ private fun NotificationPreviewContentCard(
     content: String,
     isOcrSuccessful: Boolean = false
 ) {
-    android.util.Log.d("NotificationPreviewContentCard", "プレビュー内容表示 - title: $title, content: $content")
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(

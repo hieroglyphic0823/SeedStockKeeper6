@@ -3,7 +3,6 @@ package com.example.seedstockkeeper6.utils
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
-import android.util.Log
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -70,13 +69,11 @@ object NetworkUtils {
         
         while (System.currentTimeMillis() - startTime < timeoutMs) {
             if (isNetworkAvailable(context)) {
-                Log.d(TAG, "Network is available")
                 return true
             }
             delay(1000)
         }
         
-        Log.w(TAG, "Network timeout after ${timeoutMs}ms")
         return false
     }
 }

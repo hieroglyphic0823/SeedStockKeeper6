@@ -30,7 +30,6 @@ fun NotificationPreviewScreen(
     context: android.content.Context,
     onRefreshUnreadCount: () -> Unit = {}
 ) {
-    android.util.Log.d("NotificationPreviewScreen", "NotificationPreviewScreen composable開始")
     
     val notificationManager = remember { NotificationManager(context, onRefreshUnreadCount) }
     val notificationScheduler = remember { NotificationScheduler(context) }
@@ -63,7 +62,6 @@ fun NotificationPreviewScreen(
             // 認証状態を確認
             val currentUser = auth.currentUser
             if (currentUser == null) {
-                android.util.Log.w("NotificationPreviewScreen", "ユーザーが認証されていません。デモデータを使用します。")
                 errorMessage = "認証されていません。デモデータでプレビューを表示します。"
             }
             
@@ -71,7 +69,6 @@ fun NotificationPreviewScreen(
             val (seeds, settings) = try {
                 loadUserData(auth, db)
             } catch (e: Exception) {
-                android.util.Log.w("NotificationPreviewScreen", "Firestoreデータ取得に失敗、デモデータを使用: ${e.message}")
                 getDemoData()
             }
             
@@ -82,9 +79,7 @@ fun NotificationPreviewScreen(
                 isOcrSuccessful = seeds.any { seed -> 
                     seed.imageUrls.isNotEmpty() && seed.imageUrls.any { url -> url.isNotEmpty() }
                 }
-                android.util.Log.d("NotificationPreviewScreen", "データ読み込み完了 - 種: ${seeds.size}件, 設定: ${settings.size}件, OCR成功: $isOcrSuccessful")
         } catch (e: Exception) {
-            android.util.Log.e("NotificationPreviewScreen", "データ読み込みエラー", e)
             
             // エラーの種類に応じて適切なメッセージを設定
             errorMessage = when {
@@ -163,11 +158,7 @@ fun NotificationPreviewScreen(
             onMonthlyTest = {
                 scope.launch {
                     try {
-                        android.util.Log.d("NotificationPreviewScreen", "通知生成時のuserSettings: $userSettings")
                         val farmOwnerValue = userSettings["farmOwner"] ?: "水戸黄門"
-                        android.util.Log.d("NotificationPreviewScreen", "使用するfarmOwner: $farmOwnerValue")
-                        
-                        android.util.Log.d("NotificationPreviewScreen", "GeminiAPI呼び出し開始")
                         val title = geminiService.generateMonthlyNotificationTitle(
                             region = userSettings["defaultRegion"] ?: "温暖地",
                             prefecture = userSettings["selectedPrefecture"] ?: "",
@@ -186,12 +177,9 @@ fun NotificationPreviewScreen(
                             farmOwner = farmOwnerValue,
                             customFarmOwner = userSettings["customFarmOwner"] ?: ""
                         )
-                        android.util.Log.d("NotificationPreviewScreen", "GeminiAPI呼び出し完了 - content: ${content.take(100)}...")
-                        android.util.Log.d("NotificationPreviewScreen", "通知送信開始")
                         
                         // 通知権限をチェック
                         if (!notificationManager.hasNotificationPermission()) {
-                            android.util.Log.w("NotificationPreviewScreen", "通知権限が許可されていません")
                             if (activity != null) {
                                 (activity as com.example.seedstockkeeper6.MainActivity).requestNotificationPermission()
                             }
@@ -200,7 +188,6 @@ fun NotificationPreviewScreen(
                         
                         // 現在のユーザーIDを取得
                         val currentUserId = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid
-                        android.util.Log.d("NotificationPreviewScreen", "現在のユーザーID: $currentUserId")
                         
                         notificationManager.sendMonthlyRecommendationNotificationWithContent(
                             title = title,
@@ -212,22 +199,16 @@ fun NotificationPreviewScreen(
                             seedCount = userSeeds.size,
                             userId = currentUserId ?: "unknown_user"
                         )
-                        android.util.Log.d("NotificationPreviewScreen", "通知送信完了")
                         // 通知作成後に未読数を更新
                         onRefreshUnreadCount()
                     } catch (e: Exception) {
-                        android.util.Log.e("NotificationPreviewScreen", "月次通知送信エラー", e)
                     }
                 }
             },
             onWeeklyTest = {
                 scope.launch {
                     try {
-                        android.util.Log.d("NotificationPreviewScreen", "週次通知生成時のuserSettings: $userSettings")
                         val farmOwnerValue = userSettings["farmOwner"] ?: "水戸黄門"
-                        android.util.Log.d("NotificationPreviewScreen", "使用するfarmOwner: $farmOwnerValue")
-                        
-                        android.util.Log.d("NotificationPreviewScreen", "週次GeminiAPI呼び出し開始")
                         val title = geminiService.generateWeeklyNotificationTitle(
                             userSeeds = userSeeds,
                             farmOwner = farmOwnerValue,
@@ -238,12 +219,9 @@ fun NotificationPreviewScreen(
                             farmOwner = farmOwnerValue,
                             customFarmOwner = userSettings["customFarmOwner"] ?: ""
                         )
-                        android.util.Log.d("NotificationPreviewScreen", "週次GeminiAPI呼び出し完了 - content: ${content.take(100)}...")
-                        android.util.Log.d("NotificationPreviewScreen", "週次通知送信開始")
                         
                         // 通知権限をチェック
                         if (!notificationManager.hasNotificationPermission()) {
-                            android.util.Log.w("NotificationPreviewScreen", "通知権限が許可されていません")
                             if (activity != null) {
                                 (activity as com.example.seedstockkeeper6.MainActivity).requestNotificationPermission()
                             }
@@ -259,11 +237,9 @@ fun NotificationPreviewScreen(
                             month = java.util.Calendar.getInstance().get(java.util.Calendar.MONTH) + 1,
                             seedCount = userSeeds.size
                         )
-                        android.util.Log.d("NotificationPreviewScreen", "週次通知送信完了")
                         // 通知作成後に未読数を更新
                         onRefreshUnreadCount()
                     } catch (e: Exception) {
-                        android.util.Log.e("NotificationPreviewScreen", "週次通知送信エラー", e)
                     }
                 }
             }
@@ -279,10 +255,8 @@ fun NotificationPreviewScreen(
             weeklyPreviewTitle = weeklyPreviewTitle,
             isOcrSuccessful = isOcrSuccessful,
             onMonthlyPreviewToggle = {
-                android.util.Log.d("NotificationPreviewScreen", "月次プレビューボタン押下 - showMonthlyPreview: $showMonthlyPreview")
                 showMonthlyPreview = !showMonthlyPreview
                 if (showMonthlyPreview) {
-                    android.util.Log.d("NotificationPreviewScreen", "月次プレビュー生成開始 - userSeeds: ${userSeeds.size}件, userSettings: $userSettings")
                     
                     // ローディング状態を表示
                     monthlyPreviewContent = "通知内容を生成中..."
@@ -293,12 +267,10 @@ fun NotificationPreviewScreen(
                         try {
                             val farmOwnerValue = userSettings["farmOwner"] ?: "水戸黄門"
                             val currentMonth = java.util.Calendar.getInstance().get(java.util.Calendar.MONTH) + 1
-                            android.util.Log.d("NotificationPreviewScreen", "月次プレビュー生成 - farmOwner: $farmOwnerValue")
                             
                             // タイトルとコンテンツを並行生成
                             val titleDeferred = scope.async {
                                 val farmAddressValue = userSettings["farmAddress"] ?: ""
-                                android.util.Log.d("NotificationPreviewScreen", "月次プレビュー生成 - farmAddress: $farmAddressValue")
                                 geminiService.generateMonthlyNotificationTitle(
                                     region = userSettings["defaultRegion"] ?: "温暖地",
                                     prefecture = userSettings["selectedPrefecture"] ?: "",
@@ -312,7 +284,6 @@ fun NotificationPreviewScreen(
                             }
                             
                             val contentDeferred = scope.async {
-                                android.util.Log.d("NotificationPreviewScreen", "月次プレビューGeminiAPI呼び出し開始")
                                 geminiService.generateMonthlyNotificationContent(
                                     region = userSettings["defaultRegion"] ?: "温暖地",
                                     prefecture = userSettings["selectedPrefecture"] ?: "",
@@ -328,12 +299,8 @@ fun NotificationPreviewScreen(
                             monthlyPreviewTitle = titleDeferred.await()
                             monthlyPreviewContent = contentDeferred.await()
                             
-                            android.util.Log.d("NotificationPreviewScreen", "月次プレビュー生成完了 - title: $monthlyPreviewTitle, content: ${monthlyPreviewContent.take(100)}...")
                         } catch (e: Exception) {
-                            android.util.Log.e("NotificationPreviewScreen", "月次プレビュー生成エラー", e)
-                            android.util.Log.e("NotificationPreviewScreen", "エラー詳細: ${e.javaClass.simpleName} - ${e.message}")
                             if (e.message?.contains("overloaded") == true || e.message?.contains("503") == true) {
-                                android.util.Log.w("NotificationPreviewScreen", "API過負荷のため、通知を作成できません")
                                 monthlyPreviewTitle = "API過負荷"
                                 monthlyPreviewContent = "API過負荷のため通知を作成できません。しばらく時間をおいてから再度お試しください。"
                             } else {
@@ -354,18 +321,14 @@ fun NotificationPreviewScreen(
                     scope.launch {
                         try {
                             val farmOwnerValue = userSettings["farmOwner"] ?: "水戸黄門"
-                            android.util.Log.d("NotificationPreviewScreen", "週次プレビューGeminiAPI呼び出し開始")
                             weeklyPreviewContent = geminiService.generateWeeklyNotificationContent(
                                 userSeeds = userSeeds,
                                 farmOwner = farmOwnerValue,
                                 customFarmOwner = userSettings["customFarmOwner"] ?: ""
                             )
                             weeklyPreviewTitle = "まき時終了の2週間前の種があります"
-                            android.util.Log.d("NotificationPreviewScreen", "週次プレビューGeminiAPI呼び出し完了")
                         } catch (e: Exception) {
-                            android.util.Log.e("NotificationPreviewScreen", "週次プレビュー生成エラー", e)
                             if (e.message?.contains("overloaded") == true || e.message?.contains("503") == true) {
-                                android.util.Log.w("NotificationPreviewScreen", "API過負荷のため、通知を作成できません")
                                 weeklyPreviewTitle = "API過負荷"
                                 weeklyPreviewContent = "API過負荷のため通知を作成できません。しばらく時間をおいてから再度お試しください。"
                             } else {

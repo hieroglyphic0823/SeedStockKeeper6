@@ -1,6 +1,5 @@
 package com.example.seedstockkeeper6
 
-import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
@@ -37,7 +36,6 @@ fun AppNavHost(
         modifier = modifier
     ) {
         composable("castle") {
-            Log.d("BootTrace", "Screen: CastleScreen初期化")
             val castleViewModel = viewModel<SeedListViewModel>()
             CastleScreen(
                 navController = navController,
@@ -45,7 +43,6 @@ fun AppNavHost(
             )
         }
         composable("list?filter={filter}") { backStackEntry ->
-            Log.d("BootTrace", "Screen: SeedListScreen初期化")
             val listViewModel = viewModel<SeedListViewModel>()
             SeedListScreen(
                 navController = navController,
@@ -56,7 +53,6 @@ fun AppNavHost(
             )
         }
         composable("input/{packet}") { backStackEntry ->
-            Log.d("BootTrace", "Screen: SeedInputScreen初期化")
             val json = backStackEntry.arguments?.getString("packet") ?: ""
             val packet = if (json.isNotEmpty()) Gson().fromJson(json, SeedPacket::class.java) else null
             val currentInputViewModel: SeedInputViewModel = viewModel(viewModelStoreOwner = backStackEntry)

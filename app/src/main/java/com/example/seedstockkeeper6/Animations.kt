@@ -39,9 +39,6 @@ fun FullScreenSaveAnimation(
     
     // Lottieアニメーション開始のLog出力
     LaunchedEffect(Unit) {
-        android.util.Log.d("FullScreenSaveAnimation", "=== Lottieアニメーション開始 ===")
-        android.util.Log.d("FullScreenSaveAnimation", "FABボタンで保存中に表示されるsukesan.gifアニメーション")
-        android.util.Log.d("FullScreenSaveAnimation", "アニメーション開始時刻: ${System.currentTimeMillis()}")
     }
     
     // ウィンドウサイズとアニメーションサイズをLog出力（ダイアログと同じ幅に設定）
@@ -57,15 +54,6 @@ fun FullScreenSaveAnimation(
     val animationWidthRatio = dialogActualWidthDp / windowWidthDp
     
     LaunchedEffect(Unit) {
-        android.util.Log.d("FullScreenSaveAnimation", "=== 保存アニメーションサイズ（ダイアログと同じ幅） ===")
-        android.util.Log.d("FullScreenSaveAnimation", "ウィンドウ幅: ${windowWidthDp}dp")
-        android.util.Log.d("FullScreenSaveAnimation", "ウィンドウ高: ${windowHeightDp}dp")
-        android.util.Log.d("FullScreenSaveAnimation", "画面密度: ${screenDensity}")
-        android.util.Log.d("FullScreenSaveAnimation", "ダイアログpadding: ${dialogPadding.value}dp")
-        android.util.Log.d("FullScreenSaveAnimation", "ダイアログ実際の幅: ${dialogActualWidthDp}dp")
-        android.util.Log.d("FullScreenSaveAnimation", "アニメーション幅比率: ${(animationWidthRatio * 100).toInt()}%")
-        android.util.Log.d("FullScreenSaveAnimation", "アニメーション幅(px): ${density.run { dialogActualWidthDp.dp.toPx() }}px")
-        android.util.Log.d("FullScreenSaveAnimation", "Pixel 7解像度: 1080x2100px")
     }
     
     // CoilのImageLoaderを設定（GIFサポート付き）

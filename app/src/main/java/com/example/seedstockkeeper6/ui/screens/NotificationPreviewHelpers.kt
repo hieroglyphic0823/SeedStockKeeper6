@@ -30,15 +30,12 @@ suspend fun loadUserData(
 ): Pair<List<SeedPacket>, Map<String, String>> {
     val uid = auth.currentUser?.uid
     if (uid == null) {
-        android.util.Log.w("NotificationPreviewHelpers", "ユーザーが認証されていません。デモデータを使用します。")
         return getDemoData()
     }
     
     // 種データの取得
     val seeds = try {
-        android.util.Log.d("NotificationPreviewHelpers", "種データ取得開始 - UID: $uid")
         val currentMonth = java.util.Calendar.getInstance().get(java.util.Calendar.MONTH) + 1
-        android.util.Log.d("NotificationPreviewHelpers", "現在の月: $currentMonth")
         
         val seedsSnapshot = db.collection("seeds")
             .whereEqualTo("ownerUid", uid)
@@ -57,15 +54,12 @@ suspend fun loadUserData(
                     null
                 }
             } catch (e: Exception) {
-                android.util.Log.w("NotificationPreviewHelpers", "種データ解析エラー: ${doc.id}", e)
                 null
             }
         }
         
-        android.util.Log.d("NotificationPreviewHelpers", "取得した種データ: ${allSeeds.size}件")
         allSeeds
     } catch (e: Exception) {
-        android.util.Log.e("NotificationPreviewHelpers", "種データ取得エラー", e)
         emptyList()
     }
     
@@ -89,17 +83,13 @@ suspend fun loadUserData(
                 }
             }
         }
-        android.util.Log.d("NotificationPreviewHelpers", "ユーザー設定取得成功: $settings")
-        android.util.Log.d("NotificationPreviewHelpers", "farmAddress: ${settings["farmAddress"]}")
         settings
     } catch (e: Exception) {
-        android.util.Log.w("NotificationPreviewHelpers", "ユーザー設定取得失敗、デフォルト設定を使用: ${e.message}")
         getDefaultUserSettings()
     }
     
     // 種データが空の場合はデモデータを使用
     val finalSeeds = if (seeds.isEmpty()) {
-        android.util.Log.w("NotificationPreviewHelpers", "種データが空のため、デモデータを使用します。")
         getDemoData().first
     } else {
         seeds

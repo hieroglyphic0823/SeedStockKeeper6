@@ -202,7 +202,6 @@ fun NotificationHistoryScreen(
     navController: NavController,
     onRefreshUnreadCount: () -> Unit = {}
 ) {
-    android.util.Log.d("NotificationHistoryScreen", "NotificationHistoryScreenが描画開始されました")
     val historyService = remember { NotificationHistoryService() }
     val contentGenerator = remember { NotificationContentGenerator() }
     val scope = rememberCoroutineScope()
@@ -215,20 +214,14 @@ fun NotificationHistoryScreen(
     // 通知データを読み込み
     LaunchedEffect(Unit) {
         try {
-            android.util.Log.d("NotificationHistoryScreen", "通知データ読み込み開始")
             isLoading = true
             errorMessage = ""
             val result = historyService.getUserNotificationData()
-            android.util.Log.d("NotificationHistoryScreen", "通知データ読み込み完了 - 取得件数: ${result.size}")
-            android.util.Log.d("NotificationHistoryScreen", "取得したデータ: $result")
             notificationDataList = result
-            android.util.Log.d("NotificationHistoryScreen", "notificationDataListを更新しました - 件数: ${notificationDataList.size}")
         } catch (e: Exception) {
-            android.util.Log.e("NotificationHistoryScreen", "通知データの読み込みに失敗", e)
             errorMessage = "通知データの読み込みに失敗しました: ${e.message}"
         } finally {
             isLoading = false
-            android.util.Log.d("NotificationHistoryScreen", "読み込み完了 - isLoading: $isLoading, errorMessage: $errorMessage")
         }
     }
     
@@ -281,7 +274,6 @@ fun NotificationHistoryScreen(
             }
             // 通知データリスト
             else if (notificationDataList.isEmpty()) {
-                android.util.Log.d("NotificationHistoryScreen", "空のデータを表示 - notificationDataList.isEmpty() = true")
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
@@ -310,24 +302,19 @@ fun NotificationHistoryScreen(
                 }
             }
             else {
-                android.util.Log.d("NotificationHistoryScreen", "データリストを表示 - 件数: ${notificationDataList.size}")
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     items(notificationDataList) { notificationData ->
-                        android.util.Log.d("NotificationHistoryScreen", "NotificationDataCardを描画中 - documentId: ${notificationData.documentId}, title: ${notificationData.title}")
                         NotificationDataCard(
                             notificationData = notificationData,
                             contentGenerator = contentGenerator,
                             historyService = historyService,
                             onDelete = { 
-                                android.util.Log.d("NotificationHistoryScreen", "onDeleteコールバックが呼ばれました - documentId: ${notificationData.documentId}")
                                 deletingDocumentId = notificationData.documentId
                                 showDeleteDialog = true
-                                android.util.Log.d("NotificationHistoryScreen", "削除ダイアログ状態を更新 - showDeleteDialog: $showDeleteDialog, deletingDocumentId: $deletingDocumentId")
                             },
                             onMarkAsRead = { documentId ->
-                                android.util.Log.d("NotificationHistoryScreen", "onMarkAsReadコールバックが呼ばれました - documentId: $documentId")
                                 scope.launch {
                                     try {
                                         val success = historyService.markNotificationAsRead(documentId)
@@ -340,12 +327,10 @@ fun NotificationHistoryScreen(
                                                     data
                                                 }
                                             }
-                                            android.util.Log.d("NotificationHistoryScreen", "通知を既読にしました")
                                             // 未読通知数を更新
                                             onRefreshUnreadCount()
                                         }
                                     } catch (e: Exception) {
-                                        android.util.Log.e("NotificationHistoryScreen", "既読更新でエラーが発生", e)
                                     }
                                 }
                             }
@@ -357,9 +342,7 @@ fun NotificationHistoryScreen(
     }
     
     // 削除確認ダイアログ
-    android.util.Log.d("NotificationHistoryScreen", "削除ダイアログ条件チェック - showDeleteDialog: $showDeleteDialog, deletingDocumentId: $deletingDocumentId")
     if (showDeleteDialog && deletingDocumentId != null) {
-        android.util.Log.d("NotificationHistoryScreen", "削除確認ダイアログを表示します")
         AlertDialog(
             onDismissRequest = { 
                 showDeleteDialog = false
@@ -370,11 +353,9 @@ fun NotificationHistoryScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        android.util.Log.d("NotificationHistoryScreen", "削除確認ボタンがクリックされました - documentId: $deletingDocumentId")
                         val documentId = deletingDocumentId
                         showDeleteDialog = false
                         deletingDocumentId = null
-                        android.util.Log.d("NotificationHistoryScreen", "削除ダイアログを閉じました")
                         
                         if (documentId != null) {
                             scope.launch {
@@ -385,16 +366,12 @@ fun NotificationHistoryScreen(
                                         notificationDataList = notificationDataList.filter { 
                                             it.documentId != documentId 
                                         }
-                                        android.util.Log.d("NotificationHistoryScreen", "通知データを削除しました")
                                     } else {
-                                        android.util.Log.e("NotificationHistoryScreen", "通知データの削除に失敗しました")
                                     }
                                 } catch (e: Exception) {
-                                    android.util.Log.e("NotificationHistoryScreen", "削除処理でエラーが発生", e)
                                 }
                             }
                         } else {
-                            android.util.Log.e("NotificationHistoryScreen", "削除対象のdocumentIdがnullです")
                         }
                     }
                 ) {
@@ -404,7 +381,6 @@ fun NotificationHistoryScreen(
             dismissButton = {
                 TextButton(
                     onClick = { 
-                        android.util.Log.d("NotificationHistoryScreen", "キャンセルボタンがクリックされました")
                         showDeleteDialog = false
                         deletingDocumentId = null
                     }
@@ -425,14 +401,12 @@ private fun NotificationDataCard(
     onDelete: () -> Unit,
     onMarkAsRead: (String) -> Unit
 ) {
-    android.util.Log.d("NotificationHistoryScreen", "NotificationDataCard関数が呼ばれました - documentId: ${notificationData.documentId}")
     var showDetailDialog by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     
     // 詳細ダイアログが表示された時に既読フラグを更新
     LaunchedEffect(showDetailDialog) {
         if (showDetailDialog && notificationData.isRead == 0 && notificationData.documentId != null) {
-            android.util.Log.d("NotificationHistoryScreen", "詳細ダイアログ表示 - 既読フラグを更新します")
             onMarkAsRead(notificationData.documentId)
         }
     }
@@ -501,11 +475,9 @@ private fun NotificationDataCard(
                 
                 IconButton(
                     onClick = { 
-                        android.util.Log.d("NotificationHistoryScreen", "削除ボタンがクリックされました - documentId: ${notificationData.documentId}")
                         onDelete() 
                     }
                 ) {
-                    android.util.Log.d("NotificationHistoryScreen", "削除アイコンを描画中 - documentId: ${notificationData.documentId}")
                     Icon(
                         Icons.Filled.Delete,
                         contentDescription = "削除",
@@ -561,7 +533,6 @@ private fun NotificationDataCard(
             onDismissRequest = { showDetailDialog = false },
             modifier = Modifier
                 .onSizeChanged { size ->
-                    android.util.Log.d("NotificationHistoryScreen", "AlertDialog全体サイズ: width=${size.width}, height=${size.height}")
                 }
                 .padding(bottom = 4.dp),
             title = {
@@ -590,10 +561,8 @@ private fun NotificationDataCard(
                             modifier = Modifier
                                 .size(24.dp)
                                 .onSizeChanged { size ->
-                                    android.util.Log.d("NotificationHistoryScreen", "アイコンサイズ - width: ${size.width}, height: ${size.height}")
                                 }
                                 .onGloballyPositioned { coordinates ->
-                                    android.util.Log.d("NotificationHistoryScreen", "アイコン位置 - x: ${coordinates.boundsInWindow().topLeft.x}, y: ${coordinates.boundsInWindow().topLeft.y}")
                                 }
                                 .graphicsLayer {
                                     rotationZ = rotation
@@ -609,10 +578,8 @@ private fun NotificationDataCard(
                             modifier = Modifier
                                 .weight(1f)
                                 .onSizeChanged { size ->
-                                    android.util.Log.d("NotificationHistoryScreen", "タイトルサイズ - width: ${size.width}, height: ${size.height}")
                                 }
                                 .onGloballyPositioned { coordinates ->
-                                    android.util.Log.d("NotificationHistoryScreen", "タイトル位置 - x: ${coordinates.boundsInWindow().topLeft.x}, y: ${coordinates.boundsInWindow().topLeft.y}")
                                 }
                         )
                         
@@ -620,10 +587,8 @@ private fun NotificationDataCard(
                             onClick = { showDetailDialog = false },
                             modifier = Modifier
                                 .onSizeChanged { size ->
-                                    android.util.Log.d("NotificationHistoryScreen", "×ボタンサイズ - width: ${size.width}, height: ${size.height}")
                                 }
                                 .onGloballyPositioned { coordinates ->
-                                    android.util.Log.d("NotificationHistoryScreen", "×ボタン位置 - x: ${coordinates.boundsInWindow().topLeft.x}, y: ${coordinates.boundsInWindow().topLeft.y}")
                                 }
                         ) {
                             Icon(
@@ -643,12 +608,10 @@ private fun NotificationDataCard(
                         .height(800.dp)
                         .verticalScroll(rememberScrollState())
                         .onSizeChanged { size ->
-                            android.util.Log.d("NotificationHistoryScreen", "本文Columnサイズ: width=${size.width}, height=${size.height}")
                         }
                 ) {
                     // 通知内容（JSONデータから生成）
                     val content = remember(notificationData) { contentGenerator.generateContent(notificationData) }
-                    android.util.Log.d("NotificationHistoryScreen", "表示する本文: $content")
                     
                     // ヘッダー
                     if (notificationData.summary.isNotEmpty()) {
@@ -961,10 +924,7 @@ private fun extractSignature(content: String): String {
         var advice = ""
         var signature = ""
 
-        android.util.Log.d("NotificationHistoryScreen", "extractAdviceAndSignature - 入力内容の行数: ${lines.size}")
-        android.util.Log.d("NotificationHistoryScreen", "extractAdviceAndSignature - 最後の10行:")
         for (i in maxOf(0, lines.size - 10) until lines.size) {
-            android.util.Log.d("NotificationHistoryScreen", "行${i}: '${lines[i].trim()}'")
         }
 
         // 最後の数行からアドバイスと署名を探す
@@ -974,13 +934,11 @@ private fun extractSignature(content: String): String {
             // 署名を探す
             if (line.contains("佐々木助三郎 拝") || line.contains("助三郎 より") || line.contains("助さんより")) {
                 signature = line
-                android.util.Log.d("NotificationHistoryScreen", "署名を発見: '$signature'")
             }
             // アドバイスを探す（署名の前の行で、短い文）
             else if (line.isNotEmpty() && line.length <= 50 && !line.startsWith("🌱") && !line.startsWith("⚠️") && !line.startsWith("🌟") && !line.startsWith("【") && !line.contains("佐々木助三郎") && !line.contains("助三郎") && !line.contains("助さん")) {
                 if (advice.isEmpty()) {
                     advice = line
-                    android.util.Log.d("NotificationHistoryScreen", "アドバイスを発見: '$advice'")
                 }
             }
         }

@@ -42,9 +42,6 @@ fun SeedInputScreen(
     settingsViewModel: com.example.seedstockkeeper6.viewmodel.SettingsViewModel? = null,
     onSaveRequest: () -> Unit = {} // MainScaffoldからの保存リクエストコールバック
 ) {
-    android.util.Log.d("SeedInputScreen", "=== SeedInputScreen開始 ===")
-    android.util.Log.d("SeedInputScreen", "viewModel.packet.calendar: ${viewModel.packet.calendar}")
-    android.util.Log.d("SeedInputScreen", "viewModel.selectedRegion: ${viewModel.selectedRegion}")
     
     val scroll = rememberScrollState()
     val context = LocalContext.current
@@ -135,8 +132,6 @@ fun SeedInputScreen(
             )
             
             // カレンダーセクション
-            android.util.Log.d("SeedInputScreen", "=== CalendarSection呼び出し前 ===")
-            android.util.Log.d("SeedInputScreen", "CalendarSectionに渡すviewModel.packet.calendar: ${viewModel.packet.calendar}")
             CalendarSection(viewModel)
             
             // 区切り線
@@ -187,12 +182,6 @@ fun SeedInputScreen(
     )
     
     // 地域選択ダイアログ
-    android.util.Log.d("SeedInputScreen", "=== RegionSelectionDialog呼び出し ===")
-    android.util.Log.d("SeedInputScreen", "showDialog: ${viewModel.showRegionSelectionDialog}")
-    android.util.Log.d("SeedInputScreen", "regions: ${viewModel.detectedRegions}")
-    android.util.Log.d("SeedInputScreen", "ocrResult: ${viewModel.ocrResult}")
-    android.util.Log.d("SeedInputScreen", "editingCalendarEntry: ${viewModel.editingCalendarEntry}")
-    android.util.Log.d("SeedInputScreen", "defaultRegion: ${viewModel.farmDefaultRegion}")
     RegionSelectionDialog(
         showDialog = viewModel.showRegionSelectionDialog,
         regionList = viewModel.detectedRegions,

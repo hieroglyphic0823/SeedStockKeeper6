@@ -7,7 +7,6 @@ import android.graphics.Matrix
 import android.graphics.Rect
 import android.graphics.RectF
 import android.net.Uri
-import android.util.Log
 import androidx.compose.runtime.*
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -172,7 +171,6 @@ class SeedInputViewModel : ViewModel() {
 
         // URI を取り出す（ログ出力にも使用）
         val uri = imageUris[index]
-        Log.d("SeedInputVM", "画面上から画像削除: $uri")
 
         // 表示用 URI リストから削除
         imageUris.removeAt(index)
@@ -229,7 +227,6 @@ class SeedInputViewModel : ViewModel() {
                 selectedImageUri = rotatedUri
 
             } catch (e: Exception) {
-                Log.e("ImageRotate", "回転失敗: $uri", e)
             }
         }
     }
@@ -259,7 +256,6 @@ class SeedInputViewModel : ViewModel() {
                             urlConnection.inputStream.close()
                             bitmap
                         } else {
-                            Log.e("OCR_Download", "Failed response: ${urlConnection.responseCode}")
                             null
                         }
                     }
@@ -285,7 +281,6 @@ class SeedInputViewModel : ViewModel() {
                 }
             }
         } catch (e: Exception) {
-            Log.e("OCR", "Error loading image: $uri", e)
             showSnackbar = "画像の読み込みに失敗しました。"
             return
         }
@@ -305,11 +300,9 @@ class SeedInputViewModel : ViewModel() {
                     if (attempt > 0) {
                         // リトライ前に少し待機
                         kotlinx.coroutines.delay(1000L)
-                        Log.d("OCR_Gemini", "リトライ試行: ${attempt + 1}回目")
                     }
                     result = runGeminiOcr(context, bmp)
                 } catch (e: Exception) {
-                    Log.e("OCR_Gemini", "解析失敗 (試行${attempt + 1}回目)", e)
                     if (attempt == 0) {
                         // 初回失敗時はリトライ
                         attempt++
@@ -323,7 +316,6 @@ class SeedInputViewModel : ViewModel() {
             
             result ?: throw Exception("解析に失敗しました")
         } catch (e: Exception) {
-            Log.e("OCR_Gemini", "最終的な解析失敗", e)
             showSnackbar = "解析失敗"
             return
         }
@@ -332,31 +324,24 @@ class SeedInputViewModel : ViewModel() {
             val cleanedJson = jsonText.removePrefix("```json").removeSuffix("```" ).trim()
             kotlinx.serialization.json.Json.decodeFromString<SeedPacket>(cleanedJson)
         } catch (e: Exception) {
-            Log.e("OCR_Parse", "解析結果のJSON変換失敗", e)
             showSnackbar = "解析失敗"
             return
         }
         
         // OCR結果を保存
         ocrResult = parsed
-        Log.d("RegionSelection", "OCR結果保存: ocrResult=$parsed")
         
         // OCR結果の有効期限情報をログに表示
-        Log.d("OCR_Expiration", "=== OCR結果の有効期限情報 ===")
-        Log.d("OCR_Expiration", "パケット有効期限: ${parsed.expirationYear}年${parsed.expirationMonth}月")
         parsed.calendar?.forEach { entry ->
-            Log.d("OCR_Expiration", "地域: ${entry.region}, 有効期限: ${entry.expirationYear}年${entry.expirationMonth}月")
-        } ?: Log.d("OCR_Expiration", "カレンダー情報なし")
+        } ?: run { /* カレンダー情報なし */ }
         
         // 地域名を検出して地域選択ダイアログを表示
         val detectedRegions = extractRegionsFromOcrResult(parsed)
-        Log.d("RegionSelection", "地域検出結果: detectedRegions=$detectedRegions, isNotEmpty=${detectedRegions.isNotEmpty()}")
         
         // 地域が検出されていない場合はデフォルト地域リストを使用
         val regionsToShow = if (detectedRegions.isNotEmpty()) {
             detectedRegions
         } else {
-            Log.d("RegionSelection", "地域が検出されませんでした。デフォルト地域リストを使用します")
             listOf("北海道", "東北", "関東", "中部", "関西", "中国", "四国", "九州", "沖縄")
         }
         
@@ -366,7 +351,6 @@ class SeedInputViewModel : ViewModel() {
         try {
             tryAddCroppedCalendarImage(context, bmp)
         } catch (e: Exception) {
-            Log.e("MLCrop", "カレンダー切り抜き失敗", e)
         }
         val currentImageUris = imageUris.toList()
         val newDiffs = mutableListOf<Triple<String, String, String>>()
@@ -405,10 +389,8 @@ class SeedInputViewModel : ViewModel() {
     }
 
     fun applyAIDiffResult() {
-        Log.d("SeedInputViewModel", "applyAIDiffResult開始: aiDiffList=$aiDiffList")
         if (aiDiffList.isNotEmpty()) {
             aiDiffList.forEach { (label, _, aiValue) ->
-                Log.d("SeedInputViewModel", "差分適用: label=$label, aiValue=$aiValue")
                 when (label) {
                     "商品名" -> onProductNameChange(aiValue)
                     "品種" -> onVarietyChange(aiValue)
@@ -422,19 +404,12 @@ class SeedInputViewModel : ViewModel() {
             // 地域確認ダイアログで編集されたカレンダー情報をパケットに反映
             // OCR結果ではなく、地域確認ダイアログで編集された値を優先
             if (packet.calendar != null && packet.calendar.isNotEmpty()) {
-                Log.d("Calendar", "地域確認ダイアログで編集されたカレンダー情報を反映: ${packet.calendar}")
-                Log.d("Calendar", "更新前のパケットカレンダー: ${packet.calendar}")
                 // 既にpacket.calendarに反映されているので、そのまま使用
-                Log.d("Calendar", "パケット更新完了: ${packet.calendar}")
             } else {
                 // パケットにカレンダー情報がない場合は、OCR結果を使用
                 ocrResult?.let { result ->
-                    Log.d("Calendar", "OCR結果のカレンダー情報を反映: ${result.calendar}")
-                    Log.d("Calendar", "更新前のパケットカレンダー: ${packet.calendar}")
                     packet = packet.copy(calendar = result.calendar)
-                    Log.d("Calendar", "パケット更新完了: ${packet.calendar}")
                 } ?: run {
-                    Log.w("Calendar", "ocrResultがnullのため、カレンダー情報の反映をスキップ")
                 }
             }
             
@@ -540,28 +515,19 @@ class SeedInputViewModel : ViewModel() {
         val storageRef = com.google.firebase.ktx.Firebase.storage.reference
 
         viewModelScope.launch(kotlinx.coroutines.Dispatchers.Main) {
-            android.util.Log.d("SaveSeed", "=== 保存処理開始 ===")
-            android.util.Log.d("SaveSeed", "uid: $uid")
-            android.util.Log.d("SaveSeed", "packet.productName: ${packet.productName}")
-            android.util.Log.d("SaveSeed", "imageUris.size: ${imageUris.size}")
             
             isLoading = true
             isSaving = true
             try {
                 // 1) docId を確定（既存なら流用、無ければ新規発番）
-                android.util.Log.d("SaveSeed", "ドキュメントID確定開始")
                 val target = packet.documentId?.let { db.collection("seeds").document(it) }
                     ?: db.collection("seeds").document()
                 val id = target.id
-                android.util.Log.d("SaveSeed", "ドキュメントID: $id")
 
                 // 2) 所有者を確定（ここで create/update を"先に"確定させる）
-                android.util.Log.d("SaveSeed", "所有者確認開始")
                 ensureSeedOwnershipOrFail(id, uid)
-                android.util.Log.d("SaveSeed", "所有者確認完了")
 
                 // 3) 画像アップロード（命名: seed_images/{docId}_{UUID}.jpg）
-                android.util.Log.d("SaveSeed", "画像アップロード開始: ${imageUris.size}枚")
                 val pathsByIndex = MutableList(imageUris.size) { null as String? }
                 withContext(kotlinx.coroutines.Dispatchers.IO) {
                     imageUris.forEachIndexed { index, uri ->
@@ -571,7 +537,6 @@ class SeedInputViewModel : ViewModel() {
                         // 既に Storage パスならそのまま採用
                         if (s.startsWith("seed_images/") || scheme == "seed_images") {
                             pathsByIndex[index] = s
-                            android.util.Log.d("SaveSeed", "keep @ $index : $s")
                             return@forEachIndexed
                         }
 
@@ -596,7 +561,6 @@ class SeedInputViewModel : ViewModel() {
                                 else -> null
                             }
                         } catch (e: Exception) {
-                            android.util.Log.e("SaveSeed", "Bitmap load failed @ $index : $uri", e)
                             null
                         }
 
@@ -617,15 +581,11 @@ class SeedInputViewModel : ViewModel() {
                                         storageRef.child(imagePath).putBytes(bytes).await()
                                         uploadSuccess = true
                                         pathsByIndex[index] = imagePath
-                                        android.util.Log.d("SaveSeed", "uploaded @ $index : $imagePath (from $uri) (attempt ${retryCount + 1})")
                                     } catch (e: kotlinx.coroutines.CancellationException) {
-                                        android.util.Log.w("SaveSeed", "upload cancelled @ $index : $imagePath", e)
                                         throw e
                                     } catch (e: Exception) {
                                         retryCount++
-                                        android.util.Log.w("SaveSeed", "upload attempt $retryCount failed @ $index : $imagePath", e)
                                         if (retryCount >= maxRetries) {
-                                            android.util.Log.e("SaveSeed", "upload failed after $maxRetries attempts @ $index : $imagePath", e)
                                         } else {
                                             // リトライ前に少し待機
                                             kotlinx.coroutines.delay(1000L * retryCount)
@@ -633,13 +593,10 @@ class SeedInputViewModel : ViewModel() {
                                     }
                                 }
                             } catch (e: kotlinx.coroutines.CancellationException) {
-                                android.util.Log.w("SaveSeed", "upload cancelled @ $index : $imagePath", e)
                                 throw e
                             } catch (e: Exception) {
-                                android.util.Log.e("SaveSeed", "upload failed @ $index : $imagePath", e)
                             }
                         } else {
-                            android.util.Log.e("SaveSeed", "skip @ $index : bitmap null ($uri)")
                         }
                     }
                 }
@@ -652,9 +609,7 @@ class SeedInputViewModel : ViewModel() {
                     toDelete.forEach { path ->
                         runCatching {
                             storageRef.child(path).delete().await()
-                            android.util.Log.d("SaveSeed", "deleted: $path")
                         }.onFailure {
-                            android.util.Log.e("SaveSeed", "delete failed: $path", it)
                         }
                     }
                 }
@@ -663,12 +618,9 @@ class SeedInputViewModel : ViewModel() {
                 val finalOrderedPaths = pathsByIndex.mapNotNull { it }
                 val failedUploads = pathsByIndex.count { it == null }
                 
-                android.util.Log.d("SaveSeed", "finalOrderedPaths(size=${finalOrderedPaths.size}): $finalOrderedPaths")
-                android.util.Log.d("SaveSeed", "failedUploads: $failedUploads")
                 
                 // アップロード失敗がある場合の処理
                 if (failedUploads > 0) {
-                    android.util.Log.w("SaveSeed", "Some images failed to upload: $failedUploads out of ${imageUris.size}")
                     // 一部の画像アップロードが失敗した場合でも、成功した画像は保存する
                 }
 
@@ -687,38 +639,22 @@ class SeedInputViewModel : ViewModel() {
                 // ここがポイント：同じ ownerUid を必ず送る（ルールの ownerUnchanged を満たす）
                 map["ownerUid"] = uid
 
-                android.util.Log.d("SaveSeed", "Firestore保存開始")
                 target.set(map, com.google.firebase.firestore.SetOptions.merge()).await()
-                android.util.Log.d("SaveSeed", "Firestore保存完了")
-
                 // ViewModel の状態を更新
                 packet = updatedPacket
-                android.util.Log.d("SaveSeed", "ViewModel状態更新完了")
                 
                 // 集計データを更新
                 try {
-                    android.util.Log.d("SaveSeed", "集計データ更新開始")
                     updateStatisticsAfterSeedChange(uid)
-                    android.util.Log.d("SaveSeed", "集計データ更新完了")
                 } catch (e: Exception) {
-                    android.util.Log.w("SaveSeed", "集計更新に失敗しましたが、種データの保存は成功", e)
                 }
                 
-                android.util.Log.d("SaveSeed", "=== 保存処理完了 ===")
                 showSnackbar = "保存が完了しました（画像: ${finalOrderedPaths.size}）"
                 onComplete(Result.success(Unit))
             } catch (e: SecurityException) {
-                android.util.Log.e("SaveSeed", "=== セキュリティエラー ===", e)
-                android.util.Log.e("SaveSeed", "エラー詳細: ${e.message}")
-                android.util.Log.e("SaveSeed", "スタックトレース: ${e.stackTraceToString()}")
                 showSnackbar = "このデータの所有者ではありません"
                 onComplete(Result.failure(e))
             } catch (e: Exception) {
-                android.util.Log.e("SaveSeed", "=== 保存処理エラー ===", e)
-                android.util.Log.e("SaveSeed", "エラータイプ: ${e.javaClass.simpleName}")
-                android.util.Log.e("SaveSeed", "エラーメッセージ: ${e.message}")
-                android.util.Log.e("SaveSeed", "ローカライズメッセージ: ${e.localizedMessage}")
-                android.util.Log.e("SaveSeed", "スタックトレース: ${e.stackTraceToString()}")
                 showSnackbar = "保存に失敗しました: ${e.localizedMessage ?: "不明なエラー"}"
                 onComplete(Result.failure(e))
             } finally {
@@ -733,7 +669,6 @@ class SeedInputViewModel : ViewModel() {
         return try {
             Firebase.storage.reference.child(path).downloadUrl.await().toString()
         } catch (e: Exception) {
-            Log.e("Image", "URL取得失敗: $path", e)
             null
         }
     }
@@ -765,17 +700,10 @@ class SeedInputViewModel : ViewModel() {
                     croppedBitmap.compress(Bitmap.CompressFormat.JPEG, 90, it)
                 }
                 imageUris.add(Uri.fromFile(file))
-                Log.d("MLCrop", "切り抜き画像サイズ: ${croppedBitmap.width}x${croppedBitmap.height}")
-                Log.d("MLCrop", "切り抜き画像ファイルパス: ${file.absolutePath}")
-                Log.d("MLCrop", "imageUrisに追加: ${Uri.fromFile(file)}")
-                Log.d("MLCrop", "現在のimageUris: $imageUris")
-                Log.d("MLCrop", "新規登録で切り抜き追加成功")
             } else {
-                Log.w("MLCrop", "新規登録：有効なカレンダー検出なし")
                 croppedCalendarBitmap = null
             }
         } catch (e: Exception) {
-            Log.e("MLCrop", "新規登録中の切り抜き失敗", e)
             croppedCalendarBitmap = null
         }
     }
@@ -799,11 +727,10 @@ class SeedInputViewModel : ViewModel() {
     ) {
         val input = InputImage.fromBitmap(sourceBitmap, 0)
         val objects = runCatching { seedOuterDetector.process(input).await() }
-            .onFailure { Log.e("MLKit", "seed outer detect failed", it) }
+            .onFailure { /* MLKit seed outer detect failed */ }
             .getOrNull() ?: return
 
         if (objects.isEmpty()) {
-            Log.d("MLKit", "no objects for seed outer")
             return
         }
 
@@ -859,13 +786,11 @@ class SeedInputViewModel : ViewModel() {
                 crop.compress(Bitmap.CompressFormat.JPEG, 90, out)
             }
         }.onFailure {
-            Log.e("MLKit", "save outer crop failed", it)
             return
         }
 
         val insertPos = insertAfterIndex.coerceIn(0, imageUris.size)
         imageUris.add(insertPos + 1, Uri.fromFile(file))
-        Log.d("MLKit", "outer crop added after $insertAfterIndex : ${file.absolutePath}")
     }
 
     fun RectF.addMargin(width: Int, height: Int, marginRatio: Float): RectF {
@@ -911,24 +836,20 @@ class SeedInputViewModel : ViewModel() {
                 } ?: run { showSnackbar = "画像の読み込みに失敗しました"; return@launch }
 
                 if (bmp == null) {
-                    Log.e("MLKitInput", "bmp is NULL before creating InputImage.")
                     showSnackbar = "画像データが不正です (bmp is null)"
                     return@launch // または適切なエラー処理
                 } else if (bmp.isRecycled) {
-                    Log.e("MLKitInput", "bmp is RECYCLED before creating InputImage.")
                     showSnackbar = "画像データが不正です (bmp is recycled)"
                     return@launch // または適切なエラー処理
                 } else if (bmp.width == 0 || bmp.height == 0) {
-                    Log.e("MLKitInput", "bmp has zero width or height. Width: ${bmp.width}, Height: ${bmp.height}")
                     showSnackbar = "画像データが空です (zero dimensions)"
                     return@launch // または適切なエラー処理
                 } else {
-                    Log.d("MLKitInput", "bmp is valid before creating InputImage. Width: ${bmp.width}, Height: ${bmp.height}")
                 }
                 // ---- ML Kit 検出 → 1位選出（面積×中心×ラベル係数） ----
                 val input = InputImage.fromBitmap(bmp, 0)
                 val objects = runCatching { seedOuterDetector.process(input).await() }
-                    .onFailure { Log.e("MLKit", "seed outer detect failed", it) }
+                    .onFailure { /* MLKit seed outer detect failed */ }
                     .getOrNull().orEmpty()
 
                 val w = bmp.width; val h = bmp.height
@@ -973,16 +894,10 @@ class SeedInputViewModel : ViewModel() {
                     (best.bottom + (h * marginRatio)).toInt().coerceAtMost(h)
                 )
 
-                Log.d("TightenDebug", "Before calling tightenRectToEdges:")
-                Log.d("TightenDebug", "bmp is null: ${bmp == null}")
                 if (bmp != null) {
-                    Log.d("TightenDebug", "bmp Width: ${bmp.width}, Height: ${bmp.height}, Config: ${bmp.config}, Recycled: ${bmp.isRecycled}")
                 }
 
-                Log.d("TightenDebug", "pre is null: ${pre == null}")
                 if (pre != null) {
-                    Log.d("TightenDebug", "pre Left: ${pre.left}, Top: ${pre.top}, Right: ${pre.right}, Bottom: ${pre.bottom}")
-                    Log.d("TightenDebug", "pre Width: ${pre.width()}, Height: ${pre.height()}")
                 }
 
                 val tight = com.example.seedstockkeeper6.util.tightenRectToEdges(
@@ -994,47 +909,24 @@ class SeedInputViewModel : ViewModel() {
                     maxInsetRatioX = 0.15f,  // 横方向の上限（必要に応じて）
                     maxInsetRatioY = 0.30f   // ← 縦の上限を 0.15 → 0.20~0.25 に上げる
                 )
-                Log.d("drawRectOverlayDebug", "pre is null: ${pre == null}")
                 if (pre != null) {
-                    Log.d("drawRectOverlayDebug", "pre Left: ${pre.left}, Top: ${pre.top}, Right: ${pre.right}, Bottom: ${pre.bottom}")
-                    Log.d("drawRectOverlayDebug", "pre Width: ${pre.width()}, Height: ${pre.height()}")
                 }
                 // プレビュー作成＆確認ダイアログへ
 //                val overlay = com.example.seedstockkeeper6.util.drawRectOverlay(bmp, tight)
 //                val crop = Bitmap.createBitmap(bmp, tight.left, tight.top, tight.width(), tight.height())
                 val overlay = drawRectOverlay(bmp, tight)
-                Log.d(
-                    "CropDebug",
-                    "overlay created. overlay is null: ${overlay == null}"
-                ) // overlay の状態もログに出す
 
                 val crop: Bitmap?
                 try {
-                    Log.d(
-                        "CropDebug",
-                        "Attempting Bitmap.createBitmap with tight: Left=${tight.left}, Top=${tight.top}, Width=${tight.width()}, Height=${tight.height()}"
-                    )
-                    Log.d("CropDebug", "bmp dimensions: Width=${bmp.width}, Height=${bmp.height}")
-
                     // ここで条件チェックを明示的に行うのも有効
                     if (tight.width() <= 0 || tight.height() <= 0) {
-                        Log.e(
-                            "CropDebug",
-                            "Bitmap.createBitmap error: tight width or height is zero or negative. Width: ${tight.width()}, Height: ${tight.height()}"
-                        )
+                        
                         showSnackbar = "切り抜き領域のサイズが不正です。"
                         return@launch
                     }
                     if (tight.left < 0 || tight.top < 0 || tight.left + tight.width() > bmp.width || tight.top + tight.height() > bmp.height) {
-                        Log.e(
-                            "CropDebug",
-                            "Bitmap.createBitmap error: tight coordinates are out of bmp bounds."
-                        )
-                        Log.e(
-                            "CropDebug",
-                            "tight: L${tight.left}, T${tight.top}, R${tight.left + tight.width()}, B${tight.top + tight.height()}"
-                        )
-                        Log.e("CropDebug", "bmp: W${bmp.width}, H${bmp.height}")
+                        
+                        
                         showSnackbar = "切り抜き領域が画像範囲外です。"
                         return@launch
                     }
@@ -1046,26 +938,16 @@ class SeedInputViewModel : ViewModel() {
                         tight.width(),
                         tight.height()
                     )
-                    Log.d("CropDebug", "crop created successfully. crop is null: ${crop == null}")
 
                     pendingCropOverlay = overlay
                     pendingCropBitmap = crop
                     showCropConfirmDialog = true
 
                 } catch (e: IllegalArgumentException) {
-                    Log.e(
-                        "CropDebug",
-                        "IllegalArgumentException during Bitmap.createBitmap: ${e.message}",
-                        e
-                    )
+                     
                     showSnackbar = "画像の切り抜きに失敗 (引数エラー): ${e.message}"
                     return@launch // または適切なエラー処理
                 } catch (e: Exception) {
-                    Log.e(
-                        "CropDebug",
-                        "Exception during Bitmap.createBitmap or subsequent assignments: ${e.message}",
-                        e
-                    )
                     showSnackbar = "画像の切り抜き処理中に予期せぬエラーが発生しました。"
                     return@launch // または適切なエラー処理
                 }
@@ -1115,7 +997,7 @@ class SeedInputViewModel : ViewModel() {
     ): Bitmap? {
         val input = InputImage.fromBitmap(sourceBitmap, 0)
         val objects = runCatching { seedOuterDetector.process(input).await() }
-            .onFailure { Log.e("MLKit", "seed outer detect failed", it) }
+            .onFailure { /* MLKit seed outer detect failed */ }
             .getOrNull() ?: return null
 
         if (objects.isEmpty()) return null
@@ -1282,7 +1164,6 @@ class SeedInputViewModel : ViewModel() {
         } else {
             // 5. インデックスが無効だった場合の処理（エラーハンドリング）。
             //    ここではログに警告を出力しています。必要に応じて他の処理も追加できます。
-            Log.w("YourViewModel", "Attempted to remove calendar entry at invalid index: $index. List size: ${packet.calendar.size}")
         }
     }
 
@@ -1301,21 +1182,17 @@ class SeedInputViewModel : ViewModel() {
 
     // 地域選択関連のメソッド
     fun showRegionSelectionDialog(regions: List<String>) {
-        Log.d("RegionSelection", "showRegionSelectionDialog呼び出し: regions=$regions")
         detectedRegions.clear()
         detectedRegions.addAll(regions)
         showRegionSelectionDialog = true
-        Log.d("RegionSelection", "showRegionSelectionDialog設定完了: showRegionSelectionDialog=$showRegionSelectionDialog")
     }
 
     fun onRegionSelected(region: String) {
-        Log.d("RegionSelection", "onRegionSelected開始: $region")
         selectedRegion = region
         showRegionSelectionDialog = false
         
         // 編集された値がある場合は、それを優先して使用
         if (editingCalendarEntry != null && editingCalendarEntry!!.region == region) {
-            Log.d("RegionSelection", "編集された値を使用: $editingCalendarEntry")
             packet = packet.copy(calendar = listOf(editingCalendarEntry!!))
             
             // 有効期限が設定されている場合は、パケットの有効期限も更新
@@ -1324,7 +1201,6 @@ class SeedInputViewModel : ViewModel() {
                     expirationYear = editingCalendarEntry!!.expirationYear,
                     expirationMonth = editingCalendarEntry!!.expirationMonth
                 )
-                Log.d("RegionSelection", "有効期限を更新: ${editingCalendarEntry!!.expirationYear}年${editingCalendarEntry!!.expirationMonth}月")
             }
         } else {
             // 選択された地域でカレンダーエントリを更新
@@ -1333,7 +1209,6 @@ class SeedInputViewModel : ViewModel() {
         
         // 編集モードを有効にする
         isCalendarEditMode = true
-        Log.d("RegionSelection", "地域選択完了: $region, 編集モード: $isCalendarEditMode, カレンダーサイズ: ${packet.calendar?.size}")
     }
 
     fun onRegionSelectionDismiss() {
@@ -1375,7 +1250,6 @@ class SeedInputViewModel : ViewModel() {
             )
             
             packet = packet.copy(calendar = listOf(updatedEntry))
-            Log.d("RegionSelection", "OCR結果から地域情報を適用: $region, 有効期限: ${expirationYear}年${expirationMonth}月")
         } else {
             // OCR結果に該当地域がない場合は空のエントリを作成
             // 有効期限の年を取得（OCR結果から、または現在年+1）
@@ -1396,18 +1270,15 @@ class SeedInputViewModel : ViewModel() {
                 expirationMonth = if (packet.expirationMonth > 0) packet.expirationMonth else currentDate.monthValue
             )
             packet = packet.copy(calendar = listOf(newCalendarEntry))
-            Log.d("RegionSelection", "新規カレンダーエントリを作成: $region, 有効期限: ${expirationYear}年${if (packet.expirationMonth > 0) packet.expirationMonth else currentDate.monthValue}月")
         }
     }
 
     private fun extractRegionsFromOcrResult(parsed: SeedPacket): List<String> {
         val regions = mutableListOf<String>()
         
-        Log.d("RegionSelection", "extractRegionsFromOcrResult開始: parsed.calendar=${parsed.calendar}")
         
         // カレンダーエントリから地域名を抽出
         parsed.calendar?.forEach { entry ->
-            Log.d("RegionSelection", "カレンダーエントリ確認: region='${entry.region}', isNotEmpty=${entry.region.isNotEmpty()}")
             if (entry.region.isNotEmpty()) {
                 regions.add(entry.region)
             }
@@ -1415,7 +1286,6 @@ class SeedInputViewModel : ViewModel() {
         
         // 重複を除去して返す
         val distinctRegions = regions.distinct()
-        Log.d("RegionSelection", "extractRegionsFromOcrResult完了: regions=$distinctRegions")
         return distinctRegions
     }
 
@@ -1425,32 +1295,14 @@ class SeedInputViewModel : ViewModel() {
     }
 
     fun updateEditingCalendarEntry(updatedEntry: CalendarEntry) {
-        Log.d("Calendar", "=== updateEditingCalendarEntry ===")
-        Log.d("Calendar", "更新されたエントリ: $updatedEntry")
-        Log.d("Calendar", "播種開始: ${updatedEntry.sowing_start_date}")
-        Log.d("Calendar", "播種終了: ${updatedEntry.sowing_end_date}")
-        Log.d("Calendar", "収穫開始: ${updatedEntry.harvest_start_date}")
-        Log.d("Calendar", "収穫終了: ${updatedEntry.harvest_end_date}")
-        Log.d("Calendar", "有効期限: ${updatedEntry.expirationYear}年${updatedEntry.expirationMonth}月")
-        Log.d("Calendar", "更新前のeditingCalendarEntry: $editingCalendarEntry")
         editingCalendarEntry = updatedEntry
-        Log.d("Calendar", "更新後のeditingCalendarEntry: $editingCalendarEntry")
     }
 
     fun saveEditingCalendarEntry() {
-        Log.d("Calendar", "=== saveEditingCalendarEntry ===")
-        Log.d("Calendar", "保存開始: editingCalendarEntry=$editingCalendarEntry")
         editingCalendarEntry?.let { entry ->
-            Log.d("Calendar", "保存するエントリ: $entry")
-            Log.d("Calendar", "播種開始: ${entry.sowing_start_date}")
-            Log.d("Calendar", "播種終了: ${entry.sowing_end_date}")
-            Log.d("Calendar", "収穫開始: ${entry.harvest_start_date}")
-            Log.d("Calendar", "収穫終了: ${entry.harvest_end_date}")
-            Log.d("Calendar", "有効期限: ${entry.expirationYear}年${entry.expirationMonth}月")
             
             // 年を有効期限から計算して設定
             val expirationYear = packet.expirationYear
-            Log.d("Calendar", "有効期限年: $expirationYear")
             val calculatedEntry = if (expirationYear > 0) {
                 // 有効期限の年を使用して日付を再構築
                 val updatedEntry = entry.copy(
@@ -1459,59 +1311,41 @@ class SeedInputViewModel : ViewModel() {
                     harvest_start_date = calculateDateWithYear(entry.harvest_start_date, expirationYear),
                     harvest_end_date = calculateDateWithYear(entry.harvest_end_date, expirationYear)
                 )
-                Log.d("Calendar", "年計算完了: $updatedEntry")
                 updatedEntry
             } else {
-                Log.d("Calendar", "有効期限年が0のため、そのまま使用: $entry")
                 entry
             }
             
             // OCR結果を更新
             ocrResult?.let { result ->
-                Log.d("Calendar", "更新前のOCR結果: ${result.calendar}")
                 val updatedCalendar = result.calendar.map { 
                     if (it.region == calculatedEntry.region) calculatedEntry else it 
                 }
                 ocrResult = result.copy(calendar = updatedCalendar)
-                Log.d("Calendar", "OCR結果更新完了: $updatedCalendar")
             } ?: run {
-                Log.w("Calendar", "ocrResultがnullのため、OCR結果の更新をスキップ")
             }
             
             // パケットのカレンダーも更新
             packet = packet.copy(calendar = listOf(calculatedEntry))
-            Log.d("Calendar", "=== パケット更新完了 ===")
-            Log.d("Calendar", "更新されたパケットカレンダー: ${packet.calendar}")
-            Log.d("Calendar", "播種開始: ${calculatedEntry.sowing_start_date}")
-            Log.d("Calendar", "播種終了: ${calculatedEntry.sowing_end_date}")
-            Log.d("Calendar", "収穫開始: ${calculatedEntry.harvest_start_date}")
-            Log.d("Calendar", "収穫終了: ${calculatedEntry.harvest_end_date}")
-            Log.d("Calendar", "有効期限: ${calculatedEntry.expirationYear}年${calculatedEntry.expirationMonth}月")
             
             // 編集状態をクリア
             editingCalendarEntry = null
-            Log.d("Calendar", "編集状態クリア完了")
         } ?: run {
-            Log.w("Calendar", "editingCalendarEntryがnullのため、保存をスキップ")
         }
     }
     
     // 地域確認ダイアログで有効期限が変更された際に種登録画面の有効期限フィールドに反映する
     fun updateExpirationFromCalendarEntry(entry: CalendarEntry) {
-        Log.d("Calendar", "updateExpirationFromCalendarEntry開始: $entry")
         
         // カレンダーエントリの有効期限情報を種登録画面の有効期限フィールドに反映
         if (entry.expirationYear > 0) {
             packet = packet.copy(expirationYear = entry.expirationYear)
-            Log.d("Calendar", "有効期限年を更新: ${entry.expirationYear}")
         }
         
         if (entry.expirationMonth > 0) {
             packet = packet.copy(expirationMonth = entry.expirationMonth)
-            Log.d("Calendar", "有効期限月を更新: ${entry.expirationMonth}")
         }
         
-        Log.d("Calendar", "種登録画面の有効期限更新完了: ${packet.expirationYear}年${packet.expirationMonth}月")
     }
     
     // 月と旬から年を設定して日付を構築するヘルパー関数
@@ -1588,59 +1422,30 @@ class SeedInputViewModel : ViewModel() {
      */
     private suspend fun updateStatisticsAfterSeedChange(ownerUid: String) {
         try {
-            android.util.Log.d("StatisticsUpdate", "=== 集計データ更新開始 ===")
-            android.util.Log.d("StatisticsUpdate", "ownerUid: $ownerUid")
             
             // 現在のユーザーの全種データを取得
             val db = Firebase.firestore
-            android.util.Log.d("StatisticsUpdate", "Firestore参照取得: seeds collection")
-            
-            android.util.Log.d("StatisticsUpdate", "Firestoreクエリ実行: ownerUid=$ownerUid")
             val seedsSnapshot = db.collection("seeds")
                 .whereEqualTo("ownerUid", ownerUid)
                 .get().await()
             
-            android.util.Log.d("StatisticsUpdate", "Firestoreクエリ完了: ドキュメント数=${seedsSnapshot.documents.size}")
-            android.util.Log.d("StatisticsUpdate", "クエリ結果詳細:")
-            seedsSnapshot.documents.forEachIndexed { index, doc ->
-                android.util.Log.d("StatisticsUpdate", "  doc[$index]: id=${doc.id}, exists=${doc.exists()}")
-                if (doc.exists()) {
-                    val data = doc.data
-                    android.util.Log.d("StatisticsUpdate", "    productName: ${data?.get("productName")}")
-                    android.util.Log.d("StatisticsUpdate", "    family: ${data?.get("family")}")
-                    android.util.Log.d("StatisticsUpdate", "    ownerUid: ${data?.get("ownerUid")}")
-                }
-            }
             
             val seeds = seedsSnapshot.documents.mapNotNull { doc ->
                 try {
                     val seed = doc.toObject(SeedPacket::class.java)
                     seed?.copy(id = doc.id, documentId = doc.id)
                 } catch (e: Exception) {
-                    android.util.Log.w("StatisticsUpdate", "種データ解析エラー: ${doc.id}", e)
                     null
                 }
             }
             
-            android.util.Log.d("StatisticsUpdate", "解析完了種データ数: ${seeds.size}")
-            android.util.Log.d("StatisticsUpdate", "種データ詳細: ${seeds.map { "${it.productName}(${it.family})" }}")
-            
             // 集計データを更新
-            android.util.Log.d("StatisticsUpdate", "StatisticsService呼び出し開始")
             val result = statisticsService.updateStatisticsOnSeedChange(ownerUid, seeds)
             
             if (result.success) {
-                android.util.Log.d("StatisticsUpdate", "=== 集計データ更新完了 ===")
-                android.util.Log.d("StatisticsUpdate", "totalSeeds: ${result.statistics?.totalSeeds}")
-                android.util.Log.d("StatisticsUpdate", "validSeeds: ${result.statistics?.validSeedsCount}")
-                android.util.Log.d("StatisticsUpdate", "thisMonthSowing: ${result.statistics?.thisMonthSowingCount}")
             } else {
-                android.util.Log.w("StatisticsUpdate", "=== 集計データ更新失敗 ===")
-                android.util.Log.w("StatisticsUpdate", "エラーメッセージ: ${result.message}")
             }
         } catch (e: Exception) {
-            android.util.Log.e("StatisticsUpdate", "=== 集計更新処理エラー ===", e)
-            android.util.Log.e("StatisticsUpdate", "エラー詳細: ${e.message}")
         }
     }
 

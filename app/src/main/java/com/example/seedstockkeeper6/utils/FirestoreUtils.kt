@@ -1,6 +1,5 @@
 package com.example.seedstockkeeper6.utils
 
-import android.util.Log
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreException
 import com.google.firebase.firestore.ListenerRegistration
@@ -37,11 +36,9 @@ object FirestoreUtils {
                 return Result.success(result)
             } catch (e: Exception) {
                 lastException = e
-                Log.w("FirestoreUtils", "Attempt ${attempt + 1} failed: ${e.message}")
                 
                 // リトライ可能なエラーかチェック
                 if (!isRetryableError(e)) {
-                    Log.e("FirestoreUtils", "Non-retryable error: ${e.message}")
                     return Result.failure(e)
                 }
                 
@@ -120,7 +117,6 @@ object FirestoreUtils {
             db.collection("_test").limit(1).get().await()
             true
         } catch (e: Exception) {
-            Log.w("FirestoreUtils", "Connection check failed: ${e.message}")
             false
         }
     }
@@ -135,14 +131,12 @@ object FirestoreUtils {
     ): Result<T> {
         // ネットワーク接続を確認
         if (!NetworkUtils.isNetworkAvailable(context)) {
-            Log.w("FirestoreUtils", "No network connection available")
             return Result.failure(Exception("No network connection"))
         }
         
         // ネットワーク接続を待機
         val networkAvailable = NetworkUtils.waitForNetwork(context, 10000) // 10秒待機
         if (!networkAvailable) {
-            Log.w("FirestoreUtils", "Network connection timeout")
             return Result.failure(Exception("Network connection timeout"))
         }
         
@@ -158,13 +152,10 @@ object FirestoreUtils {
             val db = FirebaseFirestore.getInstance()
             db.enableNetwork().addOnCompleteListener { task ->
                 if (task.isSuccessful) {
-                    Log.d("FirestoreUtils", "Offline persistence enabled")
                 } else {
-                    Log.w("FirestoreUtils", "Failed to enable offline persistence: ${task.exception?.message}")
                 }
             }
         } catch (e: Exception) {
-            Log.e("FirestoreUtils", "Error enabling offline persistence: ${e.message}")
         }
     }
 }

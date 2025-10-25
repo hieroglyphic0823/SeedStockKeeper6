@@ -3,7 +3,6 @@
 package com.example.seedstockkeeper6
 
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -38,9 +37,7 @@ class MainActivity : ComponentActivity() {
         ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
         if (isGranted) {
-            Log.d("MainActivity", "通知権限が許可されました")
         } else {
-            Log.w("MainActivity", "通知権限が拒否されました")
         }
     }
     
@@ -60,25 +57,19 @@ class MainActivity : ComponentActivity() {
             com.google.firebase.appcheck.FirebaseAppCheck.getInstance().installAppCheckProviderFactory(
                 com.google.firebase.appcheck.debug.DebugAppCheckProviderFactory.getInstance()
             )
-            Log.d("MainActivity", "App Check initialized with debug provider")
         } catch (e: Exception) {
-            Log.w("MainActivity", "Failed to initialize App Check: ${e.message}")
         }
         
         // Firestoreのオフライン対応を有効化
         try {
             com.example.seedstockkeeper6.utils.FirestoreUtils.enableOfflinePersistence()
-            Log.d("MainActivity", "Firestore offline persistence enabled")
         } catch (e: Exception) {
-            Log.w("MainActivity", "Failed to enable Firestore offline persistence: ${e.message}")
         }
         
         // ネットワーク接続状態をログ出力
         try {
             val networkInfo = com.example.seedstockkeeper6.utils.NetworkUtils.getNetworkInfo(this)
-            Log.d("MainActivity", "Network info: $networkInfo")
         } catch (e: Exception) {
-            Log.w("MainActivity", "Failed to get network info: ${e.message}")
         }
         
         // 通知マネージャーを初期化
@@ -131,20 +122,16 @@ class MainActivity : ComponentActivity() {
             if (::notificationManager.isInitialized) {
                 notificationManager.cancelAllNotifications()
             }
-            Log.d("MainActivity", "MainActivity destroyed and resources cleaned up")
         } catch (e: Exception) {
-            Log.w("MainActivity", "Error during cleanup: ${e.message}")
         }
     }
     
     override fun onPause() {
         super.onPause()
-        Log.d("MainActivity", "MainActivity paused")
     }
     
     override fun onResume() {
         super.onResume()
-        Log.d("MainActivity", "MainActivity resumed")
     }
 }
 

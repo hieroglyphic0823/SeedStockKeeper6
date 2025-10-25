@@ -1,6 +1,5 @@
 package com.example.seedstockkeeper6.service
 
-import android.util.Log
 import com.example.seedstockkeeper6.BuildConfig
 import com.example.seedstockkeeper6.model.SukesanMessage
 import com.example.seedstockkeeper6.model.MessageType
@@ -37,22 +36,18 @@ object SukesanMessageService {
                 null
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Error getting today's message: ${e.message}")
             // ネットワークエラーの場合はnullを返す（オフライン対応）
             when (e) {
                 is com.google.firebase.firestore.FirebaseFirestoreException -> {
                     when (e.code) {
                         com.google.firebase.firestore.FirebaseFirestoreException.Code.UNAVAILABLE,
                         com.google.firebase.firestore.FirebaseFirestoreException.Code.DEADLINE_EXCEEDED -> {
-                            Log.w(TAG, "Network unavailable, returning null for offline mode")
                         }
                         else -> {
-                            Log.e(TAG, "Firestore error: ${e.code} - ${e.message}")
                         }
                     }
                 }
                 else -> {
-                    Log.e(TAG, "Unknown error: ${e.message}")
                 }
             }
             null
@@ -76,25 +71,20 @@ object SukesanMessageService {
                 .document(message.date)
             
             docRef.set(messageWithUserId, SetOptions.merge()).await()
-            Log.d(TAG, "Message saved successfully for date: ${message.date}")
             Result.success(Unit)
         } catch (e: Exception) {
-            Log.e(TAG, "Error saving message: ${e.message}")
             // ネットワークエラーの場合は失敗を返すが、アプリは継続動作
             when (e) {
                 is com.google.firebase.firestore.FirebaseFirestoreException -> {
                     when (e.code) {
                         com.google.firebase.firestore.FirebaseFirestoreException.Code.UNAVAILABLE,
                         com.google.firebase.firestore.FirebaseFirestoreException.Code.DEADLINE_EXCEEDED -> {
-                            Log.w(TAG, "Network unavailable, message will be saved when connection is restored")
                         }
                         else -> {
-                            Log.e(TAG, "Firestore error: ${e.code} - ${e.message}")
                         }
                     }
                 }
                 else -> {
-                    Log.e(TAG, "Unknown error: ${e.message}")
                 }
             }
             Result.failure(e)
@@ -115,21 +105,13 @@ object SukesanMessageService {
     ): Result<SukesanMessage> {
         val today = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE)
         
-        Log.d(TAG, "=== 助さんメッセージ生成開始（GeminiAPI使用） ===")
-        Log.d(TAG, "農園主: $farmOwner, 農園名: $farmName")
-        Log.d(TAG, "現在の月: $currentMonth, 年: $currentYear")
-        Log.d(TAG, "地域: $region, 県: $prefecture")
-        Log.d(TAG, "登録種子数: ${seeds.size}")
         
         // 既存のメッセージをチェック
         val existingMessage = getTodaysMessage()
         if (existingMessage != null) {
-            Log.d(TAG, "今日のメッセージは既に存在します（キャッシュから取得）")
-            Log.d(TAG, "既存メッセージ: ${existingMessage.message}")
             return Result.success(existingMessage)
         }
         
-        Log.d(TAG, "新しいメッセージをGeminiAPIで生成します")
         
         // GeminiAPIでメッセージを生成
         val geminiMessage = generateMessageWithGemini(seeds, currentMonth, currentYear, farmOwner, farmName, region, prefecture)
@@ -143,17 +125,12 @@ object SukesanMessageService {
             isRead = false
         )
         
-        Log.d(TAG, "生成されたメッセージ: ${message.message}")
-        Log.d(TAG, "メッセージタイプ: ${message.messageType}")
         
         val result = saveMessage(message)
         
         return if (result.isSuccess) {
-            Log.d(TAG, "メッセージの保存に成功しました")
-            Log.d(TAG, "=== 助さんメッセージ生成完了 ===")
             Result.success(message)
         } else {
-            Log.e(TAG, "メッセージの保存に失敗しました: ${result.exceptionOrNull()?.message}")
             Result.failure(result.exceptionOrNull() ?: Exception("Unknown error"))
         }
     }
@@ -210,8 +187,6 @@ object SukesanMessageService {
                 上記の形式で、設定した助さんの口調・キャラクターで、ユーザーの登録種を優先的に含み、簡潔で分かりやすいメッセージを生成してください。
             """.trimIndent()
             
-            Log.d(TAG, "GeminiAPIプロンプト送信開始")
-            Log.d(TAG, "プロンプト: $prompt")
             
             // GeminiAPIを呼び出し
             val generativeModel = com.google.ai.client.generativeai.GenerativeModel(
@@ -222,11 +197,9 @@ object SukesanMessageService {
             val response = generativeModel.generateContent(prompt)
             val generatedMessage = response.text ?: getDefaultMessage(farmOwner, farmName, monthName)
             
-            Log.d(TAG, "GeminiAPIからの応答: $generatedMessage")
             return generatedMessage
             
         } catch (e: Exception) {
-            Log.e(TAG, "GeminiAPI呼び出しエラー: ${e.message}")
             val monthName = getMonthName(currentMonth)
             return getDefaultMessage(farmOwner, farmName, monthName)
         }
@@ -405,7 +378,6 @@ object SukesanMessageService {
     ): SukesanMessage {
         val today = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE)
         
-        Log.d(TAG, "--- メッセージ生成ロジック開始 ---")
         
         // 今日のまきどきの種を取得
         val todaySowingSeeds = seeds.filter { seed ->
@@ -432,43 +404,32 @@ object SukesanMessageService {
             } ?: false
         }
         
-        Log.d(TAG, "今日のまきどきの種子数: ${todaySowingSeeds.size}")
-        Log.d(TAG, "まき時終了間近の種子数: ${urgentSeeds.size}")
         
         if (todaySowingSeeds.isNotEmpty()) {
-            Log.d(TAG, "今日のまきどきの種子: ${todaySowingSeeds.map { "${it.productName}（${it.variety}）" }}")
         }
         if (urgentSeeds.isNotEmpty()) {
-            Log.d(TAG, "まき時終了間近の種子: ${urgentSeeds.map { "${it.productName}（${it.variety}）" }}")
         }
         
         // 農園主と農園名は引数から取得
         
         val (message, messageType) = when {
             urgentSeeds.isNotEmpty() -> {
-                Log.d(TAG, "まき時終了間近のメッセージを生成")
                 val monthName = getMonthName(currentMonth)
                 generateUrgentMessage(farmOwner, farmName, urgentSeeds, monthName) to MessageType.URGENT
             }
             todaySowingSeeds.isNotEmpty() -> {
-                Log.d(TAG, "播種時期のメッセージを生成")
                 val monthName = getMonthName(currentMonth)
                 generateSowingMessage(farmOwner, farmName, todaySowingSeeds, monthName) to MessageType.DAILY
             }
             seeds.isEmpty() -> {
-                Log.d(TAG, "ウェルカムメッセージを生成")
                 generateWelcomeMessage(farmOwner, farmName) to MessageType.WELCOME
             }
             else -> {
-                Log.d(TAG, "一般的なメッセージを生成")
                 val monthName = getMonthName(currentMonth)
                 generateGeneralMessage(farmOwner, farmName, monthName) to MessageType.DAILY
             }
         }
         
-        Log.d(TAG, "生成されたメッセージ: $message")
-        Log.d(TAG, "メッセージタイプ: $messageType")
-        Log.d(TAG, "--- メッセージ生成ロジック完了 ---")
         
         return SukesanMessage(
             id = today,
@@ -493,8 +454,6 @@ object SukesanMessageService {
             "${seed.productName}${if (seed.variety.isNotEmpty()) "（${seed.variety}）" else ""}"
         }
         
-        Log.d(TAG, "まき時終了間近メッセージ生成 - 農園主: $farmOwner, 農園名: $farmName, 月: $monthName")
-        Log.d(TAG, "対象種子: $seedNames")
         
         val message = when (farmOwner) {
             "水戸黄門" -> "黄門様、${farmName}の${monthName}は${urgentSeeds.size}種類の種のまき時が終了間近でございます。${seedNames}の播種を早急に完了させましょう。"
@@ -503,7 +462,6 @@ object SukesanMessageService {
             else -> "${farmOwner}、${farmName}の${monthName}は${urgentSeeds.size}種類の種のまき時が終了間近です。${seedNames}の播種を早急に完了させましょう。"
         }
         
-        Log.d(TAG, "生成されたまき時終了間近メッセージ: $message")
         return message
     }
     
@@ -520,8 +478,6 @@ object SukesanMessageService {
             "${seed.productName}${if (seed.variety.isNotEmpty()) "（${seed.variety}）" else ""}"
         }
         
-        Log.d(TAG, "播種時期メッセージ生成 - 農園主: $farmOwner, 農園名: $farmName, 月: $monthName")
-        Log.d(TAG, "対象種子: $seedNames")
         
         val message = when (farmOwner) {
             "水戸黄門" -> "黄門様、${farmName}の${monthName}は${sowingSeeds.size}種類の種の播種時期でございます。${seedNames}の栽培を計画的に進めましょう。"
@@ -530,7 +486,6 @@ object SukesanMessageService {
             else -> "${farmOwner}、${farmName}の${monthName}は${sowingSeeds.size}種類の種の播種時期です。${seedNames}の栽培を計画的に進めましょう。"
         }
         
-        Log.d(TAG, "生成された播種時期メッセージ: $message")
         return message
     }
     
@@ -538,7 +493,6 @@ object SukesanMessageService {
      * ウェルカムメッセージを生成
      */
     private fun generateWelcomeMessage(farmOwner: String, farmName: String): String {
-        Log.d(TAG, "ウェルカムメッセージ生成 - 農園主: $farmOwner, 農園名: $farmName")
         
         val message = when (farmOwner) {
             "水戸黄門" -> "黄門様、${farmName}へようこそ。種子を登録して、栽培計画を立てましょう。"
@@ -547,7 +501,6 @@ object SukesanMessageService {
             else -> "${farmOwner}、${farmName}へようこそ。種子を登録して、栽培計画を立てましょう。"
         }
         
-        Log.d(TAG, "生成されたウェルカムメッセージ: $message")
         return message
     }
     
@@ -555,7 +508,6 @@ object SukesanMessageService {
      * 一般的なメッセージを生成
      */
     private fun generateGeneralMessage(farmOwner: String, farmName: String, monthName: String): String {
-        Log.d(TAG, "一般的なメッセージ生成 - 農園主: $farmOwner, 農園名: $farmName, 月: $monthName")
         
         val message = when (farmOwner) {
             "水戸黄門" -> "黄門様、${farmName}の${monthName}は播種時期の種子はございませんが、他の管理作業に取り組む良い機会でございます。"
@@ -564,7 +516,6 @@ object SukesanMessageService {
             else -> "${farmOwner}、${farmName}の${monthName}は播種時期の種子はありませんが、他の管理作業に取り組む良い機会です。"
         }
         
-        Log.d(TAG, "生成された一般的なメッセージ: $message")
         return message
     }
     
@@ -602,10 +553,8 @@ object SukesanMessageService {
                 .document(messageId)
             
             docRef.update("isRead", true).await()
-            Log.d(TAG, "Message marked as read: $messageId")
             Result.success(Unit)
         } catch (e: Exception) {
-            Log.e(TAG, "Error marking message as read: ${e.message}")
             Result.failure(e)
         }
     }

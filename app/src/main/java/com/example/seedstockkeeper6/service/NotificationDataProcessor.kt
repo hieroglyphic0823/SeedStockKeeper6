@@ -1,6 +1,5 @@
 package com.example.seedstockkeeper6.service
 
-import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.net.URL
@@ -26,7 +25,6 @@ class NotificationDataProcessor {
                 reader.readText()
             }
         } catch (e: Exception) {
-            Log.e("NotificationDataProcessor", "URLからの情報取得に失敗: $url", e)
             "情報の取得に失敗しました。"
         }
     }
@@ -36,7 +34,6 @@ class NotificationDataProcessor {
      */
     suspend fun fetchRecommendedSeedsForCurrentMonth(seedInfoUrl: String, currentMonth: Int): String = withContext(Dispatchers.IO) {
         try {
-            Log.d("NotificationDataProcessor", "今月のおすすめ種情報取得開始: $seedInfoUrl, 月: $currentMonth")
             
             // 種情報URLから情報を取得
             val seedInfo = fetchSeedInfoFromUrl(seedInfoUrl)
@@ -45,10 +42,8 @@ class NotificationDataProcessor {
             val monthName = getMonthName(currentMonth)
             val recommendedSeeds = generateRecommendedSeedsForMonth(currentMonth, seedInfo)
             
-            Log.d("NotificationDataProcessor", "今月のおすすめ種情報生成完了")
             recommendedSeeds
         } catch (e: Exception) {
-            Log.e("NotificationDataProcessor", "今月のおすすめ種情報取得に失敗", e)
             generateDefaultRecommendedSeeds(currentMonth)
         }
     }

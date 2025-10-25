@@ -1,6 +1,5 @@
 package com.example.seedstockkeeper6
 
-import android.util.Log
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -666,7 +665,6 @@ fun MainScaffold(
     val selectedIds = remember { mutableStateListOf<String>() }
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
-    Log.d("MainScaffold", "MainScaffold recompose - currentRoute: $currentRoute, navBackStackEntry: $navBackStackEntry")
     val isListScreen = currentRoute == "list"
     val isCastleScreen = currentRoute == "castle"
     val isInputScreen = currentRoute?.startsWith("input") == true
@@ -689,16 +687,13 @@ fun MainScaffold(
         // 設定の読み込み完了を待つ
         kotlinx.coroutines.delay(1000)
         farmName = settingsViewModel.farmName
-        Log.d("MainScaffold", "農園名取得: $farmName")
     }
     
     // 未読通知数を取得（画面が表示されるたびに更新）
     LaunchedEffect(currentRoute) {
         try {
             unreadNotificationCount = historyService.getUnreadNotificationCount()
-            Log.d("MainScaffold", "未読通知数: $unreadNotificationCount")
         } catch (e: Exception) {
-            Log.e("MainScaffold", "未読通知数の取得に失敗", e)
         }
     }
     
@@ -707,9 +702,7 @@ fun MainScaffold(
         scope.launch {
             try {
                 unreadNotificationCount = historyService.getUnreadNotificationCount()
-                Log.d("MainScaffold", "未読通知数を更新: $unreadNotificationCount")
             } catch (e: Exception) {
-                Log.e("MainScaffold", "未読通知数の更新に失敗", e)
             }
         }
     }
@@ -721,7 +714,6 @@ fun MainScaffold(
     LaunchedEffect(Unit) {
         kotlinx.coroutines.delay(3000)
         isAppInitialized = true
-        Log.d("MainScaffold", "アプリ初期化完了")
     }
     
     // 入力画面用のViewModel（条件付きで取得）
@@ -735,7 +727,6 @@ fun MainScaffold(
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
-            Log.d("MainScaffold", "currentRoute: $currentRoute, notification_preview check: ${currentRoute != "notification_preview"}")
             MainScaffoldTopAppBar(
                 currentRoute = currentRoute,
                 navController = navController,
@@ -763,14 +754,11 @@ fun MainScaffold(
                                 val result = listViewModel.deleteSeedPacketWithImagesInternal(id)
                                 if (result.isSuccess) {
                                     successCount++
-                                    Log.d("MainScaffold", "削除成功: $id")
                                 } else {
                                     failureCount++
-                                    Log.e("MainScaffold", "削除失敗: $id", result.exceptionOrNull())
                                 }
                             } catch (e: Exception) {
                                 failureCount++
-                                Log.e("MainScaffold", "削除エラー: $id", e)
                             }
                         }
                         
@@ -845,14 +833,11 @@ fun MainScaffold(
                                 val result = listViewModel.deleteSeedPacketWithImagesInternal(id)
                                 if (result.isSuccess) {
                                     successCount++
-                                    Log.d("MainScaffold", "削除成功: $id")
                                 } else {
                                     failureCount++
-                                    Log.e("MainScaffold", "削除失敗: $id", result.exceptionOrNull())
                                 }
                             } catch (e: Exception) {
                                 failureCount++
-                                Log.e("MainScaffold", "削除エラー: $id", e)
                             }
                         }
                         

@@ -1,6 +1,5 @@
 package com.example.seedstockkeeper6.ui.screens
 
-import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
@@ -117,7 +116,6 @@ fun SeedListScreen(
     onDeleteSelected: (List<String>) -> Unit,
     backStackEntry: NavBackStackEntry? = null
 ) {
-    Log.d("BootTrace", ">>> SeedListScreen Composable表示")
     val db = Firebase.firestore
     var seeds by remember { mutableStateOf(listOf<Pair<String, SeedPacket>>()) }
     val listState = rememberLazyListState()
@@ -136,17 +134,14 @@ fun SeedListScreen(
             "thisMonth" -> {
                 showThisMonthOnly = true
                 showFilters = true
-                Log.d("SeedListScreen", "まき時フィルターが適用されました")
             }
             "urgent" -> {
                 showUrgentOnly = true
                 showFilters = true
-                Log.d("SeedListScreen", "終了間近フィルターが適用されました")
             }
             "expired" -> {
                 showExpiredOnly = true
                 showFilters = true
-                Log.d("SeedListScreen", "期限切れフィルターが適用されました")
             }
         }
     }
@@ -214,7 +209,6 @@ fun SeedListScreen(
 
     DisposableEffect(Unit) {
         if (currentUid == null) {
-            Log.w("SeedListScreen", "No authenticated user")
             return@DisposableEffect onDispose { }
         }
         
@@ -225,17 +219,13 @@ fun SeedListScreen(
                 .whereEqualTo("ownerUid", currentUid)
                 .addSnapshotListener { snapshot, error ->
                     if (error != null) {
-                        Log.e("SeedListScreen", "Firebase error: ${error.message}")
                         // エラーハンドリングを改善
                         when (error.code) {
                             com.google.firebase.firestore.FirebaseFirestoreException.Code.UNAVAILABLE -> {
-                                Log.w("SeedListScreen", "Network unavailable, using cached data")
                             }
                             com.google.firebase.firestore.FirebaseFirestoreException.Code.DEADLINE_EXCEEDED -> {
-                                Log.w("SeedListScreen", "Request timeout, using cached data")
                             }
                             else -> {
-                                Log.e("SeedListScreen", "Firestore error: ${error.code} - ${error.message}")
                             }
                         }
                         return@addSnapshotListener
@@ -250,11 +240,9 @@ fun SeedListScreen(
                                     val seedWithId = seed.copy(id = doc.id, documentId = doc.id)
                                     doc.id to seedWithId
                                 } else {
-                                    Log.w("SeedListScreen", "Failed to convert document ${doc.id} to SeedPacket")
                                     null
                                 }
                             } catch (e: Exception) {
-                                Log.w("SeedListScreen", "Error converting document ${doc.id}: ${e.message}")
                                 null
                             }
                         }
@@ -265,14 +253,12 @@ fun SeedListScreen(
                     }
                 }
         } catch (e: Exception) {
-            Log.e("SeedListScreen", "Error setting up Firestore listener: ${e.message}")
         }
         
         onDispose {
             try {
                 registration?.remove()
             } catch (e: Exception) {
-                Log.w("SeedListScreen", "Error removing listener: ${e.message}")
             }
         }
     }
@@ -447,7 +433,6 @@ fun SeedListScreen(
                 
                 // 期限切れの種の色をLogで確認
                 if (seedStatus == "expired") {
-                    Log.d("SeedListScreen", "期限切れの種: ${seed.productName}, 背景色: $backgroundColor")
                 }
                 
                 // リストアイテム

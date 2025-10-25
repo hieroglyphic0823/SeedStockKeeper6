@@ -36,12 +36,9 @@ class MonthlyNotificationWorker(
             }
             
             // ユーザーの通知設定を確認
-            android.util.Log.d("MonthlyNotificationWorker", "通知設定取得開始 - UID: $uid")
             val notificationSettings = getNotificationSettings(uid)
-            android.util.Log.d("MonthlyNotificationWorker", "取得した通知設定: $notificationSettings")
             
             if (notificationSettings["notificationFrequency"] != "月一回") {
-                android.util.Log.d("MonthlyNotificationWorker", "月次通知が無効のため終了")
                 return Result.success()
             }
             
@@ -49,12 +46,10 @@ class MonthlyNotificationWorker(
             val region = notificationSettings["defaultRegion"] ?: "温暖地"
             val prefecture = notificationSettings["selectedPrefecture"] ?: ""
             val seedInfoUrl = getSeedInfoUrl(notificationSettings)
-            android.util.Log.d("MonthlyNotificationWorker", "地域設定 - region: $region, prefecture: $prefecture, seedInfoUrl: $seedInfoUrl")
             
             // 農園主設定を取得
             val farmOwner = notificationSettings["farmOwner"] as? String ?: "水戸黄門"
             val customFarmOwner = notificationSettings["customFarmOwner"] as? String ?: ""
-            android.util.Log.d("MonthlyNotificationWorker", "農園主設定 - farmOwner: $farmOwner, customFarmOwner: $customFarmOwner")
             
             // 現在の月を取得
             val currentMonth = Calendar.getInstance().get(Calendar.MONTH) + 1
@@ -103,24 +98,19 @@ class MonthlyNotificationWorker(
             
             Result.success()
         } catch (e: Exception) {
-            android.util.Log.e("MonthlyNotificationWorker", "月次通知の送信に失敗", e)
             Result.failure()
         }
     }
     
     private suspend fun getNotificationSettings(uid: String): Map<String, String> {
         return try {
-            android.util.Log.d("MonthlyNotificationWorker", "Firebase設定取得開始 - UID: $uid")
             val settingsDoc = db.collection("users").document(uid)
                 .collection("settings").document("general").get().await()
-            android.util.Log.d("MonthlyNotificationWorker", "Firebase設定取得完了")
             
-            android.util.Log.d("MonthlyNotificationWorker", "Firebase設定ドキュメント存在: ${settingsDoc.exists()}")
             
             if (settingsDoc.exists()) {
                 val farmOwnerFromFirebase = settingsDoc.getString("farmOwner")
                 val customFarmOwnerFromFirebase = settingsDoc.getString("customFarmOwner")
-                android.util.Log.d("MonthlyNotificationWorker", "Firebaseから取得 - farmOwner: $farmOwnerFromFirebase, customFarmOwner: $customFarmOwnerFromFirebase")
                 
                 val settings = mapOf(
                     "notificationFrequency" to (settingsDoc.getString("notificationFrequency") ?: "なし"),
@@ -132,10 +122,8 @@ class MonthlyNotificationWorker(
                     "seedInfoUrlProvider" to (settingsDoc.getString("seedInfoUrlProvider") ?: "サカタのたね"),
                     "customSeedInfoUrl" to (settingsDoc.getString("customSeedInfoUrl") ?: "")
                 )
-                android.util.Log.d("MonthlyNotificationWorker", "取得した設定: $settings")
                 settings
             } else {
-                android.util.Log.d("MonthlyNotificationWorker", "Firebase設定ドキュメントが存在しません")
                 val defaultSettings = mapOf(
                     "notificationFrequency" to "なし",
                     "defaultRegion" to "温暖地",
@@ -145,11 +133,9 @@ class MonthlyNotificationWorker(
                     "seedInfoUrlProvider" to "サカタのたね",
                     "customSeedInfoUrl" to ""
                 )
-                android.util.Log.d("MonthlyNotificationWorker", "デフォルト設定を使用: $defaultSettings")
                 defaultSettings
             }
         } catch (e: Exception) {
-            android.util.Log.e("MonthlyNotificationWorker", "通知設定の取得に失敗", e)
             val errorSettings = mapOf(
                 "notificationFrequency" to "なし",
                 "defaultRegion" to "温暖地",
@@ -159,7 +145,6 @@ class MonthlyNotificationWorker(
                 "seedInfoUrlProvider" to "サカタのたね",
                 "customSeedInfoUrl" to ""
             )
-            android.util.Log.d("MonthlyNotificationWorker", "エラー時デフォルト設定: $errorSettings")
             errorSettings
         }
     }
@@ -179,7 +164,6 @@ class MonthlyNotificationWorker(
     private suspend fun getSeedsForUser(uid: String): List<SeedPacket> {
         return try {
             val currentMonth = Calendar.getInstance().get(Calendar.MONTH) + 1
-            android.util.Log.d("MonthlyNotificationWorker", "種データ取得開始 - UID: $uid, 現在の月: $currentMonth")
             
             val snapshot = db.collection("seeds")
                 .whereEqualTo("ownerUid", uid)
@@ -195,19 +179,15 @@ class MonthlyNotificationWorker(
                         val seedWithId = seed.copy(id = doc.id, documentId = doc.id)
                         seedWithId
                     } else {
-                        android.util.Log.w("MonthlyNotificationWorker", "Failed to convert document ${doc.id} to SeedPacket")
                         null
                     }
                 } catch (e: Exception) {
-                    android.util.Log.w("MonthlyNotificationWorker", "種データの変換に失敗: ${doc.id}", e)
                     null
                 }
             }
             
-            android.util.Log.d("MonthlyNotificationWorker", "種データ取得完了 - 全件数: ${snapshot.documents.size}, 取得件数: ${seeds.size}")
             seeds
         } catch (e: Exception) {
-            android.util.Log.e("MonthlyNotificationWorker", "種データの取得に失敗", e)
             emptyList()
         }
     }
@@ -273,7 +253,6 @@ class WeeklyNotificationWorker(
             
             // ユーザーの通知設定を確認
             val notificationSettings = getNotificationSettings(uid)
-            android.util.Log.d("WeeklyNotificationWorker", "取得した通知設定: $notificationSettings")
             
             if (notificationSettings["notificationFrequency"] != "週１回") {
                 return Result.success()
@@ -287,7 +266,6 @@ class WeeklyNotificationWorker(
             // 農園主設定を取得
             val farmOwner = notificationSettings["farmOwner"] as? String ?: "水戸黄門"
             val customFarmOwner = notificationSettings["customFarmOwner"] as? String ?: ""
-            android.util.Log.d("WeeklyNotificationWorker", "農園主設定 - farmOwner: $farmOwner, customFarmOwner: $customFarmOwner")
             
             // ユーザーの種データを取得
             val userSeeds = getSeedsForUser(uid)
@@ -319,7 +297,6 @@ class WeeklyNotificationWorker(
             
             Result.success()
         } catch (e: Exception) {
-            android.util.Log.e("WeeklyNotificationWorker", "週次通知の送信に失敗", e)
             Result.failure()
         }
     }
@@ -352,7 +329,6 @@ class WeeklyNotificationWorker(
                 )
             }
         } catch (e: Exception) {
-            android.util.Log.e("WeeklyNotificationWorker", "通知設定の取得に失敗", e)
             mapOf(
                 "notificationFrequency" to "なし",
                 "defaultRegion" to "温暖地",
@@ -382,7 +358,6 @@ class WeeklyNotificationWorker(
             val currentDate = Calendar.getInstance()
             val currentMonth = currentDate.get(Calendar.MONTH) + 1
             val currentDay = currentDate.get(Calendar.DAY_OF_MONTH)
-            android.util.Log.d("WeeklyNotificationWorker", "種データ取得開始 - UID: $uid, 現在の月: $currentMonth, 現在の日: $currentDay")
             
             val snapshot = db.collection("seeds")
                 .whereEqualTo("ownerUid", uid)
@@ -414,26 +389,20 @@ class WeeklyNotificationWorker(
                         
                         if (isRelevantForWeekly) {
                             seedsEndingSoon.add(seedWithId)
-                            android.util.Log.d("WeeklyNotificationWorker", "2週間前関連の種発見: ${seedWithId.productName}")
                             seedWithId
                         } else {
                             null
                         }
                     } else {
-                        android.util.Log.w("WeeklyNotificationWorker", "Failed to convert document ${doc.id} to SeedPacket")
                         null
                     }
                 } catch (e: Exception) {
-                    android.util.Log.w("WeeklyNotificationWorker", "種データの変換に失敗: ${doc.id}", e)
                     null
                 }
             }
             
-            android.util.Log.d("WeeklyNotificationWorker", "種データ取得完了 - 全件数: ${snapshot.documents.size}, 2週間前関連: ${seeds.size}")
-            android.util.Log.d("WeeklyNotificationWorker", "まき時終了の2週間前の種: ${seedsEndingSoon.size}件")
             seeds
         } catch (e: Exception) {
-            android.util.Log.e("WeeklyNotificationWorker", "種データの取得に失敗", e)
             emptyList()
         }
     }
@@ -469,7 +438,6 @@ class WeeklyNotificationWorker(
                 null
             }
         } catch (e: Exception) {
-            android.util.Log.w("WeeklyNotificationWorker", "日付の解析に失敗: $dateString", e)
             null
         }
     }
@@ -480,7 +448,6 @@ class WeeklyNotificationWorker(
  */
 private suspend fun getSeedsForUserOptimized(uid: String, statistics: MonthlyStatistics): List<SeedPacket> {
     return try {
-        android.util.Log.d("MonthlyNotificationWorker", "最適化された種データ取得開始 - UID: $uid")
         
         // 集計データから必要な情報を取得
         val currentMonth = Calendar.getInstance().get(Calendar.MONTH) + 1
@@ -528,15 +495,12 @@ private suspend fun getSeedsForUserOptimized(uid: String, statistics: MonthlySta
                     null
                 }
             } catch (e: Exception) {
-                android.util.Log.w("MonthlyNotificationWorker", "種データ解析エラー: ${doc.id}", e)
                 null
             }
         }
         
-        android.util.Log.d("MonthlyNotificationWorker", "最適化された種データ取得完了: ${seeds.size}件")
         seeds
     } catch (e: Exception) {
-        android.util.Log.e("MonthlyNotificationWorker", "最適化された種データ取得エラー", e)
         emptyList()
     }
 }

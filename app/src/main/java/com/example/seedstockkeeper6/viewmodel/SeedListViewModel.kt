@@ -1,7 +1,6 @@
 package com.example.seedstockkeeper6.viewmodel
 
 import android.net.Uri
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.firestore.ktx.firestore
@@ -24,18 +23,13 @@ class SeedListViewModel : ViewModel() {
     private val statisticsService = StatisticsService()
     
     init {
-        Log.d("BootTrace", "SeedListViewModel init")
-        android.util.Log.d("SeedListViewModel", "初期化時: seeds.value.size = ${_seeds.value.size}")
     }
     
     // プレビュー用のデモデータ設定メソッド
     fun setDemoSeeds(demoSeeds: List<SeedPacket>) {
-        android.util.Log.d("SeedListViewModel", "setDemoSeeds呼び出し: ${demoSeeds.size}件")
         demoSeeds.forEach { seed ->
-            android.util.Log.d("SeedListViewModel", "設定する商品: ${seed.productName}")
         }
         _seeds.value = demoSeeds
-        android.util.Log.d("SeedListViewModel", "seeds.value更新完了: ${_seeds.value.size}件")
     }
 
     fun deleteSeedPacketWithImages(documentId: String, onComplete: (Result<Unit>) -> Unit) {
@@ -56,7 +50,6 @@ class SeedListViewModel : ViewModel() {
                 val documentSnapshot = docRef.get().await()
 
                 if (!documentSnapshot.exists()) {
-                    Log.w("SeedListVM", "Document $documentId does not exist.")
                     return@withContext Result.failure(NoSuchElementException("Document $documentId not found"))
                 }
 
@@ -68,27 +61,22 @@ class SeedListViewModel : ViewModel() {
                             val path = Uri.decode(url).substringAfter("/o/").substringBefore("?")
                             if (path.isNotEmpty()) {
                                 storage.reference.child(path).delete().await()
-                                Log.d("SeedListVM", "Deleted image: $path")
                             }
                         } catch (e: Exception) {
-                            Log.e("SeedListVM", "Failed to delete image: $url", e)
                         }
                     }
                 }
 
                 docRef.delete().await()
-                Log.d("SeedListVM", "Deleted document: $documentId")
                 
                 // 集計データを更新
                 try {
                     updateStatisticsAfterSeedChange()
                 } catch (e: Exception) {
-                    Log.w("SeedListVM", "集計更新に失敗しましたが、削除は成功", e)
                 }
                 
                 Result.success(Unit)
             } catch (e: Exception) {
-                Log.e("SeedListVM", "Error deleting packet $documentId", e)
                 Result.failure(e)
             }
         }
@@ -98,67 +86,37 @@ class SeedListViewModel : ViewModel() {
      */
     private suspend fun updateStatisticsAfterSeedChange() {
         try {
-            android.util.Log.d("StatisticsUpdate", "=== SeedListViewModel集計データ更新開始 ===")
             
             val auth = com.google.firebase.auth.FirebaseAuth.getInstance()
             val uid = auth.currentUser?.uid
-            android.util.Log.d("StatisticsUpdate", "uid: $uid")
             
             if (uid == null) {
-                android.util.Log.w("StatisticsUpdate", "uidがnullのため集計更新をスキップ")
                 return
             }
             
             // 現在のユーザーの全種データを取得
             val db = Firebase.firestore
-            android.util.Log.d("StatisticsUpdate", "Firestore参照取得: seeds collection")
-            
-            android.util.Log.d("StatisticsUpdate", "Firestoreクエリ実行: uid=$uid")
             val seedsSnapshot = db.collection("seeds")
                 .whereEqualTo("ownerUid", uid)
                 .get().await()
             
-            android.util.Log.d("StatisticsUpdate", "Firestoreクエリ完了: ドキュメント数=${seedsSnapshot.documents.size}")
-            android.util.Log.d("StatisticsUpdate", "クエリ結果詳細:")
-            seedsSnapshot.documents.forEachIndexed { index, doc ->
-                android.util.Log.d("StatisticsUpdate", "  doc[$index]: id=${doc.id}, exists=${doc.exists()}")
-                if (doc.exists()) {
-                    val data = doc.data
-                    android.util.Log.d("StatisticsUpdate", "    productName: ${data?.get("productName")}")
-                    android.util.Log.d("StatisticsUpdate", "    family: ${data?.get("family")}")
-                    android.util.Log.d("StatisticsUpdate", "    ownerUid: ${data?.get("ownerUid")}")
-                }
-            }
             
             val seeds = seedsSnapshot.documents.mapNotNull { doc ->
                 try {
                     val seed = doc.toObject(SeedPacket::class.java)
                     seed?.copy(id = doc.id, documentId = doc.id)
                 } catch (e: Exception) {
-                    android.util.Log.w("StatisticsUpdate", "種データ解析エラー: ${doc.id}", e)
                     null
                 }
             }
             
-            android.util.Log.d("StatisticsUpdate", "解析完了種データ数: ${seeds.size}")
-            android.util.Log.d("StatisticsUpdate", "種データ詳細: ${seeds.map { "${it.productName}(${it.family})" }}")
-            
             // 集計データを更新
-            android.util.Log.d("StatisticsUpdate", "StatisticsService呼び出し開始")
             val result = statisticsService.updateStatisticsOnSeedChange(uid, seeds)
             
             if (result.success) {
-                android.util.Log.d("StatisticsUpdate", "=== SeedListViewModel集計データ更新完了 ===")
-                android.util.Log.d("StatisticsUpdate", "totalSeeds: ${result.statistics?.totalSeeds}")
-                android.util.Log.d("StatisticsUpdate", "validSeeds: ${result.statistics?.validSeedsCount}")
-                android.util.Log.d("StatisticsUpdate", "thisMonthSowing: ${result.statistics?.thisMonthSowingCount}")
             } else {
-                android.util.Log.w("StatisticsUpdate", "=== SeedListViewModel集計データ更新失敗 ===")
-                android.util.Log.w("StatisticsUpdate", "エラーメッセージ: ${result.message}")
             }
         } catch (e: Exception) {
-            android.util.Log.e("StatisticsUpdate", "=== SeedListViewModel集計更新処理エラー ===", e)
-            android.util.Log.e("StatisticsUpdate", "エラー詳細: ${e.message}")
         }
     }
 }

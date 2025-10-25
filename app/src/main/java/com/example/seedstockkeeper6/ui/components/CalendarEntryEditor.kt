@@ -128,11 +128,6 @@ fun CalendarEntryEditor(
     // ローカル状態変数（旬ベースの入力）
     var sowingStartYear by remember(entry) { 
         val year = DateConversionUtils.getYearFromDate(entry.sowing_start_date)
-        android.util.Log.d("CalendarEntryEditor", "=== 播種開始年の初期値設定 ===")
-        android.util.Log.d("CalendarEntryEditor", "entry.sowing_start_date: ${entry.sowing_start_date}")
-        android.util.Log.d("CalendarEntryEditor", "抽出された年: $year")
-        android.util.Log.d("CalendarEntryEditor", "現在年: $currentYear")
-        android.util.Log.d("CalendarEntryEditor", "使用する年: ${if (year > 0) year.toString() else currentYear.toString()}")
         mutableStateOf(if (year > 0) year.toString() else currentYear.toString()) 
     }
     var sowingStart by remember(entry) { 
@@ -145,11 +140,6 @@ fun CalendarEntryEditor(
     }
     var sowingEndYear by remember(entry) { 
         val year = DateConversionUtils.getYearFromDate(entry.sowing_end_date)
-        android.util.Log.d("CalendarEntryEditor", "=== 播種終了年の初期値設定 ===")
-        android.util.Log.d("CalendarEntryEditor", "entry.sowing_end_date: ${entry.sowing_end_date}")
-        android.util.Log.d("CalendarEntryEditor", "抽出された年: $year")
-        android.util.Log.d("CalendarEntryEditor", "現在年: $currentYear")
-        android.util.Log.d("CalendarEntryEditor", "使用する年: ${if (year > 0) year.toString() else currentYear.toString()}")
         mutableStateOf(if (year > 0) year.toString() else currentYear.toString()) 
     }
     var sowingEnd by remember(entry) { 
@@ -196,11 +186,8 @@ fun CalendarEntryEditor(
 
     // 日付変換と更新処理
     fun updateSowingStart(year: String, month: String, stage: String) {
-        android.util.Log.d("Calendar", "updateSowingStart呼び出し: year=$year, month=$month, stage=$stage")
-        android.util.Log.d("Calendar", "hideYearSelection: $hideYearSelection")
         val yearInt = if (hideYearSelection) 0 else (year.toIntOrNull() ?: 0)
         val monthInt = month.toIntOrNull() ?: 0
-        android.util.Log.d("Calendar", "変換後: yearInt=$yearInt, monthInt=$monthInt")
         
         if (monthInt > 0 && stage.isNotEmpty()) {
             val startDate = if (hideYearSelection) {
@@ -216,24 +203,16 @@ fun CalendarEntryEditor(
             } else {
                 DateConversionUtils.convertStageToStartDate(yearInt, monthInt, stage)
             }
-            android.util.Log.d("Calendar", "生成されたstartDate: $startDate")
             val updatedEntry = currentEntry.copy(sowing_start_date = startDate)
-            android.util.Log.d("Calendar", "更新前のentry: $currentEntry")
-            android.util.Log.d("Calendar", "更新後のentry: $updatedEntry")
             currentEntry = updatedEntry
             onUpdate(updatedEntry)
-            android.util.Log.d("Calendar", "onUpdate呼び出し完了")
         } else {
-            android.util.Log.w("Calendar", "updateSowingStart: 条件を満たさない - monthInt=$monthInt, stage=$stage")
         }
     }
     
     fun updateSowingEnd(year: String, month: String, stage: String) {
-        android.util.Log.d("Calendar", "updateSowingEnd呼び出し: year=$year, month=$month, stage=$stage")
-        android.util.Log.d("Calendar", "hideYearSelection: $hideYearSelection")
         val yearInt = if (hideYearSelection) 0 else (year.toIntOrNull() ?: 0)
         val monthInt = month.toIntOrNull() ?: 0
-        android.util.Log.d("Calendar", "変換後: yearInt=$yearInt, monthInt=$monthInt")
         
         if (monthInt > 0 && stage.isNotEmpty()) {
             val endDate = if (hideYearSelection) {
@@ -249,23 +228,16 @@ fun CalendarEntryEditor(
             } else {
                 DateConversionUtils.convertStageToEndDate(yearInt, monthInt, stage)
             }
-            android.util.Log.d("Calendar", "生成されたendDate: $endDate")
             val updatedEntry = currentEntry.copy(sowing_end_date = endDate)
-            android.util.Log.d("Calendar", "更新前のentry: $currentEntry")
-            android.util.Log.d("Calendar", "更新後のentry: $updatedEntry")
             currentEntry = updatedEntry
             onUpdate(updatedEntry)
-            android.util.Log.d("Calendar", "onUpdate呼び出し完了")
         } else {
-            android.util.Log.w("Calendar", "updateSowingEnd: 条件を満たさない - monthInt=$monthInt, stage=$stage")
         }
     }
     
     fun updateHarvestStart(year: String, month: String, stage: String) {
-        android.util.Log.d("Calendar", "updateHarvestStart呼び出し: year=$year, month=$month, stage=$stage")
         val yearInt = if (hideYearSelection) 0 else (year.toIntOrNull() ?: 0)
         val monthInt = month.toIntOrNull() ?: 0
-        android.util.Log.d("Calendar", "変換後: yearInt=$yearInt, monthInt=$monthInt")
         
         if (monthInt > 0 && stage.isNotEmpty()) {
             val startDate = if (hideYearSelection) {
@@ -281,23 +253,16 @@ fun CalendarEntryEditor(
             } else {
                 DateConversionUtils.convertStageToStartDate(yearInt, monthInt, stage)
             }
-            android.util.Log.d("Calendar", "生成されたstartDate: $startDate")
             val updatedEntry = currentEntry.copy(harvest_start_date = startDate)
-            android.util.Log.d("Calendar", "更新前のentry: $currentEntry")
-            android.util.Log.d("Calendar", "更新後のentry: $updatedEntry")
             currentEntry = updatedEntry
             onUpdate(updatedEntry)
-            android.util.Log.d("Calendar", "onUpdate呼び出し完了")
         } else {
-            android.util.Log.w("Calendar", "updateHarvestStart: 条件を満たさない - monthInt=$monthInt, stage=$stage")
         }
     }
     
     fun updateHarvestEnd(year: String, month: String, stage: String) {
-        android.util.Log.d("Calendar", "updateHarvestEnd呼び出し: year=$year, month=$month, stage=$stage")
         val yearInt = if (hideYearSelection) 0 else (year.toIntOrNull() ?: 0)
         val monthInt = month.toIntOrNull() ?: 0
-        android.util.Log.d("Calendar", "変換後: yearInt=$yearInt, monthInt=$monthInt")
         
         if (monthInt > 0 && stage.isNotEmpty()) {
             val endDate = if (hideYearSelection) {
@@ -313,32 +278,16 @@ fun CalendarEntryEditor(
             } else {
                 DateConversionUtils.convertStageToEndDate(yearInt, monthInt, stage)
             }
-            android.util.Log.d("Calendar", "生成されたendDate: $endDate")
             val updatedEntry = currentEntry.copy(harvest_end_date = endDate)
-            android.util.Log.d("Calendar", "更新前のentry: $currentEntry")
-            android.util.Log.d("Calendar", "更新後のentry: $updatedEntry")
             currentEntry = updatedEntry
             onUpdate(updatedEntry)
-            android.util.Log.d("Calendar", "onUpdate呼び出し完了")
         } else {
-            android.util.Log.w("Calendar", "updateHarvestEnd: 条件を満たさない - monthInt=$monthInt, stage=$stage")
         }
     }
 
     Column(
         modifier = Modifier.padding(top = 8.dp)
     ) {
-        android.util.Log.d("CalendarEntryEditor", "=== CalendarEntryEditorの高さ情報 ===")
-        android.util.Log.d("CalendarEntryEditor", "上部の余白: 8dp")
-        android.util.Log.d("CalendarEntryEditor", "播種期間ラベル: 約32dp (アイコン24dp + テキスト)")
-        android.util.Log.d("CalendarEntryEditor", "播種期間ボタン: 約48dp")
-        android.util.Log.d("CalendarEntryEditor", "播種期間後の余白: 16dp")
-        android.util.Log.d("CalendarEntryEditor", "収穫期間ラベル: 約32dp")
-        android.util.Log.d("CalendarEntryEditor", "収穫期間ボタン: 約48dp")
-        android.util.Log.d("CalendarEntryEditor", "収穫期間後の余白: 16dp")
-        android.util.Log.d("CalendarEntryEditor", "有効期限ラベル: 約32dp")
-        android.util.Log.d("CalendarEntryEditor", "有効期限ボタン: 約48dp")
-        android.util.Log.d("CalendarEntryEditor", "CalendarEntryEditor合計高さ: 約280dp")
         // 播種期間ラベル（アイコン付き）
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -824,13 +773,6 @@ fun CalendarEntryEditor(
             val packetExpirationYear = ocrResult?.expirationYear ?: 0
             val packetExpirationMonth = ocrResult?.expirationMonth ?: 0
             
-            android.util.Log.d("CalendarEntryEditor", "=== 有効期限初期値設定 ===")
-            android.util.Log.d("CalendarEntryEditor", "エントリ: $entry")
-            android.util.Log.d("CalendarEntryEditor", "エントリ有効期限: ${entryExpirationYear}年${entryExpirationMonth}月")
-            android.util.Log.d("CalendarEntryEditor", "パケット有効期限: ${packetExpirationYear}年${packetExpirationMonth}月")
-            android.util.Log.d("CalendarEntryEditor", "OCR結果: $ocrResult")
-            android.util.Log.d("CalendarEntryEditor", "現在日付: ${currentDate}")
-            android.util.Log.d("CalendarEntryEditor", "デフォルト有効期限: ${nextYear}年${currentMonth}月")
             
             // エントリレベルの有効期限を優先、なければパケットレベル、それもなければデフォルト
             val finalExpirationYear = if (entryExpirationYear > 0) {
@@ -851,7 +793,6 @@ fun CalendarEntryEditor(
             
             expirationYear = finalExpirationYear.toString()
             expirationMonth = finalExpirationMonth.toString()
-            android.util.Log.d("CalendarEntryEditor", "最終有効期限: ${expirationYear}年${expirationMonth}月")
         }
         
         // 有効期限ラベル（アイコン付き）
@@ -936,7 +877,6 @@ fun CalendarEntryEditor(
                             onUpdate(updatedEntry)
                             // 有効期限情報を種登録画面に反映
                             onUpdateExpiration(updatedEntry)
-                            android.util.Log.d("CalendarEntryEditor", "有効期限更新: ${yearInt}年${monthInt}月")
                         }
                         showExpirationBottomSheet = false
                     },
@@ -1348,13 +1288,7 @@ fun MonthStageSelectionBottomSheet(
                         // 背景色を設定
                         setBackgroundColor(colorScheme.surface.toArgb())
                         
-                        android.util.Log.d("RegionDialogNumberPicker", "=== NumberPicker色設定完了 ===")
-                        android.util.Log.d("RegionDialogNumberPicker", "テキスト色: #${Integer.toHexString(colorScheme.onSurface.toArgb())}")
-                        android.util.Log.d("RegionDialogNumberPicker", "背景色: #${Integer.toHexString(colorScheme.surface.toArgb())}")
-                        android.util.Log.d("RegionDialogNumberPicker", "現在の値: $currentMonth")
-                        android.util.Log.d("RegionDialogNumberPicker", "表示値: ${arrayOf("不明", "1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月")[currentMonth]}")
                     } catch (e: Exception) {
-                        android.util.Log.e("RegionDialogNumberPicker", "色設定エラー: ${e.message}")
                     }
                 }
             },

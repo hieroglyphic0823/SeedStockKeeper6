@@ -25,7 +25,6 @@ class GoogleMapsAuthService(private val context: Context) {
         try {
             MapsInitializer.initialize(context)
         } catch (e: Exception) {
-            android.util.Log.e("GoogleMapsAuthService", "GoogleMaps初期化エラー", e)
         }
     }
     
@@ -44,7 +43,6 @@ class GoogleMapsAuthService(private val context: Context) {
         return try {
             GoogleSignIn.getLastSignedInAccount(context)
         } catch (e: Exception) {
-            android.util.Log.e("GoogleMapsAuthService", "ユーザー取得エラー", e)
             null
         }
     }
@@ -57,7 +55,6 @@ class GoogleMapsAuthService(private val context: Context) {
         return try {
             googleSignInClient?.silentSignIn()?.await()
         } catch (e: Exception) {
-            android.util.Log.e("GoogleMapsAuthService", "サイレントサインインエラー", e)
             null
         }
     }
@@ -68,7 +65,6 @@ class GoogleMapsAuthService(private val context: Context) {
         try {
             googleSignInClient?.signOut()?.await()
         } catch (e: Exception) {
-            android.util.Log.e("GoogleMapsAuthService", "サインアウトエラー", e)
         }
     }
     

@@ -165,7 +165,6 @@ class SettingsViewModel(private val context: Context? = null) : ViewModel() {
                 }
             } catch (e: Exception) {
                 // エラーログを出力
-                android.util.Log.e("SettingsViewModel", "設定の読み込みに失敗", e)
                 
                 // エラーが発生してもデフォルト値は設定する
                 defaultRegion = "温暖地"
@@ -202,14 +201,12 @@ class SettingsViewModel(private val context: Context? = null) : ViewModel() {
                 val uid = auth.currentUser?.uid
                 
                 // デバッグ用ログ
-                android.util.Log.d("SettingsViewModel", "保存開始: farmName='$farmName', defaultRegion='$defaultRegion', selectedPrefecture='$selectedPrefecture', farmOwner='$farmOwner', customFarmOwner='$customFarmOwner', notificationFrequency='$notificationFrequency', selectedWeekday='$selectedWeekday', seedInfoUrlProvider='$seedInfoUrlProvider', customSeedInfoUrl='$customSeedInfoUrl'")
                 
                 if (uid == null) {
                     showSnackbar = "ログインが必要です"
                     return@launch
                 }
                 
-                android.util.Log.d("SettingsViewModel", "ユーザーUID: $uid")
                 
                 val db = Firebase.firestore
                 val settingsDoc = db.collection("users").document(uid).collection("settings").document("general")
@@ -230,10 +227,8 @@ class SettingsViewModel(private val context: Context? = null) : ViewModel() {
                     "updatedAt" to com.google.firebase.Timestamp.now()
                 )
                 
-                android.util.Log.d("SettingsViewModel", "保存するデータ: $settings")
                 
                 settingsDoc.set(settings).await()
-                android.util.Log.d("SettingsViewModel", "保存完了")
                 
                 // 通知スケジュールを更新
                 updateNotificationSchedule()
@@ -242,7 +237,6 @@ class SettingsViewModel(private val context: Context? = null) : ViewModel() {
                 
             } catch (e: Exception) {
                 // エラーログを出力
-                android.util.Log.e("SettingsViewModel", "設定の保存に失敗", e)
                 
                 // 権限エラーの場合は詳細なメッセージを表示
                 val errorMessage = when {

@@ -1,7 +1,6 @@
 package com.example.seedstockkeeper6.service
 
 import android.content.Context
-import android.util.Log
 import com.example.seedstockkeeper6.data.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -39,10 +38,8 @@ class WeatherService(private val context: Context) {
         return try {
             // BuildConfigからOpenWeatherMap APIキーを取得（build.gradleで設定）
             val apiKey = com.example.seedstockkeeper6.BuildConfig.OPENWEATHER_API_KEY
-            Log.d(TAG, "取得したOpenWeatherMap APIキー: ${apiKey.take(10)}...")
             apiKey
         } catch (e: Exception) {
-            Log.e(TAG, "APIキーの取得に失敗しました", e)
             "YOUR_API_KEY_HERE"
         }
     }
@@ -55,33 +52,25 @@ class WeatherService(private val context: Context) {
         return withContext(Dispatchers.IO) {
             try {
                 val apiKey = getApiKey()
-                Log.d(TAG, "OpenWeatherMap API取得開始: lat=$latitude, lon=$longitude")
 
                 // APIキーが設定されていない場合はnullを返す
                 if (apiKey == "YOUR_API_KEY_HERE" || apiKey.isEmpty()) {
-                    Log.d(TAG, "OpenWeatherMap APIキーが設定されていないため、天気予報を取得できません")
-                    Log.d(TAG, "local.propertiesにOPENWEATHER_API_KEYを設定してください")
                     return@withContext null
                 }
                 
-                Log.d(TAG, "OpenWeatherMap API呼び出し: lat=$latitude, lon=$longitude")
-                Log.d(TAG, "使用するAPIキー: ${apiKey.take(10)}...")
 
                 val response = openWeatherApi.getForecast(latitude, longitude, apiKey)
                 
                 if (response.isSuccessful && response.body() != null) {
                     val forecastResponse = response.body()!!
-                    Log.d(TAG, "OpenWeatherMap API成功: ${forecastResponse.list?.size ?: 0}件のデータ")
 
                     // OpenWeatherMapのデータ形式からアプリのデータ形式に変換
                     mapToWeeklyWeatherData(forecastResponse, latitude, longitude)
                 } else {
                     val errorBody = response.errorBody()?.string()
-                    Log.e(TAG, "OpenWeatherMap API エラー: ${response.code()} - $errorBody")
                     null
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "OpenWeatherMap API取得エラー", e)
                 null
             }
         }
@@ -97,7 +86,6 @@ class WeatherService(private val context: Context) {
     ): WeeklyWeatherData? {
         val weatherList = openWeatherResponse.list
         if (weatherList.isNullOrEmpty()) {
-            Log.w(TAG, "天気予報データが空です")
             return null
         }
 
@@ -153,7 +141,6 @@ class WeatherService(private val context: Context) {
                     val weatherMain = representativeItem.weather.firstOrNull()?.main ?: "情報なし"
                     val weatherDescription = representativeItem.weather.firstOrNull()?.description ?: "情報なし"
                     
-                    Log.d(TAG, "日別天気データ: 日時=${Date(representativeItem.dt * 1000)}, 天気=$weatherMain, アイコン=$weatherIcon, 説明=$weatherDescription")
                     
                     WeatherData(
                         date = Date(representativeItem.dt * 1000),
@@ -180,7 +167,6 @@ class WeatherService(private val context: Context) {
                 dailyForecast = dailyForecast
             )
         } catch (e: Exception) {
-            Log.e(TAG, "データ変換エラー", e)
             return null
         }
     }

@@ -82,7 +82,6 @@ fun createPreviewSeedInputViewModel(
 
 // プレビュー用のSeedListViewModel
 fun createPreviewSeedListViewModel(): SeedListViewModel {
-    android.util.Log.d("PreviewHelpers", "createPreviewSeedListViewModel開始")
     val viewModel = SeedListViewModel()
     
     // プレビュー用のデモデータを設定
@@ -183,9 +182,7 @@ fun createPreviewSeedListViewModel(): SeedListViewModel {
     viewModel.setDemoSeeds(demoSeeds)
     
     // デバッグログ出力
-    android.util.Log.d("PreviewHelpers", "プレビュー用デモデータを設定しました: ${demoSeeds.size}件")
     demoSeeds.forEach { seed ->
-        android.util.Log.d("PreviewHelpers", "商品名: ${seed.productName}, 播種期間: ${seed.calendar.map { "${it.sowing_start_date}〜${it.sowing_end_date}" }}")
     }
     
     return viewModel

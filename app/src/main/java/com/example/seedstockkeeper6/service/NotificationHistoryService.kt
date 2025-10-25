@@ -1,6 +1,5 @@
 package com.example.seedstockkeeper6.service
 
-import android.util.Log
 import com.example.seedstockkeeper6.model.NotificationHistory
 import com.example.seedstockkeeper6.model.NotificationType
 import com.example.seedstockkeeper6.model.NotificationData
@@ -38,9 +37,7 @@ class NotificationHistoryService {
     ): Boolean {
         return try {
             val currentUser = auth.currentUser
-            Log.d("NotificationHistoryService", "通知履歴保存開始 - currentUser: ${currentUser?.uid}")
             if (currentUser == null) {
-                Log.w("NotificationHistoryService", "ユーザーが認証されていません")
                 return false
             }
             
@@ -68,17 +65,14 @@ class NotificationHistoryService {
                 closingLine = closingLine
             )
             
-            Log.d("NotificationHistoryService", "保存する通知履歴: $history")
             
             val docRef = db.collection("notificationHistory")
                 .add(history)
                 .await()
             
-            Log.d("NotificationHistoryService", "通知履歴を保存しました: ${docRef.id}")
             true
             
         } catch (e: Exception) {
-            Log.e("NotificationHistoryService", "通知履歴の保存に失敗", e)
             false
         }
     }
@@ -89,16 +83,11 @@ class NotificationHistoryService {
     suspend fun getUserNotificationHistory(limit: Int = 50): List<NotificationHistory> {
         return try {
             val currentUser = auth.currentUser
-            Log.d("NotificationHistoryService", "通知履歴取得開始 - currentUser: ${currentUser?.uid}")
-            Log.d("NotificationHistoryService", "認証状態: ${auth.currentUser != null}")
-            Log.d("NotificationHistoryService", "ユーザー情報: ${currentUser?.email}, ${currentUser?.displayName}")
             
             if (currentUser == null) {
-                Log.w("NotificationHistoryService", "ユーザーが認証されていません")
                 return emptyList()
             }
             
-            Log.d("NotificationHistoryService", "Firebaseクエリ実行開始 - userId: ${currentUser.uid}")
             // 一時的にorderByを削除してインデックス不足を回避
             val snapshot = db.collection("notificationHistory")
                 .whereEqualTo("userId", currentUser.uid)
@@ -106,21 +95,16 @@ class NotificationHistoryService {
                 .get()
                 .await()
             
-            Log.d("NotificationHistoryService", "Firebaseクエリ完了 - 取得ドキュメント数: ${snapshot.documents.size}")
             
             // ドキュメントの生データをログ出力
             snapshot.documents.forEach { doc ->
-                Log.d("NotificationHistoryService", "ドキュメント生データ: ${doc.id} = ${doc.data}")
             }
             
             val histories = snapshot.documents.mapNotNull { doc ->
                 try {
-                    Log.d("NotificationHistoryService", "ドキュメント解析中: ${doc.id}")
                     val history = doc.toObject(NotificationHistory::class.java)
-                    Log.d("NotificationHistoryService", "解析結果: $history")
                     history?.copy(documentId = doc.id)
                 } catch (e: Exception) {
-                    Log.w("NotificationHistoryService", "通知履歴の解析に失敗: ${doc.id}", e)
                     null
                 }
             }
@@ -137,14 +121,11 @@ class NotificationHistoryService {
                 }
             }
             
-            Log.d("NotificationHistoryService", "通知履歴を取得しました: ${sortedHistories.size}件")
             sortedHistories.forEach { history ->
-                Log.d("NotificationHistoryService", "履歴詳細: id=${history.id}, title=${history.title}, sentAt=${history.sentAt}")
             }
             sortedHistories
             
         } catch (e: Exception) {
-            Log.e("NotificationHistoryService", "通知履歴の取得に失敗", e)
             emptyList()
         }
     }
@@ -155,30 +136,19 @@ class NotificationHistoryService {
     suspend fun saveNotificationData(notificationData: NotificationData): Boolean {
         return try {
             val currentUser = auth.currentUser
-            Log.d("NotificationHistoryService", "JSON通知データ保存開始")
-            Log.d("NotificationHistoryService", "currentUser: ${currentUser?.uid}")
-            Log.d("NotificationHistoryService", "notificationData.userId: ${notificationData.userId}")
-            Log.d("NotificationHistoryService", "notificationData.id: ${notificationData.id}")
-            Log.d("NotificationHistoryService", "notificationData.title: ${notificationData.title}")
             
             if (currentUser == null) {
-                Log.w("NotificationHistoryService", "ユーザーが認証されていません")
                 return false
             }
             
             // 通知データをそのままFirebaseに保存
-            Log.d("NotificationHistoryService", "Firebase保存処理開始")
             val docRef = db.collection("notificationData")
                 .add(notificationData)
                 .await()
             
-            Log.d("NotificationHistoryService", "JSON通知データを保存しました: ${docRef.id}")
-            Log.d("NotificationHistoryService", "保存されたドキュメントID: ${docRef.id}")
             true
             
         } catch (e: Exception) {
-            Log.e("NotificationHistoryService", "JSON通知データの保存に失敗", e)
-            Log.e("NotificationHistoryService", "エラー詳細: ${e.message}")
             e.printStackTrace()
             false
         }
@@ -190,10 +160,8 @@ class NotificationHistoryService {
     suspend fun getUserNotificationData(limit: Int = 50): List<NotificationData> {
         return try {
             val currentUser = auth.currentUser
-            Log.d("NotificationHistoryService", "JSON通知データ取得開始 - currentUser: ${currentUser?.uid}")
             
             if (currentUser == null) {
-                Log.w("NotificationHistoryService", "ユーザーが認証されていません")
                 return emptyList()
             }
             
@@ -203,7 +171,6 @@ class NotificationHistoryService {
                 .get()
                 .await()
             
-            Log.d("NotificationHistoryService", "JSON通知データ取得完了 - 取得ドキュメント数: ${snapshot.documents.size}")
             
             val notificationDataList = snapshot.documents.mapNotNull { doc ->
                 try {
@@ -211,14 +178,11 @@ class NotificationHistoryService {
                     if (notificationData != null) {
                         // FirestoreのドキュメントIDを設定
                         val updatedNotificationData = notificationData.copy(documentId = doc.id)
-                        Log.d("NotificationHistoryService", "通知データを取得 - documentId: ${doc.id}, title: ${updatedNotificationData.title}")
                         updatedNotificationData
                     } else {
-                        Log.w("NotificationHistoryService", "通知データがnullです: ${doc.id}")
                         null
                     }
                 } catch (e: Exception) {
-                    Log.w("NotificationHistoryService", "JSON通知データの解析に失敗: ${doc.id}", e)
                     null
                 }
             }
@@ -235,11 +199,9 @@ class NotificationHistoryService {
                 }
             }
             
-            Log.d("NotificationHistoryService", "JSON通知データを取得しました: ${sortedData.size}件")
             sortedData
             
         } catch (e: Exception) {
-            Log.e("NotificationHistoryService", "JSON通知データの取得に失敗", e)
             emptyList()
         }
     }
@@ -251,7 +213,6 @@ class NotificationHistoryService {
         return try {
             val currentUser = auth.currentUser
             if (currentUser == null) {
-                Log.w("NotificationHistoryService", "ユーザーが認証されていません")
                 return false
             }
             
@@ -263,7 +224,6 @@ class NotificationHistoryService {
             
             val history = doc.toObject(NotificationHistory::class.java)
             if (history?.userId != currentUser.uid) {
-                Log.w("NotificationHistoryService", "他のユーザーの通知履歴は削除できません")
                 return false
             }
             
@@ -272,11 +232,9 @@ class NotificationHistoryService {
                 .delete()
                 .await()
             
-            Log.d("NotificationHistoryService", "通知履歴を削除しました: $documentId")
             true
             
         } catch (e: Exception) {
-            Log.e("NotificationHistoryService", "通知履歴の削除に失敗", e)
             false
         }
     }
@@ -288,7 +246,6 @@ class NotificationHistoryService {
         return try {
             val currentUser = auth.currentUser
             if (currentUser == null) {
-                Log.w("NotificationHistoryService", "ユーザーが認証されていません")
                 return false
             }
             
@@ -300,7 +257,6 @@ class NotificationHistoryService {
             
             val notificationData = doc.toObject(NotificationData::class.java)
             if (notificationData?.userId != currentUser.uid) {
-                Log.w("NotificationHistoryService", "他のユーザーの通知データは削除できません")
                 return false
             }
             
@@ -309,11 +265,9 @@ class NotificationHistoryService {
                 .delete()
                 .await()
             
-            Log.d("NotificationHistoryService", "通知データを削除しました: $documentId")
             true
             
         } catch (e: Exception) {
-            Log.e("NotificationHistoryService", "通知データの削除に失敗", e)
             false
         }
     }
@@ -325,7 +279,6 @@ class NotificationHistoryService {
         return try {
             val currentUser = auth.currentUser
             if (currentUser == null) {
-                Log.w("NotificationHistoryService", "ユーザーが認証されていません")
                 return false
             }
             
@@ -337,7 +290,6 @@ class NotificationHistoryService {
             
             val notificationData = doc.toObject(NotificationData::class.java)
             if (notificationData?.userId != currentUser.uid) {
-                Log.w("NotificationHistoryService", "他のユーザーの通知データは更新できません")
                 return false
             }
             
@@ -347,11 +299,9 @@ class NotificationHistoryService {
                 .update("isRead", 1)
                 .await()
             
-            Log.d("NotificationHistoryService", "通知データを既読にしました: $documentId")
             true
             
         } catch (e: Exception) {
-            Log.e("NotificationHistoryService", "通知データの既読更新に失敗", e)
             false
         }
     }
@@ -363,7 +313,6 @@ class NotificationHistoryService {
         return try {
             val currentUser = auth.currentUser
             if (currentUser == null) {
-                Log.w("NotificationHistoryService", "ユーザーが認証されていません")
                 return 0
             }
             
@@ -374,11 +323,9 @@ class NotificationHistoryService {
                 .await()
             
             val unreadCount = snapshot.documents.size
-            Log.d("NotificationHistoryService", "未読通知数: $unreadCount")
             unreadCount
             
         } catch (e: Exception) {
-            Log.e("NotificationHistoryService", "未読通知数の取得に失敗", e)
             0
         }
     }

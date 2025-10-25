@@ -4,7 +4,6 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
-import android.util.Log
 import com.example.seedstockkeeper6.BuildConfig
 import com.google.ai.client.generativeai.GenerativeModel
 import com.google.ai.client.generativeai.type.content
@@ -19,11 +18,9 @@ fun uriToBitmap(context: Context, uri: Uri): Bitmap? {
             tempFile.outputStream().use { fileOut -> inputStream.copyTo(fileOut) }
             BitmapFactory.decodeFile(tempFile.absolutePath)
         } else {
-            Log.e("Image", "InputStream null: $uri")
             null
         }
     } catch (e: Exception) {
-        Log.e("Image", "uriToBitmap failed", e)
         null
     }
 }

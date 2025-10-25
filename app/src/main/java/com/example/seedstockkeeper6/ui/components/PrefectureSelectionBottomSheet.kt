@@ -93,7 +93,6 @@ fun PrefectureSelectionBottomSheet(
                                 setBackgroundColor(surfaceColor)
                             } catch (e: Exception) {
                                 // エラーが発生した場合はデフォルトのまま
-                                android.util.Log.w("PrefectureSelectionBottomSheet", "NumberPicker色設定に失敗", e)
                             }
                         }
                     },

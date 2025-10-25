@@ -83,8 +83,6 @@ class NotificationManager(
         seedCount: Int,
         userId: String = ""
     ) {
-        android.util.Log.d("NotificationManager", "sendMonthlyRecommendationNotificationWithContent開始")
-        android.util.Log.d("NotificationManager", "パラメータ - title: $title, userId: $userId, farmOwner: $farmOwner")
         
         // テキスト内容をNotificationDataに変換
         val notificationData = dataConverter.convertTextToNotificationData(
@@ -98,12 +96,10 @@ class NotificationManager(
             userId = userId
         )
         
-        android.util.Log.d("NotificationManager", "NotificationData変換完了 - id: ${notificationData.id}, userId: ${notificationData.userId}")
         
         // 新しいJSON形式で通知を送信
         sender.sendNotificationFromData(notificationData)
         
-        android.util.Log.d("NotificationManager", "sendMonthlyRecommendationNotificationWithContent完了")
     }
     
     /**
@@ -173,7 +169,6 @@ class NotificationManager(
                     farmOwner = "水戸黄門"
                 )
                 
-                android.util.Log.d("NotificationManager", "テスト月次通知送信開始")
                 sendMonthlyRecommendationNotificationWithContent(
                     title = title,
                     content = content,
@@ -184,9 +179,7 @@ class NotificationManager(
                     seedCount = 0,
                     userId = auth.currentUser?.uid ?: "test_user"
                 )
-                android.util.Log.d("NotificationManager", "テスト月次通知送信完了")
             } catch (e: Exception) {
-                android.util.Log.e("NotificationManager", "テスト月次通知送信エラー", e)
             }
         }
     }
@@ -207,7 +200,6 @@ class NotificationManager(
                     farmOwner = "水戸黄門"
                 )
                 
-                android.util.Log.d("NotificationManager", "テスト週次通知送信開始")
                 sendWeeklyReminderNotificationWithContent(
                     title = title,
                     content = content,
@@ -218,9 +210,7 @@ class NotificationManager(
                     seedCount = 0,
                     userId = auth.currentUser?.uid ?: "test_user"
                 )
-                android.util.Log.d("NotificationManager", "テスト週次通知送信完了")
             } catch (e: Exception) {
-                android.util.Log.e("NotificationManager", "テスト週次通知送信エラー", e)
             }
         }
     }

@@ -52,7 +52,6 @@ fun MapSelectionScreen(
     
     // Google Maps認証サービス
     val googleMapsAuthService = remember { 
-        android.util.Log.d("MapSelectionScreen", "GoogleMapsAuthServiceを初期化")
         GoogleMapsAuthService(context) 
     }
     val geocodingService = remember { GeocodingService(context) }
@@ -94,26 +93,21 @@ fun MapSelectionScreen(
     ) { result ->
         scope.launch {
             try {
-                android.util.Log.d("MapSelectionScreen", "認証結果受信: ${result.resultCode}")
                 
                 // 認証結果を処理
                 val signInResult = googleMapsAuthService.getCurrentUser()
                 if (signInResult != null) {
-                    android.util.Log.d("MapSelectionScreen", "Google認証成功: ${signInResult.email}")
                     // 認証状態を更新
                     isGoogleMapsAuthenticated = true
                     googleMapsUserInfo = signInResult.email
                     
                     // 認証成功時のスナックバー表示（オプション）
-                    android.util.Log.d("MapSelectionScreen", "Google認証が完了しました")
         } else {
-                    android.util.Log.d("MapSelectionScreen", "Google認証失敗またはキャンセル")
                     // 認証がキャンセルされた場合の処理
                     isGoogleMapsAuthenticated = false
                     googleMapsUserInfo = null
                 }
             } catch (e: Exception) {
-                android.util.Log.e("MapSelectionScreen", "Google認証エラー", e)
                 isGoogleMapsAuthenticated = false
                 googleMapsUserInfo = null
             }
@@ -138,11 +132,8 @@ fun MapSelectionScreen(
             // 保存済み位置の住所を取得
             scope.launch {
                 try {
-                    android.util.Log.d("MapSelectionScreen", "保存済み位置の住所取得開始: lat=$initialLatitude, lng=$initialLongitude")
                     address = geocodingService.getAddressFromLatLng(LatLng(initialLatitude, initialLongitude))
-                    android.util.Log.d("MapSelectionScreen", "保存済み位置の住所取得完了: $address")
                 } catch (e: Exception) {
-                    android.util.Log.e("MapSelectionScreen", "保存済み位置の住所取得エラー", e)
                     address = "住所を取得できませんでした: ${e.message}"
                 }
             }
@@ -174,11 +165,8 @@ fun MapSelectionScreen(
                     selectedLocation = latLng
                     scope.launch {
                         try {
-                            android.util.Log.d("MapSelectionScreen", "検索結果住所取得開始: lat=${latLng.latitude}, lng=${latLng.longitude}")
                             address = geocodingService.getAddressFromLatLng(latLng)
-                            android.util.Log.d("MapSelectionScreen", "検索結果住所取得完了: $address")
                         } catch (e: Exception) {
-                            android.util.Log.e("MapSelectionScreen", "検索結果住所取得エラー", e)
                             address = "住所を取得できませんでした: ${e.message}"
                         }
                     }
@@ -187,7 +175,6 @@ fun MapSelectionScreen(
                 }
             } catch (e: Exception) {
                 searchError = "検索エラー: ${e.message}"
-                android.util.Log.e("MapSelectionScreen", "検索エラー", e)
             } finally {
                 isSearching = false
             }
@@ -204,7 +191,6 @@ fun MapSelectionScreen(
             MapType.TERRAIN -> MapType.NORMAL
             else -> MapType.NORMAL
         }
-        android.util.Log.d("MapSelectionScreen", "地図タイプ切り替え: $previousType -> $mapType")
     }
     
     // Firebaseに農園位置を保存する機能
@@ -231,7 +217,6 @@ fun MapSelectionScreen(
                 "updatedAt" to com.google.firebase.Timestamp.now()
             )
             
-            android.util.Log.d("MapSelectionScreen", "Firebaseに農園位置を保存: $farmLocationData")
             
             // 既存の設定を取得して、農園位置のみを更新
             val existingDoc = settingsDoc.get().await()
@@ -246,10 +231,8 @@ fun MapSelectionScreen(
                 settingsDoc.set(farmLocationData).await()
             }
             
-            android.util.Log.d("MapSelectionScreen", "Firebaseに農園位置保存完了")
             
         } catch (e: Exception) {
-            android.util.Log.e("MapSelectionScreen", "Firebase保存エラー", e)
             saveError = "保存エラー: ${e.message}"
         } finally {
             isSavingToFirebase = false
@@ -259,7 +242,6 @@ fun MapSelectionScreen(
     // 認証状態の確認
     LaunchedEffect(Unit) {
         try {
-            android.util.Log.d("MapSelectionScreen", "認証状態を確認中...")
             
             // Firebase認証状態を確認
             isFirebaseAuthenticated = googleMapsAuthService.isFirebaseUserSignedIn()
@@ -270,17 +252,11 @@ fun MapSelectionScreen(
             isGoogleMapsAuthenticated = googleUser != null
             googleMapsUserInfo = googleUser?.email
             
-            android.util.Log.d("MapSelectionScreen", "Firebase認証: $isFirebaseAuthenticated")
-            android.util.Log.d("MapSelectionScreen", "Googleマップ認証: $isGoogleMapsAuthenticated")
-            android.util.Log.d("MapSelectionScreen", "Firebaseユーザー: $firebaseUserInfo")
-            android.util.Log.d("MapSelectionScreen", "Googleマップユーザー: $googleMapsUserInfo")
             
             // 認証インテントの確認
             val signInIntent = googleMapsAuthService.getSignInIntent()
-            android.util.Log.d("MapSelectionScreen", "認証インテント取得可能: ${signInIntent != null}")
             
         } catch (e: Exception) {
-            android.util.Log.e("MapSelectionScreen", "認証状態確認エラー", e)
         }
     }
     
@@ -288,7 +264,6 @@ fun MapSelectionScreen(
     LaunchedEffect(isGoogleMapsAuthenticated) {
         if (isGoogleMapsAuthenticated) {
             // 認証成功時の処理
-            android.util.Log.d("MapSelectionScreen", "Googleマップ認証が完了しました")
         }
     }
     
@@ -393,7 +368,6 @@ fun MapSelectionScreen(
                     // 地図タイプ切り替えボタン
                     IconButton(
                         onClick = { 
-                            android.util.Log.d("MapSelectionScreen", "地図タイプ切り替えボタンが押されました")
                             toggleMapType() 
                         }
                     ) {
@@ -482,11 +456,8 @@ fun MapSelectionScreen(
                     // 逆ジオコーディングで住所を取得
                     scope.launch {
                         try {
-                            android.util.Log.d("MapSelectionScreen", "住所取得開始: lat=${latLng.latitude}, lng=${latLng.longitude}")
                             address = geocodingService.getAddressFromLatLng(latLng)
-                            android.util.Log.d("MapSelectionScreen", "住所取得完了: $address")
                         } catch (e: Exception) {
-                            android.util.Log.e("MapSelectionScreen", "住所取得エラー", e)
                             address = "住所を取得できませんでした: ${e.message}"
                         } finally {
                             isLoadingAddress = false
@@ -620,20 +591,15 @@ fun MapSelectionScreen(
                                     onClick = {
                                         // Googleマップ認証を開始
                                         try {
-                                            android.util.Log.d("MapSelectionScreen", "認証ボタンが押されました")
                                             val signInIntent = googleMapsAuthService.getSignInIntent()
-                                            android.util.Log.d("MapSelectionScreen", "認証インテント: $signInIntent")
                                             
                                             if (signInIntent != null) {
-                                                android.util.Log.d("MapSelectionScreen", "Googleマップ認証を開始")
                                                 googleSignInLauncher.launch(signInIntent)
                                             } else {
-                                                android.util.Log.e("MapSelectionScreen", "認証インテントが取得できません")
                                                 // エラーメッセージを表示
                                                 saveError = "認証インテントが取得できません。Google Play Servicesが正しくインストールされているか確認してください。"
                                             }
                                         } catch (e: Exception) {
-                                            android.util.Log.e("MapSelectionScreen", "認証エラー", e)
                                             saveError = "認証エラー: ${e.message}"
                                         }
                                     },
@@ -648,7 +614,6 @@ fun MapSelectionScreen(
                                     onClick = {
                                         // 認証をスキップして基本機能を使用
                                         isAuthSkipped = true
-                                        android.util.Log.d("MapSelectionScreen", "認証をスキップして基本機能を使用")
                                     }
                                 ) {
                                     Text("認証をスキップ")

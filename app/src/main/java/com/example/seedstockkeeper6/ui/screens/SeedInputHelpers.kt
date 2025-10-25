@@ -65,9 +65,6 @@ fun LoadingAnimation() {
     
     // Lottieアニメーション開始のLog出力
     LaunchedEffect(Unit) {
-        android.util.Log.d("LoadingAnimation", "=== Lottieアニメーション開始 ===")
-        android.util.Log.d("LoadingAnimation", "LoadingAnimation（AI_network.json）が表示されました")
-        android.util.Log.d("LoadingAnimation", "アニメーション開始時刻: ${System.currentTimeMillis()}")
     }
     
     LottieAnimation(
@@ -86,9 +83,6 @@ fun SukesanGifAnimation() {
     
     // Lottieアニメーション開始のLog出力
     LaunchedEffect(Unit) {
-        android.util.Log.d("SukesanGifAnimation", "=== Lottieアニメーション開始 ===")
-        android.util.Log.d("SukesanGifAnimation", "AIで解析ボタンで処理中に表示されるLottieアニメーション")
-        android.util.Log.d("SukesanGifAnimation", "アニメーション開始時刻: ${System.currentTimeMillis()}")
     }
     
     // ウィンドウサイズとアニメーションサイズをLog出力（ダイアログと同じ幅に設定）
@@ -104,15 +98,6 @@ fun SukesanGifAnimation() {
     val animationWidthRatio = dialogActualWidthDp / windowWidthDp
     
     LaunchedEffect(Unit) {
-        android.util.Log.d("SukesanGifAnimation", "=== アニメーションサイズ（ダイアログと同じ幅） ===")
-        android.util.Log.d("SukesanGifAnimation", "ウィンドウ幅: ${windowWidthDp}dp")
-        android.util.Log.d("SukesanGifAnimation", "ウィンドウ高: ${windowHeightDp}dp")
-        android.util.Log.d("SukesanGifAnimation", "画面密度: ${screenDensity}")
-        android.util.Log.d("SukesanGifAnimation", "ダイアログpadding: ${dialogPadding.value}dp")
-        android.util.Log.d("SukesanGifAnimation", "ダイアログ実際の幅: ${dialogActualWidthDp}dp")
-        android.util.Log.d("SukesanGifAnimation", "アニメーション幅比率: ${(animationWidthRatio * 100).toInt()}%")
-        android.util.Log.d("SukesanGifAnimation", "アニメーション幅(px): ${density.run { dialogActualWidthDp.dp.toPx() }}px")
-        android.util.Log.d("SukesanGifAnimation", "Pixel 7解像度: 1080x2100px")
     }
     
     LottieAnimation(

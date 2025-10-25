@@ -101,11 +101,6 @@ fun SeedStockKeeper6Theme(
     val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
     
     // デバッグ情報を出力
-    android.util.Log.d("Theme", "darkTheme: $darkTheme")
-    android.util.Log.d("Theme", "Selected colorScheme: ${if (darkTheme) "DarkColorScheme" else "LightColorScheme"}")
-    android.util.Log.d("Theme", "surfaceContainer: ${colorScheme.surfaceContainer}")
-    android.util.Log.d("Theme", "secondary: ${colorScheme.secondary}")
-    android.util.Log.d("Theme", "tertiary: ${colorScheme.tertiary}")
     
     // システムバーの制御は MainActivity.kt の SystemAppearance に委ねる
     // SideEffect を削除して、enableEdgeToEdge() との競合を回避
