@@ -115,6 +115,11 @@ class NotificationManager(
         seedCount: Int,
         userId: String = ""
     ) {
+        android.util.Log.d("NotificationManager", "sendWeeklyReminderNotificationWithContent開始")
+        android.util.Log.d("NotificationManager", "タイトル: $title")
+        android.util.Log.d("NotificationManager", "コンテンツ: $content")
+        android.util.Log.d("NotificationManager", "農園主: $farmOwner, 地域: $region, 月: $month")
+        
         // テキスト内容をNotificationDataに変換
         val notificationData = dataConverter.convertTextToNotificationData(
             title = title,
@@ -126,6 +131,9 @@ class NotificationManager(
             notificationType = "WEEKLY",
             userId = userId
         )
+        
+        android.util.Log.d("NotificationManager", "NotificationData変換完了")
+        android.util.Log.d("NotificationManager", "変換後のNotificationData: タイトル=${notificationData.title}, 今月まきどき=${notificationData.thisMonthSeeds.size}, 期限間近=${notificationData.endingSoonSeeds.size}, おすすめ=${notificationData.recommendedSeeds.size}")
         
         // 新しいJSON形式で通知を送信
         sender.sendNotificationFromData(notificationData)

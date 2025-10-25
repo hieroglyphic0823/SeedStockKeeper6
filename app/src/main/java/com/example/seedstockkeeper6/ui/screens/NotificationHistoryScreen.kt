@@ -521,11 +521,27 @@ private fun NotificationDataCard(
                 )
             }
             
-            // 今月おすすめ
+            // おすすめの種（週次通知の3週目以降は来月のおすすめ）
             if (notificationData.recommendedSeeds.isNotEmpty()) {
+                val recommendedTitle = if (notificationData.notificationType == "WEEKLY") {
+                    // 週次通知の場合は週番号を判定
+                    val currentDate = java.time.LocalDate.now()
+                    val weekFields = java.time.temporal.WeekFields.of(java.util.Locale.JAPAN)
+                    val weekNumber = currentDate.get(weekFields.weekOfMonth())
+                    if (weekNumber >= 3) {
+                        "🔥 来月のおすすめ"
+                    } else {
+                        "🎯 今月のおすすめ"
+                    }
+                } else {
+                    "🎯 今月のおすすめ"
+                }
+                
+                // おすすめの種を3つ続けて表示
+                val recommendedSeedsText = notificationData.recommendedSeeds.take(3).joinToString("、") { it.name }
                 Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        text = "🎯 今月のおすすめ " + (notificationData.recommendedSeeds.firstOrNull()?.name ?: "該当なし"),
+                        text = "$recommendedTitle $recommendedSeedsText",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface,
                         maxLines = 1,
@@ -660,10 +676,23 @@ private fun NotificationDataCard(
                         Spacer(modifier = Modifier.height(4.dp))
                     }
                     
-                    // おすすめの種
+                    // おすすめの種（週次通知の3週目以降は来月のおすすめ）
                     if (notificationData.recommendedSeeds.isNotEmpty()) {
+                        val recommendedTitle = if (notificationData.notificationType == "WEEKLY") {
+                            // 週次通知の場合は週番号を判定
+                            val currentDate = java.time.LocalDate.now()
+                            val weekFields = java.time.temporal.WeekFields.of(java.util.Locale.JAPAN)
+                            val weekNumber = currentDate.get(weekFields.weekOfMonth())
+                            if (weekNumber >= 3) {
+                                "🔥 来月のおすすめ"
+                            } else {
+                                "🎯 今月のおすすめ"
+                            }
+                        } else {
+                            "🎯 今月のおすすめ"
+                        }
                         RichSection(
-                            title = "🎯 今月のおすすめ",
+                            title = recommendedTitle,
                             items = notificationData.recommendedSeeds.map { it.name to it.description }
                         )
                     }

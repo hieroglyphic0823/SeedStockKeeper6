@@ -182,11 +182,14 @@ class NotificationSender(
         
         // JSON形式の通知データをFirebaseに保存
         coroutineScope.launch {
+            android.util.Log.d("NotificationSender", "週次通知データ保存開始 - タイトル: ${notificationData.title}, タイプ: ${notificationData.notificationType}")
             val success = historyService.saveNotificationData(notificationData)
             if (success) {
+                android.util.Log.d("NotificationSender", "週次通知データ保存成功")
                 // 通知作成後に未読数を更新（NotificationPreviewScreenで既に呼ばれるため、ここでは呼ばない）
                 // onRefreshUnreadCount()
             } else {
+                android.util.Log.e("NotificationSender", "週次通知データ保存失敗")
             }
         }
         

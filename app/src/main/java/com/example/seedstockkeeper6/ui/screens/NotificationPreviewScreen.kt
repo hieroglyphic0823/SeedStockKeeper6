@@ -213,16 +213,28 @@ fun NotificationPreviewScreen(
                 scope.launch {
                     try {
                         val farmOwnerValue = userSettings["farmOwner"] ?: "水戸黄門"
+                        // 実際のユーザーデータを使用して週次通知を生成
+                        val (userSeeds, _) = loadUserData(auth, db)
                         val title = geminiService.generateWeeklyNotificationTitle(
                             userSeeds = userSeeds,
                             farmOwner = farmOwnerValue,
                             customFarmOwner = userSettings["customFarmOwner"] ?: ""
                         )
+                        // おすすめの種情報を取得
+                        val recommendedSeeds = getRecommendedSeedsInfo(userSettings)
+                        android.util.Log.d("NotificationPreviewScreen", "週次通知テスト - ユーザー種数: ${userSeeds.size}, 地域: ${userSettings["defaultRegion"]}")
+                        android.util.Log.d("NotificationPreviewScreen", "週次通知テスト - おすすめ種情報: $recommendedSeeds")
+                        
                         val content = geminiService.generateWeeklyNotificationContent(
                             userSeeds = userSeeds,
                             farmOwner = farmOwnerValue,
-                            customFarmOwner = userSettings["customFarmOwner"] ?: ""
+                            customFarmOwner = userSettings["customFarmOwner"] ?: "",
+                            recommendedSeeds = recommendedSeeds,
+                            region = userSettings["defaultRegion"] ?: "温暖地",
+                            seedInfoUrl = userSettings["seedInfoUrl"] ?: ""
                         )
+                        
+                        android.util.Log.d("NotificationPreviewScreen", "週次通知テスト - 生成されたコンテンツ: $content")
                         
                         // 通知権限をチェック
                         if (!notificationManager.hasNotificationPermission()) {
@@ -232,6 +244,7 @@ fun NotificationPreviewScreen(
                             return@launch
                         }
                         
+                        android.util.Log.d("NotificationPreviewScreen", "週次通知送信開始 - タイトル: $title")
                         notificationManager.sendWeeklyReminderNotificationWithContent(
                             title = title,
                             content = content,
@@ -239,8 +252,10 @@ fun NotificationPreviewScreen(
                             region = userSettings["defaultRegion"] ?: "温暖地",
                             prefecture = userSettings["selectedPrefecture"] ?: "",
                             month = java.util.Calendar.getInstance().get(java.util.Calendar.MONTH) + 1,
-                            seedCount = userSeeds.size
+                            seedCount = userSeeds.size,
+                            userId = auth.currentUser?.uid ?: ""
                         )
+                        android.util.Log.d("NotificationPreviewScreen", "週次通知送信完了")
                         // 通知作成後に少し遅延してから未読数を更新
                         android.util.Log.d("NotificationPreviewScreen", "週次通知作成完了、未読数更新を開始")
                         kotlinx.coroutines.delay(1000)
@@ -332,7 +347,8 @@ fun NotificationPreviewScreen(
                             weeklyPreviewContent = geminiService.generateWeeklyNotificationContent(
                                 userSeeds = userSeeds,
                                 farmOwner = farmOwnerValue,
-                                customFarmOwner = userSettings["customFarmOwner"] ?: ""
+                                customFarmOwner = userSettings["customFarmOwner"] ?: "",
+                                seedInfoUrl = userSettings["seedInfoUrl"] ?: ""
                             )
                             weeklyPreviewTitle = "まき時終了の2週間前の種があります"
                         } catch (e: Exception) {

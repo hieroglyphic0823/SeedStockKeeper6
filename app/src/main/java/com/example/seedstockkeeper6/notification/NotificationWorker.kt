@@ -280,7 +280,8 @@ class WeeklyNotificationWorker(
             val notificationContent = geminiService.generateWeeklyNotificationContent(
                 userSeeds = userSeeds,
                 farmOwner = farmOwner,
-                customFarmOwner = customFarmOwner
+                customFarmOwner = customFarmOwner,
+                seedInfoUrl = seedInfoUrl
             )
             
             // 通知を送信

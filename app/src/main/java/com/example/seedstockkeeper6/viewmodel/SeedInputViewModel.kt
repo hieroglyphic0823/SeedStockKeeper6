@@ -428,8 +428,18 @@ class SeedInputViewModel : ViewModel() {
     fun onProductNumberChange(value: String) { packet = packet.copy(productNumber = value) }
     fun onCompanyChange(value: String) { packet = packet.copy(company = value) }
     fun onOriginCountryChange(value: String) { packet = packet.copy(originCountry = value) }
-    fun onExpirationYearChange(value: String) { packet = packet.copy(expirationYear = value.toIntOrNull() ?: 0) }
-    fun onExpirationMonthChange(value: String) { packet = packet.copy(expirationMonth = value.toIntOrNull() ?: 0) }
+    fun onExpirationYearChange(value: String) { 
+        val newExpirationYear = value.toIntOrNull() ?: 0
+        packet = packet.copy(expirationYear = newExpirationYear)
+        // カレンダーエントリの有効期限も更新
+        updateCalendarEntriesExpiration(newExpirationYear, packet.expirationMonth)
+    }
+    fun onExpirationMonthChange(value: String) { 
+        val newExpirationMonth = value.toIntOrNull() ?: 0
+        packet = packet.copy(expirationMonth = newExpirationMonth)
+        // カレンダーエントリの有効期限も更新
+        updateCalendarEntriesExpiration(packet.expirationYear, newExpirationMonth)
+    }
     fun onContentsChange(value: String) { packet = packet.copy(contents = value) }
     fun onGerminationRateChange(value: String) { packet = packet.copy(germinationRate = value) }
     fun onSeedTreatmentChange(value: String) { packet = packet.copy(seedTreatment = value) }
@@ -1346,6 +1356,32 @@ class SeedInputViewModel : ViewModel() {
             packet = packet.copy(expirationMonth = entry.expirationMonth)
         }
         
+    }
+    
+    // 種の有効期限が変更された際にカレンダーエントリの有効期限も更新する
+    private fun updateCalendarEntriesExpiration(expirationYear: Int, expirationMonth: Int) {
+        if (expirationYear > 0 && expirationMonth > 0) {
+            packet.calendar?.let { calendar ->
+                val updatedCalendar = calendar.map { entry ->
+                    entry.copy(
+                        expirationYear = expirationYear,
+                        expirationMonth = expirationMonth
+                    )
+                }
+                packet = packet.copy(calendar = updatedCalendar)
+            }
+            
+            // OCR結果のカレンダーエントリも更新
+            ocrResult?.let { result ->
+                val updatedOcrCalendar = result.calendar.map { entry ->
+                    entry.copy(
+                        expirationYear = expirationYear,
+                        expirationMonth = expirationMonth
+                    )
+                }
+                ocrResult = result.copy(calendar = updatedOcrCalendar)
+            }
+        }
     }
     
     // 月と旬から年を設定して日付を構築するヘルパー関数

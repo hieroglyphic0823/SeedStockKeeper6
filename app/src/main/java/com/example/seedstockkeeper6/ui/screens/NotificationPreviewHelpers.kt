@@ -88,14 +88,8 @@ suspend fun loadUserData(
         getDefaultUserSettings()
     }
     
-    // 種データが空の場合はデモデータを使用
-    val finalSeeds = if (seeds.isEmpty()) {
-        getDemoData().first
-    } else {
-        seeds
-    }
-    
-    return Pair(finalSeeds, userSettings)
+    // デモデータは使用しない - 実際のユーザーデータのみを使用
+    return Pair(seeds, userSettings)
 }
 
 /**
@@ -118,7 +112,9 @@ fun getDemoData(): Pair<List<SeedPacket>, Map<String, String>> {
                     sowing_end_date = "2024-05-31",
                     harvest_start_date = "2024-07-01",
                     harvest_end_date = "2024-09-30",
-                    region = "温暖地"
+                    region = "温暖地",
+                    expirationYear = 2026,
+                    expirationMonth = 10
                 )
             ),
             companionPlants = listOf(
@@ -192,5 +188,28 @@ fun buildWeeklyNotificationPreview(): String {
 
 • 大根 (青首大根) - 播種期間: 8月中旬〜10月上旬
   土づくりすれば間に合います！"""
+}
+
+/**
+ * おすすめの種情報を取得する関数
+ */
+fun getRecommendedSeedsInfo(userSettings: Map<String, String>): String {
+    val currentMonth = java.util.Calendar.getInstance().get(java.util.Calendar.MONTH) + 1
+    
+    return when (currentMonth) {
+        1 -> "• 春キャベツ - 寒さに強く、春の収穫に最適\n• レタス - 早春の種まきで新鮮なサラダを\n• ホウレンソウ - 栄養豊富で育てやすい"
+        2 -> "• トマト - 夏野菜の定番、苗から育てる\n• ナス - 紫色の美しい実が楽しめる\n• ピーマン - カラフルで栄養価が高い"
+        3 -> "• キュウリ - 夏の定番野菜、つる性\n• オクラ - ネバネバ成分で健康に良い\n• ゴーヤ - 苦味が特徴の夏野菜"
+        4 -> "• カボチャ - 秋の収穫、保存がきく\n• サツマイモ - 甘くて栄養豊富\n• 大根 - 冬の定番野菜"
+        5 -> "• 白菜 - 冬の鍋物に欠かせない\n• ブロッコリー - 栄養価が高い緑黄色野菜\n• カリフラワー - 白い花蕾が美しい"
+        6 -> "• ネギ - 薬味として重宝\n• ニラ - 独特の香りが特徴\n• ニンニク - 香り高い調味料"
+        7 -> "• トウモロコシ - 夏の甘い味覚\n• 枝豆 - ビールのおつまみに最適\n• エダマメ - タンパク質豊富"
+        8 -> "• スイカ - 夏の定番果物\n• メロン - 甘くて香り高い\n• カボチャ - 秋の収穫準備"
+        9 -> "• ダイコン - 冬の定番野菜\n• カブ - 根と葉の両方を楽しめる\n• ニンジン - カロテン豊富な根菜"
+        10 -> "• ハクサイ - 冬の鍋物の主役\n• キャベツ - 一年中楽しめる葉物\n• レタス - サラダの定番"
+        11 -> "• ブロッコリー - 栄養価の高い緑黄色野菜\n• カリフラワー - 白い花蕾が美しい\n• ケール - スーパーフードとして注目"
+        12 -> "• 春菊 - 冬の鍋物に欠かせない\n• 水菜 - シャキシャキした食感\n• 小松菜 - 栄養価が高い緑黄色野菜"
+        else -> "• 季節の野菜 - 今が種まきの最適期\n• 栄養豊富な野菜 - 健康な食生活に\n• 育てやすい野菜 - 初心者にもおすすめ"
+    }
 }
 

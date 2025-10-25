@@ -170,29 +170,128 @@ class GeminiNotificationService {
     suspend fun generateWeeklyNotificationContent(
         userSeeds: List<SeedPacket>,
         farmOwner: String,
-        customFarmOwner: String = ""
+        customFarmOwner: String = "",
+        recommendedSeeds: String = "",
+        region: String = "温暖地",
+        seedInfoUrl: String = ""
     ): String = withContext(Dispatchers.IO) {
         try {
             if (generativeModel == null) {
+                android.util.Log.w("GeminiNotificationService", "generativeModelがnullのため、デフォルト週次通知コンテンツを使用")
                 return@withContext contentFormatter.getDefaultWeeklyContent()
             }
+            
+            // 農園情報の種情報URLからおすすめの種情報を取得（月次通知と同様）
+            val actualRecommendedSeeds = if (seedInfoUrl.isNotEmpty()) {
+                val currentDate = java.time.LocalDate.now()
+                val weekFields = java.time.temporal.WeekFields.of(java.util.Locale.JAPAN)
+                val weekNumber = currentDate.get(weekFields.weekOfMonth())
+                val currentMonth = currentDate.monthValue
+                
+                // 週番号に応じて対象月を決定
+                val targetMonth = if (weekNumber <= 2) {
+                    currentMonth
+                } else {
+                    if (currentMonth == 12) 1 else currentMonth + 1
+                }
+                
+                android.util.Log.d("GeminiNotificationService", "週次通知 - 対象月: $targetMonth, 週番号: $weekNumber")
+                dataProcessor.fetchRecommendedSeedsForCurrentMonth(seedInfoUrl, targetMonth)
+            } else {
+                recommendedSeeds
+            }
+            
+            android.util.Log.d("GeminiNotificationService", "週次通知 - 取得したおすすめ種情報: $actualRecommendedSeeds")
             
             // プロンプトを生成
             val prompt = promptGenerator.generateWeeklyPrompt(
                 userSeeds = userSeeds,
                 farmOwner = farmOwner,
-                customFarmOwner = customFarmOwner
+                customFarmOwner = customFarmOwner,
+                recommendedSeeds = actualRecommendedSeeds,
+                region = region
             )
+            
+            // デバッグログ: プロンプトの内容
+            android.util.Log.d("GeminiNotificationService", "週次通知プロンプト送信開始")
+            android.util.Log.d("GeminiNotificationService", "プロンプト内容: $prompt")
             
             // Gemini APIを呼び出し
             val response = generativeModel!!.generateContent(prompt)
-            val content = response.text ?: contentFormatter.getDefaultWeeklyContent()
+            val rawContent = response.text ?: contentFormatter.getDefaultWeeklyContent()
             
+            // デバッグログ: Gemini APIの応答内容
+            android.util.Log.d("GeminiNotificationService", "週次通知Gemini API応答受信")
+            android.util.Log.d("GeminiNotificationService", "生の応答内容: $rawContent")
+            
+            // JSON形式の応答を強制
+            val content = if (rawContent.trim().startsWith("{") || rawContent.contains("```json")) {
+                // コードブロック内のJSONを抽出
+                if (rawContent.contains("```json")) {
+                    val jsonStart = rawContent.indexOf("```json") + 7
+                    val jsonEnd = rawContent.indexOf("```", jsonStart)
+                    if (jsonEnd > jsonStart) {
+                        rawContent.substring(jsonStart, jsonEnd).trim()
+                    } else {
+                        rawContent
+                    }
+                } else {
+                    rawContent
+                }
+            } else {
+                // JSON形式でない場合はデフォルトのJSON形式を生成
+                android.util.Log.w("GeminiNotificationService", "JSON形式でない応答を受信、デフォルト形式を使用")
+                generateDefaultWeeklyJson(farmOwner, customFarmOwner)
+            }
+            
+            android.util.Log.d("GeminiNotificationService", "最終的なコンテンツ: $content")
             content
             
         } catch (e: Exception) {
+            android.util.Log.e("GeminiNotificationService", "週次通知生成エラー", e)
+            android.util.Log.d("GeminiNotificationService", "デフォルト週次通知コンテンツを使用")
             contentFormatter.getDefaultWeeklyContent()
         }
+    }
+    
+    /**
+     * デフォルトの週次通知JSON形式を生成
+     */
+    private fun generateDefaultWeeklyJson(farmOwner: String, customFarmOwner: String): String {
+        val today = java.time.LocalDate.now()
+        val weekFields = java.time.temporal.WeekFields.of(java.util.Locale.JAPAN)
+        val weekNumber = today.get(weekFields.weekOfMonth())
+        val monthName = getJapaneseMonthName(today.monthValue)
+        
+        return """
+        {
+          "notificationType": "WEEKLY",
+          "title": "${monthName}（第${weekNumber}週）すけさん便り",
+          "summary": "今週の種まきについてお知らせいたします。",
+          "farmOwner": "$farmOwner",
+          "region": "温暖地",
+          "prefecture": "",
+          "month": ${today.monthValue},
+          "thisMonthSeeds": [
+            {
+              "name": "恋むすめ",
+              "variety": "ニンジン",
+              "description": "今月が播種時期の種です"
+            }
+          ],
+          "endingSoonSeeds": [],
+          "recommendedSeeds": [
+            {
+              "name": "ハクサイ",
+              "variety": "冬の鍋物の主役",
+              "description": "冬の鍋物に欠かせない野菜です"
+            }
+          ],
+          "advice": "今週は種まきの準備を整えましょう。土づくりと種の準備を忘れずに。",
+          "closingLine": "健やかな種まきをお祈りしております。",
+          "signature": "助さんより"
+        }
+        """.trimIndent()
     }
     
     /**
