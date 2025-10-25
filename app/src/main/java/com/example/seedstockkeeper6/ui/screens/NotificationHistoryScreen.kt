@@ -342,13 +342,7 @@ private fun NotificationDataCard(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .onSizeChanged { size ->
-                android.util.Log.d("NotificationHistoryScreen", "カード全体サイズ: width=${size.width}, height=${size.height}")
-            }
-            .onGloballyPositioned { coordinates ->
-                val position = coordinates.boundsInWindow().topLeft
-                android.util.Log.d("NotificationHistoryScreen", "カード全体位置: x=${position.x}, y=${position.y}")
-            },
+                ,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
@@ -368,13 +362,7 @@ private fun NotificationDataCard(
                         }
                     )
                     .padding(horizontal = 16.dp, vertical = 4.dp)// ← タイトル上下の余白
-                    .onSizeChanged { size ->
-                        android.util.Log.d("NotificationHistoryScreen", "タイトル行サイズ: width=${size.width}, height=${size.height}")
-                    }
-                    .onGloballyPositioned { coordinates ->
-                        val position = coordinates.boundsInWindow().topLeft
-                        android.util.Log.d("NotificationHistoryScreen", "タイトル行位置: x=${position.x}, y=${position.y}")
-                    },
+                    ,
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -442,13 +430,7 @@ private fun NotificationDataCard(
                         }
                     )
                     .padding(horizontal = 16.dp, vertical = 8.dp)
-                    .onSizeChanged { size ->
-                        android.util.Log.d("NotificationHistoryScreen", "カード本体サイズ: width=${size.width}, height=${size.height}")
-                    }
-                    .onGloballyPositioned { coordinates ->
-                        val position = coordinates.boundsInWindow().topLeft
-                        android.util.Log.d("NotificationHistoryScreen", "カード本体位置: x=${position.x}, y=${position.y}")
-                    },
+                    ,
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 val sectionSummary = remember(notificationData) {
@@ -679,7 +661,6 @@ private fun NotificationDataCard(
                                 ""
                             }
                             val nameWithExpiration = "${seed.name}${expirationInfo}"
-                            android.util.Log.d("NotificationHistoryScreen", "期限間近の種: $nameWithExpiration")
                             nameWithExpiration to seed.description
                         }
                         RichSectionWithExpiration(
