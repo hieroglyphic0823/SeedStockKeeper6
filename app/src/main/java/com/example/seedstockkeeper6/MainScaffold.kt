@@ -703,6 +703,7 @@ fun MainScaffold(
     // 未読通知数
     var unreadNotificationCount by remember { mutableStateOf(0) }
     val historyService = remember { com.example.seedstockkeeper6.service.NotificationHistoryService() }
+    val badgeService = remember { com.example.seedstockkeeper6.service.ShortcutBadgeService(ctx) }
     
     // 農園名を取得
     var farmName by remember { mutableStateOf("") }
@@ -719,6 +720,8 @@ fun MainScaffold(
         try {
             unreadNotificationCount = historyService.getUnreadNotificationCount()
             android.util.Log.d("MainScaffold", "未読通知数取得: $unreadNotificationCount (ルート: $currentRoute)")
+            // バッジを更新
+            badgeService.setBadgeCount(unreadNotificationCount)
         } catch (e: Exception) {
             android.util.Log.e("MainScaffold", "未読通知数取得エラー", e)
         }
@@ -731,6 +734,8 @@ fun MainScaffold(
             try {
                 unreadNotificationCount = historyService.getUnreadNotificationCount()
                 android.util.Log.d("MainScaffold", "未読通知数更新: $unreadNotificationCount")
+                // バッジを更新
+                badgeService.setBadgeCount(unreadNotificationCount)
             } catch (e: Exception) {
                 android.util.Log.e("MainScaffold", "未読通知数更新エラー", e)
             }
