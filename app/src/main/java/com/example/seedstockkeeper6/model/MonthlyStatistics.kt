@@ -1,6 +1,7 @@
 package com.example.seedstockkeeper6.model
 
 import kotlinx.serialization.Serializable
+import com.google.firebase.firestore.PropertyName
 
 /**
  * 月毎の集計データを保存するモデル
@@ -13,6 +14,7 @@ data class MonthlyStatistics(
     val familyDistribution: Map<String, Int> = emptyMap(),
     val thisMonthSowingCount: Int = 0,
     val urgentSeedsCount: Int = 0,
+    @PropertyName("validSeedsCount")
     val validSeedsCount: Int = 0, // 有効期限内の種子数
     val lastUpdated: Long = System.currentTimeMillis(),
     val ownerUid: String = ""

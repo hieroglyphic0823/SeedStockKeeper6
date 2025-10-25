@@ -296,7 +296,7 @@ class NotificationHistoryService {
             // 既読フラグを1に更新
             db.collection("notificationData")
                 .document(documentId)
-                .update("isRead", 1)
+                .update(mapOf("isRead" to 1))
                 .await()
             
             true
