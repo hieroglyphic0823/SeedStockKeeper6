@@ -171,22 +171,16 @@ class CastleViewModel(private val context: Context) : ViewModel() {
         val currentMonth = currentDate.monthValue
         val currentYear = currentDate.year
         
-        val thisMonthSowingSeeds = seeds.filter { seed ->
-            !seed.isFinished && // まき終わった種は除外
-            seed.calendar?.any { entry ->
-                val sowingStartMonth = com.example.seedstockkeeper6.utils.DateConversionUtils.getMonthFromDate(entry.sowing_start_date)
-                val sowingStartYear = com.example.seedstockkeeper6.utils.DateConversionUtils.getYearFromDate(entry.sowing_start_date)
-                sowingStartMonth == currentMonth && sowingStartYear == currentYear
-            } ?: false
-        }
+        val thisMonthSowingSeeds = com.example.seedstockkeeper6.utils.SowingCalculationUtils.getThisMonthSowingSeeds(
+            seeds = seeds,
+            currentDate = currentDate,
+            excludeFinished = true
+        )
         
-        val urgentSeeds = seeds.filter { seed ->
-            seed.calendar?.any { entry ->
-                val sowingEndMonth = com.example.seedstockkeeper6.utils.DateConversionUtils.getMonthFromDate(entry.sowing_end_date)
-                val sowingEndYear = com.example.seedstockkeeper6.utils.DateConversionUtils.getYearFromDate(entry.sowing_end_date)
-                sowingEndMonth == currentMonth && sowingEndYear == currentYear
-            } ?: false
-        }
+        val urgentSeeds = com.example.seedstockkeeper6.utils.SowingCalculationUtils.getUrgentSeeds(
+            seeds = seeds,
+            currentDate = currentDate
+        )
         
         val validSeeds = seeds.filter { seed ->
             val expirationDate = LocalDate.of(seed.expirationYear, seed.expirationMonth, 1)

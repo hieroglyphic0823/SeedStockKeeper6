@@ -168,21 +168,12 @@ fun SeedListScreen(
                 seed.family.contains(searchQuery, ignoreCase = true)
             
             val matchesThisMonth = if (showThisMonthOnly) {
-                val currentMonth = java.util.Calendar.getInstance().get(java.util.Calendar.MONTH) + 1
-                // 播種期間のCalendarEntryを探す
-                seed.calendar.any { entry ->
-                    if (entry.sowing_start_date.isNotEmpty() && entry.sowing_end_date.isNotEmpty()) {
-                        try {
-                            val startMonth = entry.sowing_start_date.split("-")[1].toInt()
-                            val endMonth = entry.sowing_end_date.split("-")[1].toInt()
-                            startMonth <= currentMonth && endMonth >= currentMonth
-                        } catch (e: Exception) {
-                            false
-                        }
-                    } else {
-                        false
-                    }
-                }
+                // 統一ロジックを使用（まき終わった種も含む）
+                val thisMonthSeeds = com.example.seedstockkeeper6.utils.SowingCalculationUtils.getThisMonthSowingSeeds(
+                    seeds = listOf(seed),
+                    excludeFinished = false
+                )
+                thisMonthSeeds.isNotEmpty()
             } else {
                 true
             }
@@ -197,16 +188,11 @@ fun SeedListScreen(
             }
             
             val matchesUrgent = if (showUrgentOnly) {
-                // 終了間近の判定（今月内で播種期間が終了する種）
-                val currentDate = java.time.LocalDate.now()
-                val currentMonth = currentDate.monthValue
-                val currentYear = currentDate.year
-                
-                seed.calendar.any { entry ->
-                    val sowingEndMonth = com.example.seedstockkeeper6.utils.DateConversionUtils.getMonthFromDate(entry.sowing_end_date)
-                    val sowingEndYear = com.example.seedstockkeeper6.utils.DateConversionUtils.getYearFromDate(entry.sowing_end_date)
-                    sowingEndMonth == currentMonth && sowingEndYear == currentYear
-                }
+                // 統一ロジックを使用
+                val urgentSeeds = com.example.seedstockkeeper6.utils.SowingCalculationUtils.getUrgentSeeds(
+                    seeds = listOf(seed)
+                )
+                urgentSeeds.isNotEmpty()
             } else {
                 true
             }
@@ -474,7 +460,7 @@ fun SeedListScreen(
                 val seedStatus = getSeedStatus(seed)
                 val backgroundColor = when (seedStatus) {
                     "finished" -> MaterialTheme.colorScheme.secondaryContainer  // まき終わり
-                    "expired" -> MaterialTheme.colorScheme.surfaceContainerHigh  // 有効期限切れ
+                    "expired" -> MaterialTheme.colorScheme.surfaceContainerHighest  // 有効期限切れ
                     "urgent" -> MaterialTheme.colorScheme.errorContainer         // 終了間近
                     "thisMonth" -> MaterialTheme.colorScheme.primaryContainer    // 今月まきどき
                     else -> MaterialTheme.colorScheme.surfaceContainerLowest                   // 通常

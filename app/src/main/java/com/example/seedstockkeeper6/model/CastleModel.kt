@@ -42,24 +42,16 @@ fun generateSukesanMessage(
         else -> "${currentMonth}月"
     }
     
-    val thisMonthSowingSeeds = seeds.filter { seed ->
-        !seed.isFinished && // まき終わった種は除外
-        seed.calendar?.any { entry ->
-            val sowingStartMonth = com.example.seedstockkeeper6.utils.DateConversionUtils.getMonthFromDate(entry.sowing_start_date)
-            val sowingStartYear = com.example.seedstockkeeper6.utils.DateConversionUtils.getYearFromDate(entry.sowing_start_date)
-            sowingStartMonth == currentMonth && sowingStartYear == currentYear
-        } ?: false
-    }
+    val thisMonthSowingSeeds = com.example.seedstockkeeper6.utils.SowingCalculationUtils.getThisMonthSowingSeeds(
+        seeds = seeds,
+        currentDate = java.time.LocalDate.of(currentYear, currentMonth, 1),
+        excludeFinished = true
+    )
     
-    val urgentSeeds = seeds.filter { seed ->
-        seed.calendar?.any { entry ->
-            val sowingEndMonth = com.example.seedstockkeeper6.utils.DateConversionUtils.getMonthFromDate(entry.sowing_end_date)
-            val sowingEndYear = com.example.seedstockkeeper6.utils.DateConversionUtils.getYearFromDate(entry.sowing_end_date)
-            val sowingEndStage = com.example.seedstockkeeper6.utils.DateConversionUtils.convertDateToStage(entry.sowing_end_date)
-            // 今月内で播種期間が終了する種（上旬、中旬、下旬すべて対象）
-            sowingEndMonth == currentMonth && sowingEndYear == currentYear
-        } ?: false
-    }
+    val urgentSeeds = com.example.seedstockkeeper6.utils.SowingCalculationUtils.getUrgentSeeds(
+        seeds = seeds,
+        currentDate = java.time.LocalDate.of(currentYear, currentMonth, 1)
+    )
     
     
     if (thisMonthSowingSeeds.isNotEmpty()) {

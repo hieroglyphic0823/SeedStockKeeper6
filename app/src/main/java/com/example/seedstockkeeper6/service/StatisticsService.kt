@@ -76,43 +76,18 @@ class StatisticsService {
         val familyDistribution = validSeeds.groupBy { it.family }
             .mapValues { it.value.size }
         
-        // 今月の播種予定種子数
-        val thisMonthSowingSeeds = seeds.filter { seed ->
-            !seed.isFinished && // まき終わった種は除外
-            seed.calendar.any { entry ->
-                val sowingStartMonth = com.example.seedstockkeeper6.utils.DateConversionUtils.getMonthFromDate(entry.sowing_start_date)
-                val sowingStartYear = com.example.seedstockkeeper6.utils.DateConversionUtils.getYearFromDate(entry.sowing_start_date)
-                val sowingStartStage = com.example.seedstockkeeper6.utils.DateConversionUtils.convertDateToStage(entry.sowing_start_date)
-                val sowingEndMonth = com.example.seedstockkeeper6.utils.DateConversionUtils.getMonthFromDate(entry.sowing_end_date)
-                val sowingEndYear = com.example.seedstockkeeper6.utils.DateConversionUtils.getYearFromDate(entry.sowing_end_date)
-                val sowingEndStage = com.example.seedstockkeeper6.utils.DateConversionUtils.convertDateToStage(entry.sowing_end_date)
-                
-                
-                // 今月の播種期間に含まれるかチェック
-                val isInThisMonth = (sowingStartYear == year && sowingStartMonth == month) || 
-                                  (sowingEndYear == year && sowingEndMonth == month) ||
-                                  (sowingStartYear < year && sowingEndYear > year) ||
-                  (sowingStartYear == year && sowingStartMonth < month && sowingEndYear == year && sowingEndMonth >= month) ||
-                  (sowingStartYear == year && sowingStartMonth <= month && sowingEndYear > year) ||
-                  (sowingStartYear < year && sowingEndYear == year && sowingEndMonth >= month)
-                
-                isInThisMonth
-            }
-        }
+        // 今月の播種予定種子数（統一ロジックを使用）
+        val thisMonthSowingSeeds = com.example.seedstockkeeper6.utils.SowingCalculationUtils.getThisMonthSowingSeeds(
+            seeds = seeds,
+            currentDate = targetDate,
+            excludeFinished = true
+        )
         
-        // まき時終了間近の種子数（今月内で播種期間が終了する種）
-        val urgentSeeds = seeds.filter { seed ->
-            seed.calendar.any { entry ->
-                val sowingEndMonth = com.example.seedstockkeeper6.utils.DateConversionUtils.getMonthFromDate(entry.sowing_end_date)
-                val sowingEndYear = com.example.seedstockkeeper6.utils.DateConversionUtils.getYearFromDate(entry.sowing_end_date)
-                val sowingEndStage = com.example.seedstockkeeper6.utils.DateConversionUtils.convertDateToStage(entry.sowing_end_date)
-                
-                
-                // 今月内で播種期間が終了する種（上旬、中旬、下旬すべて対象）
-                val isUrgent = sowingEndMonth == month && sowingEndYear == year
-                isUrgent
-            }
-        }
+        // まき時終了間近の種子数（統一ロジックを使用）
+        val urgentSeeds = com.example.seedstockkeeper6.utils.SowingCalculationUtils.getUrgentSeeds(
+            seeds = seeds,
+            currentDate = targetDate
+        )
         
         val statistics = MonthlyStatistics(
             year = year,
