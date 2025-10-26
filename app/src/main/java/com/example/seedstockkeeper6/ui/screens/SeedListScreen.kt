@@ -140,6 +140,7 @@ fun SeedListScreen(
         when (filter) {
             "thisMonth" -> {
                 showThisMonthOnly = true
+                showFinishedSeeds = false  // まき終わりの種を非表示
                 showFilters = true
             }
             "urgent" -> {

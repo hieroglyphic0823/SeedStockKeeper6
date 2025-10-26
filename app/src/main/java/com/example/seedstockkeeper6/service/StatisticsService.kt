@@ -78,6 +78,7 @@ class StatisticsService {
         
         // 今月の播種予定種子数
         val thisMonthSowingSeeds = seeds.filter { seed ->
+            !seed.isFinished && // まき終わった種は除外
             seed.calendar.any { entry ->
                 val sowingStartMonth = com.example.seedstockkeeper6.utils.DateConversionUtils.getMonthFromDate(entry.sowing_start_date)
                 val sowingStartYear = com.example.seedstockkeeper6.utils.DateConversionUtils.getYearFromDate(entry.sowing_start_date)
@@ -121,6 +122,7 @@ class StatisticsService {
             thisMonthSowingCount = thisMonthSowingSeeds.size,
             urgentSeedsCount = urgentSeeds.size,
             validSeedsCount = validSeeds.size,
+            valid = true, // Firestore用の有効性フラグ
             lastUpdated = System.currentTimeMillis(),
             ownerUid = ownerUid
         )

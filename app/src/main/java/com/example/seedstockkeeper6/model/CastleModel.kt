@@ -43,6 +43,7 @@ fun generateSukesanMessage(
     }
     
     val thisMonthSowingSeeds = seeds.filter { seed ->
+        !seed.isFinished && // まき終わった種は除外
         seed.calendar?.any { entry ->
             val sowingStartMonth = com.example.seedstockkeeper6.utils.DateConversionUtils.getMonthFromDate(entry.sowing_start_date)
             val sowingStartYear = com.example.seedstockkeeper6.utils.DateConversionUtils.getYearFromDate(entry.sowing_start_date)

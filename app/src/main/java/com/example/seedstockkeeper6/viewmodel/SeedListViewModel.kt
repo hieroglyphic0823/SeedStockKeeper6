@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.ktx.storage
+import com.google.firebase.auth.ktx.auth
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
@@ -23,6 +24,44 @@ class SeedListViewModel : ViewModel() {
     private val statisticsService = StatisticsService()
     
     init {
+        loadSeeds()
+    }
+    
+    /**
+     * Firebaseから種データを読み込む
+     */
+    fun loadSeeds() {
+        viewModelScope.launch {
+            try {
+                val auth = com.google.firebase.auth.FirebaseAuth.getInstance()
+                val currentUser = auth.currentUser
+                
+                if (currentUser == null) {
+                    _seeds.value = emptyList()
+                    return@launch
+                }
+                
+                val db = Firebase.firestore
+                val snapshot = db.collection("seeds")
+                    .whereEqualTo("ownerUid", currentUser.uid)
+                    .get()
+                    .await()
+                
+                val seedList = snapshot.documents.mapNotNull { doc ->
+                    try {
+                        val seed = doc.toObject(SeedPacket::class.java)
+                        seed?.copy(documentId = doc.id)
+                    } catch (e: Exception) {
+                        null
+                    }
+                }
+                
+                _seeds.value = seedList
+            } catch (e: Exception) {
+                // エラーハンドリング
+                _seeds.value = emptyList()
+            }
+        }
     }
     
     // プレビュー用のデモデータ設定メソッド

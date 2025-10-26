@@ -16,6 +16,8 @@ data class MonthlyStatistics(
     val urgentSeedsCount: Int = 0,
     @PropertyName("validSeedsCount")
     val validSeedsCount: Int = 0, // 有効期限内の種子数
+    @PropertyName("valid")
+    val valid: Boolean = true, // Firestore用の有効性フラグ
     val lastUpdated: Long = System.currentTimeMillis(),
     val ownerUid: String = ""
 ) {

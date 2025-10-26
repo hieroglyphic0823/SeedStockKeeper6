@@ -19,6 +19,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.activity.compose.LocalActivity
 import androidx.navigation.compose.rememberNavController
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import com.example.seedstockkeeper6.ui.auth.AuthGate
 import com.example.seedstockkeeper6.ui.theme.SeedStockKeeper6Theme
 import com.example.seedstockkeeper6.notification.NotificationManager
@@ -52,27 +55,34 @@ class MainActivity : ComponentActivity() {
         
         FirebaseApp.initializeApp(this)
         
-        // App Checkを初期化（デバッグ用）
-        try {
-            com.google.firebase.appcheck.FirebaseAppCheck.getInstance().installAppCheckProviderFactory(
-                com.google.firebase.appcheck.debug.DebugAppCheckProviderFactory.getInstance()
-            )
-        } catch (e: Exception) {
+        // 重い処理はバックグラウンドで実行
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                // App Checkを初期化（デバッグ用）
+                com.google.firebase.appcheck.FirebaseAppCheck.getInstance().installAppCheckProviderFactory(
+                    com.google.firebase.appcheck.debug.DebugAppCheckProviderFactory.getInstance()
+                )
+            } catch (e: Exception) {
+                android.util.Log.w("MainActivity", "App Check初期化エラー", e)
+            }
+            
+            try {
+                // Firestoreのオフライン対応を有効化
+                com.example.seedstockkeeper6.utils.FirestoreUtils.enableOfflinePersistence()
+            } catch (e: Exception) {
+                android.util.Log.w("MainActivity", "Firestoreオフライン対応エラー", e)
+            }
+            
+            try {
+                // ネットワーク接続状態をログ出力
+                val networkInfo = com.example.seedstockkeeper6.utils.NetworkUtils.getNetworkInfo(this@MainActivity)
+                android.util.Log.d("MainActivity", "ネットワーク情報: $networkInfo")
+            } catch (e: Exception) {
+                android.util.Log.w("MainActivity", "ネットワーク情報取得エラー", e)
+            }
         }
         
-        // Firestoreのオフライン対応を有効化
-        try {
-            com.example.seedstockkeeper6.utils.FirestoreUtils.enableOfflinePersistence()
-        } catch (e: Exception) {
-        }
-        
-        // ネットワーク接続状態をログ出力
-        try {
-            val networkInfo = com.example.seedstockkeeper6.utils.NetworkUtils.getNetworkInfo(this)
-        } catch (e: Exception) {
-        }
-        
-        // 通知マネージャーを初期化
+        // 通知マネージャーを初期化（軽量な処理のみ）
         notificationManager = NotificationManager(this)
 
         setContent {

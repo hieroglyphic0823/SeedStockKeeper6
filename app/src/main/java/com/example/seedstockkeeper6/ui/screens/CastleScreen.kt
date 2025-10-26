@@ -44,11 +44,14 @@ fun CastleScreen(
     val farmLatitude = if (isPreview) 35.6762 else settingsViewModel.farmLatitude
     val farmLongitude = if (isPreview) 139.6503 else settingsViewModel.farmLongitude
     
-    // データの取得（プレビュー時は固定データ、実装時はViewModelから）
-    val seeds = if (isPreview) {
+    // 種データの状態監視（引数で渡されたviewModelを使用）
+    val seeds = viewModel.seeds.value
+    
+    // 表示用データの切り分け
+    val displaySeeds = if (isPreview) {
         createPreviewSeedData()
     } else {
-        viewModel.seeds.value
+        seeds
     }
     
     // 農園名（設定から取得、プレビュー時は固定値）
@@ -73,12 +76,12 @@ fun CastleScreen(
     val isLoadingNotification by castleViewModel.isLoadingNotification.collectAsStateWithLifecycle()
     
     // 集計データの取得
-    LaunchedEffect(seeds.size) {
-        castleViewModel.loadStatistics(seeds, isPreview)
-        }
-        
-        // 天気データの取得
-        LaunchedEffect(farmLatitude, farmLongitude, isPreview) {
+    LaunchedEffect(displaySeeds.size) {
+        castleViewModel.loadStatistics(displaySeeds, isPreview)
+    }
+    
+    // 天気データの取得
+    LaunchedEffect(farmLatitude, farmLongitude, isPreview) {
         castleViewModel.loadWeatherData(farmLatitude, farmLongitude, isPreview)
     }
     
@@ -88,7 +91,7 @@ fun CastleScreen(
     }
     
     // 集計データを生成
-    val statisticsData = castleViewModel.generateStatisticsData(seeds, isPreview)
+    val statisticsData = castleViewModel.generateStatisticsData(displaySeeds, isPreview)
     
     // 通知詳細ダイアログの状態
     var showNotificationDialog by remember { mutableStateOf(false) }

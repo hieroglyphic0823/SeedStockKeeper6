@@ -107,10 +107,23 @@ class GeminiNotificationService {
         
         repeat(maxRetries + 1) { attempt ->
             try {
+                // Google Play Services接続エラーをチェック
+                if (generativeModel == null) {
+                    android.util.Log.w("GeminiNotificationService", "GenerativeModelが初期化されていません")
+                    return null
+                }
+                
                 val response = generativeModel!!.generateContent(prompt)
                 return response.text
             } catch (e: Exception) {
                 lastException = e
+                
+                // Google Play Services関連のエラーをログ出力
+                if (e.message?.contains("SecurityException") == true || 
+                    e.message?.contains("Unknown calling package") == true) {
+                    android.util.Log.w("GeminiNotificationService", "Google Play Services接続エラー（エミュレーター環境）: ${e.message}")
+                    return null // エミュレーター環境では即座に失敗
+                }
                 
                 // 503エラー（過負荷）の場合は少し待ってからリトライ
                 if (e.message?.contains("503") == true || e.message?.contains("overloaded") == true) {
@@ -120,11 +133,13 @@ class GeminiNotificationService {
                     }
                 } else {
                     // 503以外のエラーは即座に失敗
+                    android.util.Log.e("GeminiNotificationService", "Gemini API呼び出しエラー: ${e.message}")
                     return@repeat
                 }
             }
         }
         
+        android.util.Log.e("GeminiNotificationService", "最大リトライ回数に達しました: ${lastException?.message}")
         return null
     }
     
@@ -248,9 +263,16 @@ class GeminiNotificationService {
             content
             
         } catch (e: Exception) {
-            android.util.Log.e("GeminiNotificationService", "週次通知生成エラー", e)
-            android.util.Log.d("GeminiNotificationService", "デフォルト週次通知コンテンツを使用")
-            contentFormatter.getDefaultWeeklyContent()
+            // Google Play Services関連のエラーをログ出力
+            if (e.message?.contains("SecurityException") == true || 
+                e.message?.contains("Unknown calling package") == true) {
+                android.util.Log.w("GeminiNotificationService", "Google Play Services接続エラー（エミュレーター環境）: ${e.message}")
+                contentFormatter.getDefaultWeeklyContent()
+            } else {
+                android.util.Log.e("GeminiNotificationService", "週次通知生成エラー", e)
+                android.util.Log.d("GeminiNotificationService", "デフォルト週次通知コンテンツを使用")
+                contentFormatter.getDefaultWeeklyContent()
+            }
         }
     }
     
