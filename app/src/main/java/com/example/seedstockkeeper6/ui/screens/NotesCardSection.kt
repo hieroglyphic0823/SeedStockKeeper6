@@ -51,12 +51,12 @@ fun NotesCardSection(viewModel: SeedInputViewModel) {
                             ) {
                                 androidx.compose.foundation.Image(
                                     painter = painterResource(id = R.drawable.sprout),
-                                    contentDescription = "栽培メモ",
+                                    contentDescription = "栽培覚書",
                                     modifier = Modifier.size(16.dp)
                                 )
                             }
                             Text(
-                                "栽培メモ",
+                                "栽培覚書",
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.SemiBold,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer

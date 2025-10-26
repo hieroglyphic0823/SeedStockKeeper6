@@ -52,6 +52,15 @@ fun AppNavHost(
                 backStackEntry = backStackEntry
             )
         }
+        composable("input/") {
+            val currentInputViewModel: SeedInputViewModel = viewModel()
+            SeedInputScreen(
+                navController = navController,
+                viewModel = currentInputViewModel,
+                settingsViewModel = settingsViewModel,
+                onSaveRequest = onSaveRequest
+            )
+        }
         composable("input/{packet}") { backStackEntry ->
             val json = backStackEntry.arguments?.getString("packet") ?: ""
             val packet = if (json.isNotEmpty()) Gson().fromJson(json, SeedPacket::class.java) else null

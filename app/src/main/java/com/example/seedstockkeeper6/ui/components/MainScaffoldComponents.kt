@@ -199,7 +199,7 @@ fun MainScaffoldTopAppBar(
                                         textAlign = TextAlign.Start
                                     )
                                 }
-                                // デフォルト: 商品名がある場合は商品名、ない場合は「種情報」
+                                // デフォルト: 商品名がある場合は商品名、ない場合は「種札」
                                 else -> {
                                     if (seedInputViewModel?.packet?.productName?.isNotEmpty() == true) {
                                         // 商品名がある場合はFamilyアイコンと商品名を表示
@@ -219,7 +219,7 @@ fun MainScaffoldTopAppBar(
                                             textAlign = TextAlign.Start
                                         )
                                     } else {
-                                        // 商品名がない場合は現行アイコン+「種情報」
+                                        // 商品名がない場合は現行アイコン+「種札」
                                         Image(
                                             painter = painterResource(id = R.drawable.packet),
                                             contentDescription = IconDescriptionConstants.SEED_INFO_ICON,
@@ -531,7 +531,7 @@ fun MainScaffoldNavigationBar(
                 }
                 else -> {
                     FloatingActionButton(
-                        onClick = { navController.navigate("$NavigationConstants.INPUT_ROUTE_PREFIX/") },
+                        onClick = { navController.navigate("${NavigationConstants.INPUT_ROUTE_PREFIX}/") },
                         containerColor = MaterialTheme.colorScheme.primaryContainer,
                         contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                     ) {

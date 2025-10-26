@@ -62,7 +62,7 @@ import android.graphics.Bitmap
 import android.graphics.Canvas as AndroidCanvas
 
 /**
- * 栽培カレンダーのメインコンポーネント
+ * 種暦のメインコンポーネント
  */
 
 @Composable
@@ -275,7 +275,7 @@ fun SeedCalendarGroupedInternal(
         
         // 実際の表示幅に基づいて月幅を計算
         val colW = gridW / 12f // 12ヶ月分の幅で計算（表示範囲は12ヶ月分）
-        val rowH = with(density) { 118.dp.toPx() } // 栽培カレンダーの縦幅を118dpに設定（140dp - 22dp = 118dp）
+        val rowH = with(density) { 118.dp.toPx() } // 種暦の縦幅を118dpに設定（140dp - 22dp = 118dp）
 
         // 月ラベルの背景色を描画 (secondaryContainerLight) - 12ヶ月分のみ
         for (m in 0 until 12) {

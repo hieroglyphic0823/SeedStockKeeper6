@@ -60,7 +60,7 @@ object ScreenTitleConstants {
     const val SETTINGS_TITLE = "農園設定"
     const val NOTIFICATION_PREVIEW_TITLE = "通知テスト・プレビュー"
     const val MAP_SELECTION_TITLE = "Googleマップで農園位置を選択"
-    const val INPUT_TITLE = "種情報"
+    const val INPUT_TITLE = "種札"
     const val NEW_INPUT_TITLE = "新規作成"
 }
 
@@ -174,7 +174,7 @@ fun getSeedInfoTitle(
                 productName.ifEmpty { ScreenTitleConstants.INPUT_TITLE }
             }
         }
-        // デフォルト: 商品名がある場合は商品名、ない場合は「種情報」
+        // デフォルト: 商品名がある場合は商品名、ない場合は「種札」
         else -> {
             if (productName.isNotEmpty()) {
                 if (variety.isNotEmpty()) {

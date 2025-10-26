@@ -65,11 +65,11 @@ fun PreviewCalendarSection(viewModel: SeedInputViewModel) {
         ) {
             Image(
                 painter = painterResource(id = R.drawable.calendar),
-                contentDescription = "栽培カレンダー",
+                contentDescription = "種暦",
                 modifier = Modifier.size(24.dp)
             )
             Text(
-                "栽培カレンダー",
+                "種暦",
                 style = MaterialTheme.typography.titleLarge
             )
         }
@@ -89,7 +89,7 @@ fun PreviewCalendarSection(viewModel: SeedInputViewModel) {
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Preview(showBackground = true, name = "栽培カレンダー - 表示モード（2025年9月）", heightDp = 800)
+@Preview(showBackground = true, name = "種暦 - 表示モード（2025年9月）", heightDp = 800)
 @Composable
 fun CalendarSectionPreview_DisplayMode() {
     SeedStockKeeper6Theme(darkTheme = false, dynamicColor = false) {
@@ -99,7 +99,7 @@ fun CalendarSectionPreview_DisplayMode() {
             topBar = {
                 TopAppBar(
                     title = { 
-                        Text("栽培カレンダー - 2025年9月表示")
+                        Text("種暦 - 2025年9月表示")
                     }
                 )
             }
@@ -119,7 +119,7 @@ fun CalendarSectionPreview_DisplayMode() {
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Preview(showBackground = true, name = "栽培カレンダー - 編集モード（修正版）", heightDp = 800)
+@Preview(showBackground = true, name = "種暦 - 編集モード（修正版）", heightDp = 800)
 @Composable
 fun CalendarSectionPreview_EditMode() {
     SeedStockKeeper6Theme(darkTheme = false, dynamicColor = false) {
@@ -129,7 +129,7 @@ fun CalendarSectionPreview_EditMode() {
             topBar = {
                 TopAppBar(
                     title = { 
-                        Text("栽培カレンダー - 12ヶ月表示修正版")
+                        Text("種暦 - 12ヶ月表示修正版")
                     }
                 )
             }
@@ -148,7 +148,7 @@ fun CalendarSectionPreview_EditMode() {
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Preview(showBackground = true, name = "栽培カレンダー - 新規作成（修正版）", heightDp = 800)
+@Preview(showBackground = true, name = "種暦 - 新規作成（修正版）", heightDp = 800)
 @Composable
 fun CalendarSectionPreview_NewCreation() {
     SeedStockKeeper6Theme(darkTheme = false, dynamicColor = false) {
@@ -158,7 +158,7 @@ fun CalendarSectionPreview_NewCreation() {
             topBar = {
                 TopAppBar(
                     title = { 
-                        Text("栽培カレンダー - 12ヶ月表示修正版")
+                        Text("種暦 - 12ヶ月表示修正版")
                     }
                 )
             }

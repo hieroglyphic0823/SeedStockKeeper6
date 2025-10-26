@@ -318,7 +318,7 @@ fun CultivationInfoSection(viewModel: SeedInputViewModel) {
             OutlinedTextField(
                 value = viewModel.packet.cultivation.notes,
                 onValueChange = viewModel::onNotesChange,
-                label = { Text("栽培メモ") },
+                label = { Text("栽培覚書") },
                 modifier = Modifier.fillMaxWidth()
             )
             

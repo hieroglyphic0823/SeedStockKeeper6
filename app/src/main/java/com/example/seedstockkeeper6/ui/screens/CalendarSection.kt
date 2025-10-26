@@ -115,16 +115,16 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
         ) {
             Image(
                 painter = painterResource(id = R.drawable.calendar),
-                contentDescription = "栽培カレンダー",
+                contentDescription = "種暦",
                 modifier = Modifier.size(24.dp)
             )
             Text(
-                "栽培カレンダー",
+                "種暦",
                 style = MaterialTheme.typography.titleLarge
             )
         }
         
-        // 地域設定（栽培カレンダーのタイトルとカレンダー図の間）
+        // 地域設定（種暦のタイトルとカレンダー図の間）
         val currentRegion = viewModel.packet.calendar?.firstOrNull()?.region ?: ""
         
             // 地域が選択されていない場合でも、空のカレンダーエントリを作成して表示
