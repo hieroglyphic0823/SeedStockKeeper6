@@ -1,6 +1,7 @@
 package com.example.seedstockkeeper6.ui.screens
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -57,18 +58,19 @@ fun SettingsScreen(
     
     Box(modifier = Modifier.fillMaxSize()) {
         Scaffold(
+            contentWindowInsets = WindowInsets(0, 0, 0, 0),
             snackbarHost = { SnackbarHost(snackbarHostState) },
             floatingActionButton = {
                 if (viewModel.isEditMode) {
-                    FloatingActionButton(
-                        onClick = {
-                            // 保存処理をシミュレート（実際の保存処理に合わせて調整）
-                            kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch {
-                                kotlinx.coroutines.delay(1000) // 1秒の保存処理をシミュレート
-                                viewModel.saveSettings()
-                                viewModel.exitEditMode()
-                            }
-                        },
+                FloatingActionButton(
+                    onClick = {
+                        // 保存処理をシミュレート（実際の保存処理に合わせて調整）
+                        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch {
+                            kotlinx.coroutines.delay(1000) // 1秒の保存処理をシミュレート
+                            viewModel.saveSettings()
+                            viewModel.exitEditMode()
+                        }
+                    },
                         containerColor = MaterialTheme.colorScheme.secondaryContainer,
                         contentColor = MaterialTheme.colorScheme.onSecondaryContainer
                     ) {
@@ -87,23 +89,23 @@ fun SettingsScreen(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(0.dp)
             ) {
-                // 農園設定カード
-                Card(
+            // 農園設定カード
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainer
-                    ),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                        .padding(24.dp),
+                    verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(24.dp),
-                        verticalArrangement = Arrangement.spacedBy(24.dp)
-                    ) {
-                        // 農園名設定セクション
+                    // 農園名設定セクション
                         FarmNameSection(
                             farmName = viewModel.farmName,
                             isEditMode = viewModel.isEditMode,
@@ -117,7 +119,7 @@ fun SettingsScreen(
                             thickness = 1.dp
                         )
 
-                        // 農園位置設定セクション
+                    // 農園位置設定セクション
                         FarmLocationSection(
                             farmLatitude = viewModel.farmLatitude,
                             farmLongitude = viewModel.farmLongitude,
@@ -127,13 +129,13 @@ fun SettingsScreen(
                             onNavigateToMap = { navController.navigate("map_selection") }
                         )
 
-                        // 区切り線
-                        HorizontalDivider(
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
-                            thickness = 1.dp
-                        )
+                    // 区切り線
+                    HorizontalDivider(
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
+                        thickness = 1.dp
+                    )
 
-                        // 農園主設定セクション
+                    // 農園主設定セクション
                         FarmOwnerSection(
                             farmOwner = viewModel.farmOwner,
                             customFarmOwner = viewModel.customFarmOwner,
@@ -143,13 +145,13 @@ fun SettingsScreen(
                             onCustomFarmOwnerChange = { viewModel.updateCustomFarmOwner(it) }
                         )
 
-                        // 区切り線
-                        HorizontalDivider(
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
-                            thickness = 1.dp
-                        )
+                    // 区切り線
+                    HorizontalDivider(
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
+                        thickness = 1.dp
+                    )
 
-                        // 地域設定セクション
+                    // 地域設定セクション
                         RegionSettingsSection(
                             defaultRegion = viewModel.defaultRegion,
                             selectedPrefecture = selectedPrefecture,
@@ -158,14 +160,14 @@ fun SettingsScreen(
                             onShowRegionBottomSheet = { showRegionBottomSheet = true },
                             onShowPrefectureBottomSheet = { showPrefectureBottomSheet = true }
                         )
-                        
-                        // 区切り線
-                        HorizontalDivider(
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
-                            thickness = 1.dp
-                        )
-                        
-                        // 通知タイミング設定セクション
+                    
+                    // 区切り線
+                    HorizontalDivider(
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
+                        thickness = 1.dp
+                    )
+                    
+                    // 通知タイミング設定セクション
                         NotificationSettingsSection(
                             notificationFrequency = notificationFrequency,
                             selectedWeekday = selectedWeekday,
@@ -175,14 +177,14 @@ fun SettingsScreen(
                                 viewModel.updateNotificationSettings(frequency, weekday)
                             }
                         )
-                        
-                        // 区切り線
-                        HorizontalDivider(
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
-                            thickness = 1.dp
-                        )
-                        
-                        // 種情報URL設定セクション
+                    
+                    // 区切り線
+                    HorizontalDivider(
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
+                        thickness = 1.dp
+                    )
+                    
+                    // 種情報URL設定セクション
                         SeedInfoUrlSettingsSection(
                             seedInfoUrlProvider = seedInfoUrlProvider,
                             customSeedInfoUrl = customSeedInfoUrl,
@@ -198,27 +200,27 @@ fun SettingsScreen(
         }
     }
     
-    // 地域選択ボトムシート
-    if (showRegionBottomSheet) {
-        RegionSelectionBottomSheet(
-            selectedRegion = viewModel.defaultRegion,
-            onRegionSelected = { region -> 
-                viewModel.updateDefaultRegion(region)
-                showRegionBottomSheet = false
-            },
-            onDismiss = { showRegionBottomSheet = false }
-        )
-    }
-    
-    // 県選択ボトムシート
-    if (showPrefectureBottomSheet) {
-        PrefectureSelectionBottomSheet(
-            selectedPrefecture = selectedPrefecture,
-            onPrefectureSelected = { prefecture -> 
-                viewModel.updateSelectedPrefecture(prefecture)
-                showPrefectureBottomSheet = false
-            },
-            onDismiss = { showPrefectureBottomSheet = false }
-        )
+        // 地域選択ボトムシート
+        if (showRegionBottomSheet) {
+            RegionSelectionBottomSheet(
+                selectedRegion = viewModel.defaultRegion,
+                onRegionSelected = { region -> 
+                    viewModel.updateDefaultRegion(region)
+                    showRegionBottomSheet = false
+                },
+                onDismiss = { showRegionBottomSheet = false }
+            )
+        }
+        
+        // 県選択ボトムシート
+        if (showPrefectureBottomSheet) {
+            PrefectureSelectionBottomSheet(
+                selectedPrefecture = selectedPrefecture,
+                onPrefectureSelected = { prefecture -> 
+                    viewModel.updateSelectedPrefecture(prefecture)
+                    showPrefectureBottomSheet = false
+                },
+                onDismiss = { showPrefectureBottomSheet = false }
+            )
     }
 }

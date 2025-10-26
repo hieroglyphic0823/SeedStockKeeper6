@@ -4,6 +4,7 @@ package com.example.seedstockkeeper6.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -21,7 +22,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.navigation.NavController
@@ -56,6 +56,7 @@ fun SeedInputScreen(
     }
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
             // AIで読み取り処理中、地域選択ダイアログ表示中はFABを非表示
@@ -104,12 +105,7 @@ fun SeedInputScreen(
             Column(
                 modifier = Modifier
                     .verticalScroll(scroll)
-                    .padding(
-                        top = 0.dp,  // 上パディングのみ0に
-                        start = paddingValues.calculateLeftPadding(LocalLayoutDirection.current),
-                        end = paddingValues.calculateRightPadding(LocalLayoutDirection.current),
-                        bottom = paddingValues.calculateBottomPadding()
-                    )
+                    .padding(paddingValues)
                     .padding(16.dp)
                     .fillMaxWidth()
             ) {

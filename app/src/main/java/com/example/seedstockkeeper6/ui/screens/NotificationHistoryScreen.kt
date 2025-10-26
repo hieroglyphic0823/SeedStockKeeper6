@@ -28,6 +28,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.graphics.Color as ComposeColor
 import androidx.compose.animation.core.*
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.navigation.NavController
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -60,6 +61,7 @@ fun NotificationHistoryScreen(
     val showDeleteDialog by viewModel.showDeleteDialog.collectAsStateWithLifecycle()
     
     Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { paddingValues ->
         // ローディング状態
         if (isLoading) {
