@@ -6,6 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -37,6 +38,7 @@ import com.example.seedstockkeeper6.R
 import com.example.seedstockkeeper6.model.NotificationData
 import com.example.seedstockkeeper6.model.SeedPacket
 import com.example.seedstockkeeper6.model.extractSeedInfoFromNotificationData
+import com.example.seedstockkeeper6.notification.NotificationContentGenerator
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
@@ -54,6 +56,9 @@ fun SukesanMessageCard(
     isLoading: Boolean,
     onNotificationClick: () -> Unit
 ) {
+    // NotificationContentGeneratorをrememberでインスタンス化
+    val contentGenerator = remember { NotificationContentGenerator() }
+    
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -109,9 +114,6 @@ fun SukesanMessageCard(
                     } else if (latestNotification != null) {
                         val notification = latestNotification!!
                         
-                        // 通知の内容からまきどきの種と期限切れ間近の種情報を抽出
-                        val (thisMonthSowingSeeds, urgentSeeds) = extractSeedInfoFromNotificationData(notification, seeds)
-                        
                         Column {
                             // 通知タイトル（1行）
                             Row(
@@ -153,67 +155,20 @@ fun SukesanMessageCard(
 
                             Spacer(modifier = Modifier.height(8.dp))
 
-                            // まきどきの種情報
-                            if (thisMonthSowingSeeds.isNotEmpty()) {
-                                val seedNames = thisMonthSowingSeeds.take(3).joinToString("、") { it.productName }
-                                val displayText = if (thisMonthSowingSeeds.size > 3) {
-                                    "$seedNames 他${thisMonthSowingSeeds.size - 3}種類"
-                                } else {
-                                    seedNames
-                                }
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .horizontalScroll(rememberScrollState())
-                                ) {
+                            // NotificationContentGeneratorを使って1行表示の内容を生成
+                            val messageText = contentGenerator.generateSingleLineContent(notification)
+                            val lines = messageText.trim().split("\n").filter { it.isNotEmpty() }
+                            
+                            Column {
+                                lines.forEach { line ->
                                     Text(
-                                        text = "🌱 まきどき: $displayText",
+                                        text = line,
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = Color.Black,
+                                        lineHeight = MaterialTheme.typography.bodyMedium.lineHeight * 1.2,
                                         maxLines = 1,
-                                        overflow = TextOverflow.Visible
-                                    )
-                                }
-                            } else {
-                                Text(
-                                    text = "🌱 まきどき: 該当なし",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = Color.Black
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.height(4.dp))
-
-                            // まき時終了間近の種情報
-                            if (urgentSeeds.isNotEmpty()) {
-                                val seedNames = urgentSeeds.take(3).joinToString("、") { it.productName }
-                                val displayText = if (urgentSeeds.size > 3) {
-                                    "$seedNames 他${urgentSeeds.size - 3}種類"
-                                } else {
-                                    seedNames
-                                }
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .horizontalScroll(rememberScrollState()),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        text = "⏳期限間近: $displayText",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = Color.Black,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Visible
-                                    )
-                                }
-                            } else {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        text = "⏳期限間近: 該当なし",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = Color.Black
+                                        overflow = TextOverflow.Ellipsis,
+                                        modifier = Modifier.fillMaxWidth()
                                     )
                                 }
                             }
@@ -656,6 +611,62 @@ fun PieChart(
 }
 
 /**
+ * リッチセクション（通知詳細ダイアログ用）
+ */
+@Composable
+private fun RichSection(
+    title: String, 
+    items: List<Pair<String, String>>, 
+    iconResource: Int? = null, 
+    textColor: androidx.compose.ui.graphics.Color = androidx.compose.material3.MaterialTheme.colorScheme.onSurface
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        if (iconResource != null) {
+            Image(
+                painter = painterResource(id = iconResource),
+                contentDescription = title,
+                modifier = Modifier.size(16.dp)
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+        }
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleSmall,
+            color = textColor
+        )
+    }
+    if (items.isEmpty()) {
+        Text(
+            text = "該当なし",
+            style = MaterialTheme.typography.bodyMedium,
+            color = textColor.copy(alpha = 0.8f)
+        )
+        return
+    }
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        items.forEach { (name, desc) ->
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(
+                    text = name,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = textColor
+                )
+                if (desc.isNotEmpty()) {
+                    Text(
+                        text = desc,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = textColor.copy(alpha = 0.85f)
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
  * 通知詳細ダイアログ
  */
 @Composable
@@ -663,6 +674,8 @@ fun NotificationDetailDialog(
     notification: NotificationData,
     onDismiss: () -> Unit
 ) {
+    val contentGenerator = remember { NotificationContentGenerator() }
+    
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
@@ -674,28 +687,61 @@ fun NotificationDetailDialog(
         },
         text = {
             Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(600.dp)
+                    .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // 通知内容
-                Text(
-                    text = notification.summary,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+                // 通知内容（NotificationContentGeneratorを使用）
+                val content = remember(notification) { contentGenerator.generateContent(notification) }
                 
-                // 要約がある場合は表示
+                // ヘッダー
                 if (notification.summary.isNotEmpty()) {
                     Text(
-                        text = "要約:",
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.SemiBold,
+                        text = notification.summary,
+                        style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface
                     )
-                    Text(
-                        text = notification.summary,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    Spacer(modifier = Modifier.height(4.dp))
+                }
+                
+                // 今月まきどきの種
+                if (notification.thisMonthSeeds.isNotEmpty()) {
+                    RichSection(
+                        title = "🌱まきどき",
+                        items = notification.thisMonthSeeds.map { it.name to it.description },
+                        textColor = MaterialTheme.colorScheme.onSurface
                     )
+                    Spacer(modifier = Modifier.height(4.dp))
+                }
+                
+                // 終了間近の種
+                if (notification.endingSoonSeeds.isNotEmpty()) {
+                    val endingSoonItems = notification.endingSoonSeeds.map { seed ->
+                        val expirationInfo = if (seed.expirationYear > 0 && seed.expirationMonth > 0) {
+                            " (${seed.expirationYear}/${seed.expirationMonth})"
+                        } else {
+                            ""
+                        }
+                        "${seed.name}${expirationInfo}" to seed.description
+                    }
+                    RichSection(
+                        title = "⏳期限間近",
+                        items = endingSoonItems,
+                        textColor = MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                }
+                
+                // おすすめの種
+                if (notification.recommendedSeeds.isNotEmpty()) {
+                    RichSection(
+                        title = "🎯今月のおすすめ",
+                        items = notification.recommendedSeeds.map { it.name to it.description },
+                        textColor = MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
                 }
                 
                 // 送信日時

@@ -97,6 +97,51 @@ class NotificationContentGenerator {
     }
     
     /**
+     * お城画面用の1行表示コンテンツを生成
+     */
+    fun generateSingleLineContent(notificationData: NotificationData): String {
+        val content = StringBuilder()
+        
+        // 今月まきどきの種（1行表示）
+        if (notificationData.thisMonthSeeds.isNotEmpty()) {
+            val seedNames = notificationData.thisMonthSeeds.take(5).map { it.name }
+            content.append("🌱まきどき：${seedNames.joinToString("、")}")
+            if (notificationData.thisMonthSeeds.size > 5) {
+                content.append("...")
+            }
+            content.append("\n")
+        }
+        
+        // 終了間近の種（1行表示）
+        if (notificationData.endingSoonSeeds.isNotEmpty()) {
+            val seedNames = notificationData.endingSoonSeeds.take(5).map { seed ->
+                val expirationInfo = if (seed.expirationYear > 0 && seed.expirationMonth > 0) {
+                    "${seed.name}（${seed.expirationYear}/${seed.expirationMonth}）"
+                } else {
+                    seed.name
+                }
+                expirationInfo
+            }
+            content.append("⏳期限間近：${seedNames.joinToString("、")}")
+            if (notificationData.endingSoonSeeds.size > 5) {
+                content.append("...")
+            }
+            content.append("\n")
+        }
+        
+        // おすすめの種（1行表示）
+        if (notificationData.recommendedSeeds.isNotEmpty()) {
+            val seedNames = notificationData.recommendedSeeds.take(5).map { it.name }
+            content.append("🎯おすすめ：${seedNames.joinToString("、")}")
+            if (notificationData.recommendedSeeds.size > 5) {
+                content.append("...")
+            }
+        }
+        
+        return content.toString()
+    }
+    
+    /**
      * 通知タイトルにアイコンを追加
      */
     fun generateTitleWithIcon(notificationData: NotificationData): String {

@@ -164,7 +164,7 @@ private fun getDefaultUserSettings(): Map<String, String> {
  * 月次通知プレビューを構築する関数
  */
 fun buildMonthlyNotificationPreview(): String {
-    return """🌱 まきどきの種:
+    return """🌱まきどきの種:
 • 恋むすめ (ニンジン) - 播種期間: 8月上旬〜9月下旬
 • サラダミックス (レタス) - 播種期間: 3月中旬〜5月上旬
 
