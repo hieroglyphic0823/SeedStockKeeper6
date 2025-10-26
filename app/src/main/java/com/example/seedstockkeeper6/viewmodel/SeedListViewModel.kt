@@ -38,6 +38,13 @@ class SeedListViewModel : ViewModel() {
             onComplete(result)
         }
     }
+    
+    fun updateFinishedFlag(documentId: String, isFinished: Boolean, onComplete: (Result<Unit>) -> Unit) {
+        viewModelScope.launch {
+            val result = updateFinishedFlagInternal(documentId, isFinished)
+            onComplete(result)
+        }
+    }
 
     // ★ public に変更
     suspend fun deleteSeedPacketWithImagesInternal(documentId: String): Result<Unit> =
@@ -68,6 +75,26 @@ class SeedListViewModel : ViewModel() {
                 }
 
                 docRef.delete().await()
+                
+                // 集計データを更新
+                try {
+                    updateStatisticsAfterSeedChange()
+                } catch (e: Exception) {
+                }
+                
+                Result.success(Unit)
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+    
+    suspend fun updateFinishedFlagInternal(documentId: String, isFinished: Boolean): Result<Unit> =
+        withContext(Dispatchers.IO) {
+            val db = Firebase.firestore
+            
+            try {
+                val docRef = db.collection("seeds").document(documentId)
+                docRef.update("isFinished", isFinished).await()
                 
                 // 集計データを更新
                 try {

@@ -7,8 +7,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.example.seedstockkeeper6.R
@@ -16,9 +20,15 @@ import com.example.seedstockkeeper6.ui.components.FamilyIcon
 import com.example.seedstockkeeper6.ui.components.FamilyIconCircle
 import com.example.seedstockkeeper6.util.familyRotationYearsRange
 import com.example.seedstockkeeper6.viewmodel.SeedInputViewModel
+import kotlinx.coroutines.launch
 
 @Composable
-fun BasicInfoSection(viewModel: SeedInputViewModel) {
+fun BasicInfoSection(
+    viewModel: SeedInputViewModel,
+    snackbarHostState: SnackbarHostState
+) {
+    val scope = rememberCoroutineScope()
+    
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -26,18 +36,68 @@ fun BasicInfoSection(viewModel: SeedInputViewModel) {
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier.padding(bottom = 16.dp)
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 16.dp)
         ) {
-            Image(
-                painter = painterResource(id = R.drawable.germination),
-                contentDescription = "基本情報",
-                modifier = Modifier.size(24.dp)
-            )
-            Text(
-                "基本情報",
-                style = MaterialTheme.typography.titleLarge
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.germination),
+                    contentDescription = "基本情報",
+                    modifier = Modifier.size(24.dp)
+                )
+                Text(
+                    "基本情報",
+                    style = MaterialTheme.typography.titleLarge
+                )
+            }
+            
+            // まき終わりアイコン
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = "まき終わり",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                IconButton(
+                    onClick = {
+                        val isChecked = !viewModel.packet.isFinished
+                        viewModel.updateFinishedFlagAndRefresh(isChecked) { result ->
+                            scope.launch {
+                                if (result.isSuccess) {
+                                    val message = if (isChecked) "種をまき終わりました" else "まき終わりを解除しました"
+                                    snackbarHostState.showSnackbar(
+                                        message = message,
+                                        duration = SnackbarDuration.Short
+                                    )
+                                } else {
+                                    snackbarHostState.showSnackbar(
+                                        message = "更新に失敗しました",
+                                        duration = SnackbarDuration.Short
+                                    )
+                                }
+                            }
+                        }
+                    },
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(
+                            id = if (viewModel.packet.isFinished) R.drawable.checkmark else R.drawable.packet
+                        ),
+                        contentDescription = if (viewModel.packet.isFinished) "まき終わり済み" else "まき終わり未完了",
+                        modifier = Modifier.size(36.dp),
+                        tint = Color.Unspecified // tintにColor.Unspecifiedを指定して元の色を使用
+                    )
+                }
+            }
         }
         
         // 商品名

@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -33,10 +34,16 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
+import com.example.seedstockkeeper6.R
 import com.example.seedstockkeeper6.ui.components.SwipeToDeleteItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -46,6 +53,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -63,6 +71,7 @@ import com.google.firebase.firestore.ListenerRegistration
 import com.google.gson.Gson
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
+import kotlinx.coroutines.launch
 
 // 種の状態を判定する関数
 fun getSeedStatus(seed: SeedPacket): String {
@@ -70,18 +79,13 @@ fun getSeedStatus(seed: SeedPacket): String {
     val currentMonth = currentDate.monthValue
     val currentYear = currentDate.year
     
-    // 1. 期限切れの判定（最優先）
-    val isExpired = seed.calendar.any { entry ->
-        if (entry.expirationYear > 0 && entry.expirationMonth > 0) {
-            val expirationDate = java.time.LocalDate.of(entry.expirationYear, entry.expirationMonth, 1)
-            expirationDate.isBefore(currentDate)
-        } else {
-            false
-        }
-    }
-    if (isExpired) return "expired"
+    // 1. まき終わりの判定（最優先）
+    if (seed.isFinished) return "finished"
     
-    // 2. 終了間近の判定
+    // 2. 期限切れの判定
+    if (seed.isExpired) return "expired"
+    
+    // 3. 終了間近の判定
     val isUrgent = seed.calendar.any { entry ->
         val sowingEndMonth = com.example.seedstockkeeper6.utils.DateConversionUtils.getMonthFromDate(entry.sowing_end_date)
         val sowingEndYear = com.example.seedstockkeeper6.utils.DateConversionUtils.getYearFromDate(entry.sowing_end_date)
@@ -89,7 +93,7 @@ fun getSeedStatus(seed: SeedPacket): String {
     }
     if (isUrgent) return "urgent"
     
-    // 3. 今月まける種の判定
+    // 4. 今月まける種の判定
     val isThisMonth = seed.calendar.any { entry ->
         if (entry.sowing_start_date.isNotEmpty() && entry.sowing_end_date.isNotEmpty()) {
             try {
@@ -119,12 +123,15 @@ fun SeedListScreen(
     val db = Firebase.firestore
     var seeds by remember { mutableStateOf(listOf<Pair<String, SeedPacket>>()) }
     val listState = rememberLazyListState()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
     
     // 検索状態
     var searchQuery by remember { mutableStateOf("") }
     var showThisMonthOnly by remember { mutableStateOf(false) }
     var showExpiredOnly by remember { mutableStateOf(false) }
     var showUrgentOnly by remember { mutableStateOf(false) }
+    var showFinishedSeeds by remember { mutableStateOf(true) }
     var showFilters by remember { mutableStateOf(false) }
     
     // URLパラメータの処理
@@ -152,7 +159,7 @@ fun SeedListScreen(
     val currentUid = currentUser?.uid
     
     // フィルタリングされた種リスト
-    val filteredSeeds = remember(seeds, searchQuery, showThisMonthOnly, showExpiredOnly, showUrgentOnly) {
+    val filteredSeeds = remember(seeds, searchQuery, showThisMonthOnly, showExpiredOnly, showUrgentOnly, showFinishedSeeds) {
         seeds.filter { (_, seed) ->
             val matchesSearch = searchQuery.isEmpty() || 
                 seed.productName.contains(searchQuery, ignoreCase = true) ||
@@ -203,7 +210,13 @@ fun SeedListScreen(
                 true
             }
             
-            matchesSearch && matchesThisMonth && matchesExpired && matchesUrgent
+            val matchesFinished = if (showFinishedSeeds) {
+                true // まき終わりの種も表示
+            } else {
+                !seed.isFinished // まき終わりの種を非表示
+            }
+            
+            matchesSearch && matchesThisMonth && matchesExpired && matchesUrgent && matchesFinished
         }
     }
 
@@ -237,7 +250,16 @@ fun SeedListScreen(
                                 val seed = doc.toObject(SeedPacket::class.java)
                                 if (seed != null) {
                                     // FirestoreのドキュメントIDをSeedPacketのidフィールドに設定
-                                    val seedWithId = seed.copy(id = doc.id, documentId = doc.id)
+                                    // 新しいフィールド（isFinished, isExpired）をFirestoreから直接取得
+                                    val isFinished = doc.getBoolean("isFinished") ?: false
+                                    val isExpired = doc.getBoolean("isExpired") ?: false
+                                    
+                                    val seedWithId = seed.copy(
+                                        id = doc.id, 
+                                        documentId = doc.id,
+                                        isFinished = isFinished,
+                                        isExpired = isExpired
+                                    )
                                     doc.id to seedWithId
                                 } else {
                                     null
@@ -263,11 +285,16 @@ fun SeedListScreen(
         }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surface)
-    ) {
+    Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.surface)
+                .padding(paddingValues)
+        ) {
         // 検索バー
         Card(
             modifier = Modifier
@@ -365,7 +392,7 @@ fun SeedListScreen(
                             }
                         }
                         
-                        // 2行目：「終了間近」
+                        // 2行目：「終了間近」「まき終わり」
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(16.dp),
                             verticalAlignment = Alignment.CenterVertically
@@ -389,6 +416,26 @@ fun SeedListScreen(
                                     color = MaterialTheme.colorScheme.tertiary
                                 )
                             }
+                            
+                            // まき終わりチェックボックス
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Checkbox(
+                                    checked = showFinishedSeeds,
+                                    onCheckedChange = { showFinishedSeeds = it },
+                                    colors = CheckboxDefaults.colors(
+                                        checkedColor = MaterialTheme.colorScheme.secondary,
+                                        uncheckedColor = MaterialTheme.colorScheme.outline
+                                    )
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "まき終わり",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.secondary
+                                )
+                            }
                         }
                 }
                 }
@@ -401,8 +448,8 @@ fun SeedListScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f),
-            verticalArrangement = Arrangement.spacedBy(8.dp), // アイテム間の間隔を8dpに設定
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp), // 上下に8dpのパディングを追加
+            verticalArrangement = Arrangement.spacedBy(6.dp), // アイテム間の間隔を6dpに設定
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 2.dp), // 上下に2dpのパディングを追加
             // スクロール設定
             userScrollEnabled = true
         ) {
@@ -425,10 +472,11 @@ fun SeedListScreen(
                 // 種の状態を判定
                 val seedStatus = getSeedStatus(seed)
                 val backgroundColor = when (seedStatus) {
-                    "expired" -> MaterialTheme.colorScheme.surfaceContainerHigh
-                    "urgent" -> MaterialTheme.colorScheme.errorContainer
-                    "thisMonth" -> MaterialTheme.colorScheme.primaryContainer
-                    else -> MaterialTheme.colorScheme.surface
+                    "finished" -> MaterialTheme.colorScheme.secondaryContainer  // まき終わり
+                    "expired" -> MaterialTheme.colorScheme.surfaceContainerHigh  // 有効期限切れ
+                    "urgent" -> MaterialTheme.colorScheme.errorContainer         // 終了間近
+                    "thisMonth" -> MaterialTheme.colorScheme.primaryContainer    // 今月まきどき
+                    else -> MaterialTheme.colorScheme.surfaceContainerLowest                   // 通常
                 }
                 
                 // 期限切れの種の色をLogで確認
@@ -440,117 +488,131 @@ fun SeedListScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(backgroundColor)
-                        .padding(16.dp)
+                        .padding(12.dp)
                         .clickable {
                             navController.navigate("input/$encodedSeed")
                         },
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
                 ) {
-                val rotation = familyRotationMinYearsLabel(seed.family) ?: ""
-                FamilyIcon(
-                    family = seed.family,
-                    size = 48.dp,
-                    cornerRadius = 8.dp,
-                    rotationLabel = rotation,
-                    badgeProtrusion = 4.dp,
-                    showCircleBorder = true
-                )
-                
-                // 商品情報Column
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth()
-                ) {
-                    // 品種名の上の余白（Material3ルール: 8dp）
-                    Spacer(modifier = Modifier.height(8.dp))
-                    
-                    // 商品名と品種名を横並び（横スクロール対応）
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .horizontalScroll(rememberScrollState()),
-                        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Text(
-                            seed.productName, 
-                            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Normal),
-                            maxLines = 1,
-                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-                        )
-                        Text(
-                            "（${seed.variety}）", 
-                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Light),
-                            maxLines = 1,
-                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-                        )
-                    }
-                    
-                    Spacer(modifier = Modifier.height(2.dp)) // 4dp → 2dpに縮小
-                    
-                    // 有効期限のみ表示（Checkbox一時削除でテスト）
-                    Text(
-                        "有効期限: ${seed.expirationYear}年 ${seed.expirationMonth}月", 
-                        style = MaterialTheme.typography.bodyLarge.copy(
-                            fontWeight = FontWeight.Light,
-                            lineHeight = MaterialTheme.typography.bodyLarge.fontSize // フォントサイズと同じlineHeight
-                        ),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 4.dp) // 上下の余白を4dpに制限（Checkbox削除テスト）
+                    // Familyアイコン
+                    val rotation = familyRotationMinYearsLabel(seed.family) ?: ""
+                    FamilyIcon(
+                        family = seed.family,
+                        size = 48.dp,
+                        cornerRadius = 8.dp,
+                        rotationLabel = rotation,
+                        badgeProtrusion = 4.dp,
+                        showCircleBorder = true
                     )
                     
-                    // コンパニオンプランツの表示
-                    if (seed.companionPlants.isNotEmpty()) {
-                        Spacer(modifier = Modifier.height(2.dp)) // 4dp → 2dpに縮小
-                        val companionPlantNames = seed.companionPlants
-                            .filter { it.plant.isNotBlank() }
-                            .map { it.plant }
-                            .take(3) // 最大3つまで表示
+                    // 中央: 縦並びの情報
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(2.dp)
+                    ) {
+                        // 商品名
+                        Text(
+                            text = seed.productName,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
                         
-                        if (companionPlantNames.isNotEmpty()) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .horizontalScroll(rememberScrollState()),
-                                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(6.dp)
-                            ) {
-                                // Cを丸で囲ったアイコン（Material3準拠）
-                                Box(
-                                    modifier = Modifier
-                                        .size(24.dp)
-                                        .background(
-                                            color = MaterialTheme.colorScheme.tertiaryContainer,
-                                            shape = CircleShape
-                                        ),
-                                    contentAlignment = androidx.compose.ui.Alignment.Center
+                        // 品種名
+                        Text(
+                            text = seed.variety,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        
+                        // 有効期限
+                        Text(
+                            text = "有効期限: ${seed.expirationYear}/${seed.expirationMonth}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        
+                        // コンパニオンプランツ
+                        if (seed.companionPlants.isNotEmpty()) {
+                            val companionPlantNames = seed.companionPlants
+                                .filter { it.plant.isNotBlank() }
+                                .map { it.plant }
+                                .take(3)
+                            
+                            if (companionPlantNames.isNotEmpty()) {
+                                Row(
+                                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                                 ) {
+                                    // Cを丸で囲ったアイコン
+                                    Box(
+                                        modifier = Modifier
+                                            .size(20.dp)
+                                            .background(
+                                                color = MaterialTheme.colorScheme.tertiaryContainer,
+                                                shape = CircleShape
+                                            ),
+                                        contentAlignment = androidx.compose.ui.Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = "C",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onTertiaryContainer,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                    
+                                    // コンパニオンプランツ名
                                     Text(
-                                        text = "C",
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = MaterialTheme.colorScheme.onTertiaryContainer,
-                                        fontWeight = FontWeight.Bold
+                                        text = "${companionPlantNames.joinToString(", ")}${if (seed.companionPlants.size > 3) "..." else ""}",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.primary,
+                                        maxLines = 1,
+                                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                                     )
                                 }
-                                
-                                // コンパニオンプランツ名（1行表示、横スクロール対応）
-                                Text(
-                                    "${companionPlantNames.joinToString(", ")}${if (seed.companionPlants.size > 3) "..." else ""}",
-                                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Light),
-                                    maxLines = 1,
-                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-                                )
                             }
                         }
                     }
                     
-                    // コンパニオンプランツの下の余白（Material3ルール: 8dp）
-                    Spacer(modifier = Modifier.height(8.dp))
+                    // 右側: まき終わりアイコン
+                    IconButton(
+                        onClick = {
+                            val isChecked = !seed.isFinished
+                            // まき終わりフラグの更新処理
+                            val documentId = seed.documentId ?: seed.id
+                            if (documentId != null) {
+                                viewModel.updateFinishedFlag(documentId, isChecked) { result ->
+                                    scope.launch {
+                                        if (result.isSuccess) {
+                                            val message = if (isChecked) "まき終わりに設定しました" else "まき終わりを解除しました"
+                                            snackbarHostState.showSnackbar(
+                                                message = message,
+                                                duration = SnackbarDuration.Short
+                                            )
+                                        } else {
+                                            snackbarHostState.showSnackbar(
+                                                message = "更新に失敗しました",
+                                                duration = SnackbarDuration.Short
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(
+                                id = if (seed.isFinished) R.drawable.checkmark else R.drawable.packet
+                            ),
+                            contentDescription = if (seed.isFinished) "まき終わり済み" else "まき終わり未完了",
+                            modifier = Modifier.size(36.dp),
+                            tint = Color.Unspecified // tintにColor.Unspecifiedを指定して元の色を使用
+                        )
+                    }
                 }
-            }
             }
             
             // 区切り線（最後のアイテム以外）
@@ -562,5 +624,6 @@ fun SeedListScreen(
             }
         }
         }
+    }
     }
 }

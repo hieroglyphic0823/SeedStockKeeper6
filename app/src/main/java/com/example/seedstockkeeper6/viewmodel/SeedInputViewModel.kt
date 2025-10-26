@@ -1447,6 +1447,50 @@ class SeedInputViewModel : ViewModel() {
         hasExistingData = true
     }
     
+    fun updateFinishedFlag(isFinished: Boolean) {
+        packet = packet.copy(isFinished = isFinished)
+    }
+    
+    fun updateFinishedFlagAndRefresh(isFinished: Boolean, onComplete: (Result<Unit>) -> Unit) {
+        viewModelScope.launch {
+            try {
+                // まずローカルの状態を更新
+                packet = packet.copy(isFinished = isFinished)
+                
+                // Firebaseに更新を送信
+                val documentId = packet.documentId ?: packet.id
+                if (documentId != null) {
+                    val db = Firebase.firestore
+                    val docRef = db.collection("seeds").document(documentId)
+                    docRef.update("isFinished", isFinished).await()
+                    
+                    // Firebaseから最新データを再取得
+                    val updatedDoc = docRef.get().await()
+                    if (updatedDoc.exists()) {
+                        val updatedSeed = updatedDoc.toObject(SeedPacket::class.java)
+                        if (updatedSeed != null) {
+                            val isFinishedFromDb = updatedDoc.getBoolean("isFinished") ?: false
+                            val isExpiredFromDb = updatedDoc.getBoolean("isExpired") ?: false
+                            
+                            packet = updatedSeed.copy(
+                                id = updatedDoc.id,
+                                documentId = updatedDoc.id,
+                                isFinished = isFinishedFromDb,
+                                isExpired = isExpiredFromDb
+                            )
+                        }
+                    }
+                    
+                    onComplete(Result.success(Unit))
+                } else {
+                    onComplete(Result.failure(IllegalStateException("Document ID not found")))
+                }
+            } catch (e: Exception) {
+                onComplete(Result.failure(e))
+            }
+        }
+    }
+    
     fun saveSeedData(context: android.content.Context, onComplete: (Result<Unit>) -> Unit) {
         // 種情報の保存処理
         // 既存のsaveSeedメソッドを呼び出す

@@ -57,7 +57,9 @@ data class SeedPacket(
     val companionPlants: List<CompanionPlant> = emptyList(),
     val documentId: String? = null, // FirestoreのドキュメントIDを保持する場合
     val selectedRegion: String? = null, //
-    val ownerUid: String = "" // Firestoreオーナー
+    val ownerUid: String = "", // Firestoreオーナー
+    val isFinished: Boolean = false, // まき終わりフラグ
+    val isExpired: Boolean = false   // 有効期限切れフラグ
 ) {
     // 指定された月・年・期間（上旬・中旬・下旬）に播種期間が含まれるかチェック
     fun isSowingIn(month: Int, year: Int, periodIndex: Int, isPreview: Boolean = false): Boolean {

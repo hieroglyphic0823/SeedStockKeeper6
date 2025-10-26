@@ -119,7 +119,7 @@ fun SeedInputScreen(
             )
             
             // 基本情報セクション
-            BasicInfoSection(viewModel)
+            BasicInfoSection(viewModel, snackbarHostState)
             
             // 区切り線
             HorizontalDivider(
