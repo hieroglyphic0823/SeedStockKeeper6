@@ -17,6 +17,7 @@ import com.example.seedstockkeeper6.model.CalendarEntry
 import com.example.seedstockkeeper6.model.SeedPacket
 import com.example.seedstockkeeper6.service.StatisticsService
 import com.example.seedstockkeeper6.util.drawRectOverlay
+import com.example.seedstockkeeper6.utils.ExpirationUtils
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
@@ -226,10 +227,31 @@ class SeedInputViewModel : ViewModel() {
                 selectedImageBitmap = rotated
                 selectedImageUri = rotatedUri
 
+        } catch (e: Exception) {
+        }
+    }
+    
+    /**
+     * 有効期限切れフラグをFirebaseに更新
+     */
+    fun updateExpirationFlagInFirebase(onComplete: (Result<Unit>) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val documentId = packet.documentId ?: packet.id
+                if (documentId != null) {
+                    val db = Firebase.firestore
+                    val docRef = db.collection("seeds").document(documentId)
+                    docRef.update("isExpired", packet.isExpired).await()
+                    onComplete(Result.success(Unit))
+                } else {
+                    onComplete(Result.failure(IllegalStateException("Document ID not found")))
+                }
             } catch (e: Exception) {
+                onComplete(Result.failure(e))
             }
         }
     }
+}
 
     suspend fun performOcr(context: Context) {
         if (ocrTargetIndex !in imageUris.indices) {
@@ -529,6 +551,9 @@ class SeedInputViewModel : ViewModel() {
             isLoading = true
             isSaving = true
             try {
+                // 0) 有効期限切れフラグを更新
+                checkAndUpdateExpirationFlag()
+                
                 // 1) docId を確定（既存なら流用、無ければ新規発番）
                 val target = packet.documentId?.let { db.collection("seeds").document(it) }
                     ?: db.collection("seeds").document()
@@ -1526,6 +1551,40 @@ class SeedInputViewModel : ViewModel() {
             } else {
             }
         } catch (e: Exception) {
+        }
+    }
+    
+    /**
+     * 有効期限切れフラグをチェックして更新
+     */
+    fun checkAndUpdateExpirationFlag() {
+        val isExpired = ExpirationUtils.isSeedExpired(packet)
+        if (packet.isExpired != isExpired) {
+            android.util.Log.d("SeedInputViewModel", "期限切れフラグを更新: ${packet.isExpired} -> $isExpired")
+            packet = packet.copy(isExpired = isExpired)
+        } else {
+            android.util.Log.d("SeedInputViewModel", "期限切れフラグは変更なし: $isExpired")
+        }
+    }
+    
+    /**
+     * 有効期限切れフラグをFirebaseに更新
+     */
+    fun updateExpirationFlagInFirebase(onComplete: (Result<Unit>) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val documentId = packet.documentId ?: packet.id
+                if (documentId != null) {
+                    val db = Firebase.firestore
+                    val docRef = db.collection("seeds").document(documentId)
+                    docRef.update("isExpired", packet.isExpired).await()
+                    onComplete(Result.success(Unit))
+                } else {
+                    onComplete(Result.failure(IllegalStateException("Document ID not found")))
+                }
+            } catch (e: Exception) {
+                onComplete(Result.failure(e))
+            }
         }
     }
 

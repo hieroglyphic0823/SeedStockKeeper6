@@ -638,6 +638,16 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
                     if (yearInt > 0 && monthInt > 0) {
                         viewModel.onExpirationYearChange(yearInt.toString())
                         viewModel.onExpirationMonthChange(monthInt.toString())
+                        // 有効期限変更後に期限切れフラグをチェック
+                        viewModel.checkAndUpdateExpirationFlag()
+                        // Firebaseにも期限切れフラグを更新
+                        viewModel.updateExpirationFlagInFirebase { result ->
+                            if (result.isSuccess) {
+                                android.util.Log.d("CalendarSection", "期限切れフラグをFirebaseに更新しました")
+                            } else {
+                                android.util.Log.e("CalendarSection", "期限切れフラグのFirebase更新に失敗", result.exceptionOrNull())
+                            }
+                        }
                     }
                     showExpirationBottomSheet = false
                 },

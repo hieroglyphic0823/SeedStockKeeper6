@@ -2,6 +2,7 @@ package com.example.seedstockkeeper6.service
 
 import com.example.seedstockkeeper6.BuildConfig
 import com.example.seedstockkeeper6.model.SeedPacket
+import com.example.seedstockkeeper6.utils.ExpirationUtils
 import com.google.ai.client.generativeai.GenerativeModel
 import com.google.ai.client.generativeai.type.generationConfig
 import kotlinx.coroutines.Dispatchers
@@ -31,6 +32,49 @@ class GeminiNotificationService {
             } else {
             }
         } catch (e: Exception) {
+        }
+    }
+    
+    /**
+     * 月次通知を生成（有効期限切れフラグ自動更新・古い通知削除付き）
+     */
+    suspend fun generateMonthlyNotificationWithCleanup(
+        region: String,
+        prefecture: String,
+        seedInfoUrl: String,
+        userSeeds: List<SeedPacket>,
+        currentMonth: Int,
+        farmOwner: String,
+        customFarmOwner: String = ""
+    ): String = withContext(Dispatchers.IO) {
+        try {
+            // 1. 有効期限切れフラグを自動更新
+            val updatedSeeds = updateExpirationFlags(userSeeds)
+            
+            // 2. 通知に含めるべき種をフィルタリング（まき終わり・期限切れを除外）
+            val notificationEligibleSeeds = filterNotificationEligibleSeeds(updatedSeeds)
+            
+            android.util.Log.d("GeminiNotificationService", "通知対象種数: ${notificationEligibleSeeds.size}/${userSeeds.size} (まき終わり・期限切れ除外後)")
+            
+            // 3. 古い通知を自動削除
+            val notificationHistoryService = NotificationHistoryService()
+            val deletedCount = notificationHistoryService.cleanupOldNotifications()
+            android.util.Log.i("GeminiNotificationService", "古い通知削除: ${deletedCount}件")
+            
+            // 4. 通知を生成（フィルタリングされた種を使用）
+            generateMonthlyNotificationContent(
+                region = region,
+                prefecture = prefecture,
+                seedInfoUrl = seedInfoUrl,
+                userSeeds = notificationEligibleSeeds, // フィルタリングされた種を使用
+                currentMonth = currentMonth,
+                farmOwner = farmOwner,
+                customFarmOwner = customFarmOwner
+            )
+            
+        } catch (e: Exception) {
+            android.util.Log.e("GeminiNotificationService", "月次通知生成エラー", e)
+            contentFormatter.getDefaultMonthlyContent(dataProcessor.getMonthName(currentMonth))
         }
     }
     
@@ -337,5 +381,36 @@ class GeminiNotificationService {
         } catch (e: Exception) {
             contentFormatter.extractSummaryManually(fullContent)
         }
+    }
+    
+    /**
+     * 有効期限切れフラグを自動更新
+     */
+    suspend fun updateExpirationFlags(seeds: List<SeedPacket>): List<SeedPacket> = withContext(Dispatchers.IO) {
+        try {
+            val updatedSeeds = mutableListOf<SeedPacket>()
+            
+            for (seed in seeds) {
+                val isExpired = ExpirationUtils.isSeedExpired(seed)
+                val updatedSeed = if (seed.isExpired != isExpired) {
+                    seed.copy(isExpired = isExpired)
+                } else {
+                    seed
+                }
+                updatedSeeds.add(updatedSeed)
+            }
+            
+            updatedSeeds
+        } catch (e: Exception) {
+            android.util.Log.e("GeminiNotificationService", "有効期限切れフラグ更新エラー", e)
+            seeds // エラーの場合は元のリストを返す
+        }
+    }
+    
+    /**
+     * 通知に含めるべき種をフィルタリング（まき終わり・期限切れを除外）
+     */
+    fun filterNotificationEligibleSeeds(seeds: List<SeedPacket>): List<SeedPacket> {
+        return ExpirationUtils.getNotificationEligibleSeeds(seeds)
     }
 }

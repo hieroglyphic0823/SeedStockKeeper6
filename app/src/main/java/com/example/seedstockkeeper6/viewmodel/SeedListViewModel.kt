@@ -133,7 +133,31 @@ class SeedListViewModel : ViewModel() {
             
             try {
                 val docRef = db.collection("seeds").document(documentId)
-                docRef.update("isFinished", isFinished).await()
+                
+                // まず現在の種データを取得して期限切れフラグをチェック
+                val docSnapshot = docRef.get().await()
+                if (docSnapshot.exists()) {
+                    val seed = docSnapshot.toObject(SeedPacket::class.java)
+                    if (seed != null) {
+                        val isExpired = com.example.seedstockkeeper6.utils.ExpirationUtils.isSeedExpired(seed)
+                        
+                        // まき終わりフラグと期限切れフラグを同時に更新
+                        val updates = mutableMapOf<String, Any>()
+                        updates["isFinished"] = isFinished
+                        if (seed.isExpired != isExpired) {
+                            updates["isExpired"] = isExpired
+                            android.util.Log.d("SeedListViewModel", "期限切れフラグを更新: ${seed.productName} ${seed.isExpired} -> $isExpired")
+                        }
+                        
+                        docRef.update(updates).await()
+                    } else {
+                        // 種データが取得できない場合はまき終わりフラグのみ更新
+                        docRef.update("isFinished", isFinished).await()
+                    }
+                } else {
+                    // ドキュメントが存在しない場合はまき終わりフラグのみ更新
+                    docRef.update("isFinished", isFinished).await()
+                }
                 
                 // 集計データを更新
                 try {

@@ -9,6 +9,8 @@ import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.tasks.await
 import java.text.SimpleDateFormat
 import java.util.*
+import java.time.LocalDate
+import java.time.ZoneId
 
 class NotificationHistoryService {
     
@@ -374,6 +376,55 @@ class NotificationHistoryService {
             
         } catch (e: Exception) {
             android.util.Log.e("NotificationHistoryService", "未読通知数取得エラー", e)
+            0
+        }
+    }
+    
+    /**
+     * 6ヶ月以上前の古い通知を自動削除
+     */
+    suspend fun cleanupOldNotifications(): Int {
+        return try {
+            val currentUser = auth.currentUser
+            if (currentUser == null) {
+                android.util.Log.w("NotificationHistoryService", "ユーザーがログインしていません")
+                return 0
+            }
+            
+            val sixMonthsAgo = LocalDate.now().minusMonths(6)
+            val sixMonthsAgoTimestamp = sixMonthsAgo.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+            
+            android.util.Log.d("NotificationHistoryService", "古い通知削除開始: ${sixMonthsAgo}より前の通知を削除")
+            
+            // 6ヶ月以上前の通知を取得
+            val oldNotificationsQuery = db.collection("notifications")
+                .whereEqualTo("ownerUid", currentUser.uid)
+                .whereLessThan("timestamp", sixMonthsAgoTimestamp)
+            
+            val oldNotificationsSnapshot = oldNotificationsQuery.get().await()
+            
+            if (oldNotificationsSnapshot.isEmpty) {
+                android.util.Log.d("NotificationHistoryService", "削除対象の古い通知はありません")
+                return 0
+            }
+            
+            // 古い通知を削除
+            val batch = db.batch()
+            var deletedCount = 0
+            
+            for (document in oldNotificationsSnapshot.documents) {
+                batch.delete(document.reference)
+                deletedCount++
+                android.util.Log.d("NotificationHistoryService", "削除対象通知: ID=${document.id}, タイトル=${document.getString("title")}")
+            }
+            
+            batch.commit().await()
+            
+            android.util.Log.i("NotificationHistoryService", "古い通知削除完了: ${deletedCount}件削除")
+            deletedCount
+            
+        } catch (e: Exception) {
+            android.util.Log.e("NotificationHistoryService", "古い通知削除エラー", e)
             0
         }
     }
