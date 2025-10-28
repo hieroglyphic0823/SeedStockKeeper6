@@ -118,6 +118,8 @@ fun CastleScreenPreviewContent(
         thisMonthSowingCount = 1,
         urgentSeedsCount = 0,
         totalSeeds = 3,
+        finishedSeedsCount = 1,
+        expiredSeedsCount = 0,
         familyDistribution = listOf(
             Pair("せり科", 1),
             Pair("きく科", 1),
@@ -210,6 +212,15 @@ fun CastleScreenContent(
         
         Spacer(modifier = Modifier.height(16.dp))
         
+        // 今月の種一覧
+        ThisMonthSeedsSection(
+            seeds = seeds,
+            currentMonth = currentMonth,
+            currentYear = currentYear
+        )
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
         // 助さんのメッセージ
         notification?.let { notif ->
             SukesanMessageCard(
@@ -218,13 +229,6 @@ fun CastleScreenContent(
             )
             Spacer(modifier = Modifier.height(16.dp))
         }
-        
-        // 今月の種一覧
-        ThisMonthSeedsSection(
-            seeds = seeds,
-            currentMonth = currentMonth,
-            currentYear = currentYear
-        )
         
         Spacer(modifier = Modifier.height(16.dp))
         
@@ -612,6 +616,8 @@ data class StatisticsData(
     val thisMonthSowingCount: Int,
     val urgentSeedsCount: Int,
     val totalSeeds: Int,
+    val finishedSeedsCount: Int,
+    val expiredSeedsCount: Int,
     val familyDistribution: List<Pair<String, Int>>
 )
 

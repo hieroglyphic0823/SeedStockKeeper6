@@ -112,6 +112,19 @@ fun CastleScreen(
             )
         }
         
+        // 今月の播種状況
+        item {
+            SowingSummaryCards(
+                thisMonthSowingCount = statisticsData.thisMonthSowingCount,
+                urgentSeedsCount = statisticsData.urgentSeedsCount,
+                navController = navController
+            )
+        }
+        
+        item {
+            Spacer(modifier = Modifier.height(4.dp))
+        }
+        
         // すけさんからのメッセージ
         item {
             SukesanMessageCard(
@@ -133,23 +146,11 @@ fun CastleScreen(
             Spacer(modifier = Modifier.height(4.dp))
         }
         
-        // 今月の播種状況
-        item {
-            SowingSummaryCards(
-                thisMonthSowingCount = statisticsData.thisMonthSowingCount,
-                urgentSeedsCount = statisticsData.urgentSeedsCount,
-                navController = navController
-            )
-        }
-        
-        item {
-            Spacer(modifier = Modifier.height(4.dp))
-        }
-        
         // 統計ウィジェット
         item {
             StatisticsWidgets(
                 totalSeeds = statisticsData.totalSeeds,
+                finishedSeedsCount = statisticsData.finishedSeedsCount,
                 expiredSeedsCount = statisticsData.expiredSeedsCount,
                 familyDistribution = statisticsData.familyDistribution,
                 navController = navController

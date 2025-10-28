@@ -228,7 +228,7 @@ fun SowingSummaryCards(
             )
             Text(
                 text = "今月の種",
-                style = MaterialTheme.typography.titleLarge,
+                style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Normal,
                 color = MaterialTheme.colorScheme.onBackground
             )
@@ -277,6 +277,7 @@ fun SowingSummaryCards(
 @Composable
 fun StatisticsWidgets(
     totalSeeds: Int,
+    finishedSeedsCount: Int,
     expiredSeedsCount: Int,
     familyDistribution: List<Pair<String, Int>>,
     navController: NavController
@@ -296,7 +297,7 @@ fun StatisticsWidgets(
             )
             Text(
                 text = "統計",
-                style = MaterialTheme.typography.titleLarge,
+                style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Normal,
                 color = MaterialTheme.colorScheme.onBackground
             )
@@ -320,6 +321,22 @@ fun StatisticsWidgets(
                     modifier = Modifier.fillMaxWidth()
                 )
                 
+                // まきおわり種子数
+                val onFinishedClick = {
+                    // 種リスト画面に遷移し、「まきおわり」チェックボックスをオンにする
+                    navController.navigate("list?filter=finished")
+                }
+                
+                SummaryCardWithoutIcon(
+                    title = "まきおわり",
+                    value = "$finishedSeedsCount",
+                    subtitle = "",
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = onFinishedClick
+                )
+                
                 // 期限切れ種子数
                 val onExpiredClick = {
                     // 種リスト画面に遷移し、「期限切れ」チェックボックスをオンにする
@@ -330,7 +347,7 @@ fun StatisticsWidgets(
                     title = "期限切れ",
                     value = "$expiredSeedsCount",
                     subtitle = "",
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                     contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.fillMaxWidth(),
                     onClick = onExpiredClick

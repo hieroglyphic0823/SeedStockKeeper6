@@ -148,19 +148,8 @@ class CastleViewModel(private val context: Context) : ViewModel() {
             return createPreviewStatisticsData()
         }
         
-        val monthlyStats = _monthlyStatistics.value
-        if (monthlyStats != null) {
-            return StatisticsData(
-                thisMonthSowingCount = monthlyStats.thisMonthSowingCount,
-                urgentSeedsCount = monthlyStats.urgentSeedsCount,
-                totalSeeds = monthlyStats.totalSeeds,
-                expiredSeedsCount = monthlyStats.totalSeeds - monthlyStats.validSeedsCount,
-                familyDistribution = monthlyStats.getTopFamilies(3)
-            )
-        } else {
-            // フォールバック：従来の計算処理
-            return calculateStatisticsFromSeeds(seeds)
-        }
+        // 常に最新の種データから計算するように変更
+        return calculateStatisticsFromSeeds(seeds)
     }
     
     /**
@@ -171,27 +160,47 @@ class CastleViewModel(private val context: Context) : ViewModel() {
         val currentMonth = currentDate.monthValue
         val currentYear = currentDate.year
         
+        // まき終わった種を除外した有効な種のリスト
+        val activeSeeds = seeds.filter { !it.isFinished }
+        
+        // 今月の播種予定種子数（まき終わった種を除外）
         val thisMonthSowingSeeds = com.example.seedstockkeeper6.utils.SowingCalculationUtils.getThisMonthSowingSeeds(
-            seeds = seeds,
+            seeds = activeSeeds,
             currentDate = currentDate,
-            excludeFinished = true
+            excludeFinished = false // 既にフィルタリング済みなのでfalse
         )
         
+        // 終了間近の種子数（まき終わった種を除外）
         val urgentSeeds = com.example.seedstockkeeper6.utils.SowingCalculationUtils.getUrgentSeeds(
-            seeds = seeds,
+            seeds = activeSeeds,
             currentDate = currentDate
         )
         
-        val validSeeds = seeds.filter { seed ->
+        // 有効期限内の種（まき終わった種を除外）
+        val validSeeds = activeSeeds.filter { seed ->
             val expirationDate = LocalDate.of(seed.expirationYear, seed.expirationMonth, 1)
             currentDate.isBefore(expirationDate.plusMonths(1))
         }
         
-        val expiredSeeds = seeds.filter { seed ->
+        // 期限切れの種（まき終わった種を除外）
+        val expiredSeeds = activeSeeds.filter { seed ->
             val expirationDate = LocalDate.of(seed.expirationYear, seed.expirationMonth, 1)
             currentDate.isAfter(expirationDate.plusMonths(1))
         }
         
+        // まき終わった種の数（全種から計算）
+        val finishedSeeds = seeds.filter { it.isFinished }
+        
+        // デバッグログを追加
+        android.util.Log.d("CastleViewModel", "統計計算結果:")
+        android.util.Log.d("CastleViewModel", "  全種子数: ${seeds.size}")
+        android.util.Log.d("CastleViewModel", "  まき終わり: ${finishedSeeds.size}")
+        android.util.Log.d("CastleViewModel", "  今月播種予定: ${thisMonthSowingSeeds.size}")
+        android.util.Log.d("CastleViewModel", "  終了間近: ${urgentSeeds.size}")
+        android.util.Log.d("CastleViewModel", "  期限切れ: ${expiredSeeds.size}")
+        android.util.Log.d("CastleViewModel", "  まき終わり種詳細: ${finishedSeeds.map { "${it.productName}(${it.variety})" }}")
+        
+        // 科別分布（有効期限内の種のみ）
         val familyDist = validSeeds.groupBy { it.family }
             .mapValues { it.value.size }
             .toList()
@@ -202,6 +211,7 @@ class CastleViewModel(private val context: Context) : ViewModel() {
             thisMonthSowingCount = thisMonthSowingSeeds.size,
             urgentSeedsCount = urgentSeeds.size,
             totalSeeds = seeds.size,
+            finishedSeedsCount = finishedSeeds.size,
             expiredSeedsCount = expiredSeeds.size,
             familyDistribution = familyDist
         )

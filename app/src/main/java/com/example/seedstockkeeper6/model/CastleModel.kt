@@ -10,6 +10,7 @@ data class StatisticsData(
     val thisMonthSowingCount: Int,
     val urgentSeedsCount: Int,
     val totalSeeds: Int,
+    val finishedSeedsCount: Int,
     val expiredSeedsCount: Int,
     val familyDistribution: List<Pair<String, Int>>
 )
@@ -321,6 +322,7 @@ fun createPreviewStatisticsData(): StatisticsData {
         thisMonthSowingCount = 1,
         urgentSeedsCount = 0,
         totalSeeds = 2,
+        finishedSeedsCount = 1,
         expiredSeedsCount = 0,
         familyDistribution = listOf(Pair("せり科", 1), Pair("きく科", 1))
     )

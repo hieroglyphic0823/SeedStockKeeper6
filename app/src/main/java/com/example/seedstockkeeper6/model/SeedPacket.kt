@@ -2,6 +2,7 @@ package com.example.seedstockkeeper6.model
 
 import kotlinx.serialization.Serializable
 import java.util.UUID
+import com.google.firebase.firestore.PropertyName
 
 enum class CompanionEffectCode(val code: String, val displayName: String) {
     PEST_PREVENTION("01", "害虫予防"),
@@ -58,8 +59,10 @@ data class SeedPacket(
     val documentId: String? = null, // FirestoreのドキュメントIDを保持する場合
     val selectedRegion: String? = null, //
     val ownerUid: String = "", // Firestoreオーナー
-    val isFinished: Boolean = false, // まき終わりフラグ
-    val isExpired: Boolean = false   // 有効期限切れフラグ
+    @get:PropertyName("isFinished")
+    var isFinished: Boolean = false, // まき終わりフラグ
+    @get:PropertyName("isExpired")
+    var isExpired: Boolean = false   // 有効期限切れフラグ
 ) {
     // 指定された月・年・期間（上旬・中旬・下旬）に播種期間が含まれるかチェック
     fun isSowingIn(month: Int, year: Int, periodIndex: Int, isPreview: Boolean = false): Boolean {
