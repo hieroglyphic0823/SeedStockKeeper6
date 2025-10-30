@@ -129,8 +129,22 @@ class CastleViewModel(private val context: Context) : ViewModel() {
                     // プレビュー時は固定データ
                     _latestNotification.value = createPreviewNotificationData()
                 } else {
-                    val notifications = repository.getLatestNotification(limit = 1)
-                    _latestNotification.value = notifications.firstOrNull()
+                    // 月次・週次のうち最新の通知を選択
+                    val notifications = repository.getLatestNotification(limit = 50)
+                    val targetTypes = setOf("MONTHLY", "WEEKLY")
+                    val latest = notifications
+                        .filter { it.notificationType in targetTypes }
+                        .maxByOrNull { data ->
+                            try {
+                                val formatter = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", java.util.Locale.getDefault()).apply {
+                                    timeZone = java.util.TimeZone.getTimeZone("UTC")
+                                }
+                                formatter.parse(data.sentAt)?.time ?: 0L
+                            } catch (e: Exception) {
+                                0L
+                            }
+                        }
+                    _latestNotification.value = latest
                 }
             } catch (e: Exception) {
                 _latestNotification.value = null
