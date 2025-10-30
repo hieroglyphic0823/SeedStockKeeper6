@@ -95,17 +95,23 @@ fun CalendarDetailSection(
 }
 
 // 日付範囲をフォーマットする関数
+@androidx.compose.runtime.Composable
 private fun formatDateRange(startDate: String, endDate: String): String {
     if (startDate.isEmpty() || endDate.isEmpty()) return ""
-    
-    val startYear = DateConversionUtils.getYearFromDate(startDate)
-    val startMonth = DateConversionUtils.getMonthFromDate(startDate)
-    val startStage = DateConversionUtils.convertDateToStage(startDate)
-    val endYear = DateConversionUtils.getYearFromDate(endDate)
-    val endMonth = DateConversionUtils.getMonthFromDate(endDate)
-    val endStage = DateConversionUtils.convertDateToStage(endDate)
-    
-    return "${if (startYear > 0) "${startYear}年" else ""}${startMonth}月${if (startStage.isNotEmpty()) "(${startStage})" else ""} ～ ${if (endYear > 0) "${endYear}年" else ""}${endMonth}月${if (endStage.isNotEmpty()) "(${endStage})" else ""}"
+    return androidx.compose.runtime.remember(startDate, endDate) {
+        try {
+            val start = java.time.LocalDate.parse(startDate, java.time.format.DateTimeFormatter.ISO_LOCAL_DATE)
+            val end = java.time.LocalDate.parse(endDate, java.time.format.DateTimeFormatter.ISO_LOCAL_DATE)
+            val startStage = com.example.seedstockkeeper6.utils.DateConversionUtils.convertDayToStage(start.dayOfMonth)
+            val endStage = com.example.seedstockkeeper6.utils.DateConversionUtils.convertDayToStage(end.dayOfMonth)
+            val startText = "${start.year}年${start.monthValue}月(${startStage})"
+            val endText = "${end.year}年${end.monthValue}月(${endStage})"
+            "$startText ～ $endText"
+        } catch (e: java.time.format.DateTimeParseException) {
+            android.util.Log.e("formatDateRange", "日付のパースに失敗しました: $startDate, $endDate", e)
+            "$startDate ～ $endDate"
+        }
+    }
 }
 
 @Preview(showBackground = true)

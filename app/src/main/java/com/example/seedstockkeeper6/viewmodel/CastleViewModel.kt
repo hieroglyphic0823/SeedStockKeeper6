@@ -200,12 +200,11 @@ class CastleViewModel(private val context: Context) : ViewModel() {
         android.util.Log.d("CastleViewModel", "  期限切れ: ${expiredSeeds.size}")
         android.util.Log.d("CastleViewModel", "  まき終わり種詳細: ${finishedSeeds.map { "${it.productName}(${it.variety})" }}")
         
-        // 科別分布（有効期限内の種のみ）
-        val familyDist = validSeeds.groupBy { it.family }
+        // 科別分布（全ての種を対象）
+        val familyDist = seeds.groupBy { it.family }
             .mapValues { it.value.size }
             .toList()
             .sortedByDescending { it.second }
-            .take(3)
         
         return StatisticsData(
             thisMonthSowingCount = thisMonthSowingSeeds.size,

@@ -75,8 +75,8 @@ fun CastleScreen(
     val latestNotification by castleViewModel.latestNotification.collectAsStateWithLifecycle()
     val isLoadingNotification by castleViewModel.isLoadingNotification.collectAsStateWithLifecycle()
     
-    // 集計データの取得
-    LaunchedEffect(displaySeeds.size) {
+    // 集計データの取得（リスト内容が変わったときに更新）
+    LaunchedEffect(displaySeeds) {
         castleViewModel.loadStatistics(displaySeeds, isPreview)
     }
     
@@ -90,8 +90,10 @@ fun CastleScreen(
         castleViewModel.loadNotificationData(isPreview)
     }
     
-    // 集計データを生成
-    val statisticsData = castleViewModel.generateStatisticsData(displaySeeds, isPreview)
+    // 集計データを生成（重い計算はメモ化して再コンポジション負荷を下げる）
+    val statisticsData = remember(displaySeeds, isPreview) {
+        castleViewModel.generateStatisticsData(displaySeeds, isPreview)
+    }
     
     // 通知詳細ダイアログの状態
     var showNotificationDialog by remember { mutableStateOf(false) }

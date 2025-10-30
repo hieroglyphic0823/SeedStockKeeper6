@@ -304,12 +304,15 @@ fun StatisticsWidgets(
         }
         
         Row(
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            modifier = Modifier.height(IntrinsicSize.Min)
         ) {
             // 左側：登録総数と期限切れを縦に並べる
             Column(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
-                modifier = Modifier.weight(1f)
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
             ) {
                 // 登録種子総数
                 SummaryCardWithoutIcon(
@@ -393,7 +396,7 @@ fun StatisticsWidgets(
                         )
                     } else {
                         Text(
-                            text = "有効期限内の種がありません",
+                            text = "種がありません",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f),
                             textAlign = TextAlign.Center,
@@ -602,7 +605,7 @@ fun PieChart(
         Column(
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            data.take(3).forEachIndexed { index, (family, count) ->
+            data.forEachIndexed { index, (family, count) ->
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(4.dp)

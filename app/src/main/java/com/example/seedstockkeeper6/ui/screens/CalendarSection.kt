@@ -671,36 +671,21 @@ private fun getRegionColor(region: String): Color {
 
 // 日付範囲を旬形式でフォーマットするヘルパー関数
 private fun formatDateRange(startDate: String, endDate: String): String {
-    
-    if (startDate.isEmpty() && endDate.isEmpty()) {
-        return "未設定"
+    if (startDate.isEmpty() && endDate.isEmpty()) return "未設定"
+    fun formatOne(date: String): String {
+        return try {
+            val d = java.time.LocalDate.parse(date, java.time.format.DateTimeFormatter.ISO_LOCAL_DATE)
+            val stage = com.example.seedstockkeeper6.utils.DateConversionUtils.convertDayToStage(d.dayOfMonth)
+            "${d.year}年${d.monthValue}月(${stage})"
+        } catch (e: java.time.format.DateTimeParseException) {
+            date
+        }
     }
-    
-    val startFormatted = if (startDate.isNotEmpty()) {
-        val year = DateConversionUtils.getYearFromDate(startDate)
-        val month = DateConversionUtils.getMonthFromDate(startDate)
-        val stage = DateConversionUtils.convertDateToStage(startDate)
-        val result = "${year}年${month}月(${stage})"
-        result
-    } else {
-        "未設定"
-    }
-    
-    val endFormatted = if (endDate.isNotEmpty()) {
-        val year = DateConversionUtils.getYearFromDate(endDate)
-        val month = DateConversionUtils.getMonthFromDate(endDate)
-        val stage = DateConversionUtils.convertDateToStage(endDate)
-        val result = "${year}年${month}月(${stage})"
-        result
-    } else {
-        "未設定"
-    }
-    
-    val finalResult = if (startDate.isEmpty() || endDate.isEmpty()) {
+    val startFormatted = if (startDate.isNotEmpty()) formatOne(startDate) else "未設定"
+    val endFormatted = if (endDate.isNotEmpty()) formatOne(endDate) else "未設定"
+    return if (startDate.isEmpty() || endDate.isEmpty()) {
         if (startDate.isEmpty()) endFormatted else startFormatted
     } else {
         "$startFormatted ～ $endFormatted"
     }
-    
-    return finalResult
 }

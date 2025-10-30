@@ -129,4 +129,15 @@ object DateConversionUtils {
             null
         }
     }
+
+    /**
+     * 日(day)から上旬・中旬・下旬を返す
+     */
+    fun convertDayToStage(day: Int): String {
+        return when {
+            day <= 10 -> "上旬"
+            day <= 20 -> "中旬"
+            else -> "下旬"
+        }
+    }
 }

@@ -67,13 +67,14 @@ class StatisticsService {
         // 全種子数
         val totalSeeds = seeds.size
         
-        // 科別分布（有効期限内の種のみ）
+        // 有効期限内の種（カウント用に保持）
         val validSeeds = seeds.filter { seed ->
             val expirationDate = LocalDate.of(seed.expirationYear, seed.expirationMonth, 1)
             currentDate.isBefore(expirationDate.plusMonths(1))
         }
         
-        val familyDistribution = validSeeds.groupBy { it.family }
+        // 科別分布（全ての種を対象）
+        val familyDistribution = seeds.groupBy { it.family }
             .mapValues { it.value.size }
         
         // 今月の播種予定種子数（統一ロジックを使用）
