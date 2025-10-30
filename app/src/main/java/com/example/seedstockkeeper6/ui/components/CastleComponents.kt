@@ -282,6 +282,7 @@ fun StatisticsWidgets(
     familyDistribution: List<Pair<String, Int>>,
     navController: NavController
 ) {
+    val density = LocalDensity.current
     Column(
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
@@ -305,14 +306,18 @@ fun StatisticsWidgets(
         
         Row(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
-            modifier = Modifier.height(IntrinsicSize.Min)
+            verticalAlignment = Alignment.Top
         ) {
             // 左側：登録総数と期限切れを縦に並べる
             Column(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 modifier = Modifier
                     .weight(1f)
-                    .fillMaxHeight()
+                    .onSizeChanged { size ->
+                        val wDp = with(density) { size.width.toDp() }
+                        val hDp = with(density) { size.height.toDp() }
+                        android.util.Log.d("StatsWidgets", "LeftColumn size w=" + wDp + ", h=" + hDp)
+                    }
             ) {
                 // 登録種子総数
                 SummaryCardWithoutIcon(
@@ -360,15 +365,20 @@ fun StatisticsWidgets(
             // 右側：科別分布（縦長表示）
             Card(
                 modifier = Modifier
-                    .weight(1f)
-                    .fillMaxHeight(),
+                    .weight(1f),
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
                 ),
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Column(
-                    modifier = Modifier.padding(16.dp)
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .onSizeChanged { size ->
+                            val wDp = with(density) { size.width.toDp() }
+                            val hDp = with(density) { size.height.toDp() }
+                            android.util.Log.d("StatsWidgets", "RightCard content size w=" + wDp + ", h=" + hDp)
+                        }
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -384,15 +394,22 @@ fun StatisticsWidgets(
                         )
                     }
                     
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
                     
                     // 円グラフ表示
                     if (familyDistribution.isNotEmpty()) {
+                        val legendCount = familyDistribution.size
+                        val pieHeight = when {
+                            legendCount >= 8 -> 240.dp
+                            legendCount >= 6 -> 220.dp
+                            legendCount >= 5 -> 210.dp
+                            else -> 200.dp
+                        }
                         PieChart(
                             data = familyDistribution,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(200.dp)
+                                .height(pieHeight)
                         )
                     } else {
                         Text(
@@ -550,6 +567,11 @@ fun PieChart(
     data: List<Pair<String, Int>>,
     modifier: Modifier = Modifier
 ) {
+    val density = LocalDensity.current
+    val legendCount = data.size
+    val canvasSize = if (legendCount >= 5) 88.dp else 96.dp
+    val legendSpacing = if (legendCount >= 5) 4.dp else 6.dp
+    val titleSpacer = if (legendCount >= 5) 6.dp else 8.dp
     val total = data.sumOf { it.second }
     if (total == 0) return
     
@@ -561,15 +583,29 @@ fun PieChart(
         Color(0xFFE91E63)   // 鮮やかなピンク
     )
     
+    android.util.Log.d(
+        "PieChart",
+        "familyDistribution size=" + data.size + ", items=" + data.map { it.first } + ", lengths=" + data.map { it.first.length }
+    )
+    
     Column(
-        modifier = modifier,
+        modifier = modifier.onSizeChanged { size ->
+            val wDp = with(density) { size.width.toDp() }
+            val hDp = with(density) { size.height.toDp() }
+            android.util.Log.d("PieChart", "Root size w=" + wDp + ", h=" + hDp)
+        },
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // 円グラフ
         Canvas(
             modifier = Modifier
-                .size(120.dp)
+                .size(canvasSize)
                 .padding(8.dp)
+                .onSizeChanged { size ->
+                    val wDp = with(density) { size.width.toDp() }
+                    val hDp = with(density) { size.height.toDp() }
+                    android.util.Log.d("PieChart", "Canvas size w=" + wDp + ", h=" + hDp)
+                }
         ) {
             val canvasWidth = size.width
             val canvasHeight = size.height
@@ -603,12 +639,28 @@ fun PieChart(
         
         // 凡例（円グラフの下に表示）
         Column(
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+            verticalArrangement = Arrangement.spacedBy(legendSpacing),
+            modifier = Modifier
+                .weight(1f)
+                .verticalScroll(rememberScrollState())
+                .onSizeChanged { size ->
+                    val wDp = with(density) { size.width.toDp() }
+                    val hDp = with(density) { size.height.toDp() }
+                    android.util.Log.d("PieChart", "Legend Column size w=" + wDp + ", h=" + hDp)
+                }
         ) {
             data.forEachIndexed { index, (family, count) ->
+                android.util.Log.d("PieChart", "legend item #$index: $family ($count)")
                 Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .onSizeChanged { size ->
+                            val wDp = with(density) { size.width.toDp() }
+                            val hDp = with(density) { size.height.toDp() }
+                            android.util.Log.d("PieChart", "legend row #" + index + " size w=" + wDp + ", h=" + hDp)
+                        },
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Box(
                         modifier = Modifier
@@ -620,9 +672,10 @@ fun PieChart(
                     )
                     Text(
                         text = "$family ($count)",
-                        style = MaterialTheme.typography.bodySmall,
+                        style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurface,
-                        maxLines = 1
+                        modifier = Modifier.weight(1f),
+                        softWrap = true
                     )
                 }
             }
