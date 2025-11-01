@@ -503,8 +503,10 @@ fun MainScaffoldNavigationBar(
         )
         
         // 中央のFab
+        Spacer(modifier = Modifier.weight(1f))
+        
         Box(
-            modifier = Modifier.weight(1f),
+            modifier = Modifier,
             contentAlignment = Alignment.Center
         ) {
             when {
