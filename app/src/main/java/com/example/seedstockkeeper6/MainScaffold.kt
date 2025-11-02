@@ -26,6 +26,7 @@ import com.example.seedstockkeeper6.model.getDeletePartialSuccessMessage
 import com.example.seedstockkeeper6.viewmodel.SeedInputViewModel
 import com.example.seedstockkeeper6.viewmodel.SeedListViewModel
 import com.example.seedstockkeeper6.viewmodel.SettingsViewModel
+import com.example.seedstockkeeper6.audio.BgmManager
 import com.google.firebase.auth.FirebaseUser
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
@@ -49,6 +50,9 @@ fun MainScaffold(
     val ctx = LocalContext.current
     val settingsViewModel: SettingsViewModel = viewModel { SettingsViewModel(ctx) }
     
+    // BGMマネージャーを初期化
+    val bgmManager = remember { BgmManager.getInstance(ctx) }
+    
     // 未読通知数
     var unreadNotificationCount by remember { mutableStateOf(0) }
     val historyService = remember { com.example.seedstockkeeper6.service.NotificationHistoryService() }
@@ -62,6 +66,22 @@ fun MainScaffold(
         // 設定の読み込み完了を待つ
         delay(com.example.seedstockkeeper6.model.AnimationConstants.SETTINGS_LOAD_DELAY_MS.toLong())
         farmName = settingsViewModel.farmName
+    }
+    
+    // MainScaffoldが表示されたらBGMを開始（1回のみ）
+    LaunchedEffect(Unit) {
+        // 設定の読み込み完了を少し待つ
+        delay(300)
+        
+        // BGM設定が有効な場合のみ再生開始
+        if (settingsViewModel.isBgmEnabled) {
+            bgmManager.play()
+        }
+    }
+    
+    // BGM設定の変更を監視（設定画面でON/OFF切り替え時）
+    LaunchedEffect(settingsViewModel.isBgmEnabled) {
+        bgmManager.setEnabled(settingsViewModel.isBgmEnabled)
     }
     
     // 未読通知数を取得（画面が表示されるたびに更新）

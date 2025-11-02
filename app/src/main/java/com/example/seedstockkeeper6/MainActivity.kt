@@ -25,6 +25,7 @@ import kotlinx.coroutines.launch
 import com.example.seedstockkeeper6.ui.auth.AuthGate
 import com.example.seedstockkeeper6.ui.theme.SeedStockKeeper6Theme
 import com.example.seedstockkeeper6.notification.NotificationManager
+import com.example.seedstockkeeper6.audio.BgmManager
 import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseUser
 import androidx.core.view.WindowCompat
@@ -34,6 +35,7 @@ import android.os.Build
 class MainActivity : ComponentActivity() {
     
     private lateinit var notificationManager: NotificationManager
+    private lateinit var bgmManager: BgmManager
     
     // 通知権限リクエストのランチャー
     private val requestPermissionLauncher = registerForActivityResult(
@@ -84,6 +86,9 @@ class MainActivity : ComponentActivity() {
         
         // 通知マネージャーを初期化（軽量な処理のみ）
         notificationManager = NotificationManager(this)
+        
+        // BGMマネージャーを初期化
+        bgmManager = BgmManager.getInstance(this)
 
         setContent {
             val navController = rememberNavController()
@@ -138,10 +143,26 @@ class MainActivity : ComponentActivity() {
     
     override fun onPause() {
         super.onPause()
+        // アプリがバックグラウンドに行ったらBGMを一時停止
+        try {
+            if (::bgmManager.isInitialized) {
+                bgmManager.pause()
+            }
+        } catch (e: Exception) {
+            android.util.Log.w("MainActivity", "BGM一時停止エラー", e)
+        }
     }
     
     override fun onResume() {
         super.onResume()
+        // アプリがフォアグラウンドに戻ったらBGMを再開（設定が有効な場合のみ）
+        try {
+            if (::bgmManager.isInitialized) {
+                bgmManager.play()
+            }
+        } catch (e: Exception) {
+            android.util.Log.w("MainActivity", "BGM再開エラー", e)
+        }
     }
 }
 

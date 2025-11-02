@@ -19,6 +19,7 @@ import com.example.seedstockkeeper6.ui.components.FarmLocationSection
 import com.example.seedstockkeeper6.ui.components.FarmOwnerSection
 import com.example.seedstockkeeper6.ui.components.RegionSettingsSection
 import com.example.seedstockkeeper6.ui.components.NotificationSettingsSection
+import com.example.seedstockkeeper6.ui.components.BgmSettingsSection
 import com.example.seedstockkeeper6.ui.components.SeedInfoUrlSettingsSection
 import com.example.seedstockkeeper6.model.SettingsConstants
 import kotlinx.coroutines.launch
@@ -176,6 +177,20 @@ fun SettingsScreen(
                             onNotificationSettingsChange = { frequency, weekday ->
                                 viewModel.updateNotificationSettings(frequency, weekday)
                             }
+                        )
+                    
+                    // 区切り線
+                    HorizontalDivider(
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
+                        thickness = 1.dp
+                    )
+                    
+                    // BGM設定セクション
+                        BgmSettingsSection(
+                            isBgmEnabled = viewModel.isBgmEnabled,
+                            isEditMode = viewModel.isEditMode,
+                            hasExistingData = viewModel.hasExistingData,
+                            onBgmEnabledChange = { viewModel.updateBgmEnabled(it) }
                         )
                     
                     // 区切り線

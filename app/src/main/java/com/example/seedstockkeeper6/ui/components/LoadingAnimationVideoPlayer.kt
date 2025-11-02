@@ -28,7 +28,7 @@ import androidx.media3.ui.AspectRatioFrameLayout
 @Composable
 fun LoadingAnimationVideoPlayer(
     modifier: Modifier = Modifier,
-    assetFileName: String? = "tanesukemovie_m.mp4", // assets に配置する場合
+    assetFileName: String? = "tanesukemovie.mp4", // assets に配置する場合
     rawResId: Int? = null,                         // res/raw に配置する場合
     repeat: Boolean = true,
     mute: Boolean = true

@@ -66,6 +66,10 @@ class SettingsViewModel(private val context: Context? = null) : ViewModel() {
     var customSeedInfoUrl by mutableStateOf("") // その他選択時のURL
         private set
     
+    // BGM設定の状態
+    var isBgmEnabled by mutableStateOf(true) // BGM有効/無効
+        private set
+    
     // 通知スケジューラー
     private var notificationScheduler: NotificationScheduler? = null
     
@@ -119,6 +123,10 @@ class SettingsViewModel(private val context: Context? = null) : ViewModel() {
         customSeedInfoUrl = url
     }
     
+    fun updateBgmEnabled(enabled: Boolean) {
+        isBgmEnabled = enabled
+    }
+    
     
     private fun loadSettings() {
         viewModelScope.launch {
@@ -150,6 +158,7 @@ class SettingsViewModel(private val context: Context? = null) : ViewModel() {
                     selectedWeekday = snapshot.getString("selectedWeekday") ?: "月曜日"
                     seedInfoUrlProvider = snapshot.getString("seedInfoUrlProvider") ?: "サカタのたね"
                     customSeedInfoUrl = snapshot.getString("customSeedInfoUrl") ?: ""
+                    isBgmEnabled = snapshot.getBoolean("isBgmEnabled") ?: true
                     hasExistingData = farmName.isNotBlank() || defaultRegion.isNotBlank()
                 } else {
                     // デフォルト値を設定
@@ -161,6 +170,7 @@ class SettingsViewModel(private val context: Context? = null) : ViewModel() {
                     selectedWeekday = "月曜日"
                     seedInfoUrlProvider = "サカタのたね"
                     customSeedInfoUrl = ""
+                    isBgmEnabled = true
                     hasExistingData = false
                 }
             } catch (e: Exception) {
@@ -173,6 +183,7 @@ class SettingsViewModel(private val context: Context? = null) : ViewModel() {
                 selectedWeekday = "月曜日"
                 seedInfoUrlProvider = "サカタのたね"
                 customSeedInfoUrl = ""
+                isBgmEnabled = true
                 
                 // 権限エラーの場合は詳細なメッセージを表示
                 val errorMessage = when {
@@ -224,6 +235,7 @@ class SettingsViewModel(private val context: Context? = null) : ViewModel() {
                     "selectedWeekday" to selectedWeekday,
                     "seedInfoUrlProvider" to seedInfoUrlProvider,
                     "customSeedInfoUrl" to customSeedInfoUrl,
+                    "isBgmEnabled" to isBgmEnabled,
                     "updatedAt" to com.google.firebase.Timestamp.now()
                 )
                 

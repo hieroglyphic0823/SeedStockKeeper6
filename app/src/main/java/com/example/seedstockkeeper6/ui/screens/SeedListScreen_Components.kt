@@ -551,7 +551,7 @@ fun SeedGalleryItem(
     
     // 状態に応じたフレーム画像を決定
     val frameImageResId = when (seedStatus) {
-        "finished" -> R.drawable.goshiki_w_sq  // まき終わり
+        "finished" -> R.drawable.goshiki_lb_sq  // まき終わり
         "expired" -> R.drawable.goshiki_lg_sq   // 期限切れ
         "urgent" -> R.drawable.goshiki_r_sq    // 期限間近
         "thisMonth" -> R.drawable.goshiki_y_sq // まきどき
