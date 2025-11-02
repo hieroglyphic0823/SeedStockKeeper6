@@ -1,0 +1,41 @@
+音声再生関連ログ抽出コマンド集
+================================
+
+1. 基本的なログ確認（エラーのみ）
+-----------------------------------
+adb logcat *:E
+
+2. アプリ全体のログ（タグフィルター）
+-----------------------------------
+adb logcat | Select-String -Pattern "VideoSplashScreen|LoadingAnimationVideoPlayer|ExoPlayer"
+
+3. 詳細ログ（時間付き、すべてのレベル）
+-----------------------------------
+adb logcat -v time VideoSplashScreen:* LoadingAnimationVideoPlayer:* ExoPlayer:* *:E
+
+4. ログをファイルに保存
+-----------------------------------
+adb logcat -v time > audio_logs.txt
+
+5. 特定のタグのみ抽出してファイルに保存
+-----------------------------------
+adb logcat -v time VideoSplashScreen:D LoadingAnimationVideoPlayer:D ExoPlayer:D AudioManager:D *:E > audio_logs.txt
+
+6. リアルタイムでログを監視（PowerShell）
+-----------------------------------
+adb logcat -v time *:E VideoSplashScreen:D LoadingAnimationVideoPlayer:D ExoPlayer:D | Select-String -Pattern "VideoSplashScreen|ExoPlayer|Audio|ERROR|Exception"
+
+7. ログキャッシュをクリアしてから取得
+-----------------------------------
+adb logcat -c
+adb logcat -v time VideoSplashScreen:* LoadingAnimationVideoPlayer:* ExoPlayer:* *:E
+
+8. パッケージ名でフィルター（アプリ全体）
+-----------------------------------
+adb logcat | Select-String -Pattern "com.example.seedstockkeeper6"
+
+使い方のヒント：
+- ログを確認する前に必ず「adb logcat -c」でログをクリアしてください
+- アプリを起動する前にログ監視を開始してください
+- スプラッシュ画面が表示された時点でのログを確認してください
+

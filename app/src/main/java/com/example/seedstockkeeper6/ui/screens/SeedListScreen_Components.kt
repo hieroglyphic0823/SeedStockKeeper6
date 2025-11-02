@@ -40,7 +40,9 @@ import androidx.compose.material.icons.filled.ViewModule
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -55,6 +57,7 @@ import com.example.seedstockkeeper6.util.familyRotationMinYearsLabel
 import com.example.seedstockkeeper6.viewmodel.SeedListViewModel
 import androidx.compose.foundation.Image
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -63,6 +66,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
+import com.google.firebase.ktx.Firebase
+import com.google.firebase.storage.ktx.storage
+import android.util.Log
 
 /**
  * フィルターカードコンポーネント
@@ -98,208 +105,215 @@ fun SeedListFilterCard(
         Column(
             modifier = Modifier.padding(16.dp)
         ) {
-            // フィルター用チェックボックス（常に表示）
-            Column(
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+            // 1行目：表示モード切り替えアイコンと検索表示切替ボタン（常に表示）
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
             ) {
-                // 1行目：「まきどき」「終了間近」「通常」
+                // 表示モード切り替えアイコン
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // まきどきチェックボックス
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .background(
-                                color = MaterialTheme.colorScheme.primaryContainer,
-                                shape = RoundedCornerShape(8.dp)
-                            )
-                            .padding(horizontal = 6.dp, vertical = 4.dp)
+                    // リスト表示アイコン
+                    IconButton(
+                        onClick = { onDisplayModeChange("list") },
+                        modifier = Modifier.size(32.dp)
                     ) {
-                        Checkbox(
-                            checked = showThisMonthSeeds,
-                            onCheckedChange = onThisMonthSeedsChange,
-                            colors = CheckboxDefaults.colors(
-                                checkedColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                                uncheckedColor = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = "まきどき",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        Icon(
+                            imageVector = Icons.Filled.ViewList,
+                            contentDescription = "リスト表示",
+                            tint = if (displayMode == "list") 
+                                MaterialTheme.colorScheme.primary 
+                            else 
+                                MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(24.dp)
                         )
                     }
                     
-                    // 終了間近チェックボックス
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .background(
-                                color = MaterialTheme.colorScheme.errorContainer,
-                                shape = RoundedCornerShape(8.dp)
-                            )
-                            .padding(horizontal = 6.dp, vertical = 4.dp)
+                    // ギャラリー表示アイコン
+                    IconButton(
+                        onClick = { onDisplayModeChange("gallery") },
+                        modifier = Modifier.size(32.dp)
                     ) {
-                        Checkbox(
-                            checked = showUrgentSeeds,
-                            onCheckedChange = onUrgentSeedsChange,
-                            colors = CheckboxDefaults.colors(
-                                checkedColor = MaterialTheme.colorScheme.onErrorContainer,
-                                uncheckedColor = MaterialTheme.colorScheme.onErrorContainer
-                            )
+                        Icon(
+                            imageVector = Icons.Filled.ViewModule,
+                            contentDescription = "ギャラリー表示",
+                            tint = if (displayMode == "gallery") 
+                                MaterialTheme.colorScheme.primary 
+                            else 
+                                MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(24.dp)
                         )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = "終了間近",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onErrorContainer
-                        )
-                    }
-                    
-                    // 通常チェックボックス
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .background(
-                                color = MaterialTheme.colorScheme.surfaceContainerLowest,
-                                shape = RoundedCornerShape(8.dp)
-                            )
-                            .padding(horizontal = 6.dp, vertical = 4.dp)
-                    ) {
-                        Checkbox(
-                            checked = showNormalSeeds,
-                            onCheckedChange = onNormalSeedsChange,
-                            colors = CheckboxDefaults.colors(
-                                checkedColor = MaterialTheme.colorScheme.onSurface,
-                                uncheckedColor = MaterialTheme.colorScheme.onSurface
-                            )
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = "通常",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                    
-                    Spacer(modifier = Modifier.weight(1f))
-                    
-                    // 表示モード切り替えアイコン（1行目の右端）
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        // リスト表示アイコン
-                        IconButton(
-                            onClick = { onDisplayModeChange("list") },
-                            modifier = Modifier.size(32.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Filled.ViewList,
-                                contentDescription = "リスト表示",
-                                tint = if (displayMode == "list") 
-                                    MaterialTheme.colorScheme.primary 
-                                else 
-                                    MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.size(24.dp)
-                            )
-                        }
-                        
-                        // ギャラリー表示アイコン
-                        IconButton(
-                            onClick = { onDisplayModeChange("gallery") },
-                            modifier = Modifier.size(32.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Filled.ViewModule,
-                                contentDescription = "ギャラリー表示",
-                                tint = if (displayMode == "gallery") 
-                                    MaterialTheme.colorScheme.primary 
-                                else 
-                                    MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.size(24.dp)
-                            )
-                        }
                     }
                 }
                 
-                // 2行目：「期限切れ」「まき終わり」と検索ボックス表示切り替えボタン
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                // 検索ボックス表示切り替えボタン（右端）
+                IconButton(
+                    onClick = onSearchBoxToggle
                 ) {
-                    // 期限切れチェックボックス
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .background(
-                                color = MaterialTheme.colorScheme.surfaceContainerHighest,
-                                shape = RoundedCornerShape(8.dp)
-                            )
-                            .padding(horizontal = 6.dp, vertical = 4.dp)
-                    ) {
-                        Checkbox(
-                            checked = showExpiredSeeds,
-                            onCheckedChange = onExpiredSeedsChange,
-                            colors = CheckboxDefaults.colors(
-                                checkedColor = MaterialTheme.colorScheme.onSurface,
-                                uncheckedColor = MaterialTheme.colorScheme.onSurface
-                            )
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = "期限切れ",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                    
-                    // まき終わりチェックボックス
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .background(
-                                color = MaterialTheme.colorScheme.secondaryContainer,
-                                shape = RoundedCornerShape(8.dp)
-                            )
-                            .padding(horizontal = 6.dp, vertical = 4.dp)
-                    ) {
-                        Checkbox(
-                            checked = showFinishedSeeds,
-                            onCheckedChange = onFinishedSeedsChange,
-                            colors = CheckboxDefaults.colors(
-                                checkedColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                                uncheckedColor = MaterialTheme.colorScheme.onSecondaryContainer
-                            )
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = "まき終わり",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer
-                        )
-                    }
-                    
-                    // 検索ボックス表示切り替えボタン（2行目の右端）
-                    IconButton(
-                        onClick = onSearchBoxToggle
-                    ) {
-                        Icon(
-                            imageVector = if (showSearchBox) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
-                            contentDescription = if (showSearchBox) "検索ボックスを隠す" else "検索ボックスを表示",
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
+                    Icon(
+                        imageVector = if (showSearchBox) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
+                        contentDescription = if (showSearchBox) "フィルターを隠す" else "フィルターを表示",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
                 }
             }
             
-            // 検索ボックス（条件付き表示）
+            // フィルター用チェックボックスと検索ボックス（条件付き表示）
             if (showSearchBox) {
                 Spacer(modifier = Modifier.height(12.dp))
                 
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    // 1行目：「まきどき」「終了間近」「通常」
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // まきどきチェックボックス
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .background(
+                                    color = MaterialTheme.colorScheme.primaryContainer,
+                                    shape = RoundedCornerShape(8.dp)
+                                )
+                                .padding(horizontal = 6.dp, vertical = 4.dp)
+                        ) {
+                            Checkbox(
+                                checked = showThisMonthSeeds,
+                                onCheckedChange = onThisMonthSeedsChange,
+                                colors = CheckboxDefaults.colors(
+                                    checkedColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                                    uncheckedColor = MaterialTheme.colorScheme.onPrimaryContainer
+                                )
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "まきどき",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        }
+                        
+                        // 終了間近チェックボックス
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .background(
+                                    color = MaterialTheme.colorScheme.errorContainer,
+                                    shape = RoundedCornerShape(8.dp)
+                                )
+                                .padding(horizontal = 6.dp, vertical = 4.dp)
+                        ) {
+                            Checkbox(
+                                checked = showUrgentSeeds,
+                                onCheckedChange = onUrgentSeedsChange,
+                                colors = CheckboxDefaults.colors(
+                                    checkedColor = MaterialTheme.colorScheme.onErrorContainer,
+                                    uncheckedColor = MaterialTheme.colorScheme.onErrorContainer
+                                )
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "終了間近",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onErrorContainer
+                            )
+                        }
+                        
+                        // 通常チェックボックス
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .background(
+                                    color = MaterialTheme.colorScheme.tertiaryContainer,
+                                    shape = RoundedCornerShape(8.dp)
+                                )
+                                .padding(horizontal = 6.dp, vertical = 4.dp)
+                        ) {
+                            Checkbox(
+                                checked = showNormalSeeds,
+                                onCheckedChange = onNormalSeedsChange,
+                                colors = CheckboxDefaults.colors(
+                                    checkedColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                                    uncheckedColor = MaterialTheme.colorScheme.onTertiaryContainer
+                                )
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "通常",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onTertiaryContainer
+                            )
+                        }
+                    }
+                    
+                    // 2行目：「期限切れ」「まき終わり」
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // 期限切れチェックボックス
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .background(
+                                    color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                                    shape = RoundedCornerShape(8.dp)
+                                )
+                                .padding(horizontal = 6.dp, vertical = 4.dp)
+                        ) {
+                            Checkbox(
+                                checked = showExpiredSeeds,
+                                onCheckedChange = onExpiredSeedsChange,
+                                colors = CheckboxDefaults.colors(
+                                    checkedColor = MaterialTheme.colorScheme.onSurface,
+                                    uncheckedColor = MaterialTheme.colorScheme.onSurface
+                                )
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "期限切れ",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                        
+                        // まき終わりチェックボックス
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .background(
+                                    color = MaterialTheme.colorScheme.secondaryContainer,
+                                    shape = RoundedCornerShape(8.dp)
+                                )
+                                .padding(horizontal = 6.dp, vertical = 4.dp)
+                        ) {
+                            Checkbox(
+                                checked = showFinishedSeeds,
+                                onCheckedChange = onFinishedSeedsChange,
+                                colors = CheckboxDefaults.colors(
+                                    checkedColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                                    uncheckedColor = MaterialTheme.colorScheme.onSecondaryContainer
+                                )
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "まき終わり",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer
+                            )
+                        }
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                // 検索ボックス
                 OutlinedTextField(
                     value = searchQuery,
                     onValueChange = onSearchQueryChange,
@@ -341,10 +355,10 @@ fun SeedListItem(
         val seedStatus = getSeedStatus(seed)
         val backgroundColor = when (seedStatus) {
             "finished" -> MaterialTheme.colorScheme.secondaryContainer  // まき終わり
-            "expired" -> MaterialTheme.colorScheme.surfaceContainerHighest  // 有効期限切れ
-            "urgent" -> MaterialTheme.colorScheme.errorContainer         // 終了間近
-            "thisMonth" -> MaterialTheme.colorScheme.primaryContainer    // 今月まきどき
-            else -> MaterialTheme.colorScheme.surfaceContainerLowest                   // 通常
+            "expired" -> MaterialTheme.colorScheme.surfaceContainerHighest      // 期限切れ：淡グレ
+            "urgent" -> MaterialTheme.colorScheme.errorContainer  // 強い赤系：終了間近を強調
+            "thisMonth" -> MaterialTheme.colorScheme.primaryContainer       // 黄色系：まきどき
+            else -> MaterialTheme.colorScheme.tertiaryContainer             // 緑系：通常
         }
         
         // リストアイテム
@@ -499,6 +513,51 @@ fun SeedGalleryItem(
 ) {
     val seedStatus = getSeedStatus(seed)
     
+    // 画像URLの変換とログ出力
+    var downloadUrl by remember { mutableStateOf<String?>(null) }
+    val firstImageUrl = if (seed.imageUrls.isNotEmpty()) seed.imageUrls.first() else null
+    
+    LaunchedEffect(firstImageUrl) {
+        if (firstImageUrl != null) {
+            Log.d("SeedGalleryItem", "商品名: ${seed.productName}, 品種: ${seed.variety}")
+            Log.d("SeedGalleryItem", "元のimageUrl: $firstImageUrl")
+            
+            // Firebase Storageのパスの場合はdownloadUrlを取得
+            if (firstImageUrl.startsWith("seed_images/")) {
+                Log.d("SeedGalleryItem", "Firebase Storageパスを検出: $firstImageUrl")
+                try {
+                    val storageRef = Firebase.storage.reference.child(firstImageUrl)
+                    val url = storageRef.downloadUrl.await().toString()
+                    downloadUrl = url
+                    Log.d("SeedGalleryItem", "downloadUrl取得成功: $url")
+                } catch (e: Exception) {
+                    Log.e("SeedGalleryItem", "downloadUrl取得失敗: ${e.message}", e)
+                    downloadUrl = null
+                }
+            } else if (firstImageUrl.startsWith("http://") || firstImageUrl.startsWith("https://")) {
+                // すでにHTTP/HTTPS URLの場合はそのまま使用
+                downloadUrl = firstImageUrl
+                Log.d("SeedGalleryItem", "HTTP/HTTPS URL: $firstImageUrl")
+            } else {
+                // その他の場合はそのまま使用（file://など）
+                downloadUrl = firstImageUrl
+                Log.d("SeedGalleryItem", "その他のURL形式: $firstImageUrl")
+            }
+        } else {
+            Log.d("SeedGalleryItem", "商品名: ${seed.productName}, 品種: ${seed.variety} - 画像URLが空です")
+            downloadUrl = null
+        }
+    }
+    
+    // 状態に応じたフレーム画像を決定
+    val frameImageResId = when (seedStatus) {
+        "finished" -> R.drawable.goshiki_w_sq  // まき終わり
+        "expired" -> R.drawable.goshiki_lg_sq   // 期限切れ
+        "urgent" -> R.drawable.goshiki_r_sq    // 期限間近
+        "thisMonth" -> R.drawable.goshiki_y_sq // まきどき
+        else -> R.drawable.goshiki_g_sq        // 通常
+    }
+    
     // ギャラリーアイテム
     Box(
         modifier = Modifier
@@ -508,33 +567,54 @@ fun SeedGalleryItem(
                 navController.navigate("input/$encodedSeed")
             }
     ) {
-        // 背景画像（k_goshiki_jin.png）
-        Image(
-            painter = painterResource(id = R.drawable.k_goshiki_jin),
-            contentDescription = null,
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.FillBounds
-        )
-        
-        // 種の写真（中央に表示）
-        if (seed.imageUrls.isNotEmpty()) {
-            val firstImageUrl = seed.imageUrls.first()
+        // 種の写真（中央に表示）- 写真がある場合は最前面に表示
+        if (downloadUrl != null) {
+            // 背景画像（k_goshiki_jin.png）- 写真がある場合は半透明で表示
+            Image(
+                painter = painterResource(id = frameImageResId),
+                contentDescription = null,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .alpha(1f),
+                contentScale = ContentScale.FillBounds
+            )
+            
+            // 種の写真（中央に表示、前面に配置）
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(16.dp),
+                    .padding(16.dp)
+                    .zIndex(1f),
                 contentAlignment = Alignment.Center
             ) {
                 AsyncImage(
-                    model = firstImageUrl,
+                    model = downloadUrl,
                     contentDescription = seed.productName,
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .fillMaxHeight(),
-                    contentScale = ContentScale.Fit
+                        .fillMaxSize()
+                        .clip(RoundedCornerShape(4.dp)),
+                    contentScale = ContentScale.Crop,
+                    alignment = Alignment.Center
                 )
             }
+            
+            // フレーム画像（最前面に配置）
+            Image(
+                painter = painterResource(id = frameImageResId),
+                contentDescription = null,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .zIndex(2f),
+                contentScale = ContentScale.FillBounds
+            )
         } else {
+            // 背景画像（k_goshiki_jin.png）- 写真がない場合は通常表示
+            Image(
+                painter = painterResource(id = frameImageResId),
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.FillBounds
+            )
             // 写真がない場合のフォールバック表示
             Box(
                 modifier = Modifier.fillMaxSize(),
@@ -567,26 +647,15 @@ fun SeedGalleryItem(
                     )
                 }
             }
-        }
-        
-        // 状態インジケーター（右上）
-        Box(
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(4.dp)
-        ) {
-            val indicatorColor = when (seedStatus) {
-                "finished" -> MaterialTheme.colorScheme.secondaryContainer
-                "expired" -> MaterialTheme.colorScheme.surfaceContainerHighest
-                "urgent" -> MaterialTheme.colorScheme.errorContainer
-                "thisMonth" -> MaterialTheme.colorScheme.primaryContainer
-                else -> MaterialTheme.colorScheme.surfaceContainerLowest
-            }
-            Box(
+            
+            // フレーム画像（最前面に配置）- 写真がない場合も表示
+            Image(
+                painter = painterResource(id = frameImageResId),
+                contentDescription = null,
                 modifier = Modifier
-                    .size(12.dp)
-                    .clip(CircleShape)
-                    .background(indicatorColor)
+                    .fillMaxSize()
+                    .zIndex(2f),
+                contentScale = ContentScale.FillBounds
             )
         }
     }

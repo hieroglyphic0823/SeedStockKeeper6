@@ -265,8 +265,8 @@ fun SowingSummaryCards(
                 title = "期限間近",
                 value = "$urgentSeedsCount",
                 subtitle = "",
-                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                containerColor = MaterialTheme.colorScheme.errorContainer,
+                contentColor = MaterialTheme.colorScheme.onErrorContainer,
                 modifier = Modifier.weight(1f),
                 onClick = onUrgentClick
             )
@@ -356,7 +356,7 @@ fun StatisticsWidgets(
                     value = "$expiredSeedsCount",
                     subtitle = "",
                     containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    contentColor = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.fillMaxWidth(),
                     onClick = onExpiredClick
                 )

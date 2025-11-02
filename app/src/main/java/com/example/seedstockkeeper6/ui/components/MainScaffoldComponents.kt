@@ -474,6 +474,7 @@ fun MainScaffoldNavigationBar(
     ) {
         // お城アイコン
         NavigationBarItem(
+            modifier = Modifier.weight(1f),
             icon = { 
                 Icon(
                     painter = painterResource(id = R.drawable.home),
@@ -489,6 +490,7 @@ fun MainScaffoldNavigationBar(
         
         // 目録アイコン
         NavigationBarItem(
+            modifier = Modifier.weight(1f),
             icon = { 
                 Icon(
                     painter = painterResource(id = R.drawable.list),
@@ -503,10 +505,8 @@ fun MainScaffoldNavigationBar(
         )
         
         // 中央のFab
-        Spacer(modifier = Modifier.weight(1f))
-        
         Box(
-            modifier = Modifier,
+            modifier = Modifier.weight(1f),
             contentAlignment = Alignment.Center
         ) {
             when {
@@ -545,6 +545,7 @@ fun MainScaffoldNavigationBar(
         
         // カレンダーアイコン
         NavigationBarItem(
+            modifier = Modifier.weight(1f),
             icon = { 
                 val isDarkTheme = isSystemInDarkTheme()
                 if (isDarkTheme) {
@@ -575,6 +576,7 @@ fun MainScaffoldNavigationBar(
         
         // 通知アイコン（yabumi - 矢文）
         NavigationBarItem(
+            modifier = Modifier.weight(1f),
             icon = { 
                 Box {
                     val rotationAngle by animateFloatAsState(

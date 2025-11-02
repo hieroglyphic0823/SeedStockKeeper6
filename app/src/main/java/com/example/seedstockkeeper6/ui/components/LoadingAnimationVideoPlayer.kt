@@ -1,6 +1,7 @@
 package com.example.seedstockkeeper6.ui.components
 
 import android.net.Uri
+import androidx.annotation.OptIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
@@ -13,17 +14,21 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.media3.common.AudioAttributes
+import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.RawResourceDataSource
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import androidx.media3.ui.AspectRatioFrameLayout
 
+@OptIn(UnstableApi::class)
 @Composable
 fun LoadingAnimationVideoPlayer(
     modifier: Modifier = Modifier,
-    assetFileName: String? = "tanesukemovie.mp4", // assets に配置する場合
+    assetFileName: String? = "tanesukemovie_m.mp4", // assets に配置する場合
     rawResId: Int? = null,                         // res/raw に配置する場合
     repeat: Boolean = true,
     mute: Boolean = true
@@ -33,6 +38,13 @@ fun LoadingAnimationVideoPlayer(
 
     val exoPlayer = remember {
         ExoPlayer.Builder(context).build().apply {
+            // 音声再生のためのオーディオ属性を設定
+            val audioAttributes = AudioAttributes.Builder()
+                .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
+                .setUsage(C.USAGE_MEDIA)
+                .build()
+            setAudioAttributes(audioAttributes, true)
+            
             val mediaItem = when {
                 rawResId != null -> {
                     val uri = RawResourceDataSource.buildRawResourceUri(rawResId)
