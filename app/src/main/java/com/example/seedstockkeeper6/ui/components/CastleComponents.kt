@@ -355,7 +355,7 @@ fun StatisticsWidgets(
                     title = "期限切れ",
                     value = "$expiredSeedsCount",
                     subtitle = "",
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                    containerColor = MaterialTheme.colorScheme.surfaceBright,  // backgroundLightMediumContrastを参照
                     contentColor = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.fillMaxWidth(),
                     onClick = onExpiredClick

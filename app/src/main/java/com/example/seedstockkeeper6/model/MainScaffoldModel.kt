@@ -54,7 +54,7 @@ object NotificationConstants {
  */
 object ScreenTitleConstants {
     const val CASTLE_TITLE = "お城"
-    const val LIST_TITLE = "種目録"
+    const val LIST_TITLE = "お棚場"
     const val CALENDAR_TITLE = "種暦"
     const val NOTIFICATION_TITLE = "通知履歴"
     const val SETTINGS_TITLE = "農園設定"

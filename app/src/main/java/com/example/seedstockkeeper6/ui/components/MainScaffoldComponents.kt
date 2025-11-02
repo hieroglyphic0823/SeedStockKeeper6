@@ -488,14 +488,14 @@ fun MainScaffoldNavigationBar(
             onClick = { navController.navigate(NavigationConstants.CASTLE_ROUTE) }
         )
         
-        // 目録アイコン
+        // 棚場アイコン
         NavigationBarItem(
             modifier = Modifier.weight(1f),
             icon = { 
                 Icon(
-                    painter = painterResource(id = R.drawable.list),
+                    painter = painterResource(id = R.drawable.seeds_pack_bw),
                     contentDescription = IconDescriptionConstants.LIST_ICON,
-                    tint = MaterialTheme.colorScheme.onSurface,
+                    tint = ComposeColor.Unspecified,
                     modifier = Modifier.size(if (currentRoute == NavigationConstants.LIST_ROUTE) IconSizeConstants.SELECTED_SIZE else IconSizeConstants.DEFAULT_SIZE)
                 )
             },

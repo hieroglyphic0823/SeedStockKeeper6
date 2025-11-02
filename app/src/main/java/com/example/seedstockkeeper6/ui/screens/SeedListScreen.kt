@@ -70,7 +70,10 @@ fun SeedListScreen(
     var showSearchBox by remember { mutableStateOf(false) }  // 検索ボックスを隠す
     
     // 表示モードの状態（リスト/ギャラリー）
-    var displayMode by remember { mutableStateOf("list") } // "list" or "gallery"
+    var displayMode by remember { mutableStateOf("gallery") } // "list" or "gallery"（初期値はギャラリー）
+    
+    // 並べ替えの状態
+    var sortType by remember { mutableStateOf(SortType.IMPORTANCE) }
     
     // URLパラメータの処理
     LaunchedEffect(backStackEntry) {
@@ -111,9 +114,19 @@ fun SeedListScreen(
     val currentUser = auth.currentUser
     val currentUid = currentUser?.uid
     
-    // フィルタリングされた種リスト
-    val filteredSeeds = remember(seeds, searchQuery, showThisMonthSeeds, showUrgentSeeds, showExpiredSeeds, showFinishedSeeds, showNormalSeeds) {
-        seeds.filter { (_, seed) ->
+    // 重要度の順位（数値が小さいほど優先度が高い）
+    fun getImportanceOrder(status: String): Int = when (status) {
+        "urgent" -> 1      // 期限間近
+        "thisMonth" -> 2   // まきどき
+        "normal" -> 3      // 通常
+        "finished" -> 4    // まき終わり
+        "expired" -> 5     // 期限切れ
+        else -> 6
+    }
+    
+    // フィルタリングとソートされた種リスト
+    val filteredSeeds = remember(seeds, searchQuery, showThisMonthSeeds, showUrgentSeeds, showExpiredSeeds, showFinishedSeeds, showNormalSeeds, sortType) {
+        val filtered = seeds.filter { (_, seed) ->
             val matchesSearch = searchQuery.isEmpty() || 
                 seed.productName.contains(searchQuery, ignoreCase = true) ||
                 seed.variety.contains(searchQuery, ignoreCase = true) ||
@@ -130,6 +143,30 @@ fun SeedListScreen(
             }
             
             matchesSearch && matchesStatus
+        }
+        
+        // 並べ替え処理
+        when (sortType) {
+            SortType.IMPORTANCE -> {
+                // 重要度順：期限間近 > まきどき > 通常 > まき終わり > 期限切れ
+                filtered.sortedWith(compareBy<Pair<String, SeedPacket>> { (_, seed) ->
+                    getImportanceOrder(getSeedStatus(seed))
+                }.thenBy { (_, seed) -> seed.productName })
+            }
+            SortType.REGISTRATION -> {
+                // 登録順（元の順序を保持）
+                filtered
+            }
+            SortType.NAME -> {
+                // あいうえお順（商品名でソート）
+                filtered.sortedBy { (_, seed) -> seed.productName }
+            }
+            SortType.STATUS -> {
+                // 状態順：状態でグループ化し、各グループ内で商品名でソート
+                filtered.sortedWith(compareBy<Pair<String, SeedPacket>> { (_, seed) ->
+                    getSeedStatus(seed)
+                }.thenBy { (_, seed) -> seed.productName })
+            }
         }
     }
 
@@ -222,7 +259,9 @@ fun SeedListScreen(
             searchQuery = searchQuery,
             onSearchQueryChange = { searchQuery = it },
             displayMode = displayMode,
-            onDisplayModeChange = { displayMode = it }
+            onDisplayModeChange = { displayMode = it },
+            sortType = sortType,
+            onSortTypeChange = { sortType = it }
         )
         
         // 種リスト/ギャラリー
