@@ -563,7 +563,7 @@ fun SeedListItem(
             ) {
                 Icon(
                     painter = painterResource(
-                        id = if (seed.isFinished) R.drawable.checkmark else R.drawable.packet
+                        id = if (seed.isFinished) R.drawable.seed_bag_enp else R.drawable.seed_bag_full
                     ),
                     contentDescription = if (seed.isFinished) "まき終わり済み" else "まき終わり未完了",
                     modifier = Modifier.size(36.dp),

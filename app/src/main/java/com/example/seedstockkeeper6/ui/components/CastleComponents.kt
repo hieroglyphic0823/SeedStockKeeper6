@@ -260,13 +260,20 @@ fun SowingSummaryCards(
                 navController.navigate("list?filter=urgent")
             }
             
+            // 期限間近の種が0の場合は期限切れと同じ背景色を使用
+            val urgentCardContainerColor = if (urgentSeedsCount == 0) {
+                MaterialTheme.colorScheme.surfaceContainerHighest
+            } else {
+                MaterialTheme.colorScheme.errorContainer
+            }
+            
             SummaryCardWithEmojiIcon(
                 emojiIcon = "⏳",
                 title = "期限間近",
                 value = "$urgentSeedsCount",
                 subtitle = "",
-                containerColor = MaterialTheme.colorScheme.errorContainer,
-                contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                containerColor = urgentCardContainerColor,
+                contentColor = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.weight(1f),
                 onClick = onUrgentClick
             )
@@ -282,7 +289,13 @@ fun StatisticsWidgets(
     familyDistribution: List<Pair<String, Int>>,
     navController: NavController
 ) {
+    android.util.Log.d("StatisticsWidgets", "StatisticsWidgets開始: totalSeeds=$totalSeeds, finished=$finishedSeedsCount, expired=$expiredSeedsCount, familyDistribution.size=${familyDistribution.size}")
+    
     val density = LocalDensity.current
+    val safeFamilyDistribution = familyDistribution.filter { it.first.isNotBlank() && it.second >= 0 }
+    
+    android.util.Log.d("StatisticsWidgets", "安全なfamilyDistribution.size=${safeFamilyDistribution.size}")
+    
     Column(
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
@@ -355,7 +368,7 @@ fun StatisticsWidgets(
                     title = "期限切れ",
                     value = "$expiredSeedsCount",
                     subtitle = "",
-                    containerColor = MaterialTheme.colorScheme.surfaceBright,  // backgroundLightMediumContrastを参照
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,  // 淡いベージュ
                     contentColor = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.fillMaxWidth(),
                     onClick = onExpiredClick
@@ -397,8 +410,8 @@ fun StatisticsWidgets(
                     Spacer(modifier = Modifier.height(8.dp))
                     
                     // 円グラフ表示
-                    if (familyDistribution.isNotEmpty()) {
-                        val legendCount = familyDistribution.size
+                    if (safeFamilyDistribution.isNotEmpty()) {
+                        val legendCount = safeFamilyDistribution.size
                         val pieHeight = when {
                             legendCount >= 8 -> 240.dp
                             legendCount >= 6 -> 220.dp
@@ -406,7 +419,7 @@ fun StatisticsWidgets(
                             else -> 200.dp
                         }
                         PieChart(
-                            data = familyDistribution,
+                            data = safeFamilyDistribution,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(pieHeight)
@@ -438,7 +451,7 @@ fun SummaryCardWithEmojiIcon(
     onClick: (() -> Unit)? = null
 ) {
     Card(
-        modifier = modifier.clickable { onClick?.invoke() },
+        modifier = if (onClick != null) modifier.clickable { onClick() } else modifier,
         colors = CardDefaults.cardColors(containerColor = containerColor),
         shape = RoundedCornerShape(12.dp)
     ) {
@@ -514,7 +527,7 @@ fun SummaryCardWithoutIcon(
     onClick: (() -> Unit)? = null
 ) {
     Card(
-        modifier = modifier.clickable { onClick?.invoke() },
+        modifier = if (onClick != null) modifier.clickable { onClick() } else modifier,
         colors = CardDefaults.cardColors(containerColor = containerColor),
         shape = RoundedCornerShape(12.dp)
     ) {
@@ -567,14 +580,26 @@ fun PieChart(
     data: List<Pair<String, Int>>,
     modifier: Modifier = Modifier
 ) {
+    android.util.Log.d("PieChart", "PieChart開始: data.size=${data.size}")
+    
+    // データ検証
+    val safeData = data.filter { it.first.isNotBlank() && it.second >= 0 }
+    if (safeData.isEmpty()) {
+        android.util.Log.w("PieChart", "安全なデータが空です")
+        return
+    }
+    
     val density = LocalDensity.current
-    val legendCount = data.size
+    val legendCount = safeData.size
     val canvasSize = if (legendCount >= 5) 88.dp else 96.dp
     val legendSpacing = if (legendCount >= 5) 4.dp else 6.dp
     val titleSpacer = if (legendCount >= 5) 6.dp else 8.dp
-    val total = data.sumOf { it.second }
-    if (total == 0) return
-    
+    val total = safeData.sumOf { it.second.toLong() }.toInt()
+    if (total == 0) {
+        android.util.Log.w("PieChart", "合計が0です")
+        return
+    }
+
     val colors = listOf(
         Color(0xFF2196F3),  // 鮮やかな青
         Color(0xFF4CAF50),  // 鮮やかな緑
@@ -585,7 +610,7 @@ fun PieChart(
     
     android.util.Log.d(
         "PieChart",
-        "familyDistribution size=" + data.size + ", items=" + data.map { it.first } + ", lengths=" + data.map { it.first.length }
+        "safeData size=" + safeData.size + ", items=" + safeData.map { it.first } + ", total=$total"
     )
     
     Column(
@@ -615,8 +640,16 @@ fun PieChart(
             
             var startAngle = -90f // 12時の位置から開始
             
-            data.forEachIndexed { index, (_, count) ->
-                val sweepAngle = (count.toFloat() / total) * 360f
+            safeData.forEachIndexed { index, (_, count) ->
+                if (count < 0) {
+                    android.util.Log.w("PieChart", "負の値が検出されました: index=$index, count=$count")
+                    return@forEachIndexed
+                }
+                val sweepAngle = (count.toFloat() / total.toFloat()) * 360f
+                if (sweepAngle.isNaN() || sweepAngle.isInfinite()) {
+                    android.util.Log.w("PieChart", "無効な角度が計算されました: index=$index, count=$count, total=$total, sweepAngle=$sweepAngle")
+                    return@forEachIndexed
+                }
                 val color = colors[index % colors.size]
                 
                 drawArc(
@@ -649,7 +682,7 @@ fun PieChart(
                     android.util.Log.d("PieChart", "Legend Column size w=" + wDp + ", h=" + hDp)
                 }
         ) {
-            data.forEachIndexed { index, (family, count) ->
+            safeData.forEachIndexed { index, (family, count) ->
                 android.util.Log.d("PieChart", "legend item #$index: $family ($count)")
                 Row(
                     modifier = Modifier

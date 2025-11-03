@@ -171,7 +171,7 @@ fun MainScaffoldTopAppBar(
                                 // EditMode新規作成: 現行アイコン+「新規作成」
                                 seedInputViewModel?.isEditMode == true && seedInputViewModel?.hasExistingData == false -> {
                                     Image(
-                                        painter = painterResource(id = R.drawable.packet),
+                                        painter = painterResource(id = R.drawable.seed_bag_full),
                                         contentDescription = IconDescriptionConstants.PACKET_ICON,
                                         modifier = Modifier.size(IconSizeConstants.TOP_APP_BAR_SIZE)
                                     )
@@ -221,7 +221,7 @@ fun MainScaffoldTopAppBar(
                                     } else {
                                         // 商品名がない場合は現行アイコン+「種札」
                                         Image(
-                                            painter = painterResource(id = R.drawable.packet),
+                                            painter = painterResource(id = R.drawable.seed_bag_full),
                                             contentDescription = IconDescriptionConstants.SEED_INFO_ICON,
                                             modifier = Modifier.size(IconSizeConstants.TOP_APP_BAR_SIZE)
                                         )
@@ -476,32 +476,44 @@ fun MainScaffoldNavigationBar(
         NavigationBarItem(
             modifier = Modifier.weight(1f),
             icon = { 
+                val isSelected = currentRoute == NavigationConstants.CASTLE_ROUTE
                 Icon(
                     painter = painterResource(id = R.drawable.home),
                     contentDescription = IconDescriptionConstants.CASTLE_ICON,
-                    tint = ComposeColor.Unspecified,
-                    modifier = Modifier.size(if (currentRoute == NavigationConstants.CASTLE_ROUTE) IconSizeConstants.SELECTED_SIZE else IconSizeConstants.DEFAULT_SIZE)
+                    tint = if (isSelected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(if (isSelected) IconSizeConstants.SELECTED_SIZE else IconSizeConstants.DEFAULT_SIZE)
                 )
             },
             label = { Text(ScreenTitleConstants.CASTLE_TITLE) },
             selected = currentRoute == NavigationConstants.CASTLE_ROUTE,
-            onClick = { navController.navigate(NavigationConstants.CASTLE_ROUTE) }
+            onClick = { navController.navigate(NavigationConstants.CASTLE_ROUTE) },
+            colors = NavigationBarItemDefaults.colors(
+                selectedIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                selectedTextColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                indicatorColor = MaterialTheme.colorScheme.secondaryContainer
+            )
         )
         
         // 棚場アイコン
         NavigationBarItem(
             modifier = Modifier.weight(1f),
             icon = { 
+                val isSelected = currentRoute == NavigationConstants.LIST_ROUTE
                 Icon(
                     painter = painterResource(id = R.drawable.seeds_pack_bw),
                     contentDescription = IconDescriptionConstants.LIST_ICON,
-                    tint = ComposeColor.Unspecified,
-                    modifier = Modifier.size(if (currentRoute == NavigationConstants.LIST_ROUTE) IconSizeConstants.SELECTED_SIZE else IconSizeConstants.DEFAULT_SIZE)
+                    tint = if (isSelected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(if (isSelected) IconSizeConstants.SELECTED_SIZE else IconSizeConstants.DEFAULT_SIZE)
                 )
             },
             label = { Text(ScreenTitleConstants.LIST_TITLE) },
             selected = currentRoute == NavigationConstants.LIST_ROUTE,
-            onClick = { navController.navigate(NavigationConstants.LIST_ROUTE) }
+            onClick = { navController.navigate(NavigationConstants.LIST_ROUTE) },
+            colors = NavigationBarItemDefaults.colors(
+                selectedIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                selectedTextColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                indicatorColor = MaterialTheme.colorScheme.secondaryContainer
+            )
         )
         
         // 中央のFab
@@ -547,31 +559,38 @@ fun MainScaffoldNavigationBar(
         NavigationBarItem(
             modifier = Modifier.weight(1f),
             icon = { 
+                val isSelected = currentRoute == NavigationConstants.CALENDAR_ROUTE
+                val iconTint = if (isSelected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
                 val isDarkTheme = isSystemInDarkTheme()
                 if (isDarkTheme) {
                     Icon(
-                        imageVector = if (currentRoute == NavigationConstants.CALENDAR_ROUTE) Icons.Filled.CalendarMonth else Icons.Outlined.CalendarMonth,
+                        imageVector = if (isSelected) Icons.Filled.CalendarMonth else Icons.Outlined.CalendarMonth,
                         contentDescription = IconDescriptionConstants.CALENDAR_ICON,
-                        tint = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.size(if (currentRoute == NavigationConstants.CALENDAR_ROUTE) IconSizeConstants.SELECTED_SIZE else IconSizeConstants.DEFAULT_SIZE)
+                        tint = iconTint,
+                        modifier = Modifier.size(if (isSelected) IconSizeConstants.SELECTED_SIZE else IconSizeConstants.DEFAULT_SIZE)
                     )
                 } else {
                     Icon(
                         painter = painterResource(
-                            id = if (currentRoute == NavigationConstants.CALENDAR_ROUTE) 
+                            id = if (isSelected) 
                                 R.drawable.calendar_dark 
                             else 
                                 R.drawable.calendar_light
                         ),
                         contentDescription = IconDescriptionConstants.CALENDAR_ICON,
-                        tint = ComposeColor.Unspecified,
-                        modifier = Modifier.size(if (currentRoute == NavigationConstants.CALENDAR_ROUTE) IconSizeConstants.SELECTED_SIZE else IconSizeConstants.DEFAULT_SIZE)
+                        tint = iconTint,
+                        modifier = Modifier.size(if (isSelected) IconSizeConstants.SELECTED_SIZE else IconSizeConstants.DEFAULT_SIZE)
                     )
                 }
             },
             label = { Text(ScreenTitleConstants.CALENDAR_TITLE) },
             selected = currentRoute == NavigationConstants.CALENDAR_ROUTE,
-            onClick = { navController.navigate(NavigationConstants.CALENDAR_ROUTE) }
+            onClick = { navController.navigate(NavigationConstants.CALENDAR_ROUTE) },
+            colors = NavigationBarItemDefaults.colors(
+                selectedIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                selectedTextColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                indicatorColor = MaterialTheme.colorScheme.secondaryContainer
+            )
         )
         
         // 通知アイコン（yabumi - 矢文）
@@ -579,6 +598,7 @@ fun MainScaffoldNavigationBar(
             modifier = Modifier.weight(1f),
             icon = { 
                 Box {
+                    val isSelected = currentRoute == NavigationConstants.NOTIFICATION_HISTORY_ROUTE
                     val rotationAngle by animateFloatAsState(
                         targetValue = if (isRotating) 360f else 0f,
                         animationSpec = tween(durationMillis = AnimationConstants.ROTATION_DURATION_MS),
@@ -588,9 +608,9 @@ fun MainScaffoldNavigationBar(
                     Icon(
                         painter = painterResource(id = R.drawable.yabumi0),
                         contentDescription = IconDescriptionConstants.NOTIFICATION_ICON,
-                        tint = ComposeColor.Unspecified,
+                        tint = if (isSelected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier
-                            .size(if (currentRoute == NavigationConstants.NOTIFICATION_HISTORY_ROUTE) IconSizeConstants.SELECTED_SIZE else IconSizeConstants.DEFAULT_SIZE)
+                            .size(if (isSelected) IconSizeConstants.SELECTED_SIZE else IconSizeConstants.DEFAULT_SIZE)
                             .graphicsLayer {
                                 rotationZ = rotationAngle
                             }
@@ -626,7 +646,12 @@ fun MainScaffoldNavigationBar(
                 // 回転アニメーションを開始
                 isRotating = true
                 navController.navigate(NavigationConstants.NOTIFICATION_HISTORY_ROUTE) 
-            }
+            },
+            colors = NavigationBarItemDefaults.colors(
+                selectedIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                selectedTextColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                indicatorColor = MaterialTheme.colorScheme.secondaryContainer
+            )
         )
     }
 }

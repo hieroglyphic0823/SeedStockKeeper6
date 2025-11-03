@@ -90,7 +90,7 @@ fun BasicInfoSection(
                 ) {
                     Icon(
                         painter = painterResource(
-                            id = if (viewModel.packet.isFinished) R.drawable.checkmark else R.drawable.packet
+                            id = if (viewModel.packet.isFinished) R.drawable.seed_bag_enp else R.drawable.seed_bag_full
                         ),
                         contentDescription = if (viewModel.packet.isFinished) "まき終わり済み" else "まき終わり未完了",
                         modifier = Modifier.size(36.dp),
