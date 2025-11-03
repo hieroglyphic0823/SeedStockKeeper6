@@ -160,3 +160,4 @@ adb logcat | grep -E "AudioFocus|audioFocus|AUDIOFOCUS"
    - ExoPlayer の状態変化を確認
    - AudioManager のメッセージを確認
 
+

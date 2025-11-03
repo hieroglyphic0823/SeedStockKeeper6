@@ -39,3 +39,4 @@ adb logcat | Select-String -Pattern "com.example.seedstockkeeper6"
 - アプリを起動する前にログ監視を開始してください
 - スプラッシュ画面が表示された時点でのログを確認してください
 
+
