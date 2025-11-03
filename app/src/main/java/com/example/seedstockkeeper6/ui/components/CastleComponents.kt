@@ -251,7 +251,8 @@ fun SowingSummaryCards(
                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                 contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
                 modifier = Modifier.weight(1f),
-                onClick = onThisMonthClick
+                onClick = onThisMonthClick,
+                iconResourceId = R.drawable.seed_bag_enp
             )
             
             // まき時終了間近の種子数
@@ -448,7 +449,8 @@ fun SummaryCardWithEmojiIcon(
     containerColor: Color,
     contentColor: Color,
     modifier: Modifier = Modifier,
-    onClick: (() -> Unit)? = null
+    onClick: (() -> Unit)? = null,
+    iconResourceId: Int? = null  // 追加：アイコンリソースID（指定された場合は絵文字の代わりに使用）
 ) {
     Card(
         modifier = if (onClick != null) modifier.clickable { onClick() } else modifier,
@@ -472,23 +474,34 @@ fun SummaryCardWithEmojiIcon(
             
             Spacer(modifier = Modifier.height(8.dp))
             
-            // 下段: 絵文字アイコンと値
+            // 下段: 絵文字アイコン（またはアイコンリソース）と値
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = emojiIcon,
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = contentColor,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .width(48.dp)
-                        .onSizeChanged { size ->
-                        }
-                )
+                if (iconResourceId != null) {
+                    // アイコンリソースを使用
+                    Icon(
+                        painter = painterResource(id = iconResourceId),
+                        contentDescription = title,
+                        modifier = Modifier.size(48.dp),
+                        tint = Color.Unspecified
+                    )
+                } else {
+                    // 絵文字アイコンを使用
+                    Text(
+                        text = emojiIcon,
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = contentColor,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .width(48.dp)
+                            .onSizeChanged { size ->
+                            }
+                    )
+                }
                 
                 Spacer(modifier = Modifier.width(8.dp))
                 

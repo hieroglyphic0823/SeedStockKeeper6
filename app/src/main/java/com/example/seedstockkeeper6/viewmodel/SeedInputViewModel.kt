@@ -425,12 +425,13 @@ class SeedInputViewModel : ViewModel() {
             
             // 地域確認ダイアログで編集されたカレンダー情報をパケットに反映
             // OCR結果ではなく、地域確認ダイアログで編集された値を優先
-            if (packet.calendar != null && packet.calendar.isNotEmpty()) {
+            if (packet.calendar.isNotEmpty()) {
                 // 既にpacket.calendarに反映されているので、そのまま使用
             } else {
                 // パケットにカレンダー情報がない場合は、OCR結果を使用
                 ocrResult?.let { result ->
-                    packet = packet.copy(calendar = result.calendar)
+                    val calendarList: List<CalendarEntry> = result.calendar
+                    packet = packet.copy(calendar = calendarList)
                 } ?: run {
                 }
             }
@@ -1086,7 +1087,7 @@ class SeedInputViewModel : ViewModel() {
     }
 
     fun addCalendarEntry() {
-        val list = (packet.calendar ?: emptyList()) + com.example.seedstockkeeper6.model.CalendarEntry()
+        val list = packet.calendar + com.example.seedstockkeeper6.model.CalendarEntry()
         packet = packet.copy(calendar = list)
     }
 
@@ -1098,7 +1099,7 @@ class SeedInputViewModel : ViewModel() {
             harvest_start_date = "",
             harvest_end_date = ""
         )
-        val list = (packet.calendar ?: emptyList()) + newEntry
+        val list = packet.calendar + newEntry
         packet = packet.copy(calendar = list)
     }
 
@@ -1110,9 +1111,8 @@ class SeedInputViewModel : ViewModel() {
         harvest_start_date: String? = null,
         harvest_end_date: String? = null
     ) {
-        val cur = packet.calendar ?: return
-        if (index !in cur.indices) return
-        val old = cur[index]
+        if (index !in packet.calendar.indices) return
+        val old = packet.calendar[index]
         val newItem = old.copy(
             region = region ?: old.region,
             sowing_start_date = sowing_start_date ?: old.sowing_start_date,
@@ -1120,62 +1120,63 @@ class SeedInputViewModel : ViewModel() {
             harvest_start_date = harvest_start_date ?: old.harvest_start_date,
             harvest_end_date = harvest_end_date ?: old.harvest_end_date
         )
-        val next = cur.toMutableList().apply { set(index, newItem) }
+        val next = packet.calendar.toMutableList().apply { set(index, newItem) }
         packet = packet.copy(calendar = next)
     }
 
 
     fun removeCalendarEntry(index: Int) {
-        val cur = packet.calendar ?: return
-        if (index !in cur.indices) return
-        val next = cur.toMutableList().apply { removeAt(index) }
+        if (index !in packet.calendar.indices) return
+        val next = packet.calendar.toMutableList().apply { removeAt(index) }
         packet = packet.copy(calendar = next)
     }
 
 
     fun updateCalendarRegion(index: Int, value: String) {
-        val cur = packet.calendar ?: return
-        if (index !in cur.indices) return
-        val old = cur[index]
+        if (index !in packet.calendar.indices) return
+        val old = packet.calendar[index]
         val updated = old.copy(region = value)
-        val next = cur.toMutableList().apply { set(index, updated) }
+        val next = packet.calendar.toMutableList().apply { set(index, updated) }
         packet = packet.copy(calendar = next)
     }
     // 日付ベースの更新関数
     fun updateCalendarSowingStartDate(index: Int, date: String) {
-        val cur = packet.calendar ?: return
-        if (index !in cur.indices) return
-        val old = cur[index]
-        val updated = old.copy(sowing_start_date = date)
-        val next = cur.toMutableList().apply { set(index, updated) }
-        packet = packet.copy(calendar = next)
+        updateCalendarEntry(index) { it.copy(sowing_start_date = date) }
     }
 
     fun updateCalendarSowingEndDate(index: Int, date: String) {
-        val cur = packet.calendar ?: return
-        if (index !in cur.indices) return
-        val old = cur[index]
-        val updated = old.copy(sowing_end_date = date)
-        val next = cur.toMutableList().apply { set(index, updated) }
-        packet = packet.copy(calendar = next)
+        updateCalendarEntry(index) { it.copy(sowing_end_date = date) }
     }
 
     fun updateCalendarHarvestStartDate(index: Int, date: String) {
-        val cur = packet.calendar ?: return
-        if (index !in cur.indices) return
-        val old = cur[index]
-        val updated = old.copy(harvest_start_date = date)
-        val next = cur.toMutableList().apply { set(index, updated) }
-        packet = packet.copy(calendar = next)
+        updateCalendarEntry(index) { it.copy(harvest_start_date = date) }
     }
 
     fun updateCalendarHarvestEndDate(index: Int, date: String) {
-        val cur = packet.calendar ?: return
-        if (index !in cur.indices) return
-        val old = cur[index]
-        val updated = old.copy(harvest_end_date = date)
-        val next = cur.toMutableList().apply { set(index, updated) }
-        packet = packet.copy(calendar = next)
+        updateCalendarEntry(index) { it.copy(harvest_end_date = date) }
+    }
+    
+    // カレンダーを再描画させるためのメソッド
+    fun refreshCalendar() {
+        packet = packet.copy(calendar = packet.calendar.toList())
+    }
+    
+    // カレンダーエントリを更新するヘルパー関数
+    private fun updateCalendarEntry(index: Int, update: (CalendarEntry) -> CalendarEntry) {
+        if (index < 0 || index >= packet.calendar.size) return
+        val updatedList = packet.calendar.mapIndexed { i, entry ->
+            if (i == index) update(entry) else entry
+        }
+        packet = packet.copy(calendar = updatedList)
+    }
+    
+    // 有効期限を変更するメソッド
+    fun onExpirationChanged(year: Int, month: Int) {
+        packet = packet.copy(
+            expirationYear = year,
+            expirationMonth = month
+        )
+        checkAndUpdateExpirationFlag()
     }
     fun removeCalendarEntryAtIndex(index: Int) {
         // 1. 安全チェック: インデックスがカレンダーリストの有効な範囲内にあるか確認します。
@@ -1223,27 +1224,17 @@ class SeedInputViewModel : ViewModel() {
     }
 
     fun onRegionSelected(region: String) {
-        selectedRegion = region
-        showRegionSelectionDialog = false
-        
-        // 編集された値がある場合は、それを優先して使用
-        if (editingCalendarEntry != null && editingCalendarEntry!!.region == region) {
-            packet = packet.copy(calendar = listOf(editingCalendarEntry!!))
-            
-            // 有効期限が設定されている場合は、パケットの有効期限も更新
-            if (editingCalendarEntry!!.expirationYear > 0 && editingCalendarEntry!!.expirationMonth > 0) {
-                packet = packet.copy(
-                    expirationYear = editingCalendarEntry!!.expirationYear,
-                    expirationMonth = editingCalendarEntry!!.expirationMonth
-                )
+        // CalendarEntry.regionを直接更新（selectedRegionは使わない）
+        val updatedCalendar = if (packet.calendar.isNotEmpty()) {
+            packet.calendar.mapIndexed { index, entry ->
+                if (index == 0) entry.copy(region = region) else entry
             }
         } else {
-            // 選択された地域でカレンダーエントリを更新
-            updateCalendarWithSelectedRegion(region)
+            listOf(CalendarEntry(region = region))
         }
         
-        // 編集モードを有効にする
-        isCalendarEditMode = true
+        packet = packet.copy(calendar = updatedCalendar)
+        showRegionSelectionDialog = false
     }
 
     fun onRegionSelectionDismiss() {
@@ -1386,15 +1377,13 @@ class SeedInputViewModel : ViewModel() {
     // 種の有効期限が変更された際にカレンダーエントリの有効期限も更新する
     private fun updateCalendarEntriesExpiration(expirationYear: Int, expirationMonth: Int) {
         if (expirationYear > 0 && expirationMonth > 0) {
-            packet.calendar?.let { calendar ->
-                val updatedCalendar = calendar.map { entry ->
-                    entry.copy(
-                        expirationYear = expirationYear,
-                        expirationMonth = expirationMonth
-                    )
-                }
-                packet = packet.copy(calendar = updatedCalendar)
+            val updatedCalendar = packet.calendar.map { entry ->
+                entry.copy(
+                    expirationYear = expirationYear,
+                    expirationMonth = expirationMonth
+                )
             }
+            packet = packet.copy(calendar = updatedCalendar)
             
             // OCR結果のカレンダーエントリも更新
             ocrResult?.let { result ->

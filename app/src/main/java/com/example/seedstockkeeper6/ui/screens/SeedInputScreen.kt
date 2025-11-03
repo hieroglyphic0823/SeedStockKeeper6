@@ -184,7 +184,8 @@ fun SeedInputScreen(
         ocrResult = viewModel.ocrResult,
         croppedCalendarBitmap = viewModel.croppedCalendarBitmap,
         editingCalendarEntry = viewModel.editingCalendarEntry,
-        defaultRegion = viewModel.farmDefaultRegion, // 農園情報の地域を初期値として使用
+        defaultRegion = viewModel.packet.calendar?.firstOrNull()?.region
+            ?: viewModel.farmDefaultRegion, // CalendarEntry.regionを優先、なければ農園情報の地域
         onRegionSelected = { viewModel.onRegionSelected(it) },
         onStartEditing = { viewModel.startEditingCalendarEntry(it) },
         onUpdateEditing = { viewModel.updateEditingCalendarEntry(it) },

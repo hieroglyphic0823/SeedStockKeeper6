@@ -91,7 +91,10 @@ fun RegionSelectionDialog(
     }
     
     if (showDialog) {
-        var selectedRegion by remember { mutableStateOf(defaultRegion) }
+        // defaultRegionをキーにして、ダイアログが表示される度に初期化（農園設定の地域を優先）
+        var selectedRegion by remember(showDialog, defaultRegion) { 
+            mutableStateOf(defaultRegion) 
+        }
         var editedEntry by remember { mutableStateOf<com.example.seedstockkeeper6.model.CalendarEntry?>(null) }
 
         Dialog(

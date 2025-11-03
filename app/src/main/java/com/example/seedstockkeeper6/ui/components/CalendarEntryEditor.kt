@@ -183,6 +183,22 @@ fun CalendarEntryEditor(
     
     // 年選択オプション
     val yearOptions = (currentYear - 1..currentYear + 2).map { it.toString() }
+    
+        // currentEntryが変更されたときにローカル状態変数を同期
+    LaunchedEffect(currentEntry.sowing_start_date) {
+        val year = DateConversionUtils.getYearFromDate(currentEntry.sowing_start_date)
+        if (year > 0) {
+            sowingStartYear = year.toString()
+        }
+        val month = DateConversionUtils.getMonthFromDate(currentEntry.sowing_start_date)
+        if (month > 0) {
+            sowingStart = month.toString()
+        }
+        val stage = DateConversionUtils.convertDateToStage(currentEntry.sowing_start_date)
+        if (stage.isNotEmpty()) {
+            sowingStartStage = stage
+        }
+    }
 
     // 日付変換と更新処理
     fun updateSowingStart(year: String, month: String, stage: String) {
@@ -338,16 +354,7 @@ fun CalendarEntryEditor(
                     if (sowingStart == "0" && sowingStartStage.isEmpty()) {
                         Text("播種開始")
                     } else {
-                        val year = if (currentEntry.sowing_start_date.isNotEmpty()) {
-                            try {
-                                currentEntry.sowing_start_date.split("-")[0]
-                            } catch (e: Exception) {
-                                ""
-                            }
-                        } else {
-                            ""
-                        }
-                        val yearDisplay = if (year.isNotEmpty() && year != "0000" && year != "0") "${year}年" else ""
+                        val yearDisplay = if (sowingStartYear.isNotEmpty() && sowingStartYear != "0" && sowingStartYear != "0000") "${sowingStartYear}年" else ""
                         if (yearDisplay.isNotEmpty()) {
                             Text(yearDisplay)
                         }
@@ -407,46 +414,24 @@ fun CalendarEntryEditor(
             ) {
                 PeriodSelectionBottomSheet(
                     title = "播種開始",
-                    selectedYear = if (currentEntry.sowing_start_date.isNotEmpty()) {
-                        try {
-                            currentEntry.sowing_start_date.split("-")[0]
-                        } catch (e: Exception) {
-                            "0"
-                        }
-                    } else {
-                        "0"
-                    },
+                    selectedYear = sowingStartYear,
                     selectedMonth = sowingStart,
                     selectedStage = sowingStartStage,
                     onYearChange = { year ->
+                        sowingStartYear = year
                         val month = sowingStart
                         val stage = sowingStartStage
                         updateSowingStart(year, month, stage)
                     },
                     onMonthChange = { month ->
-                        val year = if (currentEntry.sowing_start_date.isNotEmpty()) {
-                            try {
-                                currentEntry.sowing_start_date.split("-")[0]
-                            } catch (e: Exception) {
-                                "0"
-                            }
-                        } else {
-                            "0"
-                        }
+                        sowingStart = month
+                        val year = sowingStartYear
                         val stage = sowingStartStage
                         updateSowingStart(year, month, stage)
                     },
                     onStageChange = { stage ->
                         sowingStartStage = stage
-                        val year = if (currentEntry.sowing_start_date.isNotEmpty()) {
-                            try {
-                                currentEntry.sowing_start_date.split("-")[0]
-                            } catch (e: Exception) {
-                                "0"
-                            }
-                        } else {
-                            "0"
-                        }
+                        val year = sowingStartYear
                         val month = sowingStart
                         updateSowingStart(year, month, stage)
                     },
@@ -795,6 +780,22 @@ fun CalendarEntryEditor(
             expirationMonth = finalExpirationMonth.toString()
         }
         
+        // currentEntryの有効期限が変更されたときにローカル状態変数を同期
+        // ただし、ローカル状態変数が既に更新されている場合はスキップ（ボトムシートでの選択を優先）
+        LaunchedEffect(currentEntry.expirationYear, currentEntry.expirationMonth) {
+            // currentEntryが更新されたときのみ、ローカル状態変数と異なる場合に同期
+            val entryYearStr = if (currentEntry.expirationYear > 0) currentEntry.expirationYear.toString() else "0"
+            val entryMonthStr = if (currentEntry.expirationMonth > 0) currentEntry.expirationMonth.toString() else "0"
+            
+            // ローカル状態変数と異なる場合のみ更新（外部からの変更を反映）
+            if (expirationYear != entryYearStr && entryYearStr != "0") {
+                expirationYear = entryYearStr
+            }
+            if (expirationMonth != entryMonthStr && entryMonthStr != "0") {
+                expirationMonth = entryMonthStr
+            }
+        }
+        
         // 有効期限ラベル（アイコン付き）
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -877,6 +878,8 @@ fun CalendarEntryEditor(
                             onUpdate(updatedEntry)
                             // 有効期限情報を種登録画面に反映
                             onUpdateExpiration(updatedEntry)
+                            // ローカル状態変数を明示的に更新（ボタン表示のため）
+                            // expirationYear と expirationMonth は既に onYearChange/onMonthChange で更新されている
                         }
                         showExpirationBottomSheet = false
                     },

@@ -5,7 +5,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -27,87 +26,45 @@ import com.example.seedstockkeeper6.utils.DateConversionUtils
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CalendarSection(viewModel: SeedInputViewModel) {
-    // ボトムシートの表示状態
-    var showSowingStartBottomSheet by remember { mutableStateOf(false) }
-    var showSowingEndBottomSheet by remember { mutableStateOf(false) }
-    var showHarvestStartBottomSheet by remember { mutableStateOf(false) }
-    var showHarvestEndBottomSheet by remember { mutableStateOf(false) }
-    var showExpirationBottomSheet by remember { mutableStateOf(false) }
+    // ViewModelから直接参照
+    val calendarEntry = viewModel.packet.calendar?.firstOrNull() ?: CalendarEntry()
+    val currentRegion = calendarEntry.region
+    val expirationYear = viewModel.packet.expirationYear
+    val expirationMonth = viewModel.packet.expirationMonth
     
-    // 現在のカレンダーエントリを取得
-    val currentEntry = viewModel.packet.calendar?.firstOrNull() ?: CalendarEntry()
+    // ボトムシート表示状態
+    var showSowingStartSheet by remember { mutableStateOf(false) }
+    var showSowingEndSheet by remember { mutableStateOf(false) }
+    var showHarvestStartSheet by remember { mutableStateOf(false) }
+    var showHarvestEndSheet by remember { mutableStateOf(false) }
+    var showExpirationSheet by remember { mutableStateOf(false) }
     
-    // カレンダーエントリが変更された時に再計算
-    LaunchedEffect(currentEntry) {
-        // カレンダーエントリが変更された時の処理
-    }
-    
-    // 現在の日付を取得
+    // ボトムシート内の一時的な選択値
     val currentDate = java.time.LocalDate.now()
     val currentYear = currentDate.year
     val currentMonth = currentDate.monthValue
     
-    // 期間選択の状態変数（初期値を直接設定）
-    var sowingStartYear by remember(currentEntry.sowing_start_date) { 
-        val year = DateConversionUtils.getYearFromDate(currentEntry.sowing_start_date)
-        mutableStateOf(if (year > 0) year.toString() else currentYear.toString()) 
-    }
-    var sowingStartMonth by remember(currentEntry.sowing_start_date) { 
-        val month = DateConversionUtils.getMonthFromDate(currentEntry.sowing_start_date)
-        mutableStateOf(if (month > 0) month.toString() else currentMonth.toString()) 
-    }
-    var sowingStartStage by remember(currentEntry.sowing_start_date) { 
-        val stage = DateConversionUtils.convertDateToStage(currentEntry.sowing_start_date)
-        mutableStateOf(if (stage.isNotEmpty()) stage else "上旬") 
-    }
-    var sowingEndYear by remember(currentEntry.sowing_end_date) { 
-        val year = DateConversionUtils.getYearFromDate(currentEntry.sowing_end_date)
-        mutableStateOf(if (year > 0) year.toString() else currentYear.toString()) 
-    }
-    var sowingEndMonth by remember(currentEntry.sowing_end_date) { 
-        val month = DateConversionUtils.getMonthFromDate(currentEntry.sowing_end_date)
-        mutableStateOf(if (month > 0) month.toString() else currentMonth.toString()) 
-    }
-    var sowingEndStage by remember(currentEntry.sowing_end_date) { 
-        val stage = DateConversionUtils.convertDateToStage(currentEntry.sowing_end_date)
-        mutableStateOf(if (stage.isNotEmpty()) stage else "下旬") 
-    }
-    var harvestStartYear by remember(currentEntry.harvest_start_date) { 
-        val year = DateConversionUtils.getYearFromDate(currentEntry.harvest_start_date)
-        mutableStateOf(if (year > 0) year.toString() else currentYear.toString()) 
-    }
-    var harvestStartMonth by remember(currentEntry.harvest_start_date) { 
-        val month = DateConversionUtils.getMonthFromDate(currentEntry.harvest_start_date)
-        mutableStateOf(if (month > 0) month.toString() else currentMonth.toString()) 
-    }
-    var harvestStartStage by remember(currentEntry.harvest_start_date) { 
-        val stage = DateConversionUtils.convertDateToStage(currentEntry.harvest_start_date)
-        mutableStateOf(if (stage.isNotEmpty()) stage else "上旬") 
-    }
-    var harvestEndYear by remember(currentEntry.harvest_end_date) { 
-        val year = DateConversionUtils.getYearFromDate(currentEntry.harvest_end_date)
-        mutableStateOf(if (year > 0) year.toString() else currentYear.toString()) 
-    }
-    var harvestEndMonth by remember(currentEntry.harvest_end_date) { 
-        val month = DateConversionUtils.getMonthFromDate(currentEntry.harvest_end_date)
-        mutableStateOf(if (month > 0) month.toString() else currentMonth.toString()) 
-    }
-    var harvestEndStage by remember(currentEntry.harvest_end_date) { 
-        val stage = DateConversionUtils.convertDateToStage(currentEntry.harvest_end_date)
-        mutableStateOf(if (stage.isNotEmpty()) stage else "下旬") 
-    }
-    var expirationYear by remember(viewModel.packet.expirationYear) { 
-        mutableStateOf(viewModel.packet.expirationYear.toString()) 
-    }
-    var expirationMonth by remember(viewModel.packet.expirationMonth) { 
-        mutableStateOf(viewModel.packet.expirationMonth.toString()) 
-    }
-    
+    var tempSowingStartYear by remember { mutableStateOf("") }
+    var tempSowingStartMonth by remember { mutableStateOf("") }
+    var tempSowingStartStage by remember { mutableStateOf("") }
+    var tempSowingEndYear by remember { mutableStateOf("") }
+    var tempSowingEndMonth by remember { mutableStateOf("") }
+    var tempSowingEndStage by remember { mutableStateOf("") }
+    var tempHarvestStartYear by remember { mutableStateOf("") }
+    var tempHarvestStartMonth by remember { mutableStateOf("") }
+    var tempHarvestStartStage by remember { mutableStateOf("") }
+    var tempHarvestEndYear by remember { mutableStateOf("") }
+    var tempHarvestEndMonth by remember { mutableStateOf("") }
+    var tempHarvestEndStage by remember { mutableStateOf("") }
+    var tempExpirationYear by remember { mutableStateOf("") }
+    var tempExpirationMonth by remember { mutableStateOf("") }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp)
     ) {
+        // タイトル行
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -123,540 +80,427 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
                 style = MaterialTheme.typography.titleLarge
             )
         }
-        
-        // 地域設定（種暦のタイトルとカレンダー図の間）
-        val currentRegion = viewModel.packet.calendar?.firstOrNull()?.region ?: ""
-        
-            // 地域が選択されていない場合でも、空のカレンダーエントリを作成して表示
-            val calendarEntries = if (viewModel.selectedRegion.isEmpty() && (viewModel.packet.calendar?.isEmpty() != false)) {
-                // 地域が選択されていない場合は空のカレンダーエントリを作成
-                listOf(
-                CalendarEntry(
-                        region = "",
-                    sowing_start_date = "",
-                    sowing_end_date = "",
-                    harvest_start_date = "",
-                    harvest_end_date = ""
-                    )
-                )
-            } else {
-                viewModel.packet.calendar ?: emptyList()
-            }
-            
-        // カレンダー表示
-        if (calendarEntries.isNotEmpty()) {
-            SeedCalendarGrouped(
-                entries = calendarEntries,
-                packetExpirationYear = viewModel.packet.expirationYear,
-                packetExpirationMonth = viewModel.packet.expirationMonth,
-                modifier = Modifier.fillMaxWidth(),
-                heightDp = 114,
-                previewDate = null // 通常の実行時は現在の日付を使用
-            )
 
-            // 播種期間と収穫期間の表示
-            val calendarEntry = calendarEntries.firstOrNull()
-            if (calendarEntry != null) {
-                
-                // formatDateRangeの結果もログ出力
-                val harvestPeriod = formatDateRange(calendarEntry.harvest_start_date, calendarEntry.harvest_end_date)
-            }
-            if (calendarEntry != null) {
-            Spacer(modifier = Modifier.height(16.dp))
-            
-                // 播種期間
-                val sowingPeriod = formatDateRange(calendarEntry.sowing_start_date, calendarEntry.sowing_end_date)
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.padding(horizontal = 8.dp)
-                ) {
-                    // 播種期間アイコンとラベル（縦並び）
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.width(40.dp)
-                    ) {
-                        // 播種期間アイコン（背景付き）
-                        Box(
-                            modifier = Modifier
-                                .size(24.dp)
-                                .clip(RoundedCornerShape(4.dp))
-                                .background(MaterialTheme.colorScheme.primaryContainer),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Image(
-                                painter = painterResource(id = R.drawable.grain),
-                                contentDescription = "播種期間",
-                                modifier = Modifier.size(18.dp),
-                                contentScale = ContentScale.Fit,
-                                colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(MaterialTheme.colorScheme.onPrimaryContainer)
-                            )
-                        }
-                        
-                        // 播種期間ラベル
-                        Text(
-                            text = "播種",
-                            style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(top = 4.dp)
-                        )
-                    }
-                    
-                    if (viewModel.isEditMode || !viewModel.hasExistingData) {
-                        // 編集モード: ボタン表示
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Button(
-                                onClick = { showSowingStartBottomSheet = true },
-                                modifier = Modifier.weight(1f),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = MaterialTheme.colorScheme.primaryContainer
-                                ),
-                                shape = RoundedCornerShape(12.dp)
-                            ) {
-                                Column(
-                                    horizontalAlignment = Alignment.CenterHorizontally
-                                ) {
-                                    if (sowingStartYear == "0" && sowingStartMonth == "0" && sowingStartStage.isEmpty()) {
-                                        Text("播種開始")
-                                    } else {
-                                        val year = if (sowingStartYear == "0") "" else "${sowingStartYear}年"
-                                        val month = if (sowingStartMonth == "0") "不明" else "${sowingStartMonth}月"
-                                        val stage = if (sowingStartStage.isNotEmpty()) {
-                                            "(${sowingStartStage})"
-                                        } else {
-                                            "(${sowingStartStage.ifEmpty { "上旬" }})"
-                                        }
-                                        
-                                        // 年で改行して2行目に月と旬を横並びで表示
-                                        if (year.isNotEmpty()) {
-                                            Text(
-                                                text = year,
-                                                style = MaterialTheme.typography.bodyLarge,
-                                                color = MaterialTheme.colorScheme.onSecondaryContainer,
-                                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                                            )
-                                        }
-                                        Text(
-                                            text = "$month$stage",
-                                            style = MaterialTheme.typography.bodyLarge,
-                                            color = MaterialTheme.colorScheme.onSecondaryContainer,
-                                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                                        )
-                                    }
-                                }
-                            }
-                            Text("～", style = MaterialTheme.typography.bodyLarge)
-                            Button(
-                                onClick = { showSowingEndBottomSheet = true },
-                                modifier = Modifier.weight(1f),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = MaterialTheme.colorScheme.primaryContainer
-                                ),
-                                shape = RoundedCornerShape(12.dp)
-                            ) {
-                                Column(
-                                    horizontalAlignment = Alignment.CenterHorizontally
-                                ) {
-                                    if (sowingEndYear == "0" && sowingEndMonth == "0" && sowingEndStage.isEmpty()) {
-                                        Text("播種終了")
-                                    } else {
-                                        val year = if (sowingEndYear == "0") "" else "${sowingEndYear}年"
-                                        val month = if (sowingEndMonth == "0") "不明" else "${sowingEndMonth}月"
-                                        val stage = if (sowingEndStage.isNotEmpty()) {
-                                            "(${sowingEndStage})"
-                                        } else {
-                                            "(${sowingEndStage.ifEmpty { "下旬" }})"
-                                        }
-                                        
-                                        // 年で改行して2行目に月と旬を横並びで表示
-                                        if (year.isNotEmpty()) {
-                                            Text(
-                                                text = year,
-                                                style = MaterialTheme.typography.bodyLarge,
-                                                color = MaterialTheme.colorScheme.onSecondaryContainer,
-                                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                                            )
-                                        }
-                                        Text(
-                                            text = "$month$stage",
-                                            style = MaterialTheme.typography.bodyLarge,
-                                            color = MaterialTheme.colorScheme.onSecondaryContainer,
-                                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    } else {
-                        // 表示モード: テキスト表示
-                        Text(
-                            text = sowingPeriod,
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                }
-                
-                Spacer(modifier = Modifier.height(12.dp))
-                
-                // 収穫期間
-                val harvestPeriod = formatDateRange(calendarEntry.harvest_start_date, calendarEntry.harvest_end_date)
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.padding(horizontal = 8.dp)
-                ) {
-                    // 収穫期間アイコンとラベル（縦並び）
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.width(40.dp)
-                    ) {
-                        // 収穫期間アイコン（背景付き）
-                        Box(
-                            modifier = Modifier
-                                .size(24.dp)
-                                .clip(RoundedCornerShape(4.dp))
-                                .background(MaterialTheme.colorScheme.secondary),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Image(
-                                painter = painterResource(id = R.drawable.harvest),
-                                contentDescription = "収穫期間",
-                                modifier = Modifier.size(18.dp),
-                                contentScale = ContentScale.Fit
-                            )
-                        }
-                        
-                        // 収穫期間ラベル
-                        Text(
-                            text = "収穫",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(top = 4.dp)
-                        )
-                    }
-                    
-                    if (viewModel.isEditMode || !viewModel.hasExistingData) {
-                        // 編集モード: ボタン表示
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Button(
-                                onClick = { showHarvestStartBottomSheet = true },
-                                modifier = Modifier.weight(1f),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = MaterialTheme.colorScheme.secondaryContainer
-                                ),
-                                shape = RoundedCornerShape(12.dp)
-                            ) {
-                                Column(
-                                    horizontalAlignment = Alignment.CenterHorizontally
-                                ) {
-                                    if (harvestStartYear == "0" && harvestStartMonth == "0" && harvestStartStage.isEmpty()) {
-                                        Text("収穫開始")
-                                    } else {
-                                        val year = if (harvestStartYear == "0") "" else "${harvestStartYear}年"
-                                        val month = if (harvestStartMonth == "0") "不明" else "${harvestStartMonth}月"
-                                        val stage = if (harvestStartStage.isNotEmpty()) {
-                                            "(${harvestStartStage})"
-                                        } else {
-                                            "(${harvestStartStage.ifEmpty { "上旬" }})"
-                                        }
-                                        
-                                        // 年で改行して2行目に月と旬を横並びで表示
-                                        if (year.isNotEmpty()) {
-                                            Text(
-                                                text = year,
-                                                style = MaterialTheme.typography.bodyLarge,
-                                                color = MaterialTheme.colorScheme.onSecondaryContainer,
-                                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                                            )
-                                        }
-                                        Text(
-                                            text = "$month$stage",
-                                            style = MaterialTheme.typography.bodyLarge,
-                                            color = MaterialTheme.colorScheme.onSecondaryContainer,
-                                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                                        )
-                                    }
-                                }
-                            }
-                            Text("～", style = MaterialTheme.typography.bodyMedium)
-                            Button(
-                                onClick = { showHarvestEndBottomSheet = true },
-                                modifier = Modifier.weight(1f),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = MaterialTheme.colorScheme.secondaryContainer
-                                ),
-                                shape = RoundedCornerShape(12.dp)
-                            ) {
-                                Column(
-                                    horizontalAlignment = Alignment.CenterHorizontally
-                                ) {
-                                    if (harvestEndYear == "0" && harvestEndMonth == "0" && harvestEndStage.isEmpty()) {
-                                        Text("収穫終了")
-                                    } else {
-                                        val year = if (harvestEndYear == "0") "" else "${harvestEndYear}年"
-                                        val month = if (harvestEndMonth == "0") "不明" else "${harvestEndMonth}月"
-                                        val stage = if (harvestEndStage.isNotEmpty()) {
-                                            "(${harvestEndStage})"
-                                        } else {
-                                            "(${harvestEndStage.ifEmpty { "下旬" }})"
-                                        }
-                                        
-                                        // 年で改行して2行目に月と旬を横並びで表示
-                                        if (year.isNotEmpty()) {
-                                            Text(
-                                                text = year,
-                                                style = MaterialTheme.typography.bodyLarge,
-                                                color = MaterialTheme.colorScheme.onSecondaryContainer,
-                                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                                            )
-                                        }
-                                        Text(
-                                            text = "$month$stage",
-                                            style = MaterialTheme.typography.bodyLarge,
-                                            color = MaterialTheme.colorScheme.onSecondaryContainer,
-                                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    } else {
-                        // 表示モード: テキスト表示
-                        Text(
-                            text = harvestPeriod,
-                            modifier = Modifier.padding(vertical = 4.dp),
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                }
-            }
-            
-            // 有効期限表示
-            Spacer(modifier = Modifier.height(12.dp))
+        // 地域表示
+        if (currentRegion.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(4.dp))
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.padding(horizontal = 8.dp)
             ) {
-                // 有効期限アイコンとラベル（縦並び）
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.width(40.dp)
-                ) {
-                    // 有効期限アイコン（背景付き）
-                    Box(
-                        modifier = Modifier
-                            .size(24.dp)
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(MaterialTheme.colorScheme.errorContainer),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            Icons.Filled.Schedule,
-                            contentDescription = "有効期限",
-                            tint = MaterialTheme.colorScheme.onErrorContainer,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
-                    
-                    // 有効期限ラベル
-                    Text(
-                        text = "有効\n期限",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(top = 4.dp),
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                    )
-                }
-                
-                if (viewModel.isEditMode || !viewModel.hasExistingData) {
-                    // 編集モード: ボタン表示
-                    Button(
-                        onClick = { showExpirationBottomSheet = true },
-                        modifier = Modifier.width(160.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.tertiaryContainer
-                        ),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Text(
-                            text = if (expirationYear == "0" && expirationMonth == "0") {
-                                "有効期限"
-                            } else {
-                                "${expirationYear}年${expirationMonth}月"
-                            },
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onTertiaryContainer,
-                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                            maxLines = 1
-                        )
-                    }
-                } else {
-                    // 表示モード: テキスト表示
-                    Text(
-                        text = if (viewModel.packet.expirationYear > 0 && viewModel.packet.expirationMonth > 0) "${viewModel.packet.expirationYear}年${viewModel.packet.expirationMonth}月" else "未設定",
-                        modifier = Modifier.padding(vertical = 4.dp),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+                Box(
+                    modifier = Modifier
+                        .size(12.dp)
+                        .clip(RoundedCornerShape(50))
+                        .background(getRegionColor(currentRegion))
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    currentRegion,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = getRegionColor(currentRegion)
+                )
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+        } else {
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+
+        // カレンダー表示本体
+        viewModel.packet.calendar?.let { entries ->
+            if (entries.isNotEmpty()) {
+                SeedCalendarGrouped(
+                    entries = entries,
+                    packetExpirationYear = expirationYear,
+                    packetExpirationMonth = expirationMonth,
+                    modifier = Modifier.fillMaxWidth(),
+                    heightDp = 114,
+                    previewDate = null
+                )
             }
         }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // 播種期間
+        PeriodRow(
+            label = "播種",
+            color = MaterialTheme.colorScheme.primaryContainer,
+            iconRes = R.drawable.grain,
+            startText = formatDate(calendarEntry.sowing_start_date),
+            endText = formatDate(calendarEntry.sowing_end_date),
+            onStartClick = {
+                val year = DateConversionUtils.getYearFromDate(calendarEntry.sowing_start_date)
+                val month = DateConversionUtils.getMonthFromDate(calendarEntry.sowing_start_date)
+                val stage = DateConversionUtils.convertDateToStage(calendarEntry.sowing_start_date)
+                tempSowingStartYear = if (year > 0) year.toString() else currentYear.toString()
+                tempSowingStartMonth = if (month > 0) month.toString() else currentMonth.toString()
+                tempSowingStartStage = if (stage.isNotEmpty()) stage else "上旬"
+                showSowingStartSheet = true
+            },
+            onEndClick = {
+                val year = DateConversionUtils.getYearFromDate(calendarEntry.sowing_end_date)
+                val month = DateConversionUtils.getMonthFromDate(calendarEntry.sowing_end_date)
+                val stage = DateConversionUtils.convertDateToStage(calendarEntry.sowing_end_date)
+                tempSowingEndYear = if (year > 0) year.toString() else currentYear.toString()
+                tempSowingEndMonth = if (month > 0) month.toString() else currentMonth.toString()
+                tempSowingEndStage = if (stage.isNotEmpty()) stage else "下旬"
+                showSowingEndSheet = true
+            },
+            editable = viewModel.isEditMode || !viewModel.hasExistingData
+        )
+
+        // 収穫期間
+        Spacer(modifier = Modifier.height(12.dp))
+        PeriodRow(
+            label = "収穫",
+            color = MaterialTheme.colorScheme.secondaryContainer,
+            iconRes = R.drawable.harvest,
+            startText = formatDate(calendarEntry.harvest_start_date),
+            endText = formatDate(calendarEntry.harvest_end_date),
+            onStartClick = {
+                val year = DateConversionUtils.getYearFromDate(calendarEntry.harvest_start_date)
+                val month = DateConversionUtils.getMonthFromDate(calendarEntry.harvest_start_date)
+                val stage = DateConversionUtils.convertDateToStage(calendarEntry.harvest_start_date)
+                tempHarvestStartYear = if (year > 0) year.toString() else currentYear.toString()
+                tempHarvestStartMonth = if (month > 0) month.toString() else currentMonth.toString()
+                tempHarvestStartStage = if (stage.isNotEmpty()) stage else "上旬"
+                showHarvestStartSheet = true
+            },
+            onEndClick = {
+                val year = DateConversionUtils.getYearFromDate(calendarEntry.harvest_end_date)
+                val month = DateConversionUtils.getMonthFromDate(calendarEntry.harvest_end_date)
+                val stage = DateConversionUtils.convertDateToStage(calendarEntry.harvest_end_date)
+                tempHarvestEndYear = if (year > 0) year.toString() else currentYear.toString()
+                tempHarvestEndMonth = if (month > 0) month.toString() else currentMonth.toString()
+                tempHarvestEndStage = if (stage.isNotEmpty()) stage else "下旬"
+                showHarvestEndSheet = true
+            },
+            editable = viewModel.isEditMode || !viewModel.hasExistingData
+        )
+
+        // 有効期限
+        Spacer(modifier = Modifier.height(12.dp))
+        ExpirationRow(
+            expirationYear = expirationYear,
+            expirationMonth = expirationMonth,
+            onClick = {
+                tempExpirationYear = if (expirationYear > 0) expirationYear.toString() else ""
+                tempExpirationMonth = if (expirationMonth > 0) expirationMonth.toString() else ""
+                showExpirationSheet = true
+            },
+            editable = viewModel.isEditMode || !viewModel.hasExistingData
+        )
     }
-    
-    // ボトムシートの表示
-    if (showSowingStartBottomSheet) {
+
+    // --- ボトムシート群 ---
+    if (showSowingStartSheet) {
         ModalBottomSheet(
-            onDismissRequest = { showSowingStartBottomSheet = false },
+            onDismissRequest = { showSowingStartSheet = false },
             sheetState = rememberModalBottomSheetState()
         ) {
             PeriodSelectionBottomSheet(
                 title = "播種開始",
-                selectedYear = sowingStartYear,
-                selectedMonth = sowingStartMonth,
-                selectedStage = sowingStartStage,
-                onYearChange = { sowingStartYear = it },
-                onMonthChange = { sowingStartMonth = it },
-                onStageChange = { sowingStartStage = it },
+                selectedYear = tempSowingStartYear,
+                selectedMonth = tempSowingStartMonth,
+                selectedStage = tempSowingStartStage,
+                onYearChange = { tempSowingStartYear = it },
+                onMonthChange = { tempSowingStartMonth = it },
+                onStageChange = { tempSowingStartStage = it },
                 onConfirm = {
-                    val yearInt = sowingStartYear.toIntOrNull() ?: 0
-                    val monthInt = sowingStartMonth.toIntOrNull() ?: 0
-                    if (yearInt > 0 && monthInt > 0 && sowingStartStage.isNotEmpty()) {
-                        val startDate = DateConversionUtils.convertStageToStartDate(yearInt, monthInt, sowingStartStage)
-                        viewModel.updateCalendarSowingStartDate(0, startDate)
+                    val yearInt = tempSowingStartYear.toIntOrNull() ?: return@PeriodSelectionBottomSheet
+                    val monthInt = tempSowingStartMonth.toIntOrNull() ?: return@PeriodSelectionBottomSheet
+                    if (yearInt > 0 && monthInt > 0 && tempSowingStartStage.isNotEmpty()) {
+                        val date = DateConversionUtils.convertStageToStartDate(yearInt, monthInt, tempSowingStartStage)
+                        viewModel.updateCalendarSowingStartDate(0, date)
                     }
-                    showSowingStartBottomSheet = false
+                    showSowingStartSheet = false
                 },
-                onCancel = { showSowingStartBottomSheet = false }
+                onCancel = { showSowingStartSheet = false }
             )
         }
     }
-    
-    if (showSowingEndBottomSheet) {
-    ModalBottomSheet(
-            onDismissRequest = { showSowingEndBottomSheet = false },
+
+    if (showSowingEndSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showSowingEndSheet = false },
             sheetState = rememberModalBottomSheetState()
         ) {
             PeriodSelectionBottomSheet(
                 title = "播種終了",
-                selectedYear = sowingEndYear,
-                selectedMonth = sowingEndMonth,
-                selectedStage = sowingEndStage,
-                onYearChange = { sowingEndYear = it },
-                onMonthChange = { sowingEndMonth = it },
-                onStageChange = { sowingEndStage = it },
+                selectedYear = tempSowingEndYear,
+                selectedMonth = tempSowingEndMonth,
+                selectedStage = tempSowingEndStage,
+                onYearChange = { tempSowingEndYear = it },
+                onMonthChange = { tempSowingEndMonth = it },
+                onStageChange = { tempSowingEndStage = it },
                 onConfirm = {
-                    val yearInt = sowingEndYear.toIntOrNull() ?: 0
-                    val monthInt = sowingEndMonth.toIntOrNull() ?: 0
-                    if (yearInt > 0 && monthInt > 0 && sowingEndStage.isNotEmpty()) {
-                        val endDate = DateConversionUtils.convertStageToEndDate(yearInt, monthInt, sowingEndStage)
-                        viewModel.updateCalendarSowingEndDate(0, endDate)
+                    val yearInt = tempSowingEndYear.toIntOrNull() ?: return@PeriodSelectionBottomSheet
+                    val monthInt = tempSowingEndMonth.toIntOrNull() ?: return@PeriodSelectionBottomSheet
+                    if (yearInt > 0 && monthInt > 0 && tempSowingEndStage.isNotEmpty()) {
+                        val date = DateConversionUtils.convertStageToEndDate(yearInt, monthInt, tempSowingEndStage)
+                        viewModel.updateCalendarSowingEndDate(0, date)
                     }
-                    showSowingEndBottomSheet = false
+                    showSowingEndSheet = false
                 },
-                onCancel = { showSowingEndBottomSheet = false }
+                onCancel = { showSowingEndSheet = false }
             )
         }
     }
-    
-    if (showHarvestStartBottomSheet) {
+
+    if (showHarvestStartSheet) {
         ModalBottomSheet(
-            onDismissRequest = { showHarvestStartBottomSheet = false },
+            onDismissRequest = { showHarvestStartSheet = false },
             sheetState = rememberModalBottomSheetState()
         ) {
             PeriodSelectionBottomSheet(
                 title = "収穫開始",
-                selectedYear = harvestStartYear,
-                selectedMonth = harvestStartMonth,
-                selectedStage = harvestStartStage,
-                onYearChange = { harvestStartYear = it },
-                onMonthChange = { harvestStartMonth = it },
-                onStageChange = { harvestStartStage = it },
+                selectedYear = tempHarvestStartYear,
+                selectedMonth = tempHarvestStartMonth,
+                selectedStage = tempHarvestStartStage,
+                onYearChange = { tempHarvestStartYear = it },
+                onMonthChange = { tempHarvestStartMonth = it },
+                onStageChange = { tempHarvestStartStage = it },
                 onConfirm = {
-                    val yearInt = harvestStartYear.toIntOrNull() ?: 0
-                    val monthInt = harvestStartMonth.toIntOrNull() ?: 0
-                    if (yearInt > 0 && monthInt > 0 && harvestStartStage.isNotEmpty()) {
-                        val startDate = DateConversionUtils.convertStageToStartDate(yearInt, monthInt, harvestStartStage)
-                        viewModel.updateCalendarHarvestStartDate(0, startDate)
+                    val yearInt = tempHarvestStartYear.toIntOrNull() ?: return@PeriodSelectionBottomSheet
+                    val monthInt = tempHarvestStartMonth.toIntOrNull() ?: return@PeriodSelectionBottomSheet
+                    if (yearInt > 0 && monthInt > 0 && tempHarvestStartStage.isNotEmpty()) {
+                        val date = DateConversionUtils.convertStageToStartDate(yearInt, monthInt, tempHarvestStartStage)
+                        viewModel.updateCalendarHarvestStartDate(0, date)
                     }
-                    showHarvestStartBottomSheet = false
+                    showHarvestStartSheet = false
                 },
-                onCancel = { showHarvestStartBottomSheet = false },
-                isHarvestPeriod = true // 収穫期間のボトムシート
+                onCancel = { showHarvestStartSheet = false },
+                isHarvestPeriod = true
             )
         }
     }
-    
-    if (showHarvestEndBottomSheet) {
+
+    if (showHarvestEndSheet) {
         ModalBottomSheet(
-            onDismissRequest = { showHarvestEndBottomSheet = false },
+            onDismissRequest = { showHarvestEndSheet = false },
             sheetState = rememberModalBottomSheetState()
         ) {
             PeriodSelectionBottomSheet(
                 title = "収穫終了",
-                selectedYear = harvestEndYear,
-                selectedMonth = harvestEndMonth,
-                selectedStage = harvestEndStage,
-                onYearChange = { harvestEndYear = it },
-                onMonthChange = { harvestEndMonth = it },
-                onStageChange = { harvestEndStage = it },
+                selectedYear = tempHarvestEndYear,
+                selectedMonth = tempHarvestEndMonth,
+                selectedStage = tempHarvestEndStage,
+                onYearChange = { tempHarvestEndYear = it },
+                onMonthChange = { tempHarvestEndMonth = it },
+                onStageChange = { tempHarvestEndStage = it },
                 onConfirm = {
-                    val yearInt = harvestEndYear.toIntOrNull() ?: 0
-                    val monthInt = harvestEndMonth.toIntOrNull() ?: 0
-                    if (yearInt > 0 && monthInt > 0 && harvestEndStage.isNotEmpty()) {
-                        val endDate = DateConversionUtils.convertStageToEndDate(yearInt, monthInt, harvestEndStage)
-                        viewModel.updateCalendarHarvestEndDate(0, endDate)
+                    val yearInt = tempHarvestEndYear.toIntOrNull() ?: return@PeriodSelectionBottomSheet
+                    val monthInt = tempHarvestEndMonth.toIntOrNull() ?: return@PeriodSelectionBottomSheet
+                    if (yearInt > 0 && monthInt > 0 && tempHarvestEndStage.isNotEmpty()) {
+                        val date = DateConversionUtils.convertStageToEndDate(yearInt, monthInt, tempHarvestEndStage)
+                        viewModel.updateCalendarHarvestEndDate(0, date)
                     }
-                    showHarvestEndBottomSheet = false
+                    showHarvestEndSheet = false
                 },
-                onCancel = { showHarvestEndBottomSheet = false },
-                isHarvestPeriod = true // 収穫期間のボトムシート
+                onCancel = { showHarvestEndSheet = false },
+                isHarvestPeriod = true
             )
         }
     }
-    
-    if (showExpirationBottomSheet) {
+
+    if (showExpirationSheet) {
         ModalBottomSheet(
-            onDismissRequest = { showExpirationBottomSheet = false },
+            onDismissRequest = { showExpirationSheet = false },
             sheetState = rememberModalBottomSheetState()
         ) {
             ExpirationSelectionBottomSheet(
                 title = "有効期限",
-                selectedYear = expirationYear,
-                selectedMonth = expirationMonth,
-                onYearChange = { expirationYear = it },
-                onMonthChange = { expirationMonth = it },
+                selectedYear = tempExpirationYear,
+                selectedMonth = tempExpirationMonth,
+                onYearChange = { tempExpirationYear = it },
+                onMonthChange = { tempExpirationMonth = it },
                 onConfirm = {
-                    val yearInt = expirationYear.toIntOrNull() ?: 0
-                    val monthInt = expirationMonth.toIntOrNull() ?: 0
+                    val yearInt = tempExpirationYear.toIntOrNull() ?: return@ExpirationSelectionBottomSheet
+                    val monthInt = tempExpirationMonth.toIntOrNull() ?: return@ExpirationSelectionBottomSheet
                     if (yearInt > 0 && monthInt > 0) {
-                        viewModel.onExpirationYearChange(yearInt.toString())
-                        viewModel.onExpirationMonthChange(monthInt.toString())
-                        // 有効期限変更後に期限切れフラグをチェック
-                        viewModel.checkAndUpdateExpirationFlag()
-                        // Firebaseにも期限切れフラグを更新
-                        viewModel.updateExpirationFlagInFirebase { result ->
-                            if (result.isSuccess) {
-                                android.util.Log.d("CalendarSection", "期限切れフラグをFirebaseに更新しました")
-                            } else {
-                                android.util.Log.e("CalendarSection", "期限切れフラグのFirebase更新に失敗", result.exceptionOrNull())
-                            }
-                        }
+                        viewModel.onExpirationChanged(yearInt, monthInt)
                     }
-                    showExpirationBottomSheet = false
+                    showExpirationSheet = false
                 },
-                onCancel = { showExpirationBottomSheet = false }
+                onCancel = { showExpirationSheet = false }
             )
         }
     }
 }
 
+// ---- サブUI ----
+
+@Composable
+private fun PeriodRow(
+    label: String,
+    color: Color,
+    iconRes: Int,
+    startText: String,
+    endText: String,
+    onStartClick: () -> Unit,
+    onEndClick: () -> Unit,
+    editable: Boolean
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier.padding(horizontal = 8.dp)
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.width(40.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(24.dp)
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(color),
+                contentAlignment = Alignment.Center
+            ) {
+                Image(
+                    painter = painterResource(iconRes),
+                    contentDescription = label,
+                    modifier = Modifier.size(18.dp),
+                    contentScale = ContentScale.Fit
+                )
+            }
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                label,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+
+        if (editable) {
+            // Material3のルールに従ったon色を取得
+            val onColor = when (color) {
+                MaterialTheme.colorScheme.primaryContainer -> MaterialTheme.colorScheme.onPrimaryContainer
+                MaterialTheme.colorScheme.secondaryContainer -> MaterialTheme.colorScheme.onSecondaryContainer
+                MaterialTheme.colorScheme.tertiaryContainer -> MaterialTheme.colorScheme.onTertiaryContainer
+                else -> MaterialTheme.colorScheme.onSurface
+            }
+            Button(
+                onClick = onStartClick,
+                modifier = Modifier.weight(1f),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = color,
+                    contentColor = onColor
+                ),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text(
+                    startText.ifEmpty { "${label}開始" },
+                    style = MaterialTheme.typography.bodyLarge,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+            Text("～", style = MaterialTheme.typography.bodyLarge)
+            Button(
+                onClick = onEndClick,
+                modifier = Modifier.weight(1f),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = color,
+                    contentColor = onColor
+                ),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text(
+                    endText.ifEmpty { "${label}終了" },
+                    style = MaterialTheme.typography.bodyLarge,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        } else {
+            Text(
+                if (startText.isNotEmpty() && endText.isNotEmpty()) "$startText ～ $endText"
+                else if (startText.isNotEmpty()) startText
+                else if (endText.isNotEmpty()) endText
+                else "未設定",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        }
+    }
+}
+
+@Composable
+private fun ExpirationRow(
+    expirationYear: Int,
+    expirationMonth: Int,
+    onClick: () -> Unit,
+    editable: Boolean
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier.padding(horizontal = 8.dp)
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.width(40.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(24.dp)
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(MaterialTheme.colorScheme.errorContainer),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    Icons.Filled.Schedule,
+                    contentDescription = "有効期限",
+                    tint = MaterialTheme.colorScheme.onErrorContainer,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                "期限",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        if (editable) {
+            Button(
+                onClick = onClick,
+                modifier = Modifier.width(160.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.tertiaryContainer
+                ),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text(
+                    if (expirationYear > 0 && expirationMonth > 0) "${expirationYear}年${expirationMonth}月" else "有効期限",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer
+                )
+            }
+        } else {
+            Text(
+                if (expirationYear > 0 && expirationMonth > 0) "${expirationYear}年${expirationMonth}月" else "未設定",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+// ---- Utility ----
+
+private fun formatDate(date: String): String {
+    if (date.isEmpty()) return ""
+    return try {
+        val d = java.time.LocalDate.parse(date, java.time.format.DateTimeFormatter.ISO_LOCAL_DATE)
+        val stage = DateConversionUtils.convertDayToStage(d.dayOfMonth)
+        "${d.year}年${d.monthValue}月(${stage})"
+    } catch (e: Exception) {
+        date
+    }
+}
 
 // 地域ごとの色定義
 private fun getRegionColor(region: String): Color {
@@ -666,26 +510,5 @@ private fun getRegionColor(region: String): Color {
         "温暖地" -> Color(0xFFFF9800) // オレンジ
         "暖地" -> Color(0xFFE91E63) // ピンク
         else -> Color(0xFF9E9E9E) // グレー（未設定時）
-    }
-}
-
-// 日付範囲を旬形式でフォーマットするヘルパー関数
-private fun formatDateRange(startDate: String, endDate: String): String {
-    if (startDate.isEmpty() && endDate.isEmpty()) return "未設定"
-    fun formatOne(date: String): String {
-        return try {
-            val d = java.time.LocalDate.parse(date, java.time.format.DateTimeFormatter.ISO_LOCAL_DATE)
-            val stage = com.example.seedstockkeeper6.utils.DateConversionUtils.convertDayToStage(d.dayOfMonth)
-            "${d.year}年${d.monthValue}月(${stage})"
-        } catch (e: java.time.format.DateTimeParseException) {
-            date
-        }
-    }
-    val startFormatted = if (startDate.isNotEmpty()) formatOne(startDate) else "未設定"
-    val endFormatted = if (endDate.isNotEmpty()) formatOne(endDate) else "未設定"
-    return if (startDate.isEmpty() || endDate.isEmpty()) {
-        if (startDate.isEmpty()) endFormatted else startFormatted
-    } else {
-        "$startFormatted ～ $endFormatted"
     }
 }

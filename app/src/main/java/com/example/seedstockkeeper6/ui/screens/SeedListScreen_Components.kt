@@ -39,6 +39,7 @@ import androidx.compose.material.icons.filled.FilterAlt
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.SwapVert
 import androidx.compose.material.icons.filled.ViewCozy
+import androidx.compose.material.icons.filled.HourglassEmpty
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.ui.window.Dialog
@@ -534,41 +535,86 @@ fun SeedListItem(
                 }
             }
             
-            // 右側: まき終わりアイコン
-            IconButton(
-                onClick = {
-                    val isChecked = !seed.isFinished
-                    // まき終わりフラグの更新処理
-                    val documentId = seed.documentId ?: seed.id
-                    if (documentId != null) {
-                        viewModel.updateFinishedFlag(documentId, isChecked) { result ->
-                            scope.launch {
-                                if (result.isSuccess) {
-                                    val message = if (isChecked) "まき終わりに設定しました" else "まき終わりを解除しました"
-                                    snackbarHostState.showSnackbar(
-                                        message = message,
-                                        duration = SnackbarDuration.Short
-                                    )
-                                } else {
-                                    snackbarHostState.showSnackbar(
-                                        message = "更新に失敗しました",
-                                        duration = SnackbarDuration.Short
-                                    )
+            // 右側: 状態アイコン
+            // 種の状態に応じたアイコンを決定
+            val statusIconResId = when (seedStatus) {
+                "finished" -> R.drawable.seed  // まき終わり：seed
+                "urgent" -> null  // 期限間近：砂時計（Material Iconsを使用）
+                "thisMonth" -> R.drawable.seed_bag_enp  // まきどき：seed_bag_enp
+                "expired" -> R.drawable.delete_button  // 期限切れ：delete_button
+                else -> null  // 通常：何も表示しない（またはデフォルトアイコン）
+            }
+            val statusIconDescription = when (seedStatus) {
+                "finished" -> "まき終わり"
+                "urgent" -> "期限間近"
+                "thisMonth" -> "まきどき"
+                "expired" -> "期限切れ"
+                else -> "通常"
+            }
+            
+            // すべての状態でクリック可能
+            val isClickable = seedStatus in listOf("finished", "urgent", "thisMonth", "expired")
+            
+            if (isClickable) {
+                // クリックでまき終わりに設定（または解除）
+                IconButton(
+                    onClick = {
+                        val isChecked = if (seedStatus == "finished") {
+                            // まき終わりの場合は解除
+                            !seed.isFinished
+                        } else {
+                            // その他の状態の場合はまき終わりに設定
+                            true
+                        }
+                        // まき終わりフラグの更新処理
+                        val documentId = seed.documentId ?: seed.id
+                        if (documentId != null) {
+                            viewModel.updateFinishedFlag(documentId, isChecked) { result ->
+                                scope.launch {
+                                    if (result.isSuccess) {
+                                        val message = if (isChecked) "まき終わりに設定しました" else "まき終わりを解除しました"
+                                        snackbarHostState.showSnackbar(
+                                            message = message,
+                                            duration = SnackbarDuration.Short
+                                        )
+                                    } else {
+                                        snackbarHostState.showSnackbar(
+                                            message = "更新に失敗しました",
+                                            duration = SnackbarDuration.Short
+                                        )
+                                    }
                                 }
                             }
                         }
+                    },
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    if (seedStatus == "urgent") {
+                        // 期限間近：Material Iconsの砂時計を使用
+                        Icon(
+                            imageVector = Icons.Filled.HourglassEmpty,
+                            contentDescription = statusIconDescription,
+                            modifier = Modifier.size(36.dp),
+                            tint = MaterialTheme.colorScheme.onErrorContainer
+                        )
+                    } else if (statusIconResId != null) {
+                        // その他の状態：drawableリソースを使用
+                        Icon(
+                            painter = painterResource(id = statusIconResId),
+                            contentDescription = statusIconDescription,
+                            modifier = Modifier.size(36.dp),
+                            tint = Color.Unspecified
+                        )
                     }
-                },
-                modifier = Modifier.size(32.dp)
-            ) {
-                Icon(
-                    painter = painterResource(
-                        id = if (seed.isFinished) R.drawable.seed_bag_enp else R.drawable.seed_bag_full
-                    ),
-                    contentDescription = if (seed.isFinished) "まき終わり済み" else "まき終わり未完了",
-                    modifier = Modifier.size(36.dp),
-                    tint = Color.Unspecified
-                )
+                }
+            } else {
+                // 通常状態：アイコンのみ表示（クリック不可）
+                Box(
+                    modifier = Modifier.size(32.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    // 通常状態ではアイコンを表示しない
+                }
             }
         }
     }
@@ -638,6 +684,15 @@ fun SeedGalleryItem(
         else -> R.drawable.goshiki_g_sq        // 通常
     }
     
+    // 状態アイコンを決定
+    val statusIconResId = when (seedStatus) {
+        "finished" -> R.drawable.seed  // まき終わり：seed
+        "urgent" -> null  // 期限間近：砂時計（Material Iconsを使用）
+        "thisMonth" -> R.drawable.seed_bag_enp  // まきどき：seed_bag_enp
+        "expired" -> R.drawable.delete_button  // 期限切れ：delete_button
+        else -> null  // 通常：表示しない
+    }
+    
     // ギャラリーアイテム
     Box(
         modifier = Modifier
@@ -687,6 +742,50 @@ fun SeedGalleryItem(
                     .zIndex(2f),
                 contentScale = ContentScale.FillBounds
             )
+            
+            // 状態アイコンを右上にバッジ表示（写真がある場合）
+            if (seedStatus in listOf("finished", "urgent", "thisMonth", "expired")) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .zIndex(3f),
+                    contentAlignment = Alignment.TopEnd
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .padding(4.dp)
+                            .background(
+                                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
+                                shape = CircleShape
+                            )
+                            .padding(4.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (seedStatus == "urgent") {
+                            // 期限間近：Material Iconsの砂時計を使用
+                            Icon(
+                                imageVector = Icons.Filled.HourglassEmpty,
+                                contentDescription = "期限間近",
+                                modifier = Modifier.size(16.dp),
+                                tint = MaterialTheme.colorScheme.onErrorContainer
+                            )
+                        } else if (statusIconResId != null) {
+                            // その他の状態：drawableリソースを使用
+                            Icon(
+                                painter = painterResource(id = statusIconResId),
+                                contentDescription = when (seedStatus) {
+                                    "finished" -> "まき終わり"
+                                    "thisMonth" -> "まきどき"
+                                    "expired" -> "期限切れ"
+                                    else -> "状態"
+                                },
+                                modifier = Modifier.size(16.dp),
+                                tint = Color.Unspecified
+                            )
+                        }
+                    }
+                }
+            }
         } else {
             // 背景画像（k_goshiki_jin.png）- 写真がない場合は通常表示
             Image(
@@ -737,6 +836,50 @@ fun SeedGalleryItem(
                     .zIndex(2f),
                 contentScale = ContentScale.FillBounds
             )
+            
+            // 状態アイコンを右上にバッジ表示（写真がない場合）
+            if (seedStatus in listOf("finished", "urgent", "thisMonth", "expired")) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .zIndex(3f),
+                    contentAlignment = Alignment.TopEnd
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .padding(4.dp)
+                            .background(
+                                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
+                                shape = CircleShape
+                            )
+                            .padding(4.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (seedStatus == "urgent") {
+                            // 期限間近：Material Iconsの砂時計を使用
+                            Icon(
+                                imageVector = Icons.Filled.HourglassEmpty,
+                                contentDescription = "期限間近",
+                                modifier = Modifier.size(16.dp),
+                                tint = MaterialTheme.colorScheme.onErrorContainer
+                            )
+                        } else if (statusIconResId != null) {
+                            // その他の状態：drawableリソースを使用
+                            Icon(
+                                painter = painterResource(id = statusIconResId),
+                                contentDescription = when (seedStatus) {
+                                    "finished" -> "まき終わり"
+                                    "thisMonth" -> "まきどき"
+                                    "expired" -> "期限切れ"
+                                    else -> "状態"
+                                },
+                                modifier = Modifier.size(16.dp),
+                                tint = Color.Unspecified
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
 }

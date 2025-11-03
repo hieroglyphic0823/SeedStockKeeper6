@@ -16,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color as ComposeColor
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
@@ -499,10 +500,11 @@ fun MainScaffoldNavigationBar(
             modifier = Modifier.weight(1f),
             icon = { 
                 val isSelected = currentRoute == NavigationConstants.LIST_ROUTE
-                Icon(
+                val iconTint = if (isSelected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+                Image(
                     painter = painterResource(id = R.drawable.seeds_pack_bw),
                     contentDescription = IconDescriptionConstants.LIST_ICON,
-                    tint = if (isSelected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
+                    colorFilter = ColorFilter.tint(iconTint),
                     modifier = Modifier.size(if (isSelected) IconSizeConstants.SELECTED_SIZE else IconSizeConstants.DEFAULT_SIZE)
                 )
             },

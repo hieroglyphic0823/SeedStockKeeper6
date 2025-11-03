@@ -218,8 +218,10 @@ fun SeedCalendarGroupedInternal(
     val onSecondaryContainerColor = MaterialTheme.colorScheme.onSecondaryContainer
     // カレンダーの月背景色
     val calendarMonthBackgroundWithinExpiration= tertiaryContainerColor // 月の数字が入っている枠の背景色（tertiaryContainerLight）
-    val calendarMonthBackgroundExpired= errorContainerColor // errorContainerLight
+    val calendarMonthBackgroundExpired= errorContainerColor // errorContainerLight（全体背景用、今後は使用しない）
     val calendarMonthBackground=tertiaryContainerColor  // デフォルト背景（tertiaryContainerLight）
+    // 播種期間の有効期限切れ背景色（backgroundLightMediumContrast）
+    val sowingExpiredBackgroundColor = com.example.seedstockkeeper6.ui.theme.backgroundLightMediumContrast
 
     val textPaintFontSize: TextUnit = MaterialTheme.typography.bodyMedium.fontSize // ← fontSizeをここで取得
     val configuration = LocalConfiguration.current // ← トップレベルで取得
@@ -329,19 +331,12 @@ fun SeedCalendarGroupedInternal(
                     YearMonth.of(9999, 12)
                 }
                 val targetMonthForBg = YearMonth.of(logicalYear, logicalMonth)
-                if (targetMonthForBg <= expirationForMonthBg) {
-                    drawRect(
-                        color = surfaceContainerLowColor, // surfaceContainerLowLight
-                        topLeft = Offset(x, gridTop),
-                        size = Size(colW, gridH)
-                    )
-                } else {
-                    drawRect(
-                        color = calendarMonthBackgroundExpired, // AppColors から
-                        topLeft = Offset(x, gridTop),
-                        size = Size(colW, gridH)
-                    )
-                }
+                // 全体背景は常に有効期限内の色を使用（有効期限切れは播種期間のみ表示）
+                drawRect(
+                    color = surfaceContainerLowColor, // surfaceContainerLowLight
+                    topLeft = Offset(x, gridTop),
+                    size = Size(colW, gridH)
+                )
             } else { // バンドがない場合はデフォルトの背景
                 drawRect(
                     color = surfaceContainerLowColor, // surfaceContainerLowLight
@@ -522,10 +517,17 @@ fun SeedCalendarGroupedInternal(
                             
                             // 棒線の背景
                             val backgroundColor = if (item.itemLabel == "播種") {
-                                // 播種期間の背景色はprimaryContainer
-                                primaryContainerColor
+                                // 播種期間の背景色は有効期限切れかどうかで判定
+                                val bandStartMonthForCheck = YearMonth.of(startYear, startMonth)
+                                if (bandStartMonthForCheck > expirationDate) {
+                                    // 有効期限切れの場合
+                                    sowingExpiredBackgroundColor
+                                } else {
+                                    // 有効期限内の場合
+                                    primaryContainerColor
+                                }
                             } else {
-                                // 収穫期間の背景色はsecondary
+                                // 収穫期間の背景色は常にsecondary（有効期限切れの色変更なし）
                                 secondaryColor
                             }
                             drawRect(
