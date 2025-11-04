@@ -62,7 +62,9 @@ data class SeedPacket(
     @get:PropertyName("isFinished")
     var isFinished: Boolean = false, // まき終わりフラグ
     @get:PropertyName("isExpired")
-    var isExpired: Boolean = false   // 有効期限切れフラグ
+    var isExpired: Boolean = false,   // 有効期限切れフラグ
+    @get:PropertyName("sowingDate")
+    val sowingDate: String = ""  // まいた日（"YYYY-MM-DD"形式）
 ) {
     // 指定された月・年・期間（上旬・中旬・下旬）に播種期間が含まれるかチェック
     fun isSowingIn(month: Int, year: Int, periodIndex: Int, isPreview: Boolean = false): Boolean {

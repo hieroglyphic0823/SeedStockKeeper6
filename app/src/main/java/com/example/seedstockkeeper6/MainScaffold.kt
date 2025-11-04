@@ -40,8 +40,8 @@ fun MainScaffold(
     val selectedIds = remember { mutableStateListOf<String>() }
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
-    val isListScreen = currentRoute == NavigationConstants.LIST_ROUTE
-    val isCastleScreen = currentRoute == NavigationConstants.CASTLE_ROUTE
+    val isListScreen = currentRoute?.startsWith(NavigationConstants.LIST_ROUTE) == true
+    val isCastleScreen = currentRoute?.startsWith(NavigationConstants.CASTLE_ROUTE) == true
     val isInputScreen = currentRoute?.startsWith(NavigationConstants.INPUT_ROUTE_PREFIX) == true
     
     val snackbarHostState = remember { SnackbarHostState() }

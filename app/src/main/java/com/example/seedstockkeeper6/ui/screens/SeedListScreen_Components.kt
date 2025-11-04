@@ -68,6 +68,9 @@ import kotlinx.coroutines.tasks.await
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.ktx.storage
 import android.util.Log
+import android.os.Vibrator
+import android.os.VibrationEffect
+import android.content.Context
 
 /**
  * リストアイテムコンポーネント
@@ -83,6 +86,25 @@ fun SeedListItem(
     onDelete: () -> Unit,
     isLastItem: Boolean
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    
+    // バイブレーション機能
+    fun vibrateOnce() {
+        try {
+            val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
+            vibrator?.let {
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                    it.vibrate(VibrationEffect.createOneShot(50, VibrationEffect.DEFAULT_AMPLITUDE))
+                } else {
+                    @Suppress("DEPRECATION")
+                    it.vibrate(50)
+                }
+            }
+        } catch (e: Exception) {
+            // バイブレーションが利用できない場合は無視
+        }
+    }
+    
     // スワイプ可能なリストアイテム
     SwipeToDeleteItem(
         modifier = Modifier
@@ -212,58 +234,64 @@ fun SeedListItem(
             // すべての状態でクリック可能
             val isClickable = seedStatus in listOf("finished", "urgent", "thisMonth", "expired")
             
-            if (isClickable) {
-                // クリックでまき終わりに設定（または解除）
-            IconButton(
-                onClick = {
-                        val isChecked = if (seedStatus == "finished") {
-                            // まき終わりの場合は解除
-                            !seed.isFinished
-                        } else {
-                            // その他の状態の場合はまき終わりに設定
-                            true
-                        }
-                    // まき終わりフラグの更新処理
-                    val documentId = seed.documentId ?: seed.id
-                    if (documentId != null) {
-                        viewModel.updateFinishedFlag(documentId, isChecked) { result ->
-                            scope.launch {
-                                if (result.isSuccess) {
-                                    val message = if (isChecked) "まき終わりに設定しました" else "まき終わりを解除しました"
-                                    snackbarHostState.showSnackbar(
-                                        message = message,
-                                        duration = SnackbarDuration.Short
-                                    )
-                                } else {
-                                    snackbarHostState.showSnackbar(
-                                        message = "更新に失敗しました",
-                                        duration = SnackbarDuration.Short
-                                    )
+            // 状態アイコンと状態名を縦に配置
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .width(60.dp)
+                    .clickable(enabled = isClickable) {
+                        if (isClickable) {
+                            val isChecked = if (seedStatus == "finished") {
+                                // まき終わりの場合は解除
+                                !seed.isFinished
+                            } else {
+                                // その他の状態の場合はまき終わりに設定
+                                true
+                            }
+                            // まき終わりフラグの更新処理
+                            val documentId = seed.documentId ?: seed.id
+                            if (documentId != null) {
+                                viewModel.updateFinishedFlag(documentId, isChecked) { result ->
+                                    scope.launch {
+                                        if (result.isSuccess) {
+                                            // バイブレーション
+                                            vibrateOnce()
+                                            val message = if (isChecked) "まき終わりに設定しました" else "まき終わりを解除しました"
+                                            snackbarHostState.showSnackbar(
+                                                message = message,
+                                                duration = SnackbarDuration.Short
+                                            )
+                                        } else {
+                                            snackbarHostState.showSnackbar(
+                                                message = "更新に失敗しました",
+                                                duration = SnackbarDuration.Short
+                                            )
+                                        }
+                                    }
                                 }
                             }
                         }
                     }
-                },
-                modifier = Modifier.size(32.dp)
-                ) {
-                    if (statusIconResId != null) {
-                        // 状態アイコンをdrawableリソースから表示
-                        Icon(
-                            painter = painterResource(id = statusIconResId),
-                            contentDescription = statusIconDescription,
-                            modifier = Modifier.size(36.dp),
-                            tint = Color.Unspecified
-                        )
-                    }
-                }
-            } else {
-                // 通常状態：アイコンのみ表示（クリック不可）
-                Box(
-                    modifier = Modifier.size(32.dp),
-                    contentAlignment = Alignment.Center
-                ) {
+            ) {
+                if (statusIconResId != null) {
+                    // 状態アイコンをdrawableリソースから表示（丸で囲まず）
+                    Icon(
+                        painter = painterResource(id = statusIconResId),
+                        contentDescription = statusIconDescription,
+                        modifier = Modifier.size(36.dp),
+                        tint = Color.Unspecified
+                    )
+                } else {
                     // 通常状態ではアイコンを表示しない
+                    Spacer(modifier = Modifier.size(36.dp))
                 }
+                
+                // 状態名をラベル表示
+                Text(
+                    text = statusIconDescription,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
     }

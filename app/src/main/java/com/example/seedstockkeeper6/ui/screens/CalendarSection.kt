@@ -19,6 +19,7 @@ import com.example.seedstockkeeper6.R
 import com.example.seedstockkeeper6.ui.components.SeedCalendarGrouped
 import com.example.seedstockkeeper6.ui.components.ExpirationSelectionBottomSheet
 import com.example.seedstockkeeper6.ui.components.PeriodSelectionBottomSheet
+import com.example.seedstockkeeper6.ui.components.DateSelectionBottomSheet
 import com.example.seedstockkeeper6.viewmodel.SeedInputViewModel
 import com.example.seedstockkeeper6.model.CalendarEntry
 import com.example.seedstockkeeper6.utils.DateConversionUtils
@@ -38,6 +39,7 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
     var showHarvestStartSheet by remember { mutableStateOf(false) }
     var showHarvestEndSheet by remember { mutableStateOf(false) }
     var showExpirationSheet by remember { mutableStateOf(false) }
+    var showSowingDateSheet by remember { mutableStateOf(false) }
     
     // ボトムシート内の一時的な選択値
     val currentDate = java.time.LocalDate.now()
@@ -58,6 +60,9 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
     var tempHarvestEndStage by remember { mutableStateOf("") }
     var tempExpirationYear by remember { mutableStateOf("") }
     var tempExpirationMonth by remember { mutableStateOf("") }
+    var tempSowingDateYear by remember { mutableStateOf("") }
+    var tempSowingDateMonth by remember { mutableStateOf("") }
+    var tempSowingDateDay by remember { mutableStateOf("") }
 
     Column(
         modifier = Modifier
@@ -188,6 +193,33 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
                 tempExpirationYear = if (expirationYear > 0) expirationYear.toString() else ""
                 tempExpirationMonth = if (expirationMonth > 0) expirationMonth.toString() else ""
                 showExpirationSheet = true
+            },
+            editable = viewModel.isEditMode || !viewModel.hasExistingData
+        )
+        
+        // まいた日
+        Spacer(modifier = Modifier.height(12.dp))
+        SowingDateRow(
+            sowingDate = viewModel.packet.sowingDate,
+            onClick = {
+                val sowingDate = viewModel.packet.sowingDate
+                if (sowingDate.isNotEmpty()) {
+                    try {
+                        val date = java.time.LocalDate.parse(sowingDate)
+                        tempSowingDateYear = date.year.toString()
+                        tempSowingDateMonth = date.monthValue.toString()
+                        tempSowingDateDay = date.dayOfMonth.toString()
+                    } catch (e: Exception) {
+                        tempSowingDateYear = currentYear.toString()
+                        tempSowingDateMonth = currentMonth.toString()
+                        tempSowingDateDay = currentDate.dayOfMonth.toString()
+                    }
+                } else {
+                    tempSowingDateYear = currentYear.toString()
+                    tempSowingDateMonth = currentMonth.toString()
+                    tempSowingDateDay = currentDate.dayOfMonth.toString()
+                }
+                showSowingDateSheet = true
             },
             editable = viewModel.isEditMode || !viewModel.hasExistingData
         )
@@ -324,6 +356,39 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
                     showExpirationSheet = false
                 },
                 onCancel = { showExpirationSheet = false }
+            )
+        }
+    }
+    
+    if (showSowingDateSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showSowingDateSheet = false },
+            sheetState = rememberModalBottomSheetState()
+        ) {
+            DateSelectionBottomSheet(
+                title = "まいた日",
+                selectedYear = tempSowingDateYear,
+                selectedMonth = tempSowingDateMonth,
+                selectedDay = tempSowingDateDay,
+                onYearChange = { tempSowingDateYear = it },
+                onMonthChange = { tempSowingDateMonth = it },
+                onDayChange = { tempSowingDateDay = it },
+                onConfirm = {
+                    val yearInt = tempSowingDateYear.toIntOrNull() ?: return@DateSelectionBottomSheet
+                    val monthInt = tempSowingDateMonth.toIntOrNull() ?: return@DateSelectionBottomSheet
+                    val dayInt = tempSowingDateDay.toIntOrNull() ?: return@DateSelectionBottomSheet
+                    if (yearInt > 0 && monthInt > 0 && dayInt > 0) {
+                        try {
+                            val date = java.time.LocalDate.of(yearInt, monthInt, dayInt)
+                            val dateString = date.format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE)
+                            viewModel.onSowingDateChange(dateString)
+                        } catch (e: Exception) {
+                            // 無効な日付の場合は無視
+                        }
+                    }
+                    showSowingDateSheet = false
+                },
+                onCancel = { showSowingDateSheet = false }
             )
         }
     }
@@ -482,6 +547,85 @@ private fun ExpirationRow(
         } else {
             Text(
                 if (expirationYear > 0 && expirationMonth > 0) "${expirationYear}年${expirationMonth}月" else "未設定",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+private fun SowingDateRow(
+    sowingDate: String,
+    onClick: () -> Unit,
+    editable: Boolean
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier.padding(horizontal = 8.dp)
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.width(40.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(24.dp)
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(MaterialTheme.colorScheme.secondaryContainer),
+                contentAlignment = Alignment.Center
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.seed),
+                    contentDescription = "まいた日",
+                    modifier = Modifier.size(18.dp),
+                    contentScale = ContentScale.Fit
+                )
+            }
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                "まいた日",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        if (editable) {
+            Button(
+                onClick = onClick,
+                modifier = Modifier.width(160.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer
+                ),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text(
+                    if (sowingDate.isNotEmpty()) {
+                        try {
+                            val date = java.time.LocalDate.parse(sowingDate)
+                            "${date.year}年${date.monthValue}月${date.dayOfMonth}日"
+                        } catch (e: Exception) {
+                            "まいた日"
+                        }
+                    } else {
+                        "まいた日"
+                    },
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+            }
+        } else {
+            Text(
+                if (sowingDate.isNotEmpty()) {
+                    try {
+                        val date = java.time.LocalDate.parse(sowingDate)
+                        "${date.year}年${date.monthValue}月${date.dayOfMonth}日"
+                    } catch (e: Exception) {
+                        "未設定"
+                    }
+                } else {
+                    "未設定"
+                },
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

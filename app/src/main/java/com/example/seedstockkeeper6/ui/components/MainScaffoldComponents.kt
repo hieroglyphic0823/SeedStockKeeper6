@@ -420,7 +420,7 @@ fun MainScaffoldTopAppBar(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             // 種一覧画面でチェックが入っている場合は削除ボタンを表示
-                            if (currentRoute == NavigationConstants.LIST_ROUTE && selectedIds.isNotEmpty()) {
+                            if (currentRoute?.startsWith(NavigationConstants.LIST_ROUTE) == true && selectedIds.isNotEmpty()) {
                                 IconButton(
                                     onClick = onDeleteSelected
                                 ) {
@@ -477,7 +477,7 @@ fun MainScaffoldNavigationBar(
         NavigationBarItem(
             modifier = Modifier.weight(1f),
             icon = { 
-                val isSelected = currentRoute == NavigationConstants.CASTLE_ROUTE
+                val isSelected = currentRoute?.startsWith(NavigationConstants.CASTLE_ROUTE) == true
                 Icon(
                     painter = painterResource(id = R.drawable.home),
                     contentDescription = IconDescriptionConstants.CASTLE_ICON,
@@ -486,12 +486,14 @@ fun MainScaffoldNavigationBar(
                 )
             },
             label = { Text(ScreenTitleConstants.CASTLE_TITLE) },
-            selected = currentRoute == NavigationConstants.CASTLE_ROUTE,
+            selected = currentRoute?.startsWith(NavigationConstants.CASTLE_ROUTE) == true,
             onClick = { navController.navigate(NavigationConstants.CASTLE_ROUTE) },
             colors = NavigationBarItemDefaults.colors(
                 selectedIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
                 selectedTextColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                indicatorColor = MaterialTheme.colorScheme.secondaryContainer
+                indicatorColor = MaterialTheme.colorScheme.secondaryContainer,
+                unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
             )
         )
         
@@ -499,7 +501,7 @@ fun MainScaffoldNavigationBar(
         NavigationBarItem(
             modifier = Modifier.weight(1f),
             icon = { 
-                val isSelected = currentRoute == NavigationConstants.LIST_ROUTE
+                val isSelected = currentRoute?.startsWith(NavigationConstants.LIST_ROUTE) == true
                 val iconTint = if (isSelected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
                 Image(
                     painter = painterResource(id = R.drawable.seeds_pack_bw),
@@ -509,12 +511,14 @@ fun MainScaffoldNavigationBar(
                 )
             },
             label = { Text(ScreenTitleConstants.LIST_TITLE) },
-            selected = currentRoute == NavigationConstants.LIST_ROUTE,
+            selected = currentRoute?.startsWith(NavigationConstants.LIST_ROUTE) == true,
             onClick = { navController.navigate(NavigationConstants.LIST_ROUTE) },
             colors = NavigationBarItemDefaults.colors(
                 selectedIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
                 selectedTextColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                indicatorColor = MaterialTheme.colorScheme.secondaryContainer
+                indicatorColor = MaterialTheme.colorScheme.secondaryContainer,
+                unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
             )
         )
         
@@ -561,7 +565,7 @@ fun MainScaffoldNavigationBar(
         NavigationBarItem(
             modifier = Modifier.weight(1f),
             icon = { 
-                val isSelected = currentRoute == NavigationConstants.CALENDAR_ROUTE
+                val isSelected = currentRoute?.startsWith(NavigationConstants.CALENDAR_ROUTE) == true
                 val iconTint = if (isSelected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
                 val isDarkTheme = isSystemInDarkTheme()
                 if (isDarkTheme) {
@@ -586,12 +590,14 @@ fun MainScaffoldNavigationBar(
                 }
             },
             label = { Text(ScreenTitleConstants.CALENDAR_TITLE) },
-            selected = currentRoute == NavigationConstants.CALENDAR_ROUTE,
+            selected = currentRoute?.startsWith(NavigationConstants.CALENDAR_ROUTE) == true,
             onClick = { navController.navigate(NavigationConstants.CALENDAR_ROUTE) },
             colors = NavigationBarItemDefaults.colors(
                 selectedIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
                 selectedTextColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                indicatorColor = MaterialTheme.colorScheme.secondaryContainer
+                indicatorColor = MaterialTheme.colorScheme.secondaryContainer,
+                unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
             )
         )
         
@@ -600,7 +606,7 @@ fun MainScaffoldNavigationBar(
             modifier = Modifier.weight(1f),
             icon = { 
                 Box {
-                    val isSelected = currentRoute == NavigationConstants.NOTIFICATION_HISTORY_ROUTE
+                    val isSelected = currentRoute?.startsWith(NavigationConstants.NOTIFICATION_HISTORY_ROUTE) == true
                     val rotationAngle by animateFloatAsState(
                         targetValue = if (isRotating) 360f else 0f,
                         animationSpec = tween(durationMillis = AnimationConstants.ROTATION_DURATION_MS),
@@ -643,7 +649,7 @@ fun MainScaffoldNavigationBar(
                 }
             },
             label = { Text(ScreenTitleConstants.NOTIFICATION_TITLE) },
-            selected = currentRoute == NavigationConstants.NOTIFICATION_HISTORY_ROUTE,
+            selected = currentRoute?.startsWith(NavigationConstants.NOTIFICATION_HISTORY_ROUTE) == true,
             onClick = { 
                 // 回転アニメーションを開始
                 isRotating = true
@@ -652,7 +658,9 @@ fun MainScaffoldNavigationBar(
             colors = NavigationBarItemDefaults.colors(
                 selectedIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
                 selectedTextColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                indicatorColor = MaterialTheme.colorScheme.secondaryContainer
+                indicatorColor = MaterialTheme.colorScheme.secondaryContainer,
+                unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
             )
         )
     }

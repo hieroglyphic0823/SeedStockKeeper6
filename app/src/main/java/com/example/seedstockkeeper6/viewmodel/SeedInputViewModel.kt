@@ -1465,18 +1465,40 @@ class SeedInputViewModel : ViewModel() {
         packet = packet.copy(isFinished = isFinished)
     }
     
+    fun updateExpirationFlag(isExpired: Boolean) {
+        packet = packet.copy(isExpired = isExpired)
+    }
+    
+    fun onSowingDateChange(sowingDate: String) {
+        packet = packet.copy(sowingDate = sowingDate)
+    }
+    
     fun updateFinishedFlagAndRefresh(isFinished: Boolean, onComplete: (Result<Unit>) -> Unit) {
         viewModelScope.launch {
             try {
+                // まき終わりに変更する場合は現在の日付を設定、解除する場合はクリア
+                val currentDate = java.time.LocalDate.now()
+                val newSowingDate = if (isFinished) {
+                    currentDate.format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE)
+                } else {
+                    ""
+                }
+                
                 // まずローカルの状態を更新
-                packet = packet.copy(isFinished = isFinished)
+                packet = packet.copy(isFinished = isFinished, sowingDate = newSowingDate)
                 
                 // Firebaseに更新を送信
                 val documentId = packet.documentId ?: packet.id
                 if (documentId != null) {
                     val db = Firebase.firestore
                     val docRef = db.collection("seeds").document(documentId)
-                    docRef.update("isFinished", isFinished).await()
+                    
+                    // isFinishedとsowingDateを同時に更新
+                    val updates = hashMapOf<String, Any>(
+                        "isFinished" to isFinished,
+                        "sowingDate" to newSowingDate
+                    )
+                    docRef.update(updates).await()
                     
                     // Firebaseから最新データを再取得
                     val updatedDoc = docRef.get().await()
@@ -1485,12 +1507,14 @@ class SeedInputViewModel : ViewModel() {
                         if (updatedSeed != null) {
                             val isFinishedFromDb = updatedDoc.getBoolean("isFinished") ?: false
                             val isExpiredFromDb = updatedDoc.getBoolean("isExpired") ?: false
+                            val sowingDateFromDb = updatedDoc.getString("sowingDate") ?: ""
                             
                             packet = updatedSeed.copy(
                                 id = updatedDoc.id,
                                 documentId = updatedDoc.id,
                                 isFinished = isFinishedFromDb,
-                                isExpired = isExpiredFromDb
+                                isExpired = isExpiredFromDb,
+                                sowingDate = sowingDateFromDb
                             )
                         }
                     }

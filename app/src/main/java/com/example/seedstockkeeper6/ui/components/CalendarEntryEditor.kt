@@ -1037,6 +1037,208 @@ fun ExpirationSelectionBottomSheet(
 }
 
 @Composable
+fun DateSelectionBottomSheet(
+    title: String,
+    selectedYear: String,
+    selectedMonth: String,
+    selectedDay: String,
+    onYearChange: (String) -> Unit,
+    onMonthChange: (String) -> Unit,
+    onDayChange: (String) -> Unit,
+    onConfirm: () -> Unit,
+    onCancel: () -> Unit
+) {
+    val currentYear = java.time.LocalDate.now().year
+    val currentDate = java.time.LocalDate.now()
+    
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+    ) {
+        Text(
+            title,
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
+        
+        // Material3のテーマカラーを取得
+        val colorScheme = MaterialTheme.colorScheme
+        
+        // 年、月、日を横並びで表示
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // 年選択
+            Column(
+                modifier = Modifier.weight(1f),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "年",
+                    style = MaterialTheme.typography.titleSmall,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                
+                AndroidView(
+                    factory = { context ->
+                        NumberPicker(context).apply {
+                            minValue = 0
+                            maxValue = 5
+                            val yearOptions = (currentYear..(currentYear + 5)).map { "${it}年" }.toTypedArray()
+                            setDisplayedValues(yearOptions)
+                            val selectedYearInt = selectedYear.toIntOrNull() ?: currentYear
+                            value = if (selectedYearInt >= currentYear && selectedYearInt <= currentYear + 5) {
+                                selectedYearInt - currentYear
+                            } else {
+                                0
+                            }
+                            setOnValueChangedListener { _, _, newVal ->
+                                onYearChange((currentYear + newVal).toString())
+                            }
+                            
+                            try {
+                                setTextColor(colorScheme.onSurface.toArgb())
+                                setBackgroundColor(colorScheme.surface.toArgb())
+                            } catch (e: Exception) {
+                                // 色設定が失敗した場合は無視
+                            }
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(120.dp)
+                )
+            }
+            
+            // 月選択
+            Column(
+                modifier = Modifier.weight(1f),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "月",
+                    style = MaterialTheme.typography.titleSmall,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                
+                AndroidView(
+                    factory = { context ->
+                        NumberPicker(context).apply {
+                            minValue = 1
+                            maxValue = 12
+                            val monthOptions = (1..12).map { "${it}月" }.toTypedArray()
+                            setDisplayedValues(monthOptions)
+                            value = selectedMonth.toIntOrNull() ?: currentDate.monthValue
+                            setOnValueChangedListener { _, _, newVal ->
+                                onMonthChange(newVal.toString())
+                            }
+                            
+                            try {
+                                setTextColor(colorScheme.onSurface.toArgb())
+                                setBackgroundColor(colorScheme.surface.toArgb())
+                            } catch (e: Exception) {
+                                // 色設定が失敗した場合は無視
+                            }
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(120.dp)
+                )
+            }
+            
+            // 日選択
+            Column(
+                modifier = Modifier.weight(1f),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "日",
+                    style = MaterialTheme.typography.titleSmall,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                
+                AndroidView(
+                    factory = { context ->
+                        NumberPicker(context).apply {
+                            val yearInt = selectedYear.toIntOrNull() ?: currentYear
+                            val monthInt = selectedMonth.toIntOrNull() ?: currentDate.monthValue
+                            val daysInMonth = java.time.LocalDate.of(yearInt, monthInt, 1).lengthOfMonth()
+                            
+                            minValue = 1
+                            maxValue = daysInMonth
+                            val dayOptions = (1..daysInMonth).map { "${it}日" }.toTypedArray()
+                            setDisplayedValues(dayOptions)
+                            value = selectedDay.toIntOrNull()?.coerceIn(1, daysInMonth) ?: currentDate.dayOfMonth
+                            setOnValueChangedListener { _, _, newVal ->
+                                onDayChange(newVal.toString())
+                            }
+                            
+                            try {
+                                setTextColor(colorScheme.onSurface.toArgb())
+                                setBackgroundColor(colorScheme.surface.toArgb())
+                            } catch (e: Exception) {
+                                // 色設定が失敗した場合は無視
+                            }
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(120.dp),
+                    update = { picker ->
+                        val yearInt = selectedYear.toIntOrNull() ?: currentYear
+                        val monthInt = selectedMonth.toIntOrNull() ?: currentDate.monthValue
+                        val daysInMonth = java.time.LocalDate.of(yearInt, monthInt, 1).lengthOfMonth()
+                        
+                        if (picker.maxValue != daysInMonth) {
+                            picker.maxValue = daysInMonth
+                            val dayOptions = (1..daysInMonth).map { "${it}日" }.toTypedArray()
+                            picker.setDisplayedValues(dayOptions)
+                        }
+                        val selectedDayInt = selectedDay.toIntOrNull()?.coerceIn(1, daysInMonth) ?: currentDate.dayOfMonth
+                        if (picker.value != selectedDayInt) {
+                            picker.value = selectedDayInt
+                        }
+                    }
+                )
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        // 確認・キャンセルボタン
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Button(
+                onClick = onCancel,
+                modifier = Modifier.weight(1f),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            ) {
+                Text("キャンセル")
+            }
+            
+            Button(
+                onClick = onConfirm,
+                modifier = Modifier.weight(1f),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+            ) {
+                Text("OK")
+            }
+        }
+    }
+}
+
+@Composable
 fun PeriodSelectionBottomSheet(
     title: String,
     selectedYear: String,

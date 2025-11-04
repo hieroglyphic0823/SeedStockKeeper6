@@ -141,22 +141,50 @@ class SeedListViewModel : ViewModel() {
                     if (seed != null) {
                         val isExpired = com.example.seedstockkeeper6.utils.ExpirationUtils.isSeedExpired(seed)
                         
-                        // まき終わりフラグと期限切れフラグを同時に更新
+                        // まき終わりフラグと期限切れフラグ、播種日を同時に更新
                         val updates = mutableMapOf<String, Any>()
                         updates["isFinished"] = isFinished
                         if (seed.isExpired != isExpired) {
                             updates["isExpired"] = isExpired
                             android.util.Log.d("SeedListViewModel", "期限切れフラグを更新: ${seed.productName} ${seed.isExpired} -> $isExpired")
                         }
+                        // まき終わりに変更する場合は現在の日付を設定、解除する場合はクリア
+                        val currentDate = java.time.LocalDate.now()
+                        val newSowingDate = if (isFinished) {
+                            currentDate.format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE)
+                        } else {
+                            ""
+                        }
+                        updates["sowingDate"] = newSowingDate
                         
                         docRef.update(updates).await()
                     } else {
-                        // 種データが取得できない場合はまき終わりフラグのみ更新
-                        docRef.update("isFinished", isFinished).await()
+                        // 種データが取得できない場合はまき終わりフラグと播種日を更新
+                        val currentDate = java.time.LocalDate.now()
+                        val newSowingDate = if (isFinished) {
+                            currentDate.format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE)
+                        } else {
+                            ""
+                        }
+                        val updates = hashMapOf<String, Any>(
+                            "isFinished" to isFinished,
+                            "sowingDate" to newSowingDate
+                        )
+                        docRef.update(updates).await()
                     }
                 } else {
-                    // ドキュメントが存在しない場合はまき終わりフラグのみ更新
-                    docRef.update("isFinished", isFinished).await()
+                    // ドキュメントが存在しない場合はまき終わりフラグと播種日を更新
+                    val currentDate = java.time.LocalDate.now()
+                    val newSowingDate = if (isFinished) {
+                        currentDate.format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE)
+                    } else {
+                        ""
+                    }
+                    val updates = hashMapOf<String, Any>(
+                        "isFinished" to isFinished,
+                        "sowingDate" to newSowingDate
+                    )
+                    docRef.update(updates).await()
                 }
                 
                 // 集計データを更新

@@ -29,6 +29,16 @@ import com.example.seedstockkeeper6.FullScreenSaveAnimation
 import com.example.seedstockkeeper6.ui.components.AIDiffDialog
 import com.example.seedstockkeeper6.ui.components.RegionSelectionDialog
 import com.example.seedstockkeeper6.viewmodel.SeedInputViewModel
+import android.hardware.Sensor
+import android.hardware.SensorEvent
+import android.hardware.SensorEventListener
+import android.hardware.SensorManager
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.remember
+import kotlin.math.abs
+import android.os.Vibrator
+import android.os.VibrationEffect
+import android.content.Context
 
 // 分離したコンポーネントのインポート
 import com.example.seedstockkeeper6.ui.screens.*
@@ -47,6 +57,116 @@ fun SeedInputScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
+    
+    // バイブレーション機能
+    fun vibrateOnce() {
+        try {
+            val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
+            vibrator?.let {
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                    it.vibrate(VibrationEffect.createOneShot(50, VibrationEffect.DEFAULT_AMPLITUDE))
+                } else {
+                    @Suppress("DEPRECATION")
+                    it.vibrate(50)
+                }
+            }
+        } catch (e: Exception) {
+            // バイブレーションが利用できない場合は無視
+        }
+    }
+    
+    // 加速度センサーで振動を検知して「まき終わり」に設定
+    val sensorManager = remember { context.getSystemService(android.content.Context.SENSOR_SERVICE) as SensorManager }
+    val accelerometer = remember { sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER) }
+    
+    // 前回の加速度値と振動検知フラグ
+    var lastAcceleration by remember { mutableStateOf(floatArrayOf(0f, 0f, 0f)) }
+    var lastShakeTime by remember { mutableStateOf(0L) }
+    var isProcessingShake by remember { mutableStateOf(false) }
+    
+    DisposableEffect(accelerometer) {
+        // センサーリスナーの定義は外側のスコープに移動
+        val sensorEventListener = object : SensorEventListener {
+            override fun onSensorChanged(event: SensorEvent?) {
+                if (event?.sensor?.type == Sensor.TYPE_ACCELEROMETER) {
+                    val x = event.values[0]
+                    val y = event.values[1]
+                    val z = event.values[2]
+                    
+                    // 重力を除いた加速度の変化量を計算
+                    val deltaX = abs(x - lastAcceleration[0])
+                    val deltaY = abs(y - lastAcceleration[1])
+                    val deltaZ = abs(z - lastAcceleration[2])
+                    
+                    // 振動の閾値（適切な値に調整）
+                    val shakeThreshold = 15.0f
+                    val totalAcceleration = deltaX + deltaY + deltaZ
+                    
+                    val currentTime = System.currentTimeMillis()
+                    // 連続して検知しないように、2秒間隔で制限し、処理中は無視
+                    if (totalAcceleration > shakeThreshold && 
+                        currentTime - lastShakeTime > 2000 && 
+                        !isProcessingShake) {
+                        lastShakeTime = currentTime
+                        
+                        // 既存データがある場合のみ「まき終わり」に設定
+                        if (viewModel.hasExistingData && !viewModel.packet.isFinished) {
+                            isProcessingShake = true
+                            scope.launch {
+                                try {
+                                    viewModel.updateFinishedFlagAndRefresh(true) { result ->
+                                        scope.launch {
+                                            isProcessingShake = false
+                                            if (result.isSuccess) {
+                                                // バイブレーション
+                                                vibrateOnce()
+                                                snackbarHostState.showSnackbar(
+                                                    message = "種をまき終わりました",
+                                                    duration = SnackbarDuration.Short
+                                                )
+                                            } else {
+                                                snackbarHostState.showSnackbar(
+                                                    message = "更新に失敗しました",
+                                                    duration = SnackbarDuration.Short
+                                                )
+                                            }
+                                        }
+                                    }
+                                } catch (e: Exception) {
+                                    isProcessingShake = false
+                                    android.util.Log.e("SeedInputScreen", "振動検知処理エラー", e)
+                                }
+                            }
+                        }
+                    }
+                    
+                    // 配列の値を直接更新（メモリリークを防ぐ）
+                    lastAcceleration[0] = x
+                    lastAcceleration[1] = y
+                    lastAcceleration[2] = z
+                }
+            }
+            
+            override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
+                // 精度変更時は何もしない
+            }
+        }
+        
+        // accelerometerがnullでない場合のみ、センサーリスナーを登録する
+        if (accelerometer != null) {
+            sensorManager.registerListener(
+                sensorEventListener,
+                accelerometer,
+                SensorManager.SENSOR_DELAY_NORMAL
+            )
+        }
+        
+        // onDisposeブロックに登録と解除をまとめる
+        // 画面破棄時に必ずセンサーリスナーを解除する
+        onDispose {
+            sensorManager.unregisterListener(sensorEventListener)
+        }
+    }
     
     // 農園情報の地域を設定
     LaunchedEffect(settingsViewModel?.defaultRegion) {
