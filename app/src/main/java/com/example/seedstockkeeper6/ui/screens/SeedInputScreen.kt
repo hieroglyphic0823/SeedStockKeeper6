@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -57,6 +58,9 @@ fun SeedInputScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
+    
+    // 削除確認ダイアログの表示状態
+    var showDeleteConfirmDialog by remember { mutableStateOf(false) }
     
     // バイブレーション機能
     fun vibrateOnce() {
@@ -183,6 +187,7 @@ fun SeedInputScreen(
             if ((viewModel.isEditMode || !viewModel.hasExistingData) && 
                 !viewModel.isLoading && 
                 !viewModel.showRegionSelectionDialog) {
+                // 保存FAB（右側）
                 FloatingActionButton(
                     onClick = {
                         onSaveRequest() // MainScaffoldの保存アニメーションを表示
@@ -269,6 +274,29 @@ fun SeedInputScreen(
             )
             }
             
+            // 削除FAB（既存データがある場合のみ表示、保存FABの左側に配置）
+            if ((viewModel.isEditMode || !viewModel.hasExistingData) && 
+                viewModel.hasExistingData &&
+                !viewModel.isLoading && 
+                !viewModel.showRegionSelectionDialog) {
+                FloatingActionButton(
+                    onClick = {
+                        showDeleteConfirmDialog = true
+                    },
+                    containerColor = MaterialTheme.colorScheme.errorContainer,
+                    contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(end = 80.dp, bottom = 16.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Delete,
+                        contentDescription = "削除",
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
+            }
+            
             // ダイアログ類
             if (viewModel.showCropConfirmDialog) {
                 CropConfirmDialog(viewModel = viewModel)
@@ -317,6 +345,49 @@ fun SeedInputScreen(
     
     // 画像拡大表示ダイアログ
     ImageDialog(viewModel)
+    
+    // 削除確認ダイアログ
+    if (showDeleteConfirmDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirmDialog = false },
+            title = { Text("削除確認") },
+            text = { Text("削除しますか？\nY/N") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showDeleteConfirmDialog = false
+                        // Yの場合：削除を実行
+                        viewModel.deleteSeedData(context) { result ->
+                            scope.launch {
+                                if (result.isSuccess) {
+                                    snackbarHostState.showSnackbar(
+                                        message = "削除しました",
+                                        duration = SnackbarDuration.Short
+                                    )
+                                    // 削除後、種目録画面に戻る
+                                    navController.popBackStack()
+                                } else {
+                                    snackbarHostState.showSnackbar(
+                                        message = "削除に失敗しました",
+                                        duration = SnackbarDuration.Short
+                                    )
+                                }
+                            }
+                        }
+                    }
+                ) {
+                    Text("Y")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showDeleteConfirmDialog = false }
+                ) {
+                    Text("N")
+                }
+            }
+        )
+    }
     
     // 保存アニメーション（MainScaffoldで管理されるため削除）
 }

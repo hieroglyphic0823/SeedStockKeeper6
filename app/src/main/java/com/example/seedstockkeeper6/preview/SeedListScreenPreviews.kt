@@ -2,7 +2,6 @@ package com.example.seedstockkeeper6.preview
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -194,9 +193,7 @@ fun SeedListScreenPreview() {
                                 
                                 if (companionPlantNames.isNotEmpty()) {
                                     Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .horizontalScroll(rememberScrollState()),
+                                        modifier = Modifier.fillMaxWidth(),
                                         verticalAlignment = Alignment.CenterVertically,
                                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                                     ) {
@@ -218,10 +215,11 @@ fun SeedListScreenPreview() {
                                             )
                                         }
                                         
-                                        // コンパニオンプランツ名（1行表示、横スクロール対応）
+                                        // コンパニオンプランツ名（1行のみ表示、折り返さない）
                                         Text(
                                             "${companionPlantNames.joinToString(", ")}${if (seed.companionPlants.size > 3) "..." else ""}",
                                             style = MaterialTheme.typography.bodyLarge.copy(fontWeight = androidx.compose.ui.text.font.FontWeight.Light),
+                                            modifier = Modifier.weight(1f),
                                             maxLines = 1,
                                             overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                                         )

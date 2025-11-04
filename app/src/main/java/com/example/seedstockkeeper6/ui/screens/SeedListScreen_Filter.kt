@@ -7,8 +7,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -30,6 +28,25 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
+import com.example.seedstockkeeper6.R
+
+/**
+ * Colorをグレースケールに変換する拡張関数
+ */
+private fun Color.toGrayscale(): Color {
+    // RGB値を取得（0.0-1.0の範囲）
+    val red = this.red
+    val green = this.green
+    val blue = this.blue
+    
+    // 輝度を計算（0.299*R + 0.587*G + 0.114*B）
+    val gray = 0.299f * red + 0.587f * green + 0.114f * blue
+    
+    // グレースケールのColorを作成（透明度は維持）
+    return Color(red = gray, green = gray, blue = gray, alpha = this.alpha)
+}
 
 /**
  * フィルターカードコンポーネント
@@ -197,81 +214,108 @@ fun SeedListFilterCard(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // 終了間近チェックボックス（重要度1）
+                        // 終了間近アイコン+状態名ボタン（重要度1）
+                        val urgentContainerColor = if (showUrgentSeeds) {
+                            MaterialTheme.colorScheme.errorContainer
+                        } else {
+                            MaterialTheme.colorScheme.errorContainer.toGrayscale()
+                        }
+                        val urgentContentColor = if (showUrgentSeeds) {
+                            MaterialTheme.colorScheme.onErrorContainer
+                        } else {
+                            MaterialTheme.colorScheme.onErrorContainer.toGrayscale()
+                        }
                         Row(
-                            verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
                                 .background(
-                                    color = MaterialTheme.colorScheme.errorContainer,
+                                    color = urgentContainerColor,
                                     shape = RoundedCornerShape(8.dp)
                                 )
-                                .padding(horizontal = 6.dp, vertical = 4.dp)
+                                .clickable { onUrgentSeedsChange(!showUrgentSeeds) }
+                                .padding(horizontal = 8.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
-                            Checkbox(
-                                checked = showUrgentSeeds,
-                                onCheckedChange = onUrgentSeedsChange,
-                                colors = CheckboxDefaults.colors(
-                                    checkedColor = MaterialTheme.colorScheme.onErrorContainer,
-                                    uncheckedColor = MaterialTheme.colorScheme.onErrorContainer
-                                )
+                            Icon(
+                                painter = painterResource(id = R.drawable.warning),
+                                contentDescription = "終了間近",
+                                modifier = Modifier.size(24.dp),
+                                tint = Color.Unspecified
                             )
-                            Spacer(modifier = Modifier.width(4.dp))
                             Text(
                                 text = "終了間近",
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onErrorContainer
+                                color = urgentContentColor
                             )
                         }
                         
-                        // まきどきチェックボックス（重要度2）
+                        // まきどきアイコン+状態名ボタン（重要度2）
+                        val thisMonthContainerColor = if (showThisMonthSeeds) {
+                            MaterialTheme.colorScheme.primaryContainer
+                        } else {
+                            MaterialTheme.colorScheme.primaryContainer.toGrayscale()
+                        }
+                        val thisMonthContentColor = if (showThisMonthSeeds) {
+                            MaterialTheme.colorScheme.onPrimaryContainer
+                        } else {
+                            MaterialTheme.colorScheme.onPrimaryContainer.toGrayscale()
+                        }
                         Row(
-                            verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
                                 .background(
-                                    color = MaterialTheme.colorScheme.primaryContainer,
+                                    color = thisMonthContainerColor,
                                     shape = RoundedCornerShape(8.dp)
                                 )
-                                .padding(horizontal = 6.dp, vertical = 4.dp)
+                                .clickable { onThisMonthSeedsChange(!showThisMonthSeeds) }
+                                .padding(horizontal = 8.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
-                            Checkbox(
-                                checked = showThisMonthSeeds,
-                                onCheckedChange = onThisMonthSeedsChange,
-                                colors = CheckboxDefaults.colors(
-                                    checkedColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                                    uncheckedColor = MaterialTheme.colorScheme.onPrimaryContainer
-                                )
+                            Icon(
+                                painter = painterResource(id = R.drawable.seed_bag_enp),
+                                contentDescription = "まきどき",
+                                modifier = Modifier.size(24.dp),
+                                tint = Color.Unspecified
                             )
-                            Spacer(modifier = Modifier.width(4.dp))
                             Text(
                                 text = "まきどき",
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                                color = thisMonthContentColor
                             )
                         }
                         
-                        // 通常チェックボックス（重要度3）
+                        // 通常アイコン+状態名ボタン（重要度3）
+                        val normalContainerColor = if (showNormalSeeds) {
+                            MaterialTheme.colorScheme.tertiaryContainer
+                        } else {
+                            MaterialTheme.colorScheme.tertiaryContainer.toGrayscale()
+                        }
+                        val normalContentColor = if (showNormalSeeds) {
+                            MaterialTheme.colorScheme.onTertiaryContainer
+                        } else {
+                            MaterialTheme.colorScheme.onTertiaryContainer.toGrayscale()
+                        }
                         Row(
-                            verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
                                 .background(
-                                    color = MaterialTheme.colorScheme.tertiaryContainer,
+                                    color = normalContainerColor,
                                     shape = RoundedCornerShape(8.dp)
                                 )
-                                .padding(horizontal = 6.dp, vertical = 4.dp)
+                                .clickable { onNormalSeedsChange(!showNormalSeeds) }
+                                .padding(horizontal = 8.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
-                            Checkbox(
-                                checked = showNormalSeeds,
-                                onCheckedChange = onNormalSeedsChange,
-                                colors = CheckboxDefaults.colors(
-                                    checkedColor = MaterialTheme.colorScheme.onTertiaryContainer,
-                                    uncheckedColor = MaterialTheme.colorScheme.onTertiaryContainer
-                                )
+                            Icon(
+                                painter = painterResource(id = R.drawable.seed_bag_full),
+                                contentDescription = "通常",
+                                modifier = Modifier.size(24.dp),
+                                tint = Color.Unspecified
                             )
-                            Spacer(modifier = Modifier.width(4.dp))
                             Text(
                                 text = "通常",
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onTertiaryContainer
+                                color = normalContentColor
                             )
                         }
                     }
@@ -281,55 +325,73 @@ fun SeedListFilterCard(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // まき終わりチェックボックス（重要度4）
+                        // まき終わりアイコン+状態名ボタン（重要度4）
+                        val finishedContainerColor = if (showFinishedSeeds) {
+                            MaterialTheme.colorScheme.secondaryContainer
+                        } else {
+                            MaterialTheme.colorScheme.secondaryContainer.toGrayscale()
+                        }
+                        val finishedContentColor = if (showFinishedSeeds) {
+                            MaterialTheme.colorScheme.onSecondaryContainer
+                        } else {
+                            MaterialTheme.colorScheme.onSecondaryContainer.toGrayscale()
+                        }
                         Row(
-                            verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
                                 .background(
-                                    color = MaterialTheme.colorScheme.secondaryContainer,
+                                    color = finishedContainerColor,
                                     shape = RoundedCornerShape(8.dp)
                                 )
-                                .padding(horizontal = 6.dp, vertical = 4.dp)
+                                .clickable { onFinishedSeedsChange(!showFinishedSeeds) }
+                                .padding(horizontal = 8.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
-                            Checkbox(
-                                checked = showFinishedSeeds,
-                                onCheckedChange = onFinishedSeedsChange,
-                                colors = CheckboxDefaults.colors(
-                                    checkedColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                                    uncheckedColor = MaterialTheme.colorScheme.onSecondaryContainer
-                                )
+                            Icon(
+                                painter = painterResource(id = R.drawable.seed),
+                                contentDescription = "まき終わり",
+                                modifier = Modifier.size(24.dp),
+                                tint = Color.Unspecified
                             )
-                            Spacer(modifier = Modifier.width(4.dp))
                             Text(
                                 text = "まき終わり",
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSecondaryContainer
+                                color = finishedContentColor
                             )
                         }
                         
-                        // 期限切れチェックボックス（重要度5）
+                        // 期限切れアイコン+状態名ボタン（重要度5）
+                        val expiredContainerColor = if (showExpiredSeeds) {
+                            MaterialTheme.colorScheme.surfaceContainerHighest
+                        } else {
+                            MaterialTheme.colorScheme.surfaceContainerHighest.toGrayscale()
+                        }
+                        val expiredContentColor = if (showExpiredSeeds) {
+                            MaterialTheme.colorScheme.onSurface
+                        } else {
+                            MaterialTheme.colorScheme.onSurface.toGrayscale()
+                        }
                         Row(
-                            verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
                                 .background(
-                                    color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                                    color = expiredContainerColor,
                                     shape = RoundedCornerShape(8.dp)
                                 )
-                                .padding(horizontal = 6.dp, vertical = 4.dp)
+                                .clickable { onExpiredSeedsChange(!showExpiredSeeds) }
+                                .padding(horizontal = 8.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
-                            Checkbox(
-                                checked = showExpiredSeeds,
-                                onCheckedChange = onExpiredSeedsChange,
-                                colors = CheckboxDefaults.colors(
-                                    checkedColor = MaterialTheme.colorScheme.onSurface,
-                                    uncheckedColor = MaterialTheme.colorScheme.onSurface
-                                )
+                            Icon(
+                                painter = painterResource(id = R.drawable.close),
+                                contentDescription = "期限切れ",
+                                modifier = Modifier.size(24.dp),
+                                tint = Color.Unspecified
                             )
-                            Spacer(modifier = Modifier.width(4.dp))
                             Text(
                                 text = "期限切れ",
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurface
+                                color = expiredContentColor
                             )
                         }
                     }

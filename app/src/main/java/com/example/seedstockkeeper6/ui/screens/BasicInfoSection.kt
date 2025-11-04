@@ -181,7 +181,7 @@ fun BasicInfoSection(
             "urgent" -> R.drawable.warning  // 期限間近：warning
             "thisMonth" -> R.drawable.seed_bag_enp  // まきどき：seed_bag_enp
             "expired" -> R.drawable.close  // 期限切れ：close
-            else -> null  // 通常：表示しない
+            else -> R.drawable.seed_bag_full  // 通常：seed_bag_full
         }
         val statusName = when (seedStatus) {
             "finished" -> "まき終わり"
@@ -287,17 +287,12 @@ fun BasicInfoSection(
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    if (statusIconResId != null) {
-                        Icon(
-                            painter = painterResource(id = statusIconResId),
-                            contentDescription = statusName,
-                            modifier = Modifier.size(24.dp),
-                            tint = Color.Unspecified
-                        )
-                    } else {
-                        // 通常状態の場合はアイコンを表示しない
-                        Spacer(modifier = Modifier.size(24.dp))
-                    }
+                    Icon(
+                        painter = painterResource(id = statusIconResId),
+                        contentDescription = statusName,
+                        modifier = Modifier.size(24.dp),
+                        tint = Color.Unspecified
+                    )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = statusName,

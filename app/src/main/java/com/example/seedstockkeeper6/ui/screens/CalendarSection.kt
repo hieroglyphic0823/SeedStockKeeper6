@@ -2,6 +2,7 @@ package com.example.seedstockkeeper6.ui.screens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -86,12 +87,23 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
             )
         }
 
-        // 地域表示
+        // 地域表示（編集モード時はクリック可能）
         if (currentRegion.isNotEmpty()) {
             Spacer(modifier = Modifier.height(4.dp))
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(horizontal = 8.dp)
+                modifier = Modifier
+                    .padding(horizontal = 8.dp)
+                    .then(
+                        if (viewModel.isEditMode || !viewModel.hasExistingData) {
+                            Modifier.clickable {
+                                // 編集モード時に地域選択ダイアログを表示
+                                viewModel.showRegionSelectionDialog = true
+                            }
+                        } else {
+                            Modifier
+                        }
+                    )
             ) {
                 Box(
                     modifier = Modifier
@@ -108,7 +120,28 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
             }
             Spacer(modifier = Modifier.height(12.dp))
         } else {
-            Spacer(modifier = Modifier.height(12.dp))
+            // 地域が未設定で編集モードの場合、地域を追加できるようにする
+            if (viewModel.isEditMode || !viewModel.hasExistingData) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .padding(horizontal = 8.dp)
+                        .clickable {
+                            // 編集モード時に地域選択ダイアログを表示
+                            viewModel.showRegionSelectionDialog = true
+                        }
+                ) {
+                    Text(
+                        "地域を選択",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Spacer(modifier = Modifier.height(12.dp))
+            } else {
+                Spacer(modifier = Modifier.height(12.dp))
+            }
         }
 
         // カレンダー表示本体

@@ -180,6 +180,7 @@ fun SeedListItem(
                     
                     if (companionPlantNames.isNotEmpty()) {
                         Row(
+                            modifier = Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
@@ -201,11 +202,12 @@ fun SeedListItem(
                                 )
                             }
                             
-                            // コンパニオンプランツ名
+                            // コンパニオンプランツ名（1行のみ表示、折り返さない）
                             Text(
                                 text = "${companionPlantNames.joinToString(", ")}${if (seed.companionPlants.size > 3) "..." else ""}",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.weight(1f),
                                 maxLines = 1,
                                 overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                             )
@@ -221,7 +223,7 @@ fun SeedListItem(
                 "urgent" -> R.drawable.warning  // 期限間近：warning
                 "thisMonth" -> R.drawable.seed_bag_enp  // まきどき：seed_bag_enp
                 "expired" -> R.drawable.close  // 期限切れ：close
-                else -> null  // 通常：何も表示しない（またはデフォルトアイコン）
+                else -> R.drawable.seed_bag_full  // 通常：seed_bag_full
             }
             val statusIconDescription = when (seedStatus) {
                 "finished" -> "まき終わり"
@@ -273,18 +275,13 @@ fun SeedListItem(
                         }
                     }
             ) {
-                if (statusIconResId != null) {
-                    // 状態アイコンをdrawableリソースから表示（丸で囲まず）
-                    Icon(
-                        painter = painterResource(id = statusIconResId),
-                        contentDescription = statusIconDescription,
-                        modifier = Modifier.size(36.dp),
-                        tint = Color.Unspecified
-                    )
-                } else {
-                    // 通常状態ではアイコンを表示しない
-                    Spacer(modifier = Modifier.size(36.dp))
-                }
+                // 状態アイコンをdrawableリソースから表示（丸で囲まず）
+                Icon(
+                    painter = painterResource(id = statusIconResId),
+                    contentDescription = statusIconDescription,
+                    modifier = Modifier.size(36.dp),
+                    tint = Color.Unspecified
+                )
                 
                 // 状態名をラベル表示
                 Text(
@@ -367,7 +364,7 @@ fun SeedGalleryItem(
         "urgent" -> R.drawable.warning  // 期限間近：warning
         "thisMonth" -> R.drawable.seed_bag_enp  // まきどき：seed_bag_enp
         "expired" -> R.drawable.close  // 期限切れ：close
-        else -> null  // 通常：表示しない
+        else -> R.drawable.seed_bag_full  // 通常：seed_bag_full
     }
     
     // ギャラリーアイテム
@@ -421,39 +418,35 @@ fun SeedGalleryItem(
             )
             
             // 状態アイコンを右上にバッジ表示（写真がある場合）
-            if (seedStatus in listOf("finished", "urgent", "thisMonth", "expired")) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .zIndex(3f),
+                contentAlignment = Alignment.TopEnd
+            ) {
                 Box(
                     modifier = Modifier
-                        .fillMaxSize()
-                        .zIndex(3f),
-                    contentAlignment = Alignment.TopEnd
+                        .padding(4.dp)
+                        .background(
+                            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
+                            shape = CircleShape
+                        )
+                        .padding(4.dp),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .padding(4.dp)
-                            .background(
-                                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
-                                shape = CircleShape
-                            )
-                            .padding(4.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        if (statusIconResId != null) {
-                            // 状態アイコンをdrawableリソースから表示
-                            Icon(
-                                painter = painterResource(id = statusIconResId),
-                                contentDescription = when (seedStatus) {
-                                    "finished" -> "まき終わり"
-                                    "urgent" -> "期限間近"
-                                    "thisMonth" -> "まきどき"
-                                    "expired" -> "期限切れ"
-                                    else -> "状態"
-                                },
-                                modifier = Modifier.size(16.dp),
-                                tint = Color.Unspecified
-                            )
-                        }
-                    }
+                    // 状態アイコンをdrawableリソースから表示
+                    Icon(
+                        painter = painterResource(id = statusIconResId),
+                        contentDescription = when (seedStatus) {
+                            "finished" -> "まき終わり"
+                            "urgent" -> "期限間近"
+                            "thisMonth" -> "まきどき"
+                            "expired" -> "期限切れ"
+                            else -> "通常"
+                        },
+                        modifier = Modifier.size(16.dp),
+                        tint = Color.Unspecified
+                    )
                 }
             }
         } else {
@@ -507,40 +500,36 @@ fun SeedGalleryItem(
                 contentScale = ContentScale.FillBounds
             )
             
-                            // 状態アイコンを右上にバッジ表示（写真がない場合）
-            if (seedStatus in listOf("finished", "urgent", "thisMonth", "expired")) {
+            // 状態アイコンを右上にバッジ表示（写真がない場合）
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .zIndex(3f),
+                contentAlignment = Alignment.TopEnd
+            ) {
                 Box(
                     modifier = Modifier
-                        .fillMaxSize()
-                        .zIndex(3f),
-                    contentAlignment = Alignment.TopEnd
+                        .padding(4.dp)
+                        .background(
+                            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
+                            shape = CircleShape
+                        )
+                        .padding(4.dp),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .padding(4.dp)
-                            .background(
-                                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
-                                shape = CircleShape
-                            )
-                            .padding(4.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        if (statusIconResId != null) {
-                            // 状態アイコンをdrawableリソースから表示
-                            Icon(
-                                painter = painterResource(id = statusIconResId),
-                                contentDescription = when (seedStatus) {
-                                    "finished" -> "まき終わり"
-                                    "urgent" -> "期限間近"
-                                    "thisMonth" -> "まきどき"
-                                    "expired" -> "期限切れ"
-                                    else -> "状態"
-                                },
-                                modifier = Modifier.size(16.dp),
-                                tint = Color.Unspecified
-                            )
-                        }
-                    }
+                    // 状態アイコンをdrawableリソースから表示
+                    Icon(
+                        painter = painterResource(id = statusIconResId),
+                        contentDescription = when (seedStatus) {
+                            "finished" -> "まき終わり"
+                            "urgent" -> "期限間近"
+                            "thisMonth" -> "まきどき"
+                            "expired" -> "期限切れ"
+                            else -> "通常"
+                        },
+                        modifier = Modifier.size(16.dp),
+                        tint = Color.Unspecified
+                    )
                 }
             }
         }

@@ -1536,6 +1536,74 @@ class SeedInputViewModel : ViewModel() {
     }
     
     /**
+     * 種データを削除（画像も含めて削除）
+     */
+    fun deleteSeedData(context: android.content.Context, onComplete: (Result<Unit>) -> Unit) {
+        viewModelScope.launch {
+            val result = deleteSeedDataInternal(context)
+            onComplete(result)
+        }
+    }
+    
+    /**
+     * 種データ削除の内部実装
+     */
+    private suspend fun deleteSeedDataInternal(context: android.content.Context): Result<Unit> =
+        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            val db = com.google.firebase.ktx.Firebase.firestore
+            val storage = com.google.firebase.ktx.Firebase.storage
+            
+            try {
+                val documentId = packet.documentId ?: packet.id
+                if (documentId == null || documentId.isEmpty()) {
+                    return@withContext Result.failure(IllegalStateException("Document ID not found"))
+                }
+                
+                val docRef = db.collection("seeds").document(documentId)
+                val documentSnapshot = docRef.get().await()
+                
+                if (!documentSnapshot.exists()) {
+                    return@withContext Result.failure(NoSuchElementException("Document $documentId not found"))
+                }
+                
+                // 画像URLを取得して削除
+                val imageUrls = documentSnapshot.get("imageUrls") as? List<String> ?: emptyList()
+                
+                imageUrls.forEach { url ->
+                    if (url.isNotBlank()) {
+                        try {
+                            val path = android.net.Uri.decode(url).substringAfter("/o/").substringBefore("?")
+                            if (path.isNotEmpty()) {
+                                storage.reference.child(path).delete().await()
+                            }
+                        } catch (e: Exception) {
+                            // 画像削除エラーは無視（ログのみ）
+                            android.util.Log.w("SeedInputViewModel", "画像削除エラー: ${e.message}")
+                        }
+                    }
+                }
+                
+                // ドキュメントを削除
+                docRef.delete().await()
+                
+                // 集計データを更新
+                try {
+                    val auth = com.google.firebase.auth.FirebaseAuth.getInstance()
+                    val currentUser = auth.currentUser
+                    if (currentUser != null) {
+                        updateStatisticsAfterSeedChange(currentUser.uid)
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.w("SeedInputViewModel", "集計データ更新エラー: ${e.message}")
+                }
+                
+                Result.success(Unit)
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+    
+    /**
      * 種データ変更後の集計更新処理
      */
     private suspend fun updateStatisticsAfterSeedChange(ownerUid: String) {
