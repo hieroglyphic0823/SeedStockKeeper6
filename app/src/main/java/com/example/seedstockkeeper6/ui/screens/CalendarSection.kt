@@ -611,7 +611,7 @@ private fun SowingDateRow(
                 contentAlignment = Alignment.Center
             ) {
                 Image(
-                    painter = painterResource(id = R.drawable.seed),
+                    painter = painterResource(id = R.drawable.planting),
                     contentDescription = "まいた日",
                     modifier = Modifier.size(18.dp),
                     contentScale = ContentScale.Fit

@@ -2,13 +2,13 @@ package com.example.seedstockkeeper6.ui.components
 
 import android.content.res.Configuration
 import android.graphics.Paint
-import android.util.Log
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -20,6 +20,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -79,43 +82,27 @@ fun SeedCalendarGrouped(
     sowingDate: String = "" // まいた日（"YYYY-MM-DD"形式）
 ) {
     val today = previewDate ?: LocalDate.now() // プレビュー用の日付があれば使用、なければ現在の日付
-    val scrollState = rememberScrollState()
     
-    // 播種期間と収穫期間の両方を考慮して、最も早い開始月を取得
-    val allStartDates = entries.flatMap { entry ->
-        listOfNotNull(
-            entry.sowing_start_date.takeIf { it.isNotEmpty() },
-            entry.harvest_start_date.takeIf { it.isNotEmpty() }
-        )
+    // 📅 現在の月から3カ月前を起点に、2年分先までのカレンダー期間を計算
+    val calendarStartDate = LocalDate.of(today.year, today.monthValue, 1).minusMonths(3) // 過去3カ月分も表示
+    val calendarEndDate = calendarStartDate.plusYears(2).minusMonths(1) // 開始から2年分先まで
+    
+    // カレンダーの総月数を計算（過去3カ月 + 2年分 = 27ヶ月）
+    val totalMonths = ChronoUnit.MONTHS.between(calendarStartDate, calendarEndDate).toInt() + 1
+    
+    // カレンダー全体の月のリストを作成
+    val months = List(totalMonths) { i -> 
+        calendarStartDate.plusMonths(i.toLong()) 
     }
     
-    val earliestDate = allStartDates.minOfOrNull { dateStr ->
-        try {
-            LocalDate.parse(dateStr)
-        } catch (e: Exception) {
-            today // パースエラーの場合は現在の日付
-        }
-    } ?: today
+    // 📅 当月のインデックスを計算
+    val todayMonthStart = LocalDate.of(today.year, today.monthValue, 1)
+    val currentMonthIndex = ChronoUnit.MONTHS.between(calendarStartDate, todayMonthStart).toInt()
     
-    // 当月から2年分のカレンダー期間を計算
-    val calendarStartDate = LocalDate.of(today.year, today.monthValue, 1) // 当月から開始
-    val calendarEndDate = calendarStartDate.plusYears(2).minusMonths(1)
-    
-    // デバッグログを追加
-    
-    // 現在の月の位置を計算（スクロール初期位置用）
-    // 当月から開始するため、常に0から開始
-    val monthsFromStart = 0
-    
-    // 月幅を統一（実際の表示幅に基づく）
-    // 画面幅を取得して12ヶ月分で割る
-    val density = LocalDensity.current
-    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
-    val monthWidth = screenWidth / 12f // 実際の表示幅に基づく月幅
-    
-    // カレンダー開始月が左端に表示されるようにスクロール位置を計算
-    // 負の値の場合は0に設定（カレンダー開始月より前の場合は開始位置にスクロール）
-    val initialScrollOffset = maxOf(0, monthsFromStart * monthWidth.value.toInt())
+    // LazyRowのStateを作成し、初期表示位置を設定（当月が左端に表示される）
+    val lazyListState = rememberLazyListState(
+        initialFirstVisibleItemIndex = currentMonthIndex
+    )
     
     // MaterialTheme から直接取得
     val baseSowingColor = MaterialTheme.colorScheme.primaryContainer
@@ -170,25 +157,38 @@ fun SeedCalendarGrouped(
         }
         .filter { it.items.isNotEmpty() }
 
-    // 初期スクロール位置を設定
-    LaunchedEffect(initialScrollOffset) {
-        scrollState.animateScrollTo(initialScrollOffset)
-    }
-
-    Box(
-        modifier = modifier
-            .horizontalScroll(scrollState)
-            .width(monthWidth * 24) // 2年分の幅（統一された月幅を使用）
-    ) {
-        SeedCalendarGroupedInternal(
-            bands = groupedBands,
+    // BoxWithConstraintsで実際の利用可能な幅を取得
+    BoxWithConstraints(modifier = modifier) {
+        // 月幅を統一（実際の表示幅に基づく）
+        // 実際のコンテナ幅を取得して6ヶ月分で割る（画面に6ヶ月分を表示）
+        val monthWidth = maxWidth / 6f // 6ヶ月分で1画面を構成
+        
+        // LazyRowで月ごとにカレンダーを表示
+        LazyRow(
             modifier = Modifier.fillMaxWidth(),
-            heightDp = heightDp,
-            currentMonth = today.monthValue,
-            currentYear = today.year,
-            calendarStartDate = calendarStartDate,
-            calendarEndDate = calendarEndDate
-        )
+            state = lazyListState
+        ) {
+            items(
+                items = months,
+                key = { month -> "${month.year}-${month.monthValue}" }
+            ) { monthDate ->
+                // 各月の描画
+                Box(
+                    modifier = Modifier.width(monthWidth)
+                ) {
+                    SeedCalendarGroupedInternal(
+                        bands = groupedBands,
+                        modifier = Modifier.fillMaxWidth(),
+                        heightDp = heightDp,
+                        currentMonth = monthDate.monthValue,
+                        currentYear = monthDate.year,
+                        calendarStartDate = calendarStartDate,
+                        calendarEndDate = calendarEndDate,
+                        targetMonth = monthDate // 表示対象の月を指定
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -200,7 +200,8 @@ fun SeedCalendarGroupedInternal(
     currentMonth: Int,
     currentYear: Int,
     calendarStartDate: LocalDate? = null,
-    calendarEndDate: LocalDate? = null
+    calendarEndDate: LocalDate? = null,
+    targetMonth: LocalDate? = null // 表示対象の月（LazyRow使用時）
 ) {
     val density = LocalDensity.current
     val context = LocalContext.current
@@ -215,6 +216,25 @@ fun SeedCalendarGroupedInternal(
             repeatMode = RepeatMode.Reverse
         ),
         label = "sowingBlinkAnim"
+    )
+    
+    // 🥕 収穫アイコンのぷるぷる揺れアニメーション
+    val harvestShakeTransition = rememberInfiniteTransition(label = "harvestShake")
+    val shakeRotation by harvestShakeTransition.animateFloat(
+        initialValue = -6f,
+        targetValue = 6f,
+        animationSpec = infiniteRepeatable(
+            animation = keyframes {
+                durationMillis = 800
+                -6f at 0
+                6f at 100
+                -3f at 200
+                3f at 300
+                -6f at 400
+            },
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "shakeRotation"
     )
 
     // AppColors とテーマから必要な値を取得 (Composable 関数のトップレベル)
@@ -233,12 +253,14 @@ fun SeedCalendarGroupedInternal(
     val secondaryContainerColor = MaterialTheme.colorScheme.secondaryContainer
     val primaryContainerColor = MaterialTheme.colorScheme.primaryContainer
     val onSecondaryContainerColor = MaterialTheme.colorScheme.onSecondaryContainer
+    val surfaceContainerHighestColor = MaterialTheme.colorScheme.surfaceContainerHighest // お城画面の期限切れカードの表面色
     // カレンダーの月背景色
     val calendarMonthBackgroundWithinExpiration= tertiaryContainerColor // 月の数字が入っている枠の背景色（tertiaryContainerLight）
     val calendarMonthBackgroundExpired= errorContainerColor // errorContainerLight（全体背景用、今後は使用しない）
     val calendarMonthBackground=tertiaryContainerColor  // デフォルト背景（tertiaryContainerLight）
-    // 播種期間の有効期限切れ背景色（backgroundLightMediumContrast）
-    val sowingExpiredBackgroundColor = com.example.seedstockkeeper6.ui.theme.backgroundLightMediumContrast
+    // 播種期間の背景色定義
+    val sowingExpiredBackgroundColor = com.example.seedstockkeeper6.ui.theme.backgroundLightMediumContrast // 有効期限の月の色
+    val sowingExpiredGrayColor = surfaceContainerHighestColor // 有効期限の月以降（お城画面の期限切れカードと同じ色）
 
     val textPaintFontSize: TextUnit = MaterialTheme.typography.bodyMedium.fontSize // ← fontSizeをここで取得
     val configuration = LocalConfiguration.current // ← トップレベルで取得
@@ -254,6 +276,7 @@ fun SeedCalendarGroupedInternal(
             color = actualTextPaintColor.toArgb()
             textSize = with(density) { textPaintFontSize.toPx() }
             isAntiAlias = true
+            textAlign = Paint.Align.CENTER // テキストを中央揃えにする
         }
     }
 
@@ -285,19 +308,28 @@ fun SeedCalendarGroupedInternal(
         val gridW = gridRight - gridLeft
         val gridH = gridBottom - gridTop
         // カレンダーの表示期間を計算
-        // 播種期間開始月から2年分のカレンダーを作成
-        val startDate = calendarStartDate ?: LocalDate.of(currentYear, currentMonth, 1)
-        val endDate = calendarEndDate ?: startDate.plusYears(2).minusMonths(1)
-        val totalMonths = ChronoUnit.MONTHS.between(startDate, endDate).toInt() + 1
+        // targetMonthが指定されている場合は1ヶ月分だけを描画
+        val (startDate, endDate, totalMonths) = if (targetMonth != null) {
+            val monthStart = LocalDate.of(targetMonth.year, targetMonth.monthValue, 1)
+            val monthEnd = monthStart.plusMonths(1).minusDays(1)
+            Triple(monthStart, monthEnd, 1)
+        } else {
+            // 全範囲を描画
+            val start = calendarStartDate ?: LocalDate.of(currentYear, currentMonth, 1)
+            val end = calendarEndDate ?: start.plusYears(2).minusMonths(1)
+            val total = ChronoUnit.MONTHS.between(start, end).toInt() + 1
+            Triple(start, end, total)
+        }
         
         // デバッグログを追加
         
         // 実際の表示幅に基づいて月幅を計算
-        val colW = gridW / 12f // 12ヶ月分の幅で計算（表示範囲は12ヶ月分）
+        // targetMonthが指定されている場合は1ヶ月分、そうでなければ全範囲で計算
+        val colW = gridW / totalMonths.toFloat() // 月幅を計算
         val rowH = with(density) { 118.dp.toPx() } // 種暦の縦幅を118dpに設定（140dp - 22dp = 118dp）
 
-        // 月ラベルの背景色を描画 (secondaryContainerLight) - 12ヶ月分のみ
-        for (m in 0 until 12) {
+        // 月ラベルの背景色を描画 (secondaryContainerLight) - 全範囲分
+        for (m in 0 until totalMonths) {
             val x = gridLeft + colW * m
             drawRect(
                 color = secondaryContainerColor, // secondaryContainerLight
@@ -328,8 +360,8 @@ fun SeedCalendarGroupedInternal(
         )
         
         
-        // 月ヘッダと月の背景色描画 (ここは月ごとに有効期限判定している) - 12ヶ月分のみ
-        for (m in 0 until 12) {
+        // 月ヘッダと月の背景色描画 (ここは月ごとに有効期限判定している) - 全範囲分
+        for (m in 0 until totalMonths) {
             val currentMonthDate = startDate.plusMonths(m.toLong())
             val logicalMonth = currentMonthDate.monthValue
             val logicalYear = currentMonthDate.year
@@ -348,11 +380,40 @@ fun SeedCalendarGroupedInternal(
                     YearMonth.of(9999, 12)
                 }
                 val targetMonthForBg = YearMonth.of(logicalYear, logicalMonth)
-                // 全体背景は常に有効期限内の色を使用（有効期限切れは播種期間のみ表示）
+                
+                // カレンダーの月背景色を有効期限に応じて変更
+                // 上半分（播種期間表示部分）のみ有効期限に応じて色を変更
+                // 下半分（収穫期間表示部分）は常に通常色
+                val halfHeight = gridH / 2f
+                
+                // 上半分の背景色（播種期間表示部分）
+                val topHalfBackgroundColor = when {
+                    targetMonthForBg < expirationForMonthBg -> {
+                        // 有効期限の月より前：通常色
+                        surfaceContainerLowColor
+                    }
+                    targetMonthForBg == expirationForMonthBg -> {
+                        // 有効期限の月：backgroundLightMediumContrast
+                        sowingExpiredBackgroundColor
+                    }
+                    else -> {
+                        // 有効期限の月より後：グレーアウト
+                        sowingExpiredGrayColor
+                    }
+                }
+                
+                // 上半分の背景を描画（播種期間表示部分）
                 drawRect(
-                    color = surfaceContainerLowColor, // surfaceContainerLowLight
+                    color = topHalfBackgroundColor,
                     topLeft = Offset(x, gridTop),
-                    size = Size(colW, gridH)
+                    size = Size(colW, halfHeight)
+                )
+                
+                // 下半分の背景を描画（収穫期間表示部分、常に通常色）
+                drawRect(
+                    color = surfaceContainerLowColor,
+                    topLeft = Offset(x, gridTop + halfHeight),
+                    size = Size(colW, halfHeight)
                 )
             } else { // バンドがない場合はデフォルトの背景
                 drawRect(
@@ -462,9 +523,15 @@ fun SeedCalendarGroupedInternal(
             val baseCenterY = top + rowH / 2f + with(density) { 8.dp.toPx() } // 上下に8dpの余白を追加
 
             val expirationDate = try {
-                YearMonth.of(groupedBand.expirationYear, groupedBand.expirationMonth)
+                // expirationMonthが0以下の場合は有効期限なしとして扱う
+                if (groupedBand.expirationMonth > 0) {
+                    YearMonth.of(groupedBand.expirationYear, groupedBand.expirationMonth)
+                } else {
+                    // 有効期限なしの場合は非常に遠い未来の日付を設定（期限切れ判定を無効化）
+                    YearMonth.of(9999, 12)
+                }
             } catch (e: Exception) {
-                YearMonth.of(1900, 1) // Fallback
+                YearMonth.of(9999, 12) // Fallback: 有効期限なしとして扱う
             }
 
             groupedBand.items.forEach { item ->
@@ -532,17 +599,10 @@ fun SeedCalendarGroupedInternal(
                                 top + with(density) { 27.dp.toPx() } // 16dp + 11dp = 27dp
                             }
                             
-                            // 棒線の背景
+                            // 棒線の背景（播種バー自体の色は常に通常色）
                             val backgroundColor = if (item.itemLabel == "播種") {
-                                // 播種期間の背景色は有効期限切れかどうかで判定
-                                val bandStartMonthForCheck = YearMonth.of(startYear, startMonth)
-                                if (bandStartMonthForCheck > expirationDate) {
-                                    // 有効期限切れの場合
-                                    sowingExpiredBackgroundColor
-                                } else {
-                                    // 有効期限内の場合
-                                    primaryContainerColor
-                                }
+                                // 播種期間の背景色は常にprimaryContainerColor（カレンダーの月背景色で有効期限を表現）
+                                primaryContainerColor
                             } else {
                                 // 収穫期間の背景色は常にsecondary（有効期限切れの色変更なし）
                                 secondaryColor
@@ -602,22 +662,16 @@ fun SeedCalendarGroupedInternal(
                                     
                                     positions.forEach { iconX ->
                                         // 棒グラフの範囲内（startX から endX）にある旬のみアイコンを表示
-                                        if (iconX >= startX && iconX <= endX) {
+                                        // 有効期限切れの期間はアイコンを表示しない
+                                        if (iconX >= startX && iconX <= endX && !isExpired) {
                                             val iconY = adjustedCenterY - with(density) { 14.dp.toPx() } // 棒の上に配置
-                                            
-                                            // 有効期限切れの場合はグレーアウト（アルファ値を下げる）
-                                            val finalAlpha = if (isExpired) {
-                                                alphaAnim * 0.3f // 有効期限切れは暗めに
-                                            } else {
-                                                alphaAnim // 通常の点滅
-                                            }
                                             
                                             drawImage(
                                                 image = iconImage,
                                                 dstOffset = IntOffset(iconX.toInt() - iconDisplaySizeInt / 2, iconY.toInt()),
                                                 dstSize = IntSize(iconDisplaySizeInt, iconDisplaySizeInt),
                                                 colorFilter = ColorFilter.tint(
-                                                    onPrimaryContainerColor.copy(alpha = finalAlpha)
+                                                    onPrimaryContainerColor.copy(alpha = alphaAnim)
                                                 )
                                             )
                                         }
@@ -650,7 +704,7 @@ fun SeedCalendarGroupedInternal(
                                             }
                                             
                                             val plantingSize = with(density) { 22.dp.toPx() }
-                                            val plantingY = adjustedCenterY - with(density) { 32.dp.toPx() }
+                                            val plantingY = adjustedCenterY - with(density) { 30.dp.toPx() }
                                             
                                             // アイコンbitmap取得
                                             val plantingBitmap = try {
@@ -674,76 +728,79 @@ fun SeedCalendarGroupedInternal(
                                             )
                                         }
                                     } catch (e: Exception) {
-                                        Log.e("SeedCalendar", "まいた日描画エラー: ${e.message}")
                                     }
                                 }
                             } else {
-                                // 収穫期間：従来のアイコン表示
+                                // 🌾 収穫期間：各月を3分割して収穫アイコンを配置（旬ごとに1つ）
                                 val iconSize = with(density) { 20.dp.toPx() } // 収穫アイコンは20dp
-                                val iconResource = R.drawable.harvest
+                                val iconResource = R.drawable.harvest_b
                                 
-                                // アイコンを棒グラフ幅に横に繰り返し表示
-                                val iconSpacing = iconSize * 1.5f // アイコン間隔（アイコンサイズの1.5倍）
-                                val iconCount = ((endX - startX) / iconSpacing).toInt() + 1 // 繰り返し回数を計算
-                                
-                                // アイコンの位置とリソースを記録（複数個）
-                                for (i in 0 until iconCount) {
-                                    val iconX = startX + i * iconSpacing
-                                    val iconPosition = Offset(iconX, adjustedCenterY)
-                                    iconPositions.add(iconPosition to iconResource)
-                                }
-                                
-                                // Canvas内でアイコンを描画
-                                try {
-                                    // Vector Drawableを適切に処理
-                                    val iconBitmap = try {
-                                        // まず通常のBitmapとして試行
-                                        val bitmap = android.graphics.BitmapFactory.decodeResource(
-                                            context.resources, 
-                                            iconResource
-                                        )
-                                        if (bitmap != null) {
-                                            bitmap
-                                        } else {
-                                            throw Exception("Bitmap decode failed")
-                                        }
-                                    } catch (e: Exception) {
-                                        // Vector Drawableの場合は、適切なサイズでBitmapを作成
-                                        val drawable = context.resources.getDrawable(iconResource, null)
-                                        val bitmap = Bitmap.createBitmap(
-                                            iconSize.toInt(), 
-                                            iconSize.toInt(), 
-                                            Bitmap.Config.ARGB_8888
-                                        )
-                                        val canvas = AndroidCanvas(bitmap)
-                                        drawable.setBounds(0, 0, iconSize.toInt(), iconSize.toInt())
-                                        drawable.draw(canvas)
-                                        bitmap
-                                    }
-                                    
-                                    val iconImage = iconBitmap.asImageBitmap()
-                                    val iconDisplaySizeInt = iconSize.toInt()
-                                    
-                                    // 複数のアイコンを描画
-                                    for (i in 0 until iconCount) {
-                                        val currentIconX = startX + i * iconSpacing
-                                        
-                                        // アイコンの位置を計算
-                                        val iconY = adjustedCenterY - with(density) { 11.dp.toPx() } - with(density) { 4.dp.toPx() }
-                                        
-                                        drawImage(
-                                            image = iconImage,
-                                            dstOffset = IntOffset(
-                                                x = currentIconX.toInt(),
-                                                y = iconY.toInt()
-                                            ),
-                                            dstSize = IntSize(iconDisplaySizeInt, iconDisplaySizeInt),
-                                            colorFilter = null // 収穫アイコンは色付けなし（アイコンそのままの色）
-                                        )
-                                    }
-                                    
+                                // アイコン画像の準備
+                                val iconBitmap = try {
+                                    val bmp = android.graphics.BitmapFactory.decodeResource(context.resources, iconResource)
+                                    bmp ?: throw Exception("decode failed")
                                 } catch (e: Exception) {
-                                    // アイコンの描画に失敗した場合はログ出力
+                                    val drawable = context.resources.getDrawable(iconResource, null)
+                                    val bmp = Bitmap.createBitmap(iconSize.toInt(), iconSize.toInt(), Bitmap.Config.ARGB_8888)
+                                    val c = AndroidCanvas(bmp)
+                                    drawable.setBounds(0, 0, iconSize.toInt(), iconSize.toInt())
+                                    drawable.draw(c)
+                                    bmp
+                                }
+                                val iconImage = iconBitmap.asImageBitmap()
+                                val iconDisplaySizeInt = iconSize.toInt()
+                                
+                                // 収穫期間の各月を順に処理
+                                val startMonthDate = LocalDate.of(startYear, startMonth, 1)
+                                val endMonthDate = LocalDate.of(endYear, endMonth, 1)
+                                val monthSpan = ChronoUnit.MONTHS.between(startMonthDate, endMonthDate).toInt().coerceAtLeast(0)
+                                
+                                // 各月の開始位置を計算（カレンダー表示上の相対位置）
+                                for (m in 0..monthSpan) {
+                                    val monthX = gridLeft + colW * (startMonthIndexInCalendar + m)
+                                    
+                                    // 月を3分割してそれぞれの中心にアイコンを配置
+                                    val positions = listOf(
+                                        monthX + colW / 6f,      // 上旬
+                                        monthX + colW / 2f,      // 中旬
+                                        monthX + colW * 5f / 6f  // 下旬
+                                    )
+                                    
+                                    positions.forEach { iconX ->
+                                        // 棒グラフの範囲内（startX から endX）にある旬のみアイコンを表示
+                                        if (iconX >= startX && iconX <= endX) {
+                                            val iconY = adjustedCenterY - with(density) { 11.dp.toPx() } - with(density) { 4.dp.toPx() }
+                                            val iconCenterX = iconX
+                                            val iconCenterY = iconY + iconDisplaySizeInt / 2f
+                                            
+                                            // 🥕 収穫アイコンをぷるぷる揺らして描画
+                                            val nativeCanvas = drawContext.canvas.nativeCanvas
+                                            nativeCanvas.save()
+                                            // 回転中心をアイコンの中央に設定
+                                            val pivotX = iconCenterX
+                                            val pivotY = iconCenterY
+                                            // 回転中心を原点に移動 → 回転 → 元に戻す
+                                            nativeCanvas.translate(pivotX, pivotY)
+                                            nativeCanvas.rotate(shakeRotation)
+                                            nativeCanvas.translate(-pivotX, -pivotY)
+                                            
+                                            // アイコンを描画（指定サイズで描画）
+                                            val srcRect = android.graphics.Rect(0, 0, iconBitmap.width, iconBitmap.height)
+                                            val dstRect = android.graphics.RectF(
+                                                iconCenterX - iconDisplaySizeInt / 2f,
+                                                iconY,
+                                                iconCenterX + iconDisplaySizeInt / 2f,
+                                                iconY + iconDisplaySizeInt
+                                            )
+                                            nativeCanvas.drawBitmap(
+                                                iconBitmap,
+                                                srcRect,
+                                                dstRect,
+                                                android.graphics.Paint()
+                                            )
+                                            nativeCanvas.restore()
+                                        }
+                                    }
                                 }
                             }
                         }
