@@ -206,16 +206,16 @@ fun SeedCalendarGroupedInternal(
     val density = LocalDensity.current
     val context = LocalContext.current
     
-    // 🌾 播種期間の種アイコン点滅アニメーション
-    val infiniteTransition = rememberInfiniteTransition(label = "sowingBlink")
-    val alphaAnim by infiniteTransition.animateFloat(
-        initialValue = 0.3f,
-        targetValue = 1.0f,
+    // 🌾 播種期間の種アイコン上から徐々に表示アニメーション
+    val infiniteTransition = rememberInfiniteTransition(label = "sowingReveal")
+    val revealProgress by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 1200, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse
+            animation = tween(durationMillis = 1500, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
         ),
-        label = "sowingBlinkAnim"
+        label = "sowingRevealAnim"
     )
     
     // 🥕 収穫アイコンのぷるぷる揺れアニメーション
@@ -534,6 +534,11 @@ fun SeedCalendarGroupedInternal(
                 YearMonth.of(9999, 12) // Fallback: 有効期限なしとして扱う
             }
 
+            // 🌱 「まいた日」アイコンの描画情報を保存（最前面に表示するため）
+            var plantingIconInfo: Triple<Float, Float, Float>? = null // (periodX, plantingY, plantingSize)
+            var plantingBitmap: android.graphics.Bitmap? = null
+            val sowingDateString = groupedBand.sowingDate ?: ""
+            
             groupedBand.items.forEach { item ->
                 item.ranges.forEach { r ->
                     // 日付から月と年を取得
@@ -604,22 +609,73 @@ fun SeedCalendarGroupedInternal(
                                 // 播種期間の背景色は常にprimaryContainerColor（カレンダーの月背景色で有効期限を表現）
                                 primaryContainerColor
                             } else {
-                                // 収穫期間の背景色は常にsecondary（有効期限切れの色変更なし）
-                                secondaryColor
+                                // 収穫期間の背景色は常にsecondaryContainer（有効期限切れの色変更なし）
+                                secondaryContainerColor
                             }
                             drawRect(
                                 color = backgroundColor,
                                 topLeft = Offset(startX - 2f, adjustedCenterY - with(density) { 11.dp.toPx() }),
                                 size = Size(endX - startX + 4f, with(density) { 22.dp.toPx() })
                             )
-                            drawLine(
-                                color = actualColor,
-                                start = Offset(startX, adjustedCenterY),
-                                end = Offset(endX, adjustedCenterY),
-                                strokeWidth = 6f
-                            )
+                            // 播種期間の場合のみ、中央に線を引く
+                            if (item.itemLabel == "播種") {
+                                drawLine(
+                                    color = actualColor,
+                                    start = Offset(startX, adjustedCenterY),
+                                    end = Offset(endX, adjustedCenterY),
+                                    strokeWidth = 6f
+                                )
+                            }
                             
                             if (item.itemLabel == "播種") {
+                                // 🌱 「まいた日」アイコンの位置を計算（後で描画するため情報を保存）
+                                if (sowingDateString.isNotEmpty()) {
+                                    try {
+                                        val sowingDate = LocalDate.parse(sowingDateString)
+                                        val sowingYear = sowingDate.year
+                                        val sowingMonth = sowingDate.monthValue
+                                        val sowingDay = sowingDate.dayOfMonth
+                                        val lastDay = YearMonth.of(sowingYear, sowingMonth).lengthOfMonth()
+                                        val dayRatio = sowingDay.toFloat() / lastDay.toFloat()
+                                        
+                                        // 月のインデックスを算出
+                                        val sowingMonthIndex =
+                                            ChronoUnit.MONTHS.between(startDate, LocalDate.of(sowingYear, sowingMonth, 1)).toInt()
+                                        
+                                        // カレンダー範囲内のみ描画
+                                        if (!sowingDate.isBefore(startDate) && !sowingDate.isAfter(endDate)) {
+                                            // どの旬に属するかを判断してアイコン位置を補正
+                                            val periodX = when {
+                                                dayRatio < 1f / 3f -> gridLeft + colW * (sowingMonthIndex + 1f / 6f)      // 上旬
+                                                dayRatio < 2f / 3f -> gridLeft + colW * (sowingMonthIndex + 0.5f)         // 中旬
+                                                else -> gridLeft + colW * (sowingMonthIndex + 5f / 6f)                    // 下旬
+                                            }
+                                            
+                                            val plantingSize = with(density) { 22.dp.toPx() }
+                                            val plantingY = adjustedCenterY - with(density) { 30.dp.toPx() }
+                                            
+                                            // アイコンbitmap取得（一度だけ取得）
+                                            if (plantingBitmap == null) {
+                                                plantingBitmap = try {
+                                                    BitmapFactory.decodeResource(context.resources, R.drawable.planting)
+                                                        ?: throw Exception("decode failed")
+                                                } catch (e: Exception) {
+                                                    val drawable = context.resources.getDrawable(R.drawable.planting, null)
+                                                    val bmp = Bitmap.createBitmap(plantingSize.toInt(), plantingSize.toInt(), Bitmap.Config.ARGB_8888)
+                                                    val c = AndroidCanvas(bmp)
+                                                    drawable.setBounds(0, 0, plantingSize.toInt(), plantingSize.toInt())
+                                                    drawable.draw(c)
+                                                    bmp
+                                                }
+                                            }
+                                            
+                                            // 描画情報を保存（全ての描画処理の後に描画）
+                                            plantingIconInfo = Triple(periodX, plantingY, plantingSize)
+                                        }
+                                    } catch (e: Exception) {
+                                    }
+                                }
+                                
                                 // 🌾 播種期間：各月を3分割して種アイコンを配置（点滅アニメーション付き）
                                 val iconSize = with(density) { 16.dp.toPx() } // 少し小さめ
                                 val iconResource = R.drawable.sesame
@@ -665,71 +721,34 @@ fun SeedCalendarGroupedInternal(
                                         // 有効期限切れの期間はアイコンを表示しない
                                         if (iconX >= startX && iconX <= endX && !isExpired) {
                                             val iconY = adjustedCenterY - with(density) { 14.dp.toPx() } // 棒の上に配置
+                                            val iconLeft = iconX - iconDisplaySizeInt / 2f
+                                            val iconTop = iconY
+                                            
+                                            // 上から徐々に表示するアニメーション（clipRectで制御）
+                                            val revealHeight = iconDisplaySizeInt * revealProgress
+                                            val clipBottom = iconTop + revealHeight
+                                            
+                                            // clipRectで上から下に徐々に表示
+                                            drawContext.canvas.save()
+                                            drawContext.canvas.clipRect(
+                                                left = iconLeft,
+                                                top = iconTop,
+                                                right = iconLeft + iconDisplaySizeInt,
+                                                bottom = clipBottom
+                                            )
                                             
                                             drawImage(
                                                 image = iconImage,
                                                 dstOffset = IntOffset(iconX.toInt() - iconDisplaySizeInt / 2, iconY.toInt()),
                                                 dstSize = IntSize(iconDisplaySizeInt, iconDisplaySizeInt),
-                                                colorFilter = ColorFilter.tint(
-                                                    onPrimaryContainerColor.copy(alpha = alphaAnim)
-                                                )
+                                                colorFilter = ColorFilter.tint(onPrimaryContainerColor)
                                             )
+                                            
+                                            drawContext.canvas.restore()
                                         }
                                     }
                                 }
                                 
-                                // 🌱 「まいた日」アイコンを旬位置に重ねて表示
-                                val sowingDateString = groupedBand.sowingDate ?: ""
-                                if (item.itemLabel == "播種" && sowingDateString.isNotEmpty()) {
-                                    // 既にトップレベルで定義されているprimaryColorを使用
-                                    try {
-                                        val sowingDate = LocalDate.parse(sowingDateString)
-                                        val sowingYear = sowingDate.year
-                                        val sowingMonth = sowingDate.monthValue
-                                        val sowingDay = sowingDate.dayOfMonth
-                                        val lastDay = YearMonth.of(sowingYear, sowingMonth).lengthOfMonth()
-                                        val dayRatio = sowingDay.toFloat() / lastDay.toFloat()
-                                        
-                                        // 月のインデックスを算出
-                                        val sowingMonthIndex =
-                                            ChronoUnit.MONTHS.between(startDate, LocalDate.of(sowingYear, sowingMonth, 1)).toInt()
-                                        
-                                        // カレンダー範囲内のみ描画
-                                        if (!sowingDate.isBefore(startDate) && !sowingDate.isAfter(endDate)) {
-                                            // どの旬に属するかを判断してアイコン位置を補正
-                                            val periodX = when {
-                                                dayRatio < 1f / 3f -> gridLeft + colW * (sowingMonthIndex + 1f / 6f)      // 上旬
-                                                dayRatio < 2f / 3f -> gridLeft + colW * (sowingMonthIndex + 0.5f)         // 中旬
-                                                else -> gridLeft + colW * (sowingMonthIndex + 5f / 6f)                    // 下旬
-                                            }
-                                            
-                                            val plantingSize = with(density) { 22.dp.toPx() }
-                                            val plantingY = adjustedCenterY - with(density) { 30.dp.toPx() }
-                                            
-                                            // アイコンbitmap取得
-                                            val plantingBitmap = try {
-                                                BitmapFactory.decodeResource(context.resources, R.drawable.planting)
-                                                    ?: throw Exception("decode failed")
-                                            } catch (e: Exception) {
-                                                val drawable = context.resources.getDrawable(R.drawable.planting, null)
-                                                val bmp = Bitmap.createBitmap(plantingSize.toInt(), plantingSize.toInt(), Bitmap.Config.ARGB_8888)
-                                                val c = AndroidCanvas(bmp)
-                                                drawable.setBounds(0, 0, plantingSize.toInt(), plantingSize.toInt())
-                                                drawable.draw(c)
-                                                bmp
-                                            }
-                                            
-                                            // 🪴 まいた日アイコン（点滅なし、色はそのまま）
-                                            drawImage(
-                                                image = plantingBitmap.asImageBitmap(),
-                                                dstOffset = IntOffset((periodX - plantingSize / 2).toInt(), plantingY.toInt()),
-                                                dstSize = IntSize(plantingSize.toInt(), plantingSize.toInt()),
-                                                colorFilter = null // 元の色をそのまま表示、点滅なし
-                                            )
-                                        }
-                                    } catch (e: Exception) {
-                                    }
-                                }
                             } else {
                                 // 🌾 収穫期間：各月を3分割して収穫アイコンを配置（旬ごとに1つ）
                                 val iconSize = with(density) { 20.dp.toPx() } // 収穫アイコンは20dp
@@ -807,6 +826,19 @@ fun SeedCalendarGroupedInternal(
                     }
                 }
             }
+            
+            // 🌱 「まいた日」アイコンを最前面に描画（全ての描画処理の後）
+            plantingIconInfo?.let { (periodX, plantingY, plantingSize) ->
+                plantingBitmap?.let { bitmap ->
+                    drawImage(
+                        image = bitmap.asImageBitmap(),
+                        dstOffset = IntOffset((periodX - plantingSize / 2).toInt(), plantingY.toInt()),
+                        dstSize = IntSize(plantingSize.toInt(), plantingSize.toInt()),
+                        colorFilter = null // 元の色をそのまま表示、点滅なし
+                    )
+                }
+            }
+            
             // 地域が一つの場合は行の区切り線を削除
         }
     }

@@ -15,15 +15,19 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.seedstockkeeper6.R
 import com.example.seedstockkeeper6.ui.components.SeedCalendarGrouped
 import com.example.seedstockkeeper6.ui.components.ExpirationSelectionBottomSheet
 import com.example.seedstockkeeper6.ui.components.PeriodSelectionBottomSheet
 import com.example.seedstockkeeper6.ui.components.DateSelectionBottomSheet
+import com.example.seedstockkeeper6.ui.components.RegionSelectionBottomSheet
 import com.example.seedstockkeeper6.viewmodel.SeedInputViewModel
 import com.example.seedstockkeeper6.model.CalendarEntry
 import com.example.seedstockkeeper6.utils.DateConversionUtils
+import com.example.seedstockkeeper6.model.REGION_OPTIONS
+import com.example.seedstockkeeper6.model.getRegionColor
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -41,6 +45,7 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
     var showHarvestEndSheet by remember { mutableStateOf(false) }
     var showExpirationSheet by remember { mutableStateOf(false) }
     var showSowingDateSheet by remember { mutableStateOf(false) }
+    var showRegionBottomSheet by remember { mutableStateOf(false) }
     
     // ボトムシート内の一時的な選択値
     val currentDate = java.time.LocalDate.now()
@@ -87,62 +92,80 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
             )
         }
 
-        // 地域表示（編集モード時はクリック可能）
-        if (currentRegion.isNotEmpty()) {
-            Spacer(modifier = Modifier.height(4.dp))
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
+        // 地域表示（編集モード時はボタン形式、表示モード時は色付きSurface）
+        Spacer(modifier = Modifier.height(4.dp))
+        if (viewModel.isEditMode || !viewModel.hasExistingData) {
+            // 編集モード時は色付きボタン
+            Button(
+                onClick = { showRegionBottomSheet = true },
                 modifier = Modifier
-                    .padding(horizontal = 8.dp)
-                    .then(
-                        if (viewModel.isEditMode || !viewModel.hasExistingData) {
-                            Modifier.clickable {
-                                // 編集モード時に地域選択ダイアログを表示
-                                viewModel.showRegionSelectionDialog = true
-                            }
-                        } else {
-                            Modifier
-                        }
-                    )
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (currentRegion.isNotEmpty()) getRegionColor(currentRegion) else MaterialTheme.colorScheme.surfaceVariant,
+                    contentColor = Color.White
+                ),
+                shape = MaterialTheme.shapes.large,
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp)
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(12.dp)
-                        .clip(RoundedCornerShape(50))
-                        .background(getRegionColor(currentRegion))
-                )
-                Spacer(modifier = Modifier.width(6.dp))
                 Text(
-                    currentRegion,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = getRegionColor(currentRegion)
+                    text = currentRegion.ifEmpty { "地域を選択" },
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Medium
                 )
             }
-            Spacer(modifier = Modifier.height(12.dp))
         } else {
-            // 地域が未設定で編集モードの場合、地域を追加できるようにする
-            if (viewModel.isEditMode || !viewModel.hasExistingData) {
-                Spacer(modifier = Modifier.height(4.dp))
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
+            // 表示モード時は色付きSurface
+            if (currentRegion.isNotEmpty()) {
+                Surface(
                     modifier = Modifier
-                        .padding(horizontal = 8.dp)
-                        .clickable {
-                            // 編集モード時に地域選択ダイアログを表示
-                            viewModel.showRegionSelectionDialog = true
-                        }
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp),
+                    color = getRegionColor(currentRegion).copy(alpha = 0.1f),
+                    shape = MaterialTheme.shapes.medium
                 ) {
-                    Text(
-                        "地域を選択",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(12.dp)
+                                .clip(RoundedCornerShape(50))
+                                .background(getRegionColor(currentRegion))
+                        )
+                        Text(
+                            text = currentRegion,
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
                 }
-                Spacer(modifier = Modifier.height(12.dp))
             } else {
-                Spacer(modifier = Modifier.height(12.dp))
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                    shape = MaterialTheme.shapes.medium
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "未設定",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
             }
         }
+        Spacer(modifier = Modifier.height(12.dp))
 
         // カレンダー表示本体
         viewModel.packet.calendar?.let { entries ->
@@ -426,6 +449,18 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
             )
         }
     }
+    
+    // 地域選択ボトムシート
+    if (showRegionBottomSheet) {
+        RegionSelectionBottomSheet(
+            selectedRegion = currentRegion,
+            onRegionSelected = { region ->
+                viewModel.onRegionSelected(region)
+                showRegionBottomSheet = false
+            },
+            onDismiss = { showRegionBottomSheet = false }
+        )
+    }
 }
 
 // ---- サブUI ----
@@ -680,13 +715,3 @@ private fun formatDate(date: String): String {
     }
 }
 
-// 地域ごとの色定義
-private fun getRegionColor(region: String): Color {
-    return when (region) {
-        "寒地" -> Color(0xFF1A237E) // 紺
-        "寒冷地" -> Color(0xFF1976D2) // 青
-        "温暖地" -> Color(0xFFFF9800) // オレンジ
-        "暖地" -> Color(0xFFE91E63) // ピンク
-        else -> Color(0xFF9E9E9E) // グレー（未設定時）
-    }
-}
