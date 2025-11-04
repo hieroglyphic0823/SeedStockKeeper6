@@ -153,7 +153,8 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
                     packetExpirationMonth = expirationMonth,
                     modifier = Modifier.fillMaxWidth(),
                     heightDp = 114,
-                    previewDate = null
+                    previewDate = null,
+                    sowingDate = viewModel.packet.sowingDate
                 )
             }
         }

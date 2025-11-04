@@ -2,6 +2,7 @@ package com.example.seedstockkeeper6.ui.components
 
 import android.content.res.Configuration
 import android.graphics.Paint
+import android.util.Log
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -28,6 +29,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.animation.core.*
 import java.time.temporal.ChronoUnit
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -59,6 +61,7 @@ import com.example.seedstockkeeper6.model.CalendarEntry
 import java.time.LocalDate
 import java.time.YearMonth
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Canvas as AndroidCanvas
 
 /**
@@ -72,7 +75,8 @@ fun SeedCalendarGrouped(
     packetExpirationMonth: Int,
     modifier: Modifier = Modifier.fillMaxWidth(),
     heightDp: Int = 114,
-    previewDate: LocalDate? = null // プレビュー用の日付
+    previewDate: LocalDate? = null, // プレビュー用の日付
+    sowingDate: String = "" // まいた日（"YYYY-MM-DD"形式）
 ) {
     val today = previewDate ?: LocalDate.now() // プレビュー用の日付があれば使用、なければ現在の日付
     val scrollState = rememberScrollState()
@@ -160,7 +164,8 @@ fun SeedCalendarGrouped(
                 groupLabel = region,
                 expirationYear = packetExpirationYear,
                 expirationMonth = packetExpirationMonth,
-                items = items
+                items = items,
+                sowingDate = sowingDate
             )
         }
         .filter { it.items.isNotEmpty() }
@@ -199,6 +204,18 @@ fun SeedCalendarGroupedInternal(
 ) {
     val density = LocalDensity.current
     val context = LocalContext.current
+    
+    // 🌾 播種期間の種アイコン点滅アニメーション
+    val infiniteTransition = rememberInfiniteTransition(label = "sowingBlink")
+    val alphaAnim by infiniteTransition.animateFloat(
+        initialValue = 0.3f,
+        targetValue = 1.0f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1200, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "sowingBlinkAnim"
+    )
 
     // AppColors とテーマから必要な値を取得 (Composable 関数のトップレベル)
     val actualTextPaintColor = MaterialTheme.colorScheme.onSurface
@@ -542,94 +559,192 @@ fun SeedCalendarGroupedInternal(
                                 strokeWidth = 6f
                             )
                             
-                            // 棒グラフの先頭にアイコンを表示
-                            val iconSize = if (item.itemLabel == "収穫") {
-                                with(density) { 20.dp.toPx() } // 収穫アイコンは20dp
-                            } else {
-                                with(density) { 24.dp.toPx() } // 播種アイコンは24dp
-                            }
-                            
-                            // 播種期間はgrain、収穫期間はharvestアイコンを使用
-                            val iconResource = if (item.itemLabel == "収穫") {
-                                R.drawable.harvest
-                            } else {
-                                R.drawable.grain
-                            }
-                            
-                            
-                            
-                            // アイコンを棒グラフ幅に横に繰り返し表示
-                            val iconSpacing = iconSize * 1.5f // アイコン間隔（アイコンサイズの1.5倍）
-                            val iconCount = ((endX - startX) / iconSpacing).toInt() + 1 // 繰り返し回数を計算
-                            
-                            // アイコンの位置とリソースを記録（複数個）
-                            for (i in 0 until iconCount) {
-                                val iconX = startX + i * iconSpacing
-                                val iconPosition = Offset(iconX, adjustedCenterY)
-                                iconPositions.add(iconPosition to iconResource)
-                            }
-                            
-                            // Canvas内でアイコンを描画
-                            try {
-                                // Vector Drawableを適切に処理
-                                val iconBitmap = try {
-                                    // まず通常のBitmapとして試行
-                                    val bitmap = android.graphics.BitmapFactory.decodeResource(
-                                        context.resources, 
-                                        iconResource
-                                    )
-                                    if (bitmap != null) {
-                                        bitmap
-                                    } else {
-                                        throw Exception("Bitmap decode failed")
-                                    }
-                                } catch (e: Exception) {
-                                    // Vector Drawableの場合は、適切なサイズでBitmapを作成
-                                    val drawable = context.resources.getDrawable(iconResource, null)
-                                    val bitmap = Bitmap.createBitmap(
-                                        iconSize.toInt(), 
-                                        iconSize.toInt(), 
-                                        Bitmap.Config.ARGB_8888
-                                    )
-                                    val canvas = AndroidCanvas(bitmap)
-                                    drawable.setBounds(0, 0, iconSize.toInt(), iconSize.toInt())
-                                    drawable.draw(canvas)
-                                    bitmap
-                                }
+                            if (item.itemLabel == "播種") {
+                                // 🌾 播種期間：各月を3分割して種アイコンを配置（点滅アニメーション付き）
+                                val iconSize = with(density) { 16.dp.toPx() } // 少し小さめ
+                                val iconResource = R.drawable.sesame
                                 
+                                // アイコン画像の準備
+                                val iconBitmap = try {
+                                    val bmp = android.graphics.BitmapFactory.decodeResource(context.resources, iconResource)
+                                    bmp ?: throw Exception("decode failed")
+                                } catch (e: Exception) {
+                                    val drawable = context.resources.getDrawable(iconResource, null)
+                                    val bmp = Bitmap.createBitmap(iconSize.toInt(), iconSize.toInt(), Bitmap.Config.ARGB_8888)
+                                    val c = AndroidCanvas(bmp)
+                                    drawable.setBounds(0, 0, iconSize.toInt(), iconSize.toInt())
+                                    drawable.draw(c)
+                                    bmp
+                                }
                                 val iconImage = iconBitmap.asImageBitmap()
                                 val iconDisplaySizeInt = iconSize.toInt()
                                 
-                                // 複数のアイコンを描画
-                                for (i in 0 until iconCount) {
-                                    val currentIconX = startX + i * iconSpacing
+                                // 播種期間の各月を順に処理
+                                val startMonthDate = LocalDate.of(startYear, startMonth, 1)
+                                val endMonthDate = LocalDate.of(endYear, endMonth, 1)
+                                val monthSpan = ChronoUnit.MONTHS.between(startMonthDate, endMonthDate).toInt().coerceAtLeast(0)
+                                
+                                // 各月の開始位置を計算（カレンダー表示上の相対位置）
+                                for (m in 0..monthSpan) {
+                                    val monthX = gridLeft + colW * (startMonthIndexInCalendar + m)
                                     
-                                    // アイコンの位置を計算
-                                    val iconY = if (item.itemLabel == "収穫") {
-                                        // 収穫アイコンの上端が棒グラフの上端より4dp上
-                                        adjustedCenterY - with(density) { 11.dp.toPx() } - with(density) { 4.dp.toPx() }
-                                    } else {
-                                        // 播種アイコンの上端が播種棒グラフの上端より10dp上
-                                        adjustedCenterY - with(density) { 11.dp.toPx() } - with(density) { 10.dp.toPx() }
-                                    }
-                                    
-                                    drawImage(
-                                        image = iconImage,
-                                        dstOffset = IntOffset(
-                                            x = currentIconX.toInt(),
-                                            y = iconY.toInt()
-                                        ),
-                                        dstSize = IntSize(iconDisplaySizeInt, iconDisplaySizeInt),
-                                        colorFilter = if (item.itemLabel == "播種") {
-                                            androidx.compose.ui.graphics.ColorFilter.tint(onPrimaryContainerColor)
-                                        } else {
-                                            null // 収穫アイコンは色付けなし（アイコンそのままの色）
-                                        }
+                                    // 月を3分割してそれぞれの中心にアイコンを配置
+                                    val positions = listOf(
+                                        monthX + colW / 6f,      // 上旬
+                                        monthX + colW / 2f,      // 中旬
+                                        monthX + colW * 5f / 6f  // 下旬
                                     )
+                                    
+                                    // 各月の有効期限チェック
+                                    val currentMonthForCheck = startMonthDate.plusMonths(m.toLong())
+                                    val currentYearMonth = YearMonth.of(currentMonthForCheck.year, currentMonthForCheck.monthValue)
+                                    val isExpired = currentYearMonth > expirationDate
+                                    
+                                    positions.forEach { iconX ->
+                                        // 棒グラフの範囲内（startX から endX）にある旬のみアイコンを表示
+                                        if (iconX >= startX && iconX <= endX) {
+                                            val iconY = adjustedCenterY - with(density) { 14.dp.toPx() } // 棒の上に配置
+                                            
+                                            // 有効期限切れの場合はグレーアウト（アルファ値を下げる）
+                                            val finalAlpha = if (isExpired) {
+                                                alphaAnim * 0.3f // 有効期限切れは暗めに
+                                            } else {
+                                                alphaAnim // 通常の点滅
+                                            }
+                                            
+                                            drawImage(
+                                                image = iconImage,
+                                                dstOffset = IntOffset(iconX.toInt() - iconDisplaySizeInt / 2, iconY.toInt()),
+                                                dstSize = IntSize(iconDisplaySizeInt, iconDisplaySizeInt),
+                                                colorFilter = ColorFilter.tint(
+                                                    onPrimaryContainerColor.copy(alpha = finalAlpha)
+                                                )
+                                            )
+                                        }
+                                    }
                                 }
                                 
-                            } catch (e: Exception) {
-                                // アイコンの描画に失敗した場合はログ出力
+                                // 🌱 「まいた日」アイコンを旬位置に重ねて表示
+                                val sowingDateString = groupedBand.sowingDate ?: ""
+                                if (item.itemLabel == "播種" && sowingDateString.isNotEmpty()) {
+                                    // 既にトップレベルで定義されているprimaryColorを使用
+                                    try {
+                                        val sowingDate = LocalDate.parse(sowingDateString)
+                                        val sowingYear = sowingDate.year
+                                        val sowingMonth = sowingDate.monthValue
+                                        val sowingDay = sowingDate.dayOfMonth
+                                        val lastDay = YearMonth.of(sowingYear, sowingMonth).lengthOfMonth()
+                                        val dayRatio = sowingDay.toFloat() / lastDay.toFloat()
+                                        
+                                        // 月のインデックスを算出
+                                        val sowingMonthIndex =
+                                            ChronoUnit.MONTHS.between(startDate, LocalDate.of(sowingYear, sowingMonth, 1)).toInt()
+                                        
+                                        // カレンダー範囲内のみ描画
+                                        if (!sowingDate.isBefore(startDate) && !sowingDate.isAfter(endDate)) {
+                                            // どの旬に属するかを判断してアイコン位置を補正
+                                            val periodX = when {
+                                                dayRatio < 1f / 3f -> gridLeft + colW * (sowingMonthIndex + 1f / 6f)      // 上旬
+                                                dayRatio < 2f / 3f -> gridLeft + colW * (sowingMonthIndex + 0.5f)         // 中旬
+                                                else -> gridLeft + colW * (sowingMonthIndex + 5f / 6f)                    // 下旬
+                                            }
+                                            
+                                            val plantingSize = with(density) { 22.dp.toPx() }
+                                            val plantingY = adjustedCenterY - with(density) { 32.dp.toPx() }
+                                            
+                                            // アイコンbitmap取得
+                                            val plantingBitmap = try {
+                                                BitmapFactory.decodeResource(context.resources, R.drawable.planting)
+                                                    ?: throw Exception("decode failed")
+                                            } catch (e: Exception) {
+                                                val drawable = context.resources.getDrawable(R.drawable.planting, null)
+                                                val bmp = Bitmap.createBitmap(plantingSize.toInt(), plantingSize.toInt(), Bitmap.Config.ARGB_8888)
+                                                val c = AndroidCanvas(bmp)
+                                                drawable.setBounds(0, 0, plantingSize.toInt(), plantingSize.toInt())
+                                                drawable.draw(c)
+                                                bmp
+                                            }
+                                            
+                                            // 🪴 まいた日アイコン（点滅なし、色はそのまま）
+                                            drawImage(
+                                                image = plantingBitmap.asImageBitmap(),
+                                                dstOffset = IntOffset((periodX - plantingSize / 2).toInt(), plantingY.toInt()),
+                                                dstSize = IntSize(plantingSize.toInt(), plantingSize.toInt()),
+                                                colorFilter = null // 元の色をそのまま表示、点滅なし
+                                            )
+                                        }
+                                    } catch (e: Exception) {
+                                        Log.e("SeedCalendar", "まいた日描画エラー: ${e.message}")
+                                    }
+                                }
+                            } else {
+                                // 収穫期間：従来のアイコン表示
+                                val iconSize = with(density) { 20.dp.toPx() } // 収穫アイコンは20dp
+                                val iconResource = R.drawable.harvest
+                                
+                                // アイコンを棒グラフ幅に横に繰り返し表示
+                                val iconSpacing = iconSize * 1.5f // アイコン間隔（アイコンサイズの1.5倍）
+                                val iconCount = ((endX - startX) / iconSpacing).toInt() + 1 // 繰り返し回数を計算
+                                
+                                // アイコンの位置とリソースを記録（複数個）
+                                for (i in 0 until iconCount) {
+                                    val iconX = startX + i * iconSpacing
+                                    val iconPosition = Offset(iconX, adjustedCenterY)
+                                    iconPositions.add(iconPosition to iconResource)
+                                }
+                                
+                                // Canvas内でアイコンを描画
+                                try {
+                                    // Vector Drawableを適切に処理
+                                    val iconBitmap = try {
+                                        // まず通常のBitmapとして試行
+                                        val bitmap = android.graphics.BitmapFactory.decodeResource(
+                                            context.resources, 
+                                            iconResource
+                                        )
+                                        if (bitmap != null) {
+                                            bitmap
+                                        } else {
+                                            throw Exception("Bitmap decode failed")
+                                        }
+                                    } catch (e: Exception) {
+                                        // Vector Drawableの場合は、適切なサイズでBitmapを作成
+                                        val drawable = context.resources.getDrawable(iconResource, null)
+                                        val bitmap = Bitmap.createBitmap(
+                                            iconSize.toInt(), 
+                                            iconSize.toInt(), 
+                                            Bitmap.Config.ARGB_8888
+                                        )
+                                        val canvas = AndroidCanvas(bitmap)
+                                        drawable.setBounds(0, 0, iconSize.toInt(), iconSize.toInt())
+                                        drawable.draw(canvas)
+                                        bitmap
+                                    }
+                                    
+                                    val iconImage = iconBitmap.asImageBitmap()
+                                    val iconDisplaySizeInt = iconSize.toInt()
+                                    
+                                    // 複数のアイコンを描画
+                                    for (i in 0 until iconCount) {
+                                        val currentIconX = startX + i * iconSpacing
+                                        
+                                        // アイコンの位置を計算
+                                        val iconY = adjustedCenterY - with(density) { 11.dp.toPx() } - with(density) { 4.dp.toPx() }
+                                        
+                                        drawImage(
+                                            image = iconImage,
+                                            dstOffset = IntOffset(
+                                                x = currentIconX.toInt(),
+                                                y = iconY.toInt()
+                                            ),
+                                            dstSize = IntSize(iconDisplaySizeInt, iconDisplaySizeInt),
+                                            colorFilter = null // 収穫アイコンは色付けなし（アイコンそのままの色）
+                                        )
+                                    }
+                                    
+                                } catch (e: Exception) {
+                                    // アイコンの描画に失敗した場合はログ出力
+                                }
                             }
                         }
                     }

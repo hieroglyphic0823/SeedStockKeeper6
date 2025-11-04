@@ -48,7 +48,7 @@ fun CalendarEntryDisplay(
                     contentAlignment = Alignment.Center
                 ) {
                     Image(
-                        painter = painterResource(id = R.drawable.grain),
+                        painter = painterResource(id = R.drawable.sesame_br),
                         contentDescription = "播種期間",
                         modifier = Modifier.size(18.dp),
                         contentScale = ContentScale.Fit

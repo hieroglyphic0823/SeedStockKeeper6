@@ -39,5 +39,6 @@ data class GroupedCalendarBand(
     val groupLabel: String,
     val expirationYear: Int,
     val expirationMonth: Int,
-    val items: List<RangeItem>
+    val items: List<RangeItem>,
+    val sowingDate: String = "" // まいた日（"YYYY-MM-DD"形式）
 )

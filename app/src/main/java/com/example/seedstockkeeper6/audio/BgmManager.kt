@@ -25,7 +25,7 @@ class BgmManager private constructor(context: Context) {
     init {
         // BGMファイルを設定（res/raw/tanesuke_bgm.mp3）
         val mediaItem = MediaItem.fromUri(
-            android.net.Uri.parse("android.resource://${context.packageName}/${R.raw.tanesuke_bgm}")
+            android.net.Uri.parse("android.resource://${context.packageName}/${R.raw.sukesan_theme}")
         )
         exoPlayer.apply {
             setMediaItem(mediaItem)
