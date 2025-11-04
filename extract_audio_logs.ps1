@@ -21,3 +21,4 @@ adb logcat -v time ^
     *:E | Select-String -Pattern "VideoSplashScreen|LoadingAnimationVideoPlayer|ExoPlayer|Audio|Media|ERROR|error|Exception|exception|volume|Volume|音声|動画|playback|Playback|prepare|Prepare|state|State"
 
 
+

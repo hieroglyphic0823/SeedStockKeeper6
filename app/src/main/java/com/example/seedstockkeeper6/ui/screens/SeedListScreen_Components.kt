@@ -35,15 +35,6 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.FilterAlt
-import androidx.compose.material.icons.filled.List
-import androidx.compose.material.icons.filled.SwapVert
-import androidx.compose.material.icons.filled.ViewCozy
-import androidx.compose.material.icons.filled.HourglassEmpty
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.RadioButtonDefaults
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -77,340 +68,6 @@ import kotlinx.coroutines.tasks.await
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.ktx.storage
 import android.util.Log
-
-/**
- * 並べ替えの種類
- */
-enum class SortType(val displayName: String) {
-    IMPORTANCE("重要度順"),
-    REGISTRATION("登録順"),
-    NAME("あいうえお順"),
-    STATUS("状態順")
-}
-
-/**
- * フィルターカードコンポーネント
- * 種のフィルター条件と検索ボックス、表示モード切り替えを表示
- */
-@Composable
-fun SeedListFilterCard(
-    showThisMonthSeeds: Boolean,
-    onThisMonthSeedsChange: (Boolean) -> Unit,
-    showUrgentSeeds: Boolean,
-    onUrgentSeedsChange: (Boolean) -> Unit,
-    showExpiredSeeds: Boolean,
-    onExpiredSeedsChange: (Boolean) -> Unit,
-    showFinishedSeeds: Boolean,
-    onFinishedSeedsChange: (Boolean) -> Unit,
-    showNormalSeeds: Boolean,
-    onNormalSeedsChange: (Boolean) -> Unit,
-    showSearchBox: Boolean,
-    onSearchBoxToggle: () -> Unit,
-    searchQuery: String,
-    onSearchQueryChange: (String) -> Unit,
-    displayMode: String,
-    onDisplayModeChange: (String) -> Unit,
-    sortType: SortType,
-    onSortTypeChange: (SortType) -> Unit
-) {
-    // 並べ替えダイアログの表示状態
-    var showSortDialog by remember { mutableStateOf(false) }
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer
-        )
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
-            // 1行目：並べ替え、表示、絞込みアイコン（右揃え）
-            Row(
-                horizontalArrangement = Arrangement.End,
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                // 並べ替えアイコンボタン（左）
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    modifier = Modifier.clickable { showSortDialog = true }
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.SwapVert,
-                        contentDescription = "並べ替え",
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(24.dp)
-                    )
-                    Text(
-                        text = "並べ替え",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-                
-                Spacer(modifier = Modifier.width(16.dp))
-                
-                // 表示モード切り替えボタン（中央）
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    modifier = Modifier.clickable { 
-                        onDisplayModeChange(if (displayMode == "list") "gallery" else "list")
-                    }
-                ) {
-                    Icon(
-                        imageVector = if (displayMode == "list") Icons.Filled.List else Icons.Filled.ViewCozy,
-                        contentDescription = if (displayMode == "list") "目録" else "絵巻",
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(24.dp)
-                    )
-                    Text(
-                        text = if (displayMode == "list") "目録" else "絵巻",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-                
-                Spacer(modifier = Modifier.width(16.dp))
-                
-                // 絞り込みアイコンボタン（右端）
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    modifier = Modifier.clickable { onSearchBoxToggle() }
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.FilterAlt,
-                        contentDescription = "吟味",
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(24.dp)
-                    )
-                    Text(
-                        text = "吟味",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-            }
-            
-            // 並べ替えダイアログ
-            if (showSortDialog) {
-                AlertDialog(
-                    onDismissRequest = { showSortDialog = false },
-                    title = { Text("並べ替え") },
-                    text = {
-                        Column {
-                            SortType.values().forEach { type ->
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clickable { 
-                                            onSortTypeChange(type)
-                                            showSortDialog = false
-                                        },
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    RadioButton(
-                                        selected = sortType == type,
-                                        onClick = { 
-                                            onSortTypeChange(type)
-                                            showSortDialog = false
-                                        },
-                                        colors = RadioButtonDefaults.colors(
-                                            selectedColor = MaterialTheme.colorScheme.primary,
-                                            unselectedColor = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(
-                                        text = type.displayName,
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        color = MaterialTheme.colorScheme.onSurface
-                                    )
-                                }
-                            }
-                        }
-                    },
-                    confirmButton = {
-                        TextButton(onClick = { showSortDialog = false }) {
-                            Text("閉じる")
-                        }
-                    }
-                )
-            }
-            
-            // フィルター用チェックボックスと検索ボックス（条件付き表示）
-            if (showSearchBox) {
-                Spacer(modifier = Modifier.height(12.dp))
-                
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    // 1行目：「終了間近」「まきどき」「通常」（重要度順）
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        // 終了間近チェックボックス（重要度1）
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier
-                                .background(
-                                    color = MaterialTheme.colorScheme.errorContainer,
-                                    shape = RoundedCornerShape(8.dp)
-                                )
-                                .padding(horizontal = 6.dp, vertical = 4.dp)
-                        ) {
-                            Checkbox(
-                                checked = showUrgentSeeds,
-                                onCheckedChange = onUrgentSeedsChange,
-                                colors = CheckboxDefaults.colors(
-                                    checkedColor = MaterialTheme.colorScheme.onErrorContainer,
-                                    uncheckedColor = MaterialTheme.colorScheme.onErrorContainer
-                                )
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = "終了間近",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onErrorContainer
-                            )
-                        }
-                        
-                        // まきどきチェックボックス（重要度2）
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier
-                                .background(
-                                    color = MaterialTheme.colorScheme.primaryContainer,
-                                    shape = RoundedCornerShape(8.dp)
-                                )
-                                .padding(horizontal = 6.dp, vertical = 4.dp)
-                        ) {
-                            Checkbox(
-                                checked = showThisMonthSeeds,
-                                onCheckedChange = onThisMonthSeedsChange,
-                                colors = CheckboxDefaults.colors(
-                                    checkedColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                                    uncheckedColor = MaterialTheme.colorScheme.onPrimaryContainer
-                                )
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = "まきどき",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
-                        }
-                        
-                        // 通常チェックボックス（重要度3）
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier
-                                .background(
-                                    color = MaterialTheme.colorScheme.tertiaryContainer,
-                                    shape = RoundedCornerShape(8.dp)
-                                )
-                                .padding(horizontal = 6.dp, vertical = 4.dp)
-                        ) {
-                            Checkbox(
-                                checked = showNormalSeeds,
-                                onCheckedChange = onNormalSeedsChange,
-                                colors = CheckboxDefaults.colors(
-                                    checkedColor = MaterialTheme.colorScheme.onTertiaryContainer,
-                                    uncheckedColor = MaterialTheme.colorScheme.onTertiaryContainer
-                                )
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = "通常",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onTertiaryContainer
-                            )
-                        }
-                    }
-                    
-                    // 2行目：「まき終わり」「期限切れ」（重要度順）
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        // まき終わりチェックボックス（重要度4）
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier
-                                .background(
-                                    color = MaterialTheme.colorScheme.secondaryContainer,
-                                    shape = RoundedCornerShape(8.dp)
-                                )
-                                .padding(horizontal = 6.dp, vertical = 4.dp)
-                        ) {
-                            Checkbox(
-                                checked = showFinishedSeeds,
-                                onCheckedChange = onFinishedSeedsChange,
-                                colors = CheckboxDefaults.colors(
-                                    checkedColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                                    uncheckedColor = MaterialTheme.colorScheme.onSecondaryContainer
-                                )
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = "まき終わり",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSecondaryContainer
-                            )
-                        }
-                        
-                        // 期限切れチェックボックス（重要度5）
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier
-                                .background(
-                                    color = MaterialTheme.colorScheme.surfaceContainerHighest,
-                                    shape = RoundedCornerShape(8.dp)
-                                )
-                                .padding(horizontal = 6.dp, vertical = 4.dp)
-                        ) {
-                            Checkbox(
-                                checked = showExpiredSeeds,
-                                onCheckedChange = onExpiredSeedsChange,
-                                colors = CheckboxDefaults.colors(
-                                    checkedColor = MaterialTheme.colorScheme.onSurface,
-                                    uncheckedColor = MaterialTheme.colorScheme.onSurface
-                                )
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = "期限切れ",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                        }
-                    }
-                }
-                
-                Spacer(modifier = Modifier.height(12.dp))
-                
-                // 検索ボックス
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = onSearchQueryChange,
-                    label = { Text("種を検索") },
-                    placeholder = { Text("商品名、品種、科名で検索") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.outline
-                    )
-                )
-            }
-        }
-    }
-}
 
 /**
  * リストアイテムコンポーネント
@@ -539,9 +196,9 @@ fun SeedListItem(
             // 種の状態に応じたアイコンを決定
             val statusIconResId = when (seedStatus) {
                 "finished" -> R.drawable.seed  // まき終わり：seed
-                "urgent" -> null  // 期限間近：砂時計（Material Iconsを使用）
+                "urgent" -> R.drawable.warning  // 期限間近：warning
                 "thisMonth" -> R.drawable.seed_bag_enp  // まきどき：seed_bag_enp
-                "expired" -> R.drawable.delete_button  // 期限切れ：delete_button
+                "expired" -> R.drawable.close  // 期限切れ：close
                 else -> null  // 通常：何も表示しない（またはデフォルトアイコン）
             }
             val statusIconDescription = when (seedStatus) {
@@ -557,8 +214,8 @@ fun SeedListItem(
             
             if (isClickable) {
                 // クリックでまき終わりに設定（または解除）
-                IconButton(
-                    onClick = {
+            IconButton(
+                onClick = {
                         val isChecked = if (seedStatus == "finished") {
                             // まき終わりの場合は解除
                             !seed.isFinished
@@ -566,39 +223,31 @@ fun SeedListItem(
                             // その他の状態の場合はまき終わりに設定
                             true
                         }
-                        // まき終わりフラグの更新処理
-                        val documentId = seed.documentId ?: seed.id
-                        if (documentId != null) {
-                            viewModel.updateFinishedFlag(documentId, isChecked) { result ->
-                                scope.launch {
-                                    if (result.isSuccess) {
-                                        val message = if (isChecked) "まき終わりに設定しました" else "まき終わりを解除しました"
-                                        snackbarHostState.showSnackbar(
-                                            message = message,
-                                            duration = SnackbarDuration.Short
-                                        )
-                                    } else {
-                                        snackbarHostState.showSnackbar(
-                                            message = "更新に失敗しました",
-                                            duration = SnackbarDuration.Short
-                                        )
-                                    }
+                    // まき終わりフラグの更新処理
+                    val documentId = seed.documentId ?: seed.id
+                    if (documentId != null) {
+                        viewModel.updateFinishedFlag(documentId, isChecked) { result ->
+                            scope.launch {
+                                if (result.isSuccess) {
+                                    val message = if (isChecked) "まき終わりに設定しました" else "まき終わりを解除しました"
+                                    snackbarHostState.showSnackbar(
+                                        message = message,
+                                        duration = SnackbarDuration.Short
+                                    )
+                                } else {
+                                    snackbarHostState.showSnackbar(
+                                        message = "更新に失敗しました",
+                                        duration = SnackbarDuration.Short
+                                    )
                                 }
                             }
                         }
-                    },
-                    modifier = Modifier.size(32.dp)
+                    }
+                },
+                modifier = Modifier.size(32.dp)
                 ) {
-                    if (seedStatus == "urgent") {
-                        // 期限間近：Material Iconsの砂時計を使用
-                        Icon(
-                            imageVector = Icons.Filled.HourglassEmpty,
-                            contentDescription = statusIconDescription,
-                            modifier = Modifier.size(36.dp),
-                            tint = MaterialTheme.colorScheme.onErrorContainer
-                        )
-                    } else if (statusIconResId != null) {
-                        // その他の状態：drawableリソースを使用
+                    if (statusIconResId != null) {
+                        // 状態アイコンをdrawableリソースから表示
                         Icon(
                             painter = painterResource(id = statusIconResId),
                             contentDescription = statusIconDescription,
@@ -687,9 +336,9 @@ fun SeedGalleryItem(
     // 状態アイコンを決定
     val statusIconResId = when (seedStatus) {
         "finished" -> R.drawable.seed  // まき終わり：seed
-        "urgent" -> null  // 期限間近：砂時計（Material Iconsを使用）
+        "urgent" -> R.drawable.warning  // 期限間近：warning
         "thisMonth" -> R.drawable.seed_bag_enp  // まきどき：seed_bag_enp
-        "expired" -> R.drawable.delete_button  // 期限切れ：delete_button
+        "expired" -> R.drawable.close  // 期限切れ：close
         else -> null  // 通常：表示しない
     }
     
@@ -761,20 +410,13 @@ fun SeedGalleryItem(
                             .padding(4.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        if (seedStatus == "urgent") {
-                            // 期限間近：Material Iconsの砂時計を使用
-                            Icon(
-                                imageVector = Icons.Filled.HourglassEmpty,
-                                contentDescription = "期限間近",
-                                modifier = Modifier.size(16.dp),
-                                tint = MaterialTheme.colorScheme.onErrorContainer
-                            )
-                        } else if (statusIconResId != null) {
-                            // その他の状態：drawableリソースを使用
+                        if (statusIconResId != null) {
+                            // 状態アイコンをdrawableリソースから表示
                             Icon(
                                 painter = painterResource(id = statusIconResId),
                                 contentDescription = when (seedStatus) {
                                     "finished" -> "まき終わり"
+                                    "urgent" -> "期限間近"
                                     "thisMonth" -> "まきどき"
                                     "expired" -> "期限切れ"
                                     else -> "状態"
@@ -837,7 +479,7 @@ fun SeedGalleryItem(
                 contentScale = ContentScale.FillBounds
             )
             
-            // 状態アイコンを右上にバッジ表示（写真がない場合）
+                            // 状態アイコンを右上にバッジ表示（写真がない場合）
             if (seedStatus in listOf("finished", "urgent", "thisMonth", "expired")) {
                 Box(
                     modifier = Modifier
@@ -855,20 +497,13 @@ fun SeedGalleryItem(
                             .padding(4.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        if (seedStatus == "urgent") {
-                            // 期限間近：Material Iconsの砂時計を使用
-                            Icon(
-                                imageVector = Icons.Filled.HourglassEmpty,
-                                contentDescription = "期限間近",
-                                modifier = Modifier.size(16.dp),
-                                tint = MaterialTheme.colorScheme.onErrorContainer
-                            )
-                        } else if (statusIconResId != null) {
-                            // その他の状態：drawableリソースを使用
+                        if (statusIconResId != null) {
+                            // 状態アイコンをdrawableリソースから表示
                             Icon(
                                 painter = painterResource(id = statusIconResId),
                                 contentDescription = when (seedStatus) {
                                     "finished" -> "まき終わり"
+                                    "urgent" -> "期限間近"
                                     "thisMonth" -> "まきどき"
                                     "expired" -> "期限切れ"
                                     else -> "状態"
@@ -883,4 +518,3 @@ fun SeedGalleryItem(
         }
     }
 }
-

@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -276,7 +277,8 @@ fun SowingSummaryCards(
                 containerColor = urgentCardContainerColor,
                 contentColor = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.weight(1f),
-                onClick = onUrgentClick
+                onClick = onUrgentClick,
+                iconResourceId = R.drawable.warning
             )
         }
     }
@@ -450,7 +452,8 @@ fun SummaryCardWithEmojiIcon(
     contentColor: Color,
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
-    iconResourceId: Int? = null  // 追加：アイコンリソースID（指定された場合は絵文字の代わりに使用）
+    iconResourceId: Int? = null,  // 追加：アイコンリソースID（指定された場合は絵文字の代わりに使用）
+    iconImageVector: ImageVector? = null  // 追加：Material IconsのImageVector（指定された場合は絵文字の代わりに使用）
 ) {
     Card(
         modifier = if (onClick != null) modifier.clickable { onClick() } else modifier,
@@ -480,12 +483,31 @@ fun SummaryCardWithEmojiIcon(
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                if (iconResourceId != null) {
-                    // アイコンリソースを使用
+                if (iconImageVector != null) {
+                    // Material Iconsを使用
+                    Icon(
+                        imageVector = iconImageVector,
+                        contentDescription = title,
+                        modifier = Modifier.size(28.dp),
+                        tint = contentColor
+                    )
+                } else if (iconResourceId != null) {
+                    // アイコンリソースを使用（まきどきカードのみ左右反転）
+                    val isFlipHorizontal = iconResourceId == R.drawable.seed_bag_enp
                     Icon(
                         painter = painterResource(id = iconResourceId),
                         contentDescription = title,
-                        modifier = Modifier.size(48.dp),
+                        modifier = Modifier
+                            .size(28.dp)
+                            .then(
+                                if (isFlipHorizontal) {
+                                    Modifier.graphicsLayer {
+                                        scaleX = -1f
+                                    }
+                                } else {
+                                    Modifier
+                                }
+                            ),
                         tint = Color.Unspecified
                     )
                 } else {

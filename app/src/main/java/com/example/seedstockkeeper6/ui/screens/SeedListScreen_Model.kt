@@ -3,6 +3,16 @@ package com.example.seedstockkeeper6.ui.screens
 import com.example.seedstockkeeper6.model.SeedPacket
 
 /**
+ * 並べ替えの種類
+ */
+enum class SortType(val displayName: String) {
+    IMPORTANCE("重要度順"),
+    REGISTRATION("登録順"),
+    NAME("あいうえお順"),
+    STATUS("状態順")
+}
+
+/**
  * 種の状態を判定する関数
  * 
  * 種の状態を以下の優先順位で判定します：

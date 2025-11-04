@@ -161,3 +161,4 @@ adb logcat | grep -E "AudioFocus|audioFocus|AUDIOFOCUS"
    - AudioManager のメッセージを確認
 
 
+

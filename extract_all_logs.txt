@@ -40,3 +40,4 @@ adb logcat | Select-String -Pattern "com.example.seedstockkeeper6"
 - スプラッシュ画面が表示された時点でのログを確認してください
 
 
+
