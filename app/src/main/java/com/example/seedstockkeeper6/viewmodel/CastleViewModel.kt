@@ -205,15 +205,6 @@ class CastleViewModel(private val context: Context) : ViewModel() {
         // まき終わった種の数（全種から計算）
         val finishedSeeds = seeds.filter { it.isFinished }
         
-        // デバッグログを追加
-        android.util.Log.d("CastleViewModel", "統計計算結果:")
-        android.util.Log.d("CastleViewModel", "  全種子数: ${seeds.size}")
-        android.util.Log.d("CastleViewModel", "  まき終わり: ${finishedSeeds.size}")
-        android.util.Log.d("CastleViewModel", "  今月播種予定: ${thisMonthSowingSeeds.size}")
-        android.util.Log.d("CastleViewModel", "  終了間近: ${urgentSeeds.size}")
-        android.util.Log.d("CastleViewModel", "  期限切れ: ${expiredSeeds.size}")
-        android.util.Log.d("CastleViewModel", "  まき終わり種詳細: ${finishedSeeds.map { "${it.productName}(${it.variety})" }}")
-        
         // 科別分布（全ての種を対象）
         val familyDist = seeds.groupBy { it.family }
             .mapValues { it.value.size }

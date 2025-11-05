@@ -65,22 +65,18 @@ class MainActivity : ComponentActivity() {
                     com.google.firebase.appcheck.debug.DebugAppCheckProviderFactory.getInstance()
                 )
             } catch (e: Exception) {
-                android.util.Log.w("MainActivity", "App Check初期化エラー", e)
             }
             
             try {
                 // Firestoreのオフライン対応を有効化
                 com.example.seedstockkeeper6.utils.FirestoreUtils.enableOfflinePersistence()
             } catch (e: Exception) {
-                android.util.Log.w("MainActivity", "Firestoreオフライン対応エラー", e)
             }
             
             try {
-                // ネットワーク接続状態をログ出力
+                // ネットワーク接続状態を取得
                 val networkInfo = com.example.seedstockkeeper6.utils.NetworkUtils.getNetworkInfo(this@MainActivity)
-                android.util.Log.d("MainActivity", "ネットワーク情報: $networkInfo")
             } catch (e: Exception) {
-                android.util.Log.w("MainActivity", "ネットワーク情報取得エラー", e)
             }
         }
         
@@ -149,7 +145,6 @@ class MainActivity : ComponentActivity() {
                 bgmManager.pause()
             }
         } catch (e: Exception) {
-            android.util.Log.w("MainActivity", "BGM一時停止エラー", e)
         }
     }
     
@@ -161,7 +156,6 @@ class MainActivity : ComponentActivity() {
                 bgmManager.play()
             }
         } catch (e: Exception) {
-            android.util.Log.w("MainActivity", "BGM再開エラー", e)
         }
     }
 }

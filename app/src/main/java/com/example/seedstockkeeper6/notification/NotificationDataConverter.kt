@@ -25,9 +25,6 @@ class NotificationDataConverter {
         userId: String = ""
     ): NotificationData {
         
-        android.util.Log.d("NotificationDataConverter", "convertTextToNotificationData開始 - タイトル: $title, タイプ: $notificationType")
-        android.util.Log.d("NotificationDataConverter", "コンテンツ内容: $content")
-        
         return try {
             // まず、内容にJSONブロックが含まれているかチェック
             val jsonStart = content.indexOf("```json")
@@ -37,25 +34,20 @@ class NotificationDataConverter {
                 
                 if (jsonEnd != -1) {
                     val jsonText = content.substring(jsonStart + 7, jsonEnd).trim()
-                    android.util.Log.d("NotificationDataConverter", "コードブロック内のJSONを抽出: $jsonText")
                     return parseJsonToNotificationData(jsonText, title, farmOwner, region, prefecture, month, notificationType, userId)
                 }
             }
             
             // JSONブロックがない場合、純粋なJSON形式かチェック
             if (content.trim().startsWith("{")) {
-                android.util.Log.d("NotificationDataConverter", "純粋なJSON形式として処理: $content")
                 return parseJsonToNotificationData(content, title, farmOwner, region, prefecture, month, notificationType, userId)
             }
             
             // JSON形式でない場合は、テキストから構造化データを抽出
-            android.util.Log.d("NotificationDataConverter", "テキスト形式として処理")
             val result = extractFromTextContent(title, content, farmOwner, region, prefecture, month, notificationType, userId)
             result
             
         } catch (e: Exception) {
-            android.util.Log.e("NotificationDataConverter", "変換エラー", e)
-            e.printStackTrace()
             createDefaultNotificationData(title, content, farmOwner, region, prefecture, month, notificationType, userId)
         }
     }
@@ -73,29 +65,11 @@ class NotificationDataConverter {
         notificationType: String,
         userId: String
     ): NotificationData {
-        android.util.Log.d("NotificationDataConverter", "parseJsonToNotificationData開始")
-        android.util.Log.d("NotificationDataConverter", "JSONテキスト: $jsonText")
-        
         val jsonObject = JsonParser.parseString(jsonText).asJsonObject
         
-        // 各フィールドの値をログ出力
         val thisMonthSeeds = parseSeedInfoArray(jsonObject.getAsJsonArray("thisMonthSeeds"))
         val endingSoonSeeds = parseSeedInfoArray(jsonObject.getAsJsonArray("endingSoonSeeds"))
         val recommendedSeeds = parseSeedInfoArray(jsonObject.getAsJsonArray("recommendedSeeds"))
-        
-        android.util.Log.d("NotificationDataConverter", "今月まきどきの種数: ${thisMonthSeeds.size}")
-        android.util.Log.d("NotificationDataConverter", "期限間近の種数: ${endingSoonSeeds.size}")
-        android.util.Log.d("NotificationDataConverter", "おすすめの種数: ${recommendedSeeds.size}")
-        
-        thisMonthSeeds.forEachIndexed { index, seed ->
-            android.util.Log.d("NotificationDataConverter", "今月まきどきの種$index: ${seed.name} (${seed.variety})")
-        }
-        endingSoonSeeds.forEachIndexed { index, seed ->
-            android.util.Log.d("NotificationDataConverter", "期限間近の種$index: ${seed.name} (${seed.variety})")
-        }
-        recommendedSeeds.forEachIndexed { index, seed ->
-            android.util.Log.d("NotificationDataConverter", "おすすめの種$index: ${seed.name} (${seed.variety})")
-        }
         
         return NotificationData(
             id = jsonObject.get("id")?.asString ?: java.util.UUID.randomUUID().toString(),
@@ -317,11 +291,8 @@ class NotificationDataConverter {
      */
     private fun parseSeedInfoArray(jsonArray: com.google.gson.JsonArray?): List<SeedInfo> {
         if (jsonArray == null) {
-            android.util.Log.d("NotificationDataConverter", "parseSeedInfoArray: JSON配列がnull")
             return emptyList()
         }
-        
-        android.util.Log.d("NotificationDataConverter", "parseSeedInfoArray: 配列サイズ = ${jsonArray.size()}")
         
         return jsonArray.mapNotNull { element ->
             try {
@@ -333,10 +304,8 @@ class NotificationDataConverter {
                     expirationYear = obj.get("expirationYear")?.asInt ?: 0,
                     expirationMonth = obj.get("expirationMonth")?.asInt ?: 0
                 )
-                android.util.Log.d("NotificationDataConverter", "種情報解析: ${seedInfo.name} (${seedInfo.variety}) - 有効期限: ${seedInfo.expirationYear}/${seedInfo.expirationMonth}")
                 seedInfo
             } catch (e: Exception) {
-                android.util.Log.e("NotificationDataConverter", "種情報解析エラー", e)
                 null
             }
         }

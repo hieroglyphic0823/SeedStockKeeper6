@@ -164,7 +164,6 @@ fun NotificationPreviewCard(
             // プレビュー内容表示
             if (showMonthlyPreview) {
                 val monthlyTitle = if (monthlyPreviewTitle.isNotEmpty()) monthlyPreviewTitle else "月次通知プレビュー"
-                android.util.Log.d("NotificationPreviewComponents", "月次プレビュー表示: タイトル='$monthlyTitle'")
                 NotificationPreviewContentCard(
                     title = monthlyTitle,
                     content = monthlyPreviewContent,
@@ -174,7 +173,6 @@ fun NotificationPreviewCard(
             
             if (showWeeklyPreview) {
                 val weeklyTitle = if (weeklyPreviewTitle.isNotEmpty()) weeklyPreviewTitle else "週次通知プレビュー"
-                android.util.Log.d("NotificationPreviewComponents", "週次プレビュー表示: タイトル='$weeklyTitle'")
                 NotificationPreviewContentCard(
                     title = weeklyTitle,
                     content = weeklyPreviewContent
@@ -193,7 +191,6 @@ private fun NotificationPreviewContentCard(
     content: String,
     isOcrSuccessful: Boolean = false
 ) {
-    android.util.Log.d("NotificationPreviewComponents", "NotificationPreviewContentCard開始: タイトル='$title'")
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -224,20 +221,15 @@ private fun NotificationPreviewContentCard(
                 }
             } else {
                 // タイトルを2行に分けて表示
-                android.util.Log.d("NotificationPreviewComponents", "タイトル分割処理開始: $title")
                 val titleParts = if (title.contains("すけさん便り")) {
                     val parts = title.split("すけさん便り")
-                    android.util.Log.d("NotificationPreviewComponents", "分割結果: ${parts.toList()}")
                     if (parts.size >= 2) {
                         val firstPart = parts[0].trim()
-                        android.util.Log.d("NotificationPreviewComponents", "1行目: '$firstPart', 2行目: 'すけさん便り'")
                         Pair(firstPart, "すけさん便り")
                     } else {
-                        android.util.Log.d("NotificationPreviewComponents", "分割失敗、元のタイトルを使用")
                         Pair(title, "")
                     }
                 } else {
-                    android.util.Log.d("NotificationPreviewComponents", "'すけさん便り'が含まれていない: $title")
                     Pair(title, "")
                 }
                 

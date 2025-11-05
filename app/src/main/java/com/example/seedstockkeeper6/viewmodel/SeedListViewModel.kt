@@ -146,7 +146,6 @@ class SeedListViewModel : ViewModel() {
                         updates["isFinished"] = isFinished
                         if (seed.isExpired != isExpired) {
                             updates["isExpired"] = isExpired
-                            android.util.Log.d("SeedListViewModel", "期限切れフラグを更新: ${seed.productName} ${seed.isExpired} -> $isExpired")
                         }
                         // まき終わりに変更する場合は現在の日付を設定、解除する場合はクリア
                         val currentDate = java.time.LocalDate.now()

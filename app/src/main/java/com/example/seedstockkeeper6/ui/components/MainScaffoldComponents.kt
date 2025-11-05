@@ -625,7 +625,6 @@ fun MainScaffoldNavigationBar(
                     )
                     // 未読通知バッジ
                     if (unreadNotificationCount > 0) {
-                        android.util.Log.d("MainScaffold", "未読バッジ表示: $unreadNotificationCount")
                         Box(
                             modifier = Modifier
                                 .size(IconSizeConstants.BADGE_SIZE)
@@ -643,8 +642,6 @@ fun MainScaffoldNavigationBar(
                                 fontSize = 10.sp
                             )
                         }
-                    } else {
-                        android.util.Log.d("MainScaffold", "未読バッジ非表示: $unreadNotificationCount")
                     }
                 }
             },

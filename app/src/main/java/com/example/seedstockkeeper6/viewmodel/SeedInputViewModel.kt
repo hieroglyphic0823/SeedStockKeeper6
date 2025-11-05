@@ -1577,8 +1577,7 @@ class SeedInputViewModel : ViewModel() {
                                 storage.reference.child(path).delete().await()
                             }
                         } catch (e: Exception) {
-                            // 画像削除エラーは無視（ログのみ）
-                            android.util.Log.w("SeedInputViewModel", "画像削除エラー: ${e.message}")
+                            // 画像削除エラーは無視
                         }
                     }
                 }
@@ -1594,7 +1593,6 @@ class SeedInputViewModel : ViewModel() {
                         updateStatisticsAfterSeedChange(currentUser.uid)
                     }
                 } catch (e: Exception) {
-                    android.util.Log.w("SeedInputViewModel", "集計データ更新エラー: ${e.message}")
                 }
                 
                 Result.success(Unit)
@@ -1641,10 +1639,7 @@ class SeedInputViewModel : ViewModel() {
     fun checkAndUpdateExpirationFlag() {
         val isExpired = ExpirationUtils.isSeedExpired(packet)
         if (packet.isExpired != isExpired) {
-            android.util.Log.d("SeedInputViewModel", "期限切れフラグを更新: ${packet.isExpired} -> $isExpired")
             packet = packet.copy(isExpired = isExpired)
-        } else {
-            android.util.Log.d("SeedInputViewModel", "期限切れフラグは変更なし: $isExpired")
         }
     }
     

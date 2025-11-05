@@ -138,7 +138,6 @@ fun SeedInputScreen(
                                     }
                                 } catch (e: Exception) {
                                     isProcessingShake = false
-                                    android.util.Log.e("SeedInputScreen", "振動検知処理エラー", e)
                                 }
                             }
                         }

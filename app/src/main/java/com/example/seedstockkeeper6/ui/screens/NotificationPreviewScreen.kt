@@ -200,12 +200,9 @@ fun NotificationPreviewScreen(
                             userId = currentUserId ?: "unknown_user"
                         )
                         // 通知作成後に少し遅延してから未読数を更新
-                        android.util.Log.d("NotificationPreviewScreen", "月次通知作成完了、未読数更新を開始")
                         kotlinx.coroutines.delay(1000)
                         onRefreshUnreadCount()
-                        android.util.Log.d("NotificationPreviewScreen", "未読数更新完了")
                     } catch (e: Exception) {
-                        android.util.Log.e("NotificationPreviewScreen", "月次通知作成エラー", e)
                     }
                 }
             },
@@ -222,8 +219,6 @@ fun NotificationPreviewScreen(
                         )
                         // おすすめの種情報を取得
                         val recommendedSeeds = getRecommendedSeedsInfo(userSettings)
-                        android.util.Log.d("NotificationPreviewScreen", "週次通知テスト - ユーザー種数: ${userSeeds.size}, 地域: ${userSettings["defaultRegion"]}")
-                        android.util.Log.d("NotificationPreviewScreen", "週次通知テスト - おすすめ種情報: $recommendedSeeds")
                         
                         val content = geminiService.generateWeeklyNotificationContent(
                             userSeeds = userSeeds,
@@ -234,8 +229,6 @@ fun NotificationPreviewScreen(
                             seedInfoUrl = userSettings["seedInfoUrl"] ?: ""
                         )
                         
-                        android.util.Log.d("NotificationPreviewScreen", "週次通知テスト - 生成されたコンテンツ: $content")
-                        
                         // 通知権限をチェック
                         if (!notificationManager.hasNotificationPermission()) {
                             if (activity != null) {
@@ -244,7 +237,6 @@ fun NotificationPreviewScreen(
                             return@launch
                         }
                         
-                        android.util.Log.d("NotificationPreviewScreen", "週次通知送信開始 - タイトル: $title")
                         notificationManager.sendWeeklyReminderNotificationWithContent(
                             title = title,
                             content = content,
@@ -255,14 +247,10 @@ fun NotificationPreviewScreen(
                             seedCount = userSeeds.size,
                             userId = auth.currentUser?.uid ?: ""
                         )
-                        android.util.Log.d("NotificationPreviewScreen", "週次通知送信完了")
                         // 通知作成後に少し遅延してから未読数を更新
-                        android.util.Log.d("NotificationPreviewScreen", "週次通知作成完了、未読数更新を開始")
                         kotlinx.coroutines.delay(1000)
                         onRefreshUnreadCount()
-                        android.util.Log.d("NotificationPreviewScreen", "未読数更新完了")
                     } catch (e: Exception) {
-                        android.util.Log.e("NotificationPreviewScreen", "週次通知作成エラー", e)
                     }
                 }
             }

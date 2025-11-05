@@ -204,14 +204,11 @@ fun SeedListScreen(
                                         documentId = doc.id
                                     )
                                     
-                                    // デバッグログを追加
-                                    android.util.Log.d("SeedListScreen", "種データ取得: ${seedWithId.productName}(${seedWithId.variety}) - isFinished: ${seedWithId.isFinished}, isExpired: ${seedWithId.isExpired}")
                                     doc.id to seedWithId
                                 } else {
                                     null
                                 }
                             } catch (e: Exception) {
-                                android.util.Log.e("SeedListScreen", "種データ取得エラー: ${e.message}")
                                 null
                             }
                         }

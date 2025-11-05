@@ -40,7 +40,6 @@ class ShortcutBadgeService(private val context: Context) {
             // Android 8.0未満では、ランチャー依存の非公式な方法しかないため、
             // ここでは何もしないか、setLegacyBadgeのような別の実装を試すことになります。
             // ただし、setLegacyBadgeも確実ではありません。
-            android.util.Log.w("ShortcutBadgeService", "Badge count is not officially supported on API < 26.")
         }
     }
     

@@ -108,7 +108,6 @@ private fun formatDateRange(startDate: String, endDate: String): String {
             val endText = "${end.year}年${end.monthValue}月(${endStage})"
             "$startText ～ $endText"
         } catch (e: java.time.format.DateTimeParseException) {
-            android.util.Log.e("formatDateRange", "日付のパースに失敗しました: $startDate, $endDate", e)
             "$startDate ～ $endDate"
         }
     }

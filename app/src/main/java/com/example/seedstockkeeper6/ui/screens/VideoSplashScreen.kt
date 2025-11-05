@@ -50,7 +50,6 @@ fun VideoSplashScreen(
                 repeatMode = Player.REPEAT_MODE_OFF
                 prepare()
             } catch (e: Exception) {
-                android.util.Log.e("VideoSplashScreen", "動画リソースの読み込みに失敗しました", e)
             }
         }
     }
@@ -59,28 +58,23 @@ fun VideoSplashScreen(
         // 再生準備が完了したら再生を開始
         exoPlayer.addListener(object : Player.Listener {
             override fun onPlaybackStateChanged(playbackState: Int) {
-                android.util.Log.d("VideoSplashScreen", "再生状態変化: playbackState=$playbackState (STATE_IDLE=1, STATE_BUFFERING=2, STATE_READY=3, STATE_ENDED=4)")
                 when (playbackState) {
                     Player.STATE_READY -> {
                         // 再生準備が完了したら再生を開始
-                        android.util.Log.d("VideoSplashScreen", "再生準備完了、再生を開始します")
                         if (!exoPlayer.playWhenReady) {
                             exoPlayer.playWhenReady = true
                         }
                     }
                     Player.STATE_ENDED -> {
-                        android.util.Log.d("VideoSplashScreen", "再生終了")
                         onVideoEnd()
                     }
                 }
             }
             
             override fun onIsPlayingChanged(isPlaying: Boolean) {
-                android.util.Log.d("VideoSplashScreen", "再生状態変化: isPlaying=$isPlaying, volume=${exoPlayer.volume}, playWhenReady=${exoPlayer.playWhenReady}")
             }
             
             override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
-                android.util.Log.e("VideoSplashScreen", "再生エラー", error)
             }
         })
         

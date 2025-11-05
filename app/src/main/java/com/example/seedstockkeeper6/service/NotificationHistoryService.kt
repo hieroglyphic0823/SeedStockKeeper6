@@ -140,24 +140,17 @@ class NotificationHistoryService {
             val currentUser = auth.currentUser
             
             if (currentUser == null) {
-                android.util.Log.e("NotificationHistoryService", "ユーザーがログインしていません")
                 return false
             }
-            
-            android.util.Log.d("NotificationHistoryService", "通知データ保存開始 - タイトル: ${notificationData.title}, isRead: ${notificationData.isRead}")
             
             // 通知データをそのままFirebaseに保存
             val docRef = db.collection("notificationData")
                 .add(notificationData)
                 .await()
             
-            android.util.Log.d("NotificationHistoryService", "通知データ保存完了 - ドキュメントID: ${docRef.id}")
-            
             true
             
         } catch (e: Exception) {
-            android.util.Log.e("NotificationHistoryService", "通知データ保存エラー", e)
-            e.printStackTrace()
             false
         }
     }
@@ -321,26 +314,14 @@ class NotificationHistoryService {
         return try {
             val currentUser = auth.currentUser
             if (currentUser == null) {
-                android.util.Log.d("NotificationHistoryService", "ユーザーがログインしていません")
                 return 0
             }
             
-            android.util.Log.d("NotificationHistoryService", "未読通知数取得開始 - ユーザーID: ${currentUser.uid}")
-            
-            // まず、すべての通知を取得して詳細を確認
+            // まず、すべての通知を取得
             val allSnapshot = db.collection("notificationData")
                 .whereEqualTo("userId", currentUser.uid)
                 .get()
                 .await()
-            
-            android.util.Log.d("NotificationHistoryService", "全通知数: ${allSnapshot.documents.size}")
-            
-            // 各ドキュメントの詳細をログ出力
-            allSnapshot.documents.forEachIndexed { index, doc ->
-                val data = doc.toObject(com.example.seedstockkeeper6.model.NotificationData::class.java)
-                val rawData = doc.data
-                android.util.Log.d("NotificationHistoryService", "通知$index: ID=${data?.id}, isRead=${data?.isRead} (raw read: ${rawData?.get("read")}), title=${data?.title}")
-            }
             
             // アプリケーション側で未読通知をフィルタリング
             val unreadNotifications = allSnapshot.documents.filter { doc ->
@@ -356,26 +337,15 @@ class NotificationHistoryService {
                     is Float -> readValue == 0.0f
                     null -> true // nullの場合は未読として扱う
                     else -> {
-                        android.util.Log.w("NotificationHistoryService", "予期しないread型: ${readValue?.javaClass?.simpleName}")
                         true // 予期しない型の場合は未読として扱う
                     }
                 }
             }
             
             val unreadCount = unreadNotifications.size
-            android.util.Log.d("NotificationHistoryService", "未読通知数: $unreadCount (フィルタリング後)")
-            
-            // 未読通知の詳細をログ出力
-            unreadNotifications.forEachIndexed { index, doc ->
-                val data = doc.toObject(com.example.seedstockkeeper6.model.NotificationData::class.java)
-                val rawData = doc.data
-                android.util.Log.d("NotificationHistoryService", "未読通知$index: ID=${data?.id}, isRead=${data?.isRead} (raw read: ${rawData?.get("read")}), title=${data?.title}")
-            }
-            
             unreadCount
             
         } catch (e: Exception) {
-            android.util.Log.e("NotificationHistoryService", "未読通知数取得エラー", e)
             0
         }
     }
@@ -387,14 +357,11 @@ class NotificationHistoryService {
         return try {
             val currentUser = auth.currentUser
             if (currentUser == null) {
-                android.util.Log.w("NotificationHistoryService", "ユーザーがログインしていません")
                 return 0
             }
             
             val sixMonthsAgo = LocalDate.now().minusMonths(6)
             val sixMonthsAgoTimestamp = sixMonthsAgo.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
-            
-            android.util.Log.d("NotificationHistoryService", "古い通知削除開始: ${sixMonthsAgo}より前の通知を削除")
             
             // 6ヶ月以上前の通知を取得
             val oldNotificationsQuery = db.collection("notifications")
@@ -404,7 +371,6 @@ class NotificationHistoryService {
             val oldNotificationsSnapshot = oldNotificationsQuery.get().await()
             
             if (oldNotificationsSnapshot.isEmpty) {
-                android.util.Log.d("NotificationHistoryService", "削除対象の古い通知はありません")
                 return 0
             }
             
@@ -415,16 +381,13 @@ class NotificationHistoryService {
             for (document in oldNotificationsSnapshot.documents) {
                 batch.delete(document.reference)
                 deletedCount++
-                android.util.Log.d("NotificationHistoryService", "削除対象通知: ID=${document.id}, タイトル=${document.getString("title")}")
             }
             
             batch.commit().await()
             
-            android.util.Log.i("NotificationHistoryService", "古い通知削除完了: ${deletedCount}件削除")
             deletedCount
             
         } catch (e: Exception) {
-            android.util.Log.e("NotificationHistoryService", "古い通知削除エラー", e)
             0
         }
     }

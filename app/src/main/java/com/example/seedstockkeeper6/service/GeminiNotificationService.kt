@@ -54,12 +54,9 @@ class GeminiNotificationService {
             // 2. 通知に含めるべき種をフィルタリング（まき終わり・期限切れを除外）
             val notificationEligibleSeeds = filterNotificationEligibleSeeds(updatedSeeds)
             
-            android.util.Log.d("GeminiNotificationService", "通知対象種数: ${notificationEligibleSeeds.size}/${userSeeds.size} (まき終わり・期限切れ除外後)")
-            
             // 3. 古い通知を自動削除
             val notificationHistoryService = NotificationHistoryService()
             val deletedCount = notificationHistoryService.cleanupOldNotifications()
-            android.util.Log.i("GeminiNotificationService", "古い通知削除: ${deletedCount}件")
             
             // 4. 通知を生成（フィルタリングされた種を使用）
             generateMonthlyNotificationContent(
@@ -73,7 +70,6 @@ class GeminiNotificationService {
             )
             
         } catch (e: Exception) {
-            android.util.Log.e("GeminiNotificationService", "月次通知生成エラー", e)
             contentFormatter.getDefaultMonthlyContent(dataProcessor.getMonthName(currentMonth))
         }
     }
@@ -153,7 +149,6 @@ class GeminiNotificationService {
             try {
                 // Google Play Services接続エラーをチェック
                 if (generativeModel == null) {
-                    android.util.Log.w("GeminiNotificationService", "GenerativeModelが初期化されていません")
                     return null
                 }
                 
@@ -162,10 +157,9 @@ class GeminiNotificationService {
             } catch (e: Exception) {
                 lastException = e
                 
-                // Google Play Services関連のエラーをログ出力
+                // Google Play Services関連のエラーをチェック
                 if (e.message?.contains("SecurityException") == true || 
                     e.message?.contains("Unknown calling package") == true) {
-                    android.util.Log.w("GeminiNotificationService", "Google Play Services接続エラー（エミュレーター環境）: ${e.message}")
                     return null // エミュレーター環境では即座に失敗
                 }
                 
@@ -177,13 +171,11 @@ class GeminiNotificationService {
                     }
                 } else {
                     // 503以外のエラーは即座に失敗
-                    android.util.Log.e("GeminiNotificationService", "Gemini API呼び出しエラー: ${e.message}")
                     return@repeat
                 }
             }
         }
         
-        android.util.Log.e("GeminiNotificationService", "最大リトライ回数に達しました: ${lastException?.message}")
         return null
     }
     
@@ -236,7 +228,6 @@ class GeminiNotificationService {
     ): String = withContext(Dispatchers.IO) {
         try {
             if (generativeModel == null) {
-                android.util.Log.w("GeminiNotificationService", "generativeModelがnullのため、デフォルト週次通知コンテンツを使用")
                 return@withContext contentFormatter.getDefaultWeeklyContent()
             }
             
@@ -254,13 +245,10 @@ class GeminiNotificationService {
                     if (currentMonth == 12) 1 else currentMonth + 1
                 }
                 
-                android.util.Log.d("GeminiNotificationService", "週次通知 - 対象月: $targetMonth, 週番号: $weekNumber")
                 dataProcessor.fetchRecommendedSeedsForCurrentMonth(seedInfoUrl, targetMonth)
             } else {
                 recommendedSeeds
             }
-            
-            android.util.Log.d("GeminiNotificationService", "週次通知 - 取得したおすすめ種情報: $actualRecommendedSeeds")
             
             // プロンプトを生成
             val prompt = promptGenerator.generateWeeklyPrompt(
@@ -271,17 +259,9 @@ class GeminiNotificationService {
                 region = region
             )
             
-            // デバッグログ: プロンプトの内容
-            android.util.Log.d("GeminiNotificationService", "週次通知プロンプト送信開始")
-            android.util.Log.d("GeminiNotificationService", "プロンプト内容: $prompt")
-            
             // Gemini APIを呼び出し
             val response = generativeModel!!.generateContent(prompt)
             val rawContent = response.text ?: contentFormatter.getDefaultWeeklyContent()
-            
-            // デバッグログ: Gemini APIの応答内容
-            android.util.Log.d("GeminiNotificationService", "週次通知Gemini API応答受信")
-            android.util.Log.d("GeminiNotificationService", "生の応答内容: $rawContent")
             
             // JSON形式の応答を強制
             val content = if (rawContent.trim().startsWith("{") || rawContent.contains("```json")) {
@@ -299,22 +279,17 @@ class GeminiNotificationService {
                 }
             } else {
                 // JSON形式でない場合はデフォルトのJSON形式を生成
-                android.util.Log.w("GeminiNotificationService", "JSON形式でない応答を受信、デフォルト形式を使用")
                 generateDefaultWeeklyJson(farmOwner, customFarmOwner)
             }
             
-            android.util.Log.d("GeminiNotificationService", "最終的なコンテンツ: $content")
             content
             
         } catch (e: Exception) {
-            // Google Play Services関連のエラーをログ出力
+            // Google Play Services関連のエラーをチェック
             if (e.message?.contains("SecurityException") == true || 
                 e.message?.contains("Unknown calling package") == true) {
-                android.util.Log.w("GeminiNotificationService", "Google Play Services接続エラー（エミュレーター環境）: ${e.message}")
                 contentFormatter.getDefaultWeeklyContent()
             } else {
-                android.util.Log.e("GeminiNotificationService", "週次通知生成エラー", e)
-                android.util.Log.d("GeminiNotificationService", "デフォルト週次通知コンテンツを使用")
                 contentFormatter.getDefaultWeeklyContent()
             }
         }
@@ -402,7 +377,6 @@ class GeminiNotificationService {
             
             updatedSeeds
         } catch (e: Exception) {
-            android.util.Log.e("GeminiNotificationService", "有効期限切れフラグ更新エラー", e)
             seeds // エラーの場合は元のリストを返す
         }
     }

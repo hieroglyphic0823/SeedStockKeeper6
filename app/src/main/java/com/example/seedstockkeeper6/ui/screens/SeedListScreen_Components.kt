@@ -67,7 +67,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.ktx.storage
-import android.util.Log
 import android.os.Vibrator
 import android.os.VibrationEffect
 import android.content.Context
@@ -313,38 +312,29 @@ fun SeedGalleryItem(
 ) {
     val seedStatus = getSeedStatus(seed)
     
-    // 画像URLの変換とログ出力
+    // 画像URLの変換
     var downloadUrl by remember { mutableStateOf<String?>(null) }
     val firstImageUrl = if (seed.imageUrls.isNotEmpty()) seed.imageUrls.first() else null
     
     LaunchedEffect(firstImageUrl) {
         if (firstImageUrl != null) {
-            Log.d("SeedGalleryItem", "商品名: ${seed.productName}, 品種: ${seed.variety}")
-            Log.d("SeedGalleryItem", "元のimageUrl: $firstImageUrl")
-            
             // Firebase Storageのパスの場合はdownloadUrlを取得
             if (firstImageUrl.startsWith("seed_images/")) {
-                Log.d("SeedGalleryItem", "Firebase Storageパスを検出: $firstImageUrl")
                 try {
                     val storageRef = Firebase.storage.reference.child(firstImageUrl)
                     val url = storageRef.downloadUrl.await().toString()
                     downloadUrl = url
-                    Log.d("SeedGalleryItem", "downloadUrl取得成功: $url")
                 } catch (e: Exception) {
-                    Log.e("SeedGalleryItem", "downloadUrl取得失敗: ${e.message}", e)
                     downloadUrl = null
                 }
             } else if (firstImageUrl.startsWith("http://") || firstImageUrl.startsWith("https://")) {
                 // すでにHTTP/HTTPS URLの場合はそのまま使用
                 downloadUrl = firstImageUrl
-                Log.d("SeedGalleryItem", "HTTP/HTTPS URL: $firstImageUrl")
             } else {
                 // その他の場合はそのまま使用（file://など）
                 downloadUrl = firstImageUrl
-                Log.d("SeedGalleryItem", "その他のURL形式: $firstImageUrl")
             }
         } else {
-            Log.d("SeedGalleryItem", "商品名: ${seed.productName}, 品種: ${seed.variety} - 画像URLが空です")
             downloadUrl = null
         }
     }

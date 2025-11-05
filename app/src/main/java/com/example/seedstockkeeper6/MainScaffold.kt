@@ -92,15 +92,12 @@ fun MainScaffold(
                 historyService.getUnreadNotificationCount()
             }
             unreadNotificationCount = count
-            android.util.Log.d("MainScaffold", "未読通知数取得: $unreadNotificationCount (ルート: $currentRoute)")
             
             // バッジを更新（UIスレッドで実行）
             badgeService.setBadgeCount(unreadNotificationCount)
         } catch (e: kotlinx.coroutines.CancellationException) {
             // コルーチンスコープがキャンセルされた場合は無視
-            android.util.Log.d("MainScaffold", "通知数取得がキャンセルされました")
         } catch (e: Exception) {
-            android.util.Log.e("MainScaffold", "未読通知数取得エラー", e)
         }
     }
     
@@ -114,15 +111,12 @@ fun MainScaffold(
                     historyService.getUnreadNotificationCount()
                 }
                 unreadNotificationCount = count
-                android.util.Log.d("MainScaffold", "未読通知数更新: $unreadNotificationCount")
                 
                 // バッジを更新（UIスレッドで実行）
                 badgeService.setBadgeCount(unreadNotificationCount)
             } catch (e: kotlinx.coroutines.CancellationException) {
                 // コルーチンスコープがキャンセルされた場合は無視
-                android.util.Log.d("MainScaffold", "通知数更新がキャンセルされました")
             } catch (e: Exception) {
-                android.util.Log.e("MainScaffold", "未読通知数更新エラー", e)
             }
         }
     }

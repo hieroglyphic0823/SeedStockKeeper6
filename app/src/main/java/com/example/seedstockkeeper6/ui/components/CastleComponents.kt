@@ -292,12 +292,8 @@ fun StatisticsWidgets(
     familyDistribution: List<Pair<String, Int>>,
     navController: NavController
 ) {
-    android.util.Log.d("StatisticsWidgets", "StatisticsWidgets開始: totalSeeds=$totalSeeds, finished=$finishedSeedsCount, expired=$expiredSeedsCount, familyDistribution.size=${familyDistribution.size}")
-    
     val density = LocalDensity.current
     val safeFamilyDistribution = familyDistribution.filter { it.first.isNotBlank() && it.second >= 0 }
-    
-    android.util.Log.d("StatisticsWidgets", "安全なfamilyDistribution.size=${safeFamilyDistribution.size}")
     
     Column(
         verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -330,9 +326,6 @@ fun StatisticsWidgets(
                 modifier = Modifier
                     .weight(1f)
                     .onSizeChanged { size ->
-                        val wDp = with(density) { size.width.toDp() }
-                        val hDp = with(density) { size.height.toDp() }
-                        android.util.Log.d("StatsWidgets", "LeftColumn size w=" + wDp + ", h=" + hDp)
                     }
             ) {
                 // 登録種子総数
@@ -391,9 +384,6 @@ fun StatisticsWidgets(
                     modifier = Modifier
                         .padding(16.dp)
                         .onSizeChanged { size ->
-                            val wDp = with(density) { size.width.toDp() }
-                            val hDp = with(density) { size.height.toDp() }
-                            android.util.Log.d("StatsWidgets", "RightCard content size w=" + wDp + ", h=" + hDp)
                         }
                 ) {
                     Row(
@@ -615,12 +605,9 @@ fun PieChart(
     data: List<Pair<String, Int>>,
     modifier: Modifier = Modifier
 ) {
-    android.util.Log.d("PieChart", "PieChart開始: data.size=${data.size}")
-    
     // データ検証
     val safeData = data.filter { it.first.isNotBlank() && it.second >= 0 }
     if (safeData.isEmpty()) {
-        android.util.Log.w("PieChart", "安全なデータが空です")
         return
     }
     
@@ -631,7 +618,6 @@ fun PieChart(
     val titleSpacer = if (legendCount >= 5) 6.dp else 8.dp
     val total = safeData.sumOf { it.second.toLong() }.toInt()
     if (total == 0) {
-        android.util.Log.w("PieChart", "合計が0です")
         return
     }
 
@@ -643,16 +629,8 @@ fun PieChart(
         Color(0xFFE91E63)   // 鮮やかなピンク
     )
     
-    android.util.Log.d(
-        "PieChart",
-        "safeData size=" + safeData.size + ", items=" + safeData.map { it.first } + ", total=$total"
-    )
-    
     Column(
         modifier = modifier.onSizeChanged { size ->
-            val wDp = with(density) { size.width.toDp() }
-            val hDp = with(density) { size.height.toDp() }
-            android.util.Log.d("PieChart", "Root size w=" + wDp + ", h=" + hDp)
         },
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -662,9 +640,6 @@ fun PieChart(
                 .size(canvasSize)
                 .padding(8.dp)
                 .onSizeChanged { size ->
-                    val wDp = with(density) { size.width.toDp() }
-                    val hDp = with(density) { size.height.toDp() }
-                    android.util.Log.d("PieChart", "Canvas size w=" + wDp + ", h=" + hDp)
                 }
         ) {
             val canvasWidth = size.width
@@ -677,12 +652,10 @@ fun PieChart(
             
             safeData.forEachIndexed { index, (_, count) ->
                 if (count < 0) {
-                    android.util.Log.w("PieChart", "負の値が検出されました: index=$index, count=$count")
                     return@forEachIndexed
                 }
                 val sweepAngle = (count.toFloat() / total.toFloat()) * 360f
                 if (sweepAngle.isNaN() || sweepAngle.isInfinite()) {
-                    android.util.Log.w("PieChart", "無効な角度が計算されました: index=$index, count=$count, total=$total, sweepAngle=$sweepAngle")
                     return@forEachIndexed
                 }
                 val color = colors[index % colors.size]
@@ -712,20 +685,13 @@ fun PieChart(
                 .weight(1f)
                 .verticalScroll(rememberScrollState())
                 .onSizeChanged { size ->
-                    val wDp = with(density) { size.width.toDp() }
-                    val hDp = with(density) { size.height.toDp() }
-                    android.util.Log.d("PieChart", "Legend Column size w=" + wDp + ", h=" + hDp)
                 }
         ) {
             safeData.forEachIndexed { index, (family, count) ->
-                android.util.Log.d("PieChart", "legend item #$index: $family ($count)")
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .onSizeChanged { size ->
-                            val wDp = with(density) { size.width.toDp() }
-                            val hDp = with(density) { size.height.toDp() }
-                            android.util.Log.d("PieChart", "legend row #" + index + " size w=" + wDp + ", h=" + hDp)
                         },
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)

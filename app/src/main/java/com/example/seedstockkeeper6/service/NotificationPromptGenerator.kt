@@ -222,11 +222,6 @@ $userSeedsText
         val weekNumber = today.get(weekFields.weekOfMonth())
         val monthName = getMonthName(today.monthValue)
         
-        // デバッグログ: 週次通知のプロンプト情報
-        android.util.Log.d("NotificationPromptGenerator", "週次通知プロンプト生成 - 週番号: $weekNumber, 地域: $region")
-        android.util.Log.d("NotificationPromptGenerator", "ユーザー種情報数: ${userSeeds.size}")
-        android.util.Log.d("NotificationPromptGenerator", "ユーザー種情報詳細: $userSeedsText")
-        
         return """
             $tone
             
@@ -449,32 +444,18 @@ $userSeedsText
         if (endingThisMonthSeeds.isNotEmpty()) {
             content.appendLine("⚠️ 終了間近:")
             endingThisMonthSeeds.forEach { seed ->
-                // デバッグログ: 種情報の有効期限
-                android.util.Log.d("NotificationPromptGenerator", "種情報デバッグ - 種名: ${seed.productName}")
-                android.util.Log.d("NotificationPromptGenerator", "種情報デバッグ - 種の有効期限: ${seed.expirationYear}年${seed.expirationMonth}月")
-                
-                // カレンダーエントリの有効期限を確認
-                seed.calendar?.forEachIndexed { index, entry ->
-                    android.util.Log.d("NotificationPromptGenerator", "種情報デバッグ - カレンダーエントリ$index: ${entry.expirationYear}年${entry.expirationMonth}月")
-                }
-                
                 // 種の有効期限を優先的に使用（カレンダーエントリは間違っている可能性があるため）
                 val expirationInfo = if (seed.expirationYear > 0 && seed.expirationMonth > 0) {
-                    android.util.Log.d("NotificationPromptGenerator", "種情報デバッグ - 使用する有効期限: 種の有効期限 ${seed.expirationYear}年${seed.expirationMonth}月")
                     " - 有効期限: ${seed.expirationYear}年${seed.expirationMonth}月"
                 } else {
                     // 種の有効期限がない場合のみカレンダーエントリを使用
                     seed.calendar?.firstOrNull()?.let { entry ->
-                        android.util.Log.d("NotificationPromptGenerator", "種情報デバッグ - 使用する有効期限: カレンダーエントリ ${entry.expirationYear}年${entry.expirationMonth}月")
                         if (entry.expirationYear > 0 && entry.expirationMonth > 0) {
                             " - 有効期限: ${entry.expirationYear}年${entry.expirationMonth}月"
                         } else {
                             ""
                         }
-                    } ?: run {
-                        android.util.Log.d("NotificationPromptGenerator", "種情報デバッグ - 有効期限情報なし")
-                        ""
-                    }
+                    } ?: ""
                 }
                 content.appendLine("・${seed.productName} (${seed.variety}) - ${seed.family}${expirationInfo}")
             }
@@ -513,23 +494,16 @@ $userSeedsText
             if (currentMonth == 12) currentYear + 1 else currentYear
         }
         
-        // デバッグログ: 対象月と地域の情報
-        android.util.Log.d("NotificationPromptGenerator", "おすすめの種抽出 - 対象月: $targetMonth, 対象年: $targetYear, 地域: $region")
-        
         // 対象月の地域区分に応じたおすすめの種を抽出
         val recommendedSeeds = userSeeds.filter { seed ->
             seed.calendar?.any { entry ->
                 val isRegionMatch = entry.region == region
                 val isMonthMatch = isSeedRecommendedForMonth(entry, targetMonth, targetYear)
-                android.util.Log.d("NotificationPromptGenerator", "種チェック - ${seed.productName}: 地域一致=$isRegionMatch, 月一致=$isMonthMatch")
                 isRegionMatch && isMonthMatch
             } ?: false
         }
         
-        android.util.Log.d("NotificationPromptGenerator", "抽出されたおすすめの種数: ${recommendedSeeds.size}")
-        
         if (recommendedSeeds.isEmpty()) {
-            android.util.Log.d("NotificationPromptGenerator", "おすすめの種が見つかりませんでした")
             return "おすすめの種は登録されていません。"
         }
         
@@ -568,13 +542,9 @@ $userSeedsText
      * 週次通知用のユーザー種情報をフォーマット
      */
     private fun formatUserSeedsForWeeklyPrompt(seeds: List<SeedPacket>): String {
-        android.util.Log.d("NotificationPromptGenerator", "formatUserSeedsForWeeklyPrompt開始 - 種数: ${seeds.size}")
         if (seeds.isEmpty()) {
-            android.util.Log.d("NotificationPromptGenerator", "種が空のため、デフォルトメッセージを返す")
             return "登録された種はありません。"
         }
-        
-        android.util.Log.d("NotificationPromptGenerator", "formatUserSeedsForWeeklyPrompt - 週番号: ${getWeekNumber(java.time.LocalDate.now())}")
         
         val currentDate = java.time.LocalDate.now()
         val currentWeek = getWeekNumber(currentDate)
@@ -668,34 +638,20 @@ $userSeedsText
         if (urgentSeeds.isNotEmpty()) {
             content.appendLine("⚠️ 期限間近の種:")
             urgentSeeds.forEach { seed ->
-                // デバッグログ: 種情報の有効期限
-                android.util.Log.d("NotificationPromptGenerator", "週次通知デバッグ - 種名: ${seed.productName}")
-                android.util.Log.d("NotificationPromptGenerator", "週次通知デバッグ - 種の有効期限: ${seed.expirationYear}年${seed.expirationMonth}月")
-                
-                // カレンダーエントリの有効期限を確認
-                seed.calendar?.forEachIndexed { index, entry ->
-                    android.util.Log.d("NotificationPromptGenerator", "週次通知デバッグ - カレンダーエントリ$index: ${entry.expirationYear}年${entry.expirationMonth}月")
-                }
-                
                 content.appendLine("・${seed.productName} (${seed.variety})")
                 content.appendLine("  科: ${seed.family}")
                 
                 val expirationInfo = if (seed.expirationYear > 0 && seed.expirationMonth > 0) {
-                    android.util.Log.d("NotificationPromptGenerator", "週次通知デバッグ - 使用する有効期限: 種の有効期限 ${seed.expirationYear}年${seed.expirationMonth}月")
                     "有効期限: ${seed.expirationYear}年${seed.expirationMonth}月"
                 } else {
                     // 種の有効期限がない場合のみカレンダーエントリを使用
                     seed.calendar?.firstOrNull()?.let { entry ->
-                        android.util.Log.d("NotificationPromptGenerator", "週次通知デバッグ - 使用する有効期限: カレンダーエントリ ${entry.expirationYear}年${entry.expirationMonth}月")
                         if (entry.expirationYear > 0 && entry.expirationMonth > 0) {
                             "有効期限: ${entry.expirationYear}年${entry.expirationMonth}月"
                         } else {
                             "有効期限: 未設定"
                         }
-                    } ?: run {
-                        android.util.Log.d("NotificationPromptGenerator", "週次通知デバッグ - 有効期限情報なし")
-                        "有効期限: 未設定"
-                    }
+                    } ?: "有効期限: 未設定"
                 }
                 content.appendLine("  $expirationInfo")
             }
@@ -704,18 +660,12 @@ $userSeedsText
         
         // おすすめの種情報を追加（週番号に応じてタイトルを変更）
         val recommendedTitle = if (currentWeek <= 2) "🎯 今月のおすすめ" else "🔥 来月のおすすめ"
-        android.util.Log.d("NotificationPromptGenerator", "おすすめの種タイトル: $recommendedTitle (週番号: $currentWeek)")
         content.appendLine("$recommendedTitle:")
         
         // ユーザーの種情報からおすすめの種を選出（簡単な例として、期限間近でない種を選出）
         val recommendedSeeds = seeds.filter { seed ->
             !urgentSeeds.contains(seed) && relevantSeeds.contains(seed)
         }.take(3)
-        
-        android.util.Log.d("NotificationPromptGenerator", "おすすめの種選出結果: ${recommendedSeeds.size}個")
-        recommendedSeeds.forEachIndexed { index, seed ->
-            android.util.Log.d("NotificationPromptGenerator", "おすすめの種$index: ${seed.productName} (${seed.variety})")
-        }
         
         if (recommendedSeeds.isNotEmpty()) {
             recommendedSeeds.forEach { seed ->
@@ -728,7 +678,6 @@ $userSeedsText
         }
         
         val result = content.toString().trim()
-        android.util.Log.d("NotificationPromptGenerator", "formatUserSeedsForWeeklyPrompt完了 - 生成されたプロンプト: $result")
         return result
     }
     
