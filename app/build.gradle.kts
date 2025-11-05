@@ -61,6 +61,14 @@ android {
         compose = true
         mlModelBinding = true
     }
+    
+    packaging {
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            // エラーログで指摘された重複ファイルを明示的に除外する
+            excludes += "META-INF/DEPENDENCIES"
+        }
+    }
 }
 
 dependencies {
@@ -115,6 +123,11 @@ dependencies {
     implementation("com.google.android.gms:play-services-location:21.0.1")
     implementation("com.google.android.libraries.places:places:3.3.0")
     implementation("com.google.maps.android:maps-compose:4.3.0")
+    
+    // Google Calendar API 関連（安定構成）
+    implementation("com.google.apis:google-api-services-calendar:v3-rev20220715-2.0.0")
+    implementation("com.google.api-client:google-api-client-android:1.33.2")
+    implementation("com.google.http-client:google-http-client-gson:1.33.2")
 
     // 画像/AI/その他
     implementation(libs.coil.compose)

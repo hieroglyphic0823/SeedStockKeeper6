@@ -1,5 +1,8 @@
 package com.example.seedstockkeeper6.ui.screens
 
+import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.rememberScrollState
@@ -21,7 +24,11 @@ import com.example.seedstockkeeper6.ui.components.RegionSettingsSection
 import com.example.seedstockkeeper6.ui.components.NotificationSettingsSection
 import com.example.seedstockkeeper6.ui.components.BgmSettingsSection
 import com.example.seedstockkeeper6.ui.components.SeedInfoUrlSettingsSection
+import com.example.seedstockkeeper6.ui.components.CalendarSelectionSection
 import com.example.seedstockkeeper6.model.SettingsConstants
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount
+import com.google.android.gms.tasks.Task
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 
@@ -42,6 +49,34 @@ fun SettingsScreen(
     val customSeedInfoUrl = viewModel.customSeedInfoUrl
     
     val snackbarHostState = remember { SnackbarHostState() }
+    
+    // Google Sign-In用のランチャー
+    val googleSignInLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        val task: Task<GoogleSignInAccount> = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+        try {
+            val account = task.result
+            viewModel.handleGoogleSignInResult(account)
+        } catch (e: Exception) {
+            Log.e("SettingsScreen", "Google Sign-In処理エラー: ${e.javaClass.simpleName} - ${e.message}")
+            viewModel.handleGoogleSignInResult(null)
+        }
+    }
+    
+    // Google Sign-Inが必要な場合、Intentを起動
+    LaunchedEffect(viewModel.needsGoogleSignIn) {
+        if (viewModel.needsGoogleSignIn) {
+            val intent = viewModel.getGoogleSignInIntent()
+            if (intent != null) {
+                Log.d("SettingsScreen", "Google Sign-In Intentを起動します")
+                googleSignInLauncher.launch(intent)
+            } else {
+                Log.e("SettingsScreen", "Google Sign-In Intentが取得できません")
+                viewModel.cancelGoogleSignIn()
+            }
+        }
+    }
     
     // Snackbarの表示
     LaunchedEffect(viewModel.showSnackbar) {
@@ -208,6 +243,25 @@ fun SettingsScreen(
                             onSeedInfoUrlProviderChange = { viewModel.updateSeedInfoUrlProvider(it) },
                             onCustomSeedInfoUrlChange = { viewModel.updateCustomSeedInfoUrl(it) },
                             onNavigateToNotificationPreview = { navController.navigate("notification_preview") }
+                        )
+                    
+                    // 区切り線
+                    HorizontalDivider(
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
+                        thickness = 1.dp
+                    )
+                    
+                    // Googleカレンダー選択セクション
+                        CalendarSelectionSection(
+                            calendarId = viewModel.calendarId,
+                            calendarName = viewModel.calendarName,
+                            calendarList = viewModel.calendarList,
+                            isLoadingCalendars = viewModel.isLoadingCalendars,
+                            calendarError = viewModel.calendarError,
+                            isEditMode = viewModel.isEditMode,
+                            hasExistingData = viewModel.hasExistingData,
+                            onLoadCalendars = { viewModel.loadCalendarList() },
+                            onCalendarSelected = { id, name -> viewModel.updateCalendarId(id, name) }
                         )
                     }
                 }

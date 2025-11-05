@@ -913,3 +913,176 @@ fun SeedInfoUrlSettingsSection(
         }
     }
 }
+
+/**
+ * Googleカレンダー選択セクション
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun CalendarSelectionSection(
+    calendarId: String?,
+    calendarName: String?,
+    calendarList: List<com.google.api.services.calendar.model.CalendarListEntry>,
+    isLoadingCalendars: Boolean,
+    calendarError: String?,
+    isEditMode: Boolean,
+    hasExistingData: Boolean,
+    onLoadCalendars: () -> Unit,
+    onCalendarSelected: (String?, String?) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+    
+    Column(
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Icon(
+                Icons.Filled.CalendarToday,
+                contentDescription = "Googleカレンダー連携",
+                tint = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.size(24.dp)
+            )
+            Text(
+                text = "Googleカレンダー連携",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        }
+        
+        if (isEditMode || !hasExistingData) {
+            // 編集モード: カレンダー選択UI
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // カレンダー一覧読み込みボタン
+                if (calendarList.isEmpty() && !isLoadingCalendars) {
+                    Button(
+                        onClick = onLoadCalendars,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary
+                        )
+                    ) {
+                        Icon(
+                            Icons.Filled.Refresh,
+                            contentDescription = "カレンダー一覧を読み込む",
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("カレンダー一覧を読み込む")
+                    }
+                }
+                
+                // 読み込み中表示
+                if (isLoadingCalendars) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "カレンダー一覧を読み込み中...",
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                }
+                
+                // エラー表示
+                calendarError?.let { error ->
+                    Text(
+                        text = error,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+                
+                // カレンダー選択ドロップダウン
+                if (calendarList.isNotEmpty()) {
+                    ExposedDropdownMenuBox(
+                        expanded = expanded,
+                        onExpandedChange = { expanded = !expanded }
+                    ) {
+                        TextField(
+                            value = calendarName ?: "カレンダーを選択",
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text("Googleカレンダー") },
+                            trailingIcon = {
+                                ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .menuAnchor(),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                focusedLabelColor = MaterialTheme.colorScheme.primary,
+                                focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+                                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLowest
+                            )
+                        )
+                        
+                        ExposedDropdownMenu(
+                            expanded = expanded,
+                            onDismissRequest = { expanded = false }
+                        ) {
+                            // 選択解除オプション
+                            DropdownMenuItem(
+                                text = { Text("カレンダーを選択しない") },
+                                onClick = {
+                                    onCalendarSelected(null, null)
+                                    expanded = false
+                                }
+                            )
+                            HorizontalDivider()
+                            
+                            calendarList.forEach { calendar ->
+                                DropdownMenuItem(
+                                    text = { Text(calendar.summary ?: calendar.id ?: "無名のカレンダー") },
+                                    onClick = {
+                                        onCalendarSelected(calendar.id, calendar.summary)
+                                        expanded = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            // 表示モード: 選択されたカレンダーを表示
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "Googleカレンダー",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                )
+                Text(
+                    text = calendarName ?: SettingsConstants.NOT_SET_DISPLAY_TEXT,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = if (calendarName == null) 
+                        MaterialTheme.colorScheme.onSurfaceVariant 
+                    else 
+                        MaterialTheme.colorScheme.onSurface
+                )
+            }
+        }
+        
+        Text(
+            text = "播種・収穫イベントを登録するGoogleカレンダーを選択します",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+        )
+    }
+}
