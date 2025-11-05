@@ -161,11 +161,12 @@ fun MainScaffold(
                     scope.launch(Dispatchers.IO) {
                         var successCount = 0
                         var failureCount = 0
+                        val context = ctx // LocalContextから取得したContextを使用
                         
                         // 各削除処理を順次実行
                         for (id in idsToDelete) {
                             try {
-                                val result = listViewModel.deleteSeedPacketWithImagesInternal(id)
+                                val result = listViewModel.deleteSeedPacketWithImagesInternal(id, context)
                                 if (result.isSuccess) {
                                     successCount++
                                 } else {
@@ -244,11 +245,12 @@ fun MainScaffold(
                     scope.launch(Dispatchers.IO) {
                         var successCount = 0
                         var failureCount = 0
+                        val context = ctx // LocalContextから取得したContextを使用
                         
                         // 各削除処理を順次実行
                         for (id in idsToDelete) {
                             try {
-                                val result = listViewModel.deleteSeedPacketWithImagesInternal(id)
+                                val result = listViewModel.deleteSeedPacketWithImagesInternal(id, context)
                                 if (result.isSuccess) {
                                     successCount++
                                 } else {

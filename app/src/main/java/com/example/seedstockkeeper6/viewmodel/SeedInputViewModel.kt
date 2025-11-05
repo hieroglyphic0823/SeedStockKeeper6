@@ -16,6 +16,12 @@ import com.example.seedstockkeeper6.ml.CalendarDetector
 import com.example.seedstockkeeper6.model.CalendarEntry
 import com.example.seedstockkeeper6.model.SeedPacket
 import com.example.seedstockkeeper6.service.StatisticsService
+import com.example.seedstockkeeper6.service.GoogleCalendarService
+import android.accounts.Account
+import com.google.android.gms.auth.GoogleAuthUtil
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount
+import com.google.api.services.calendar.CalendarScopes
 import com.example.seedstockkeeper6.util.drawRectOverlay
 import com.example.seedstockkeeper6.utils.ExpirationUtils
 import com.google.firebase.auth.FirebaseAuth
@@ -679,6 +685,14 @@ class SeedInputViewModel : ViewModel() {
                 // ViewModel の状態を更新
                 packet = updatedPacket
                 
+                // Googleカレンダー連携（Firestore保存成功後）
+                try {
+                    syncWithGoogleCalendar(context, updatedPacket, id, uid)
+                } catch (e: Exception) {
+                    android.util.Log.e("SeedInputViewModel", "Googleカレンダー連携エラー: ${e.message}", e)
+                    // エラーが起きても保存は成功とする
+                }
+                
                 // 集計データを更新
                 try {
                     updateStatisticsAfterSeedChange(uid)
@@ -706,6 +720,103 @@ class SeedInputViewModel : ViewModel() {
             Firebase.storage.reference.child(path).downloadUrl.await().toString()
         } catch (e: Exception) {
             null
+        }
+    }
+    
+    /**
+     * Googleカレンダーと同期（作成・更新・削除）
+     */
+    private suspend fun syncWithGoogleCalendar(
+        context: Context,
+        packet: SeedPacket,
+        documentId: String,
+        uid: String
+    ) {
+        try {
+            // 1. 農園設定からcalendarIdを取得
+            val db = Firebase.firestore
+            val settingsDoc = db.collection("users").document(uid).collection("settings").document("general")
+            val settingsSnapshot = settingsDoc.get().await()
+            
+            val calendarId = settingsSnapshot.getString("calendarId")
+            if (calendarId.isNullOrBlank()) {
+                android.util.Log.d("SeedInputViewModel", "GoogleカレンダーIDが設定されていません。スキップします。")
+                return
+            }
+            
+            val farmName = settingsSnapshot.getString("farmName")
+            
+            // 2. アクセストークンを取得
+            val account = GoogleSignIn.getLastSignedInAccount(context)
+                ?: return // Google Sign-Inされていない場合はスキップ
+            
+            val accountEmail = account.email ?: return
+            val accessToken = withContext(Dispatchers.IO) {
+                try {
+                    GoogleAuthUtil.getToken(
+                        context,
+                        Account(accountEmail, "com.google"),
+                        "oauth2:${CalendarScopes.CALENDAR}"
+                    )
+                } catch (e: Exception) {
+                    android.util.Log.e("SeedInputViewModel", "アクセストークン取得エラー: ${e.message}")
+                    null
+                }
+            }
+            
+            if (accessToken.isNullOrBlank()) {
+                android.util.Log.e("SeedInputViewModel", "アクセストークンが取得できませんでした")
+                return
+            }
+            
+            // 3. GoogleCalendarServiceでイベント作成/更新
+            val calendarService = GoogleCalendarService(context)
+            val isNewPacket = packet.sowingEventId.isEmpty() && packet.harvestEventId.isEmpty() && packet.plantedEventId.isEmpty()
+            
+            val result = if (isNewPacket) {
+                // 新規作成
+                calendarService.createEventsForSeedPacket(accessToken, calendarId, packet, farmName)
+            } else {
+                // 更新
+                calendarService.updateEventsForSeedPacket(accessToken, calendarId, packet, farmName)
+            }
+            
+            result.onSuccess { (sowingEventId, harvestEventId, plantedEventId) ->
+                // 4. 取得したeventIdをFirestoreに保存
+                try {
+                    val eventIdUpdates = mutableMapOf<String, Any?>()
+                    sowingEventId?.let { eventIdUpdates["sowingEventId"] = it }
+                    harvestEventId?.let { eventIdUpdates["harvestEventId"] = it }
+                    plantedEventId?.let { eventIdUpdates["plantedEventId"] = it }
+                    
+                    // eventIdがnullの場合は空文字にクリア
+                    if (sowingEventId == null) eventIdUpdates["sowingEventId"] = ""
+                    if (harvestEventId == null) eventIdUpdates["harvestEventId"] = ""
+                    if (plantedEventId == null) eventIdUpdates["plantedEventId"] = ""
+                    
+                    if (eventIdUpdates.isNotEmpty()) {
+                        db.collection("seeds").document(documentId)
+                            .update(eventIdUpdates)
+                            .await()
+                        
+                        // ViewModelの状態も更新
+                        this@SeedInputViewModel.packet = this@SeedInputViewModel.packet.copy(
+                            sowingEventId = sowingEventId ?: "",
+                            harvestEventId = harvestEventId ?: "",
+                            plantedEventId = plantedEventId ?: ""
+                        )
+                        
+                        android.util.Log.d("SeedInputViewModel", "Googleカレンダー連携成功: sowing=$sowingEventId, harvest=$harvestEventId, planted=$plantedEventId")
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.e("SeedInputViewModel", "eventId保存エラー: ${e.message}", e)
+                }
+            }.onFailure { exception ->
+                android.util.Log.e("SeedInputViewModel", "Googleカレンダー連携失敗: ${exception.message}", exception)
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("SeedInputViewModel", "Googleカレンダー連携処理エラー: ${e.message}", e)
+            // エラーが起きてもFirestore保存は成功しているので、ログだけ出力
         }
     }
     private suspend fun tryAddCroppedCalendarImage(context: Context, bmp: Bitmap) {

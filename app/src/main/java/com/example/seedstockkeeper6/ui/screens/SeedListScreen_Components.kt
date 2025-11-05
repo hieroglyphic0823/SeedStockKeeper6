@@ -252,7 +252,7 @@ fun SeedListItem(
                             // まき終わりフラグの更新処理
                             val documentId = seed.documentId ?: seed.id
                             if (documentId != null) {
-                                viewModel.updateFinishedFlag(documentId, isChecked) { result ->
+                                viewModel.updateFinishedFlag(documentId, isChecked, context) { result ->
                                     scope.launch {
                                         if (result.isSuccess) {
                                             // バイブレーション
