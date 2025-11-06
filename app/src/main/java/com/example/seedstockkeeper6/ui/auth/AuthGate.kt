@@ -84,7 +84,7 @@ private fun Splash(modifier: Modifier = Modifier) {
         LoadingAnimationVideoPlayer(
             modifier = Modifier.fillMaxSize(),
             assetFileName = null,
-            rawResId = com.example.seedstockkeeper6.R.raw.tanesukemovie,
+            rawResId = com.example.seedstockkeeper6.R.raw.sukesan_s,
             mute = false
         )
     }

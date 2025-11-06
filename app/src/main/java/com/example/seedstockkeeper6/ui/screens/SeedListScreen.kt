@@ -262,55 +262,57 @@ fun SeedListScreen(
         )
         
         // 種リスト/ギャラリー
-        Column(modifier = Modifier.weight(1f)) {
-            if (displayMode == "list") {
-                // リスト表示
-                LazyColumn(
-                    state = listState,
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(6.dp),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 2.dp),
-                    userScrollEnabled = true
-                ) {
-                    itemsIndexed(
-                        items = filteredSeeds,
-                        key = { _, (id, _) -> id }
-                    ) { index, (id, seed) ->
-                        val encodedSeed = URLEncoder.encode(Gson().toJson(seed), "UTF-8")
-                        SeedListItem(
-                            seed = seed,
-                            encodedSeed = encodedSeed,
-                            navController = navController,
-                            viewModel = viewModel,
-                            snackbarHostState = snackbarHostState,
-                            scope = scope,
-                            onDelete = {
-                                onDeleteSelected(listOf(id))
-                            },
-                            isLastItem = index == filteredSeeds.size - 1
-                        )
-                    }
+        if (displayMode == "list") {
+            // リスト表示
+            LazyColumn(
+                state = listState,
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 2.dp),
+                userScrollEnabled = true
+            ) {
+                itemsIndexed(
+                    items = filteredSeeds,
+                    key = { _, (id, _) -> id }
+                ) { index, (id, seed) ->
+                    val encodedSeed = URLEncoder.encode(Gson().toJson(seed), "UTF-8")
+                    SeedListItem(
+                        seed = seed,
+                        encodedSeed = encodedSeed,
+                        navController = navController,
+                        viewModel = viewModel,
+                        snackbarHostState = snackbarHostState,
+                        scope = scope,
+                        onDelete = {
+                            onDeleteSelected(listOf(id))
+                        },
+                        isLastItem = index == filteredSeeds.size - 1
+                    )
                 }
-            } else {
-                // ギャラリー表示
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(3),
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(
-                        items = filteredSeeds,
-                        key = { (id, _) -> id }
-                    ) { (id, seed) ->
-                        val encodedSeed = URLEncoder.encode(Gson().toJson(seed), "UTF-8")
-                        SeedGalleryItem(
-                            seed = seed,
-                            encodedSeed = encodedSeed,
-                            navController = navController
-                        )
-                    }
+            }
+        } else {
+            // ギャラリー表示
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(3),
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
+                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(
+                    items = filteredSeeds,
+                    key = { (id, _) -> id }
+                ) { (id, seed) ->
+                    val encodedSeed = URLEncoder.encode(Gson().toJson(seed), "UTF-8")
+                    SeedGalleryItem(
+                        seed = seed,
+                        encodedSeed = encodedSeed,
+                        navController = navController
+                    )
                 }
             }
         }

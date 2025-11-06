@@ -44,7 +44,7 @@ fun VideoSplashScreen(
             
             // リソースURIの構築（エラーハンドリング付き）
             try {
-                val videoUri = RawResourceDataSource.buildRawResourceUri(R.raw.tanesukemovie)
+                val videoUri = RawResourceDataSource.buildRawResourceUri(R.raw.sukesan_s)
                 val mediaItem = MediaItem.fromUri(videoUri)
                 setMediaItem(mediaItem)
                 repeatMode = Player.REPEAT_MODE_OFF
