@@ -209,13 +209,13 @@ fun SeedCalendarGroupedInternal(
     val density = LocalDensity.current
     val context = LocalContext.current
     
-    // 🌾 播種期間の種アイコン上から徐々に表示アニメーション
+    // 🌾 播種アイコン用：0→1 をループする時間（全体タイムライン）
     val infiniteTransition = rememberInfiniteTransition(label = "sowingReveal")
-    val revealProgress by infiniteTransition.animateFloat(
+    val t by infiniteTransition.animateFloat(
         initialValue = 0f,
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 2500, easing = LinearEasing),
+            animation = tween(durationMillis = 8000, easing = LinearEasing),
             repeatMode = RepeatMode.Restart
         ),
         label = "sowingRevealAnim"
@@ -600,11 +600,11 @@ fun SeedCalendarGroupedInternal(
                         BandStyle.Solid -> {
                             // 播種期間は上、収穫期間は下に配置
                             val adjustedCenterY = if (item.itemLabel == "収穫") {
-                                // 収穫期間は元の位置に配置（上余白16dp + 播種棒グラフ22dp + 中間余白16dp + 収穫棒グラフの半分11dp）
-                                top + with(density) { 65.dp.toPx() } // 16dp + 22dp + 16dp + 11dp = 65dp
+                                // 収穫期間は元の位置に配置（上余白20dp + 播種棒グラフ22dp + 中間余白16dp + 収穫棒グラフの半分11dp）
+                                top + with(density) { 69.dp.toPx() } // 20dp + 22dp + 16dp + 11dp = 69dp
                             } else {
-                                // 播種期間は118dpの位置に配置（上余白16dp + 播種棒グラフの半分11dp）
-                                top + with(density) { 27.dp.toPx() } // 16dp + 11dp = 27dp
+                                // 播種期間は118dpの位置に配置（上余白20dp + 播種棒グラフの半分11dp）
+                                top + with(density) { 31.dp.toPx() } // 20dp + 11dp = 31dp
                             }
                             
                             // 棒線の背景（播種バー自体の色は常に通常色）
@@ -613,7 +613,7 @@ fun SeedCalendarGroupedInternal(
                                 primaryContainerColor
                             } else {
                                 // 収穫期間の背景色はsecondary（有効期限切れの色変更なし）
-                                secondaryColor
+                                primaryColor
                             }
                             drawRect(
                                 color = backgroundColor,
@@ -680,7 +680,7 @@ fun SeedCalendarGroupedInternal(
                                 }
                                 
                                 // 🌾 播種期間：各月を3分割して種アイコンを配置（点滅アニメーション付き）
-                                val iconSize = with(density) { 16.dp.toPx() } // 少し小さめ
+                                val iconSize = with(density) { 10.dp.toPx() } // 播種バーの上に並ぶ種アイコン（小さめ）
                                 val iconResource = R.drawable.sesame
                                 
                                 // アイコン画像の準備
@@ -703,6 +703,9 @@ fun SeedCalendarGroupedInternal(
                                 val endMonthDate = LocalDate.of(endYear, endMonth, 1)
                                 val monthSpan = ChronoUnit.MONTHS.between(startMonthDate, endMonthDate).toInt().coerceAtLeast(0)
                                 
+                                // 左から順にインデックスを振る（パラパラ用）
+                                var seedIndex = 0
+                                
                                 // 各月の開始位置を計算（カレンダー表示上の相対位置）
                                 for (m in 0..monthSpan) {
                                     val monthX = gridLeft + colW * (startMonthIndexInCalendar + m)
@@ -720,33 +723,68 @@ fun SeedCalendarGroupedInternal(
                                     val isExpired = currentYearMonth > expirationDate
                                     
                                     positions.forEach { iconX ->
-                                        // 棒グラフの範囲内（startX から endX）にある旬のみアイコンを表示
-                                        // 有効期限切れの期間はアイコンを表示しない
+                                        // 棒グラフの範囲内（startX から endX）にある旬のみアイコンを対象
                                         if (iconX >= startX && iconX <= endX && !isExpired) {
-                                            val iconY = adjustedCenterY - with(density) { 14.dp.toPx() } // 棒の上に配置
+                                            val iconY = adjustedCenterY - with(density) { 12.dp.toPx() }
                                             val iconLeft = iconX - iconDisplaySizeInt / 2f
                                             val iconTop = iconY
-                                            
-                                            // 上から徐々に表示するアニメーション（clipRectで制御）
-                                            val revealHeight = iconDisplaySizeInt * revealProgress
-                                            val clipBottom = iconTop + revealHeight
-                                            
-                                            // clipRectで上から下に徐々に表示
+
+                                            // 🌱 各アイコンごとにフェーズをずらす（パラパラ感）
+                                            val phaseShift = 0.08f * seedIndex // 0.08ずつずらす
+                                            val localT = ((t + phaseShift) % 1f + 1f) % 1f // 0〜1に正規化
+                                            seedIndex++
+
+                                            val iconHeight = iconDisplaySizeInt.toFloat()
+                                            val iconBottom = iconTop + iconHeight
+
+                                            // 0.0–0.4 : 上からだんだん出てくる
+                                            // 0.4–0.6 : 全部見えている（キープ）
+                                            // 0.6–1.0 : 上からスーッと消えていく
+                                            val appearEnd = 0.4f
+                                            val holdEnd = 0.6f
+
+                                            val clipTop: Float
+                                            val clipBottom: Float
+
+                                            when {
+                                                // 出現フェーズ（上から伸びる）
+                                                localT < appearEnd -> {
+                                                    val f = (localT / appearEnd).coerceIn(0f, 1f) // 0→1
+                                                    clipTop = iconTop // 上は固定
+                                                    clipBottom = iconTop + iconHeight * f // 下だけ伸びる
+                                                }
+                                                // キープ（全部見える）
+                                                localT < holdEnd -> {
+                                                    clipTop = iconTop
+                                                    clipBottom = iconBottom
+                                                }
+                                                // 消去フェーズ（上から削れていく）
+                                                else -> {
+                                                    val g = ((localT - holdEnd) / (1f - holdEnd)).coerceIn(0f, 1f) // 0→1
+                                                    clipTop = iconTop + iconHeight * g // 上がだんだん下がってくる
+                                                    clipBottom = iconBottom // 下は固定
+                                                }
+                                            }
+
+                                            // クリップしてから drawImage
                                             drawContext.canvas.save()
                                             drawContext.canvas.clipRect(
                                                 left = iconLeft,
-                                                top = iconTop,
+                                                top = clipTop,
                                                 right = iconLeft + iconDisplaySizeInt,
                                                 bottom = clipBottom
                                             )
-                                            
+
                                             drawImage(
                                                 image = iconImage,
-                                                dstOffset = IntOffset(iconX.toInt() - iconDisplaySizeInt / 2, iconY.toInt()),
+                                                dstOffset = IntOffset(
+                                                    iconX.toInt() - iconDisplaySizeInt / 2,
+                                                    iconTop.toInt()
+                                                ),
                                                 dstSize = IntSize(iconDisplaySizeInt, iconDisplaySizeInt),
                                                 colorFilter = ColorFilter.tint(onPrimaryContainerColor)
                                             )
-                                            
+
                                             drawContext.canvas.restore()
                                         }
                                     }
@@ -813,7 +851,7 @@ fun SeedCalendarGroupedInternal(
                                     positions.forEach { iconX ->
                                         // 棒グラフの範囲内（startX から endX）にある旬のみアイコンを表示
                                         if (iconX >= startX && iconX <= endX) {
-                                            val iconY = adjustedCenterY - with(density) { 11.dp.toPx() } - with(density) { 4.dp.toPx() }
+                                            val iconY = adjustedCenterY - with(density) { 20.dp.toPx() } // 収穫棒グラフの中心より20dp上に配置
                                             val iconCenterX = iconX
                                             val iconCenterY = iconY + iconDisplaySizeInt / 2f
                                             
