@@ -15,6 +15,7 @@ import com.google.api.services.calendar.model.Event
 import com.google.api.services.calendar.model.EventDateTime
 import com.example.seedstockkeeper6.model.SeedPacket
 import com.example.seedstockkeeper6.model.CalendarEntry
+import com.example.seedstockkeeper6.service.CalendarColors
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.time.LocalDate
@@ -199,6 +200,7 @@ class GoogleCalendarService(
                             start = createAllDayEventDateTime(calendarEntry.sowing_start_date)
                             // all-dayイベントのendは翌日（排他的）
                             end = createAllDayEventDateTime(getNextDay(calendarEntry.sowing_end_date))
+                            colorId = CalendarColors.SOWING_COLOR_ID
                         }
                         
                         val createdEvent = service.events().insert(calendarId, sowingEvent).execute()
@@ -218,6 +220,7 @@ class GoogleCalendarService(
                             start = createAllDayEventDateTime(calendarEntry.harvest_start_date)
                             // all-dayイベントのendは翌日（排他的）
                             end = createAllDayEventDateTime(getNextDay(calendarEntry.harvest_end_date))
+                            colorId = CalendarColors.HARVEST_COLOR_ID
                         }
                         
                         val createdEvent = service.events().insert(calendarId, harvestEvent).execute()
@@ -239,6 +242,7 @@ class GoogleCalendarService(
                         start = createAllDayEventDateTime(packet.sowingDate)
                         // all-dayイベントのendは翌日（排他的）
                         end = createAllDayEventDateTime(getNextDay(packet.sowingDate))
+                        colorId = CalendarColors.PLANTED_COLOR_ID
                     }
                     
                     val createdEvent = service.events().insert(calendarId, plantedEvent).execute()
@@ -268,7 +272,10 @@ class GoogleCalendarService(
         farmName: String? = null
     ): Result<Triple<String?, String?, String?>> = withContext(Dispatchers.IO) {
         try {
-            Log.d(TAG, "種覚書のカレンダーイベント更新開始: ${packet.variety}")
+            Log.d(TAG, "=== 種覚書のカレンダーイベント更新開始 ===")
+            Log.d(TAG, "品種: ${packet.variety}, 商品名: ${packet.productName}")
+            Log.d(TAG, "カレンダーID: $calendarId")
+            Log.d(TAG, "既存イベントID - 播種: ${packet.sowingEventId}, 収穫: ${packet.harvestEventId}, まいた日: ${packet.plantedEventId}")
             
             val service = createCalendarService(accessToken)
             val description = createEventDescription(packet, farmName)
@@ -282,25 +289,32 @@ class GoogleCalendarService(
             // 播種期間イベントの更新または作成
             if (calendarEntry != null && calendarEntry.sowing_start_date.isNotEmpty() && calendarEntry.sowing_end_date.isNotEmpty()) {
                 try {
+                    Log.d(TAG, "播種期間イベント処理開始: ${calendarEntry.sowing_start_date} ～ ${calendarEntry.sowing_end_date}")
                     val sowingEvent = Event().apply {
-                        summary = "【🌱播種期間】${packet.productName}"
+                        summary = "【🌱まきどき】${packet.productName}"
                         this.description = description
                         start = createAllDayEventDateTime(calendarEntry.sowing_start_date)
                         end = createAllDayEventDateTime(getNextDay(calendarEntry.sowing_end_date))
+                        colorId = CalendarColors.SOWING_COLOR_ID
                     }
+                    Log.d(TAG, "播種期間イベント詳細 - タイトル: ${sowingEvent.summary}, 色ID: ${sowingEvent.colorId}, 開始: ${sowingEvent.start?.date}, 終了: ${sowingEvent.end?.date}")
                     
                     if (packet.sowingEventId.isNotEmpty()) {
                         // 既存イベントを更新
-                        service.events().update(calendarId, packet.sowingEventId, sowingEvent).execute()
-                        Log.d(TAG, "播種期間イベント更新成功: ${packet.sowingEventId}")
+                        Log.d(TAG, "既存の播種期間イベントを更新: ${packet.sowingEventId}")
+                        val updatedEvent = service.events().update(calendarId, packet.sowingEventId, sowingEvent).execute()
+                        Log.d(TAG, "✅ 播種期間イベント更新成功: ${updatedEvent.id}")
+                        Log.d(TAG, "   更新後のURL: ${updatedEvent.htmlLink}")
                     } else {
                         // 新規作成
+                        Log.d(TAG, "新規の播種期間イベントを作成")
                         val createdEvent = service.events().insert(calendarId, sowingEvent).execute()
                         sowingEventId = createdEvent.id
-                        Log.d(TAG, "播種期間イベント作成成功: $sowingEventId")
+                        Log.d(TAG, "✅ 播種期間イベント作成成功: $sowingEventId")
+                        Log.d(TAG, "   作成後のURL: ${createdEvent.htmlLink}")
                     }
                 } catch (e: Exception) {
-                    Log.e(TAG, "播種期間イベント更新/作成失敗: ${e.message}", e)
+                    Log.e(TAG, "❌ 播種期間イベント更新/作成失敗: ${e.message}", e)
                 }
             } else {
                 // 播種期間が無い場合は既存イベントを削除
@@ -318,25 +332,32 @@ class GoogleCalendarService(
             // 収穫期間イベントの更新または作成
             if (calendarEntry != null && calendarEntry.harvest_start_date.isNotEmpty() && calendarEntry.harvest_end_date.isNotEmpty()) {
                 try {
+                    Log.d(TAG, "収穫期間イベント処理開始: ${calendarEntry.harvest_start_date} ～ ${calendarEntry.harvest_end_date}")
                     val harvestEvent = Event().apply {
                         summary = "【🧺収穫予定】${packet.productName}"
                         this.description = description
                         start = createAllDayEventDateTime(calendarEntry.harvest_start_date)
                         end = createAllDayEventDateTime(getNextDay(calendarEntry.harvest_end_date))
+                        colorId = CalendarColors.HARVEST_COLOR_ID
                     }
+                    Log.d(TAG, "収穫期間イベント詳細 - タイトル: ${harvestEvent.summary}, 色ID: ${harvestEvent.colorId}, 開始: ${harvestEvent.start?.date}, 終了: ${harvestEvent.end?.date}")
                     
                     if (packet.harvestEventId.isNotEmpty()) {
                         // 既存イベントを更新
-                        service.events().update(calendarId, packet.harvestEventId, harvestEvent).execute()
-                        Log.d(TAG, "収穫期間イベント更新成功: ${packet.harvestEventId}")
+                        Log.d(TAG, "既存の収穫期間イベントを更新: ${packet.harvestEventId}")
+                        val updatedEvent = service.events().update(calendarId, packet.harvestEventId, harvestEvent).execute()
+                        Log.d(TAG, "✅ 収穫期間イベント更新成功: ${updatedEvent.id}")
+                        Log.d(TAG, "   更新後のURL: ${updatedEvent.htmlLink}")
                     } else {
                         // 新規作成
+                        Log.d(TAG, "新規の収穫期間イベントを作成")
                         val createdEvent = service.events().insert(calendarId, harvestEvent).execute()
                         harvestEventId = createdEvent.id
-                        Log.d(TAG, "収穫期間イベント作成成功: $harvestEventId")
+                        Log.d(TAG, "✅ 収穫期間イベント作成成功: $harvestEventId")
+                        Log.d(TAG, "   作成後のURL: ${createdEvent.htmlLink}")
                     }
                 } catch (e: Exception) {
-                    Log.e(TAG, "収穫期間イベント更新/作成失敗: ${e.message}", e)
+                    Log.e(TAG, "❌ 収穫期間イベント更新/作成失敗: ${e.message}", e)
                 }
             } else {
                 // 収穫期間が無い場合は既存イベントを削除
@@ -354,26 +375,33 @@ class GoogleCalendarService(
             // まいた日イベントの更新または作成
             if (packet.sowingDate.isNotEmpty()) {
                 try {
+                    Log.d(TAG, "まいた日イベント処理開始: ${packet.sowingDate}")
                     val plantedDescription = description + "\n実際に種をまいた日"
                     val plantedEvent = Event().apply {
                         summary = "【✋まいた】${packet.productName}"
                         this.description = plantedDescription
                         start = createAllDayEventDateTime(packet.sowingDate)
                         end = createAllDayEventDateTime(getNextDay(packet.sowingDate))
+                        colorId = CalendarColors.PLANTED_COLOR_ID
                     }
+                    Log.d(TAG, "まいた日イベント詳細 - タイトル: ${plantedEvent.summary}, 色ID: ${plantedEvent.colorId}, 開始: ${plantedEvent.start?.date}, 終了: ${plantedEvent.end?.date}")
                     
                     if (packet.plantedEventId.isNotEmpty()) {
                         // 既存イベントを更新
-                        service.events().update(calendarId, packet.plantedEventId, plantedEvent).execute()
-                        Log.d(TAG, "まいた日イベント更新成功: ${packet.plantedEventId}")
+                        Log.d(TAG, "既存のまいた日イベントを更新: ${packet.plantedEventId}")
+                        val updatedEvent = service.events().update(calendarId, packet.plantedEventId, plantedEvent).execute()
+                        Log.d(TAG, "✅ まいた日イベント更新成功: ${updatedEvent.id}")
+                        Log.d(TAG, "   更新後のURL: ${updatedEvent.htmlLink}")
                     } else {
                         // 新規作成
+                        Log.d(TAG, "新規のまいた日イベントを作成")
                         val createdEvent = service.events().insert(calendarId, plantedEvent).execute()
                         plantedEventId = createdEvent.id
-                        Log.d(TAG, "まいた日イベント作成成功: $plantedEventId")
+                        Log.d(TAG, "✅ まいた日イベント作成成功: $plantedEventId")
+                        Log.d(TAG, "   作成後のURL: ${createdEvent.htmlLink}")
                     }
                 } catch (e: Exception) {
-                    Log.e(TAG, "まいた日イベント更新/作成失敗: ${e.message}", e)
+                    Log.e(TAG, "❌ まいた日イベント更新/作成失敗: ${e.message}", e)
                 }
             } else {
                 // まいた日が無い場合は既存イベントを削除
@@ -388,7 +416,8 @@ class GoogleCalendarService(
                 }
             }
             
-            Log.d(TAG, "種覚書のカレンダーイベント更新完了: sowing=$sowingEventId, harvest=$harvestEventId, planted=$plantedEventId")
+            Log.d(TAG, "=== 種覚書のカレンダーイベント更新完了 ===")
+            Log.d(TAG, "最終イベントID - 播種: $sowingEventId, 収穫: $harvestEventId, まいた日: $plantedEventId")
             Result.success(Triple(sowingEventId, harvestEventId, plantedEventId))
         } catch (e: Exception) {
             Log.e(TAG, "種覚書のカレンダーイベント更新エラー: ${e.message}", e)

@@ -82,7 +82,8 @@ fun PreviewCalendarSection(viewModel: SeedInputViewModel) {
                 packetExpirationMonth = viewModel.packet.expirationMonth,
                 modifier = Modifier.fillMaxWidth(),
                 heightDp = 114,
-                previewDate = LocalDate.of(2025, 9, 1) // 2025年9月を現在の日付として設定
+                previewDate = LocalDate.of(2025, 9, 1), // 2025年9月を現在の日付として設定
+                family = viewModel.packet.family
             )
         }
     }

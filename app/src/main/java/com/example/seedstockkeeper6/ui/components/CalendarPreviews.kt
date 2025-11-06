@@ -33,7 +33,8 @@ fun SeedCalendarGroupedPreview() {
             packetExpirationYear = 2026, // 有効期限2026年10月
             packetExpirationMonth = 10,
             modifier = Modifier.fillMaxWidth(),
-            heightDp = 114
+            heightDp = 114,
+            family = "せり科" // プレビュー用の科名
         )
     }
 }

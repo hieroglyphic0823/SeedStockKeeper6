@@ -177,7 +177,8 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
                     modifier = Modifier.fillMaxWidth(),
                     heightDp = 114,
                     previewDate = null,
-                    sowingDate = viewModel.packet.sowingDate
+                    sowingDate = viewModel.packet.sowingDate,
+                    family = viewModel.packet.family
                 )
             }
         }

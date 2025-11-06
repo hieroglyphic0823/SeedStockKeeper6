@@ -61,10 +61,25 @@ class MainActivity : ComponentActivity() {
         lifecycleScope.launch(Dispatchers.IO) {
             try {
                 // App Checkを初期化（デバッグ用）
-                com.google.firebase.appcheck.FirebaseAppCheck.getInstance().installAppCheckProviderFactory(
-                    com.google.firebase.appcheck.debug.DebugAppCheckProviderFactory.getInstance()
-                )
+                // 既に初期化されている場合は再初期化しない
+                val appCheck = com.google.firebase.appcheck.FirebaseAppCheck.getInstance()
+                // プロバイダーが既に設定されているかチェック
+                try {
+                    appCheck.installAppCheckProviderFactory(
+                        com.google.firebase.appcheck.debug.DebugAppCheckProviderFactory.getInstance()
+                    )
+                } catch (e: com.google.firebase.FirebaseException) {
+                    // "Too many attempts"エラーや既に初期化済みの場合は無視
+                    if (e.message?.contains("Too many attempts") == true ||
+                        e.message?.contains("already") == true) {
+                        // エミュレーター環境でよく発生するエラー、無視する
+                    } else {
+                        // その他のFirebaseExceptionは再スロー
+                        throw e
+                    }
+                }
             } catch (e: Exception) {
+                // その他のエラーは無視（App Checkの初期化失敗は致命的ではない）
             }
             
             try {

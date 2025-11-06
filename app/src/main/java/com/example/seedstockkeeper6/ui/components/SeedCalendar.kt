@@ -61,6 +61,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.seedstockkeeper6.R
 import com.example.seedstockkeeper6.model.CalendarEntry
+import com.example.seedstockkeeper6.util.normalizeFamilyName
 import java.time.LocalDate
 import java.time.YearMonth
 import android.graphics.Bitmap
@@ -79,7 +80,8 @@ fun SeedCalendarGrouped(
     modifier: Modifier = Modifier.fillMaxWidth(),
     heightDp: Int = 114,
     previewDate: LocalDate? = null, // プレビュー用の日付
-    sowingDate: String = "" // まいた日（"YYYY-MM-DD"形式）
+    sowingDate: String = "", // まいた日（"YYYY-MM-DD"形式）
+    family: String = "" // 科（family）情報
 ) {
     val today = previewDate ?: LocalDate.now() // プレビュー用の日付があれば使用、なければ現在の日付
     
@@ -152,7 +154,8 @@ fun SeedCalendarGrouped(
                 expirationYear = packetExpirationYear,
                 expirationMonth = packetExpirationMonth,
                 items = items,
-                sowingDate = sowingDate
+                sowingDate = sowingDate,
+                family = family
             )
         }
         .filter { it.items.isNotEmpty() }
@@ -609,8 +612,8 @@ fun SeedCalendarGroupedInternal(
                                 // 播種期間の背景色は常にprimaryContainerColor（カレンダーの月背景色で有効期限を表現）
                                 primaryContainerColor
                             } else {
-                                // 収穫期間の背景色は常にsecondaryContainer（有効期限切れの色変更なし）
-                                secondaryContainerColor
+                                // 収穫期間の背景色はsecondary（有効期限切れの色変更なし）
+                                secondaryColor
                             }
                             drawRect(
                                 color = backgroundColor,
@@ -750,9 +753,31 @@ fun SeedCalendarGroupedInternal(
                                 }
                                 
                             } else {
-                                // 🌾 収穫期間：各月を3分割して収穫アイコンを配置（旬ごとに1つ）
+                                // 🌾 収穫期間：各月を3分割して科（family）アイコンを配置（旬ごとに1つ）
                                 val iconSize = with(density) { 20.dp.toPx() } // 収穫アイコンは20dp
-                                val iconResource = R.drawable.harvest_b
+                                
+                                // 科名からアイコンリソースを取得（normalizeFamilyNameを使用）
+                                val normalizedFamily = normalizeFamilyName(groupedBand.family)
+                                val iconResource = when (normalizedFamily) {
+                                    "イネ科" -> R.drawable.corn
+                                    "ナス科" -> R.drawable.eggplant
+                                    "ヒルガオ科" -> R.drawable.sweet_potato
+                                    "アブラナ科" -> R.drawable.broccoli
+                                    "ウリ科" -> R.drawable.cucumber
+                                    "マメ科" -> R.drawable.bean
+                                    "キク科" -> R.drawable.lettuce
+                                    "セリ科" -> R.drawable.carrot
+                                    "ヒガンバナ科" -> R.drawable.onion2
+                                    "アマランサス科" -> R.drawable.spinach
+                                    "バラ科" -> R.drawable.strawberry
+                                    "ミカン科" -> R.drawable.orange
+                                    "アカザ科" -> R.drawable.spinach
+                                    "シソ科" -> R.drawable.perilla
+                                    "ユリ科（ネギ類）" -> R.drawable.onion2
+                                    "ショウガ科" -> R.drawable.ginger
+                                    "アオイ科" -> R.drawable.okra
+                                    else -> R.drawable.vegetables // デフォルトアイコン
+                                }
                                 
                                 // アイコン画像の準備
                                 val iconBitmap = try {

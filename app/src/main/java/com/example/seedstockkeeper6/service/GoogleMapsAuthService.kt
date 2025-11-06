@@ -24,19 +24,30 @@ class GoogleMapsAuthService(private val context: Context) {
     private fun initializeGoogleMaps() {
         try {
             MapsInitializer.initialize(context)
+        } catch (e: SecurityException) {
+            // Google Play Servicesの内部エラー（エミュレーター環境でよく発生）
+            // アプリの機能には影響しないため、無視する
         } catch (e: Exception) {
+            // その他のエラーも無視（MapsInitializerの初期化失敗は致命的ではない）
         }
     }
     
     private fun initializeGoogleSignIn() {
-        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestEmail()
-            .requestProfile()
-            // Google Maps API用の認証では特別なスコープは不要
-            // .requestScopes(Scope("https://www.googleapis.com/auth/maps.readonly"))
-            .build()
-        
-        googleSignInClient = GoogleSignIn.getClient(context, gso)
+        try {
+            val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestEmail()
+                .requestProfile()
+                // Google Maps API用の認証では特別なスコープは不要
+                // .requestScopes(Scope("https://www.googleapis.com/auth/maps.readonly"))
+                .build()
+            
+            googleSignInClient = GoogleSignIn.getClient(context, gso)
+        } catch (e: SecurityException) {
+            // Google Play Servicesの内部エラー（エミュレーター環境でよく発生）
+            // アプリの機能には影響しないため、無視する
+        } catch (e: Exception) {
+            // その他のエラーも無視
+        }
     }
     
     suspend fun getCurrentUser(): GoogleSignInAccount? {
