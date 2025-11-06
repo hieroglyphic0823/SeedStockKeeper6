@@ -49,13 +49,13 @@ fun CalendarEntryDisplay(
                 ) {
                     Image(
                         painter = painterResource(id = R.drawable.sesame_br),
-                        contentDescription = "播種期間",
+                        contentDescription = "まきどき期間",
                         modifier = Modifier.size(18.dp),
                         contentScale = ContentScale.Fit
                     )
                 }
             Text(
-                "播種期間",
+                "まきどき期間",
                 style = MaterialTheme.typography.titleSmall
             )
         }

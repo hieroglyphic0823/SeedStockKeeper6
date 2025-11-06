@@ -320,13 +320,13 @@ fun CalendarEntryEditor(
             ) {
                 androidx.compose.foundation.Image(
                     painter = painterResource(id = R.drawable.grain),
-                    contentDescription = "播種期間",
+                    contentDescription = "まきどき期間",
                     modifier = Modifier.size(18.dp),
                     contentScale = ContentScale.Fit
                 )
             }
             Text(
-                "播種期間",
+                "まきどき期間",
                 style = MaterialTheme.typography.titleMedium
             )
         }
@@ -352,7 +352,7 @@ fun CalendarEntryEditor(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     if (sowingStart == "0" && sowingStartStage.isEmpty()) {
-                        Text("播種開始")
+                        Text("まきどき開始")
                     } else {
                         val yearDisplay = if (sowingStartYear.isNotEmpty() && sowingStartYear != "0" && sowingStartYear != "0000") "${sowingStartYear}年" else ""
                         if (yearDisplay.isNotEmpty()) {
@@ -385,7 +385,7 @@ fun CalendarEntryEditor(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     if (sowingEnd == "0" && sowingEndStage.isEmpty()) {
-                        Text("播種終了")
+                        Text("まきどき終了")
                     } else {
                         val year = if (currentEntry.sowing_end_date.isNotEmpty()) {
                             try {
@@ -413,7 +413,7 @@ fun CalendarEntryEditor(
                 sheetState = rememberModalBottomSheetState()
             ) {
                 PeriodSelectionBottomSheet(
-                    title = "播種開始",
+                    title = "まきどき開始",
                     selectedYear = sowingStartYear,
                     selectedMonth = sowingStart,
                     selectedStage = sowingStartStage,
@@ -451,7 +451,7 @@ fun CalendarEntryEditor(
                 sheetState = rememberModalBottomSheetState()
             ) {
                 PeriodSelectionBottomSheet(
-                    title = "播種終了",
+                    title = "まきどき終了",
                     selectedYear = if (currentEntry.sowing_end_date.isNotEmpty()) {
                         try {
                             currentEntry.sowing_end_date.split("-")[0]

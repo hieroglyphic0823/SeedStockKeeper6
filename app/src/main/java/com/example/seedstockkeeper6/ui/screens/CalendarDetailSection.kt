@@ -50,11 +50,11 @@ fun CalendarDetailSection(
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.grain),
-                        contentDescription = "播種期間",
+                        contentDescription = "まきどき期間",
                         modifier = Modifier.size(16.dp)
                     )
                     Text(
-                        "播種期間: ${formatDateRange(entry.sowing_start_date, entry.sowing_end_date)}",
+                        "まきどき期間: ${formatDateRange(entry.sowing_start_date, entry.sowing_end_date)}",
                         style = MaterialTheme.typography.bodyLarge
                     )
                 }
@@ -179,11 +179,11 @@ fun CalendarDetailSectionPreview(entry: CalendarEntry) {
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.grain),
-                        contentDescription = "播種期間",
+                        contentDescription = "まきどき期間",
                         modifier = Modifier.size(16.dp)
                     )
                     Text(
-                        "播種期間: ${formatDateRange(entry.sowing_start_date, entry.sowing_end_date)}",
+                        "まきどき期間: ${formatDateRange(entry.sowing_start_date, entry.sowing_end_date)}",
                         style = MaterialTheme.typography.bodyLarge
                     )
                 }

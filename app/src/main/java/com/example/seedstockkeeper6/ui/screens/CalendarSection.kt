@@ -187,9 +187,9 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
 
         // 播種期間
         PeriodRow(
-            label = "播種",
+            label = "まきどき",
             color = MaterialTheme.colorScheme.primaryContainer,
-            iconRes = R.drawable.grain,
+            iconRes = R.drawable.sesame_br,
             startText = formatDate(calendarEntry.sowing_start_date),
             endText = formatDate(calendarEntry.sowing_end_date),
             onStartClick = {
@@ -217,7 +217,7 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
         Spacer(modifier = Modifier.height(12.dp))
         PeriodRow(
             label = "収穫",
-            color = MaterialTheme.colorScheme.secondaryContainer,
+            color = MaterialTheme.colorScheme.primary,
             iconRes = R.drawable.harvest,
             startText = formatDate(calendarEntry.harvest_start_date),
             endText = formatDate(calendarEntry.harvest_end_date),
@@ -290,7 +290,7 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
             sheetState = rememberModalBottomSheetState()
         ) {
             PeriodSelectionBottomSheet(
-                title = "播種開始",
+                title = "まきどき開始",
                 selectedYear = tempSowingStartYear,
                 selectedMonth = tempSowingStartMonth,
                 selectedStage = tempSowingStartStage,
@@ -317,7 +317,7 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
             sheetState = rememberModalBottomSheetState()
         ) {
             PeriodSelectionBottomSheet(
-                title = "播種終了",
+                title = "まきどき終了",
                 selectedYear = tempSowingEndYear,
                 selectedMonth = tempSowingEndMonth,
                 selectedStage = tempSowingEndStage,
@@ -480,11 +480,11 @@ private fun PeriodRow(
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = Modifier.padding(horizontal = 8.dp)
+        modifier = Modifier.padding(start = 4.dp, end = 8.dp) // 左余白を4dpに変更
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.width(40.dp)
+            modifier = Modifier.width(46.dp) // ラベルの幅を46dpに変更
         ) {
             Box(
                 modifier = Modifier
@@ -572,7 +572,7 @@ private fun ExpirationRow(
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = Modifier.padding(horizontal = 8.dp)
+        modifier = Modifier.padding(start = 4.dp, end = 8.dp) // 左余白を4dpに変更
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -633,11 +633,11 @@ private fun SowingDateRow(
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = Modifier.padding(horizontal = 8.dp)
+        modifier = Modifier.padding(start = 4.dp, end = 8.dp) // 左余白を4dpに変更
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.width(40.dp)
+            modifier = Modifier.width(46.dp) // ラベルの幅を46dpに変更
         ) {
             Box(
                 modifier = Modifier
@@ -649,7 +649,7 @@ private fun SowingDateRow(
                 Image(
                     painter = painterResource(id = R.drawable.planting),
                     contentDescription = "まいた日",
-                    modifier = Modifier.size(18.dp),
+                    modifier = Modifier.size(22.dp),
                     contentScale = ContentScale.Fit
                 )
             }

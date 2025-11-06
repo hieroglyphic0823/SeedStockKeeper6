@@ -125,7 +125,7 @@ fun SeedCalendarGrouped(
                             ),
                             style = BandStyle.Solid, // 点線から棒線に変更
                             color = baseSowingColor,
-                            itemLabel = "播種"
+                            itemLabel = "まきどき"
                         )
                     )
                 } else emptyList()
@@ -608,7 +608,7 @@ fun SeedCalendarGroupedInternal(
                             }
                             
                             // 棒線の背景（播種バー自体の色は常に通常色）
-                            val backgroundColor = if (item.itemLabel == "播種") {
+                            val backgroundColor = if (item.itemLabel == "まきどき") {
                                 // 播種期間の背景色は常にprimaryContainerColor（カレンダーの月背景色で有効期限を表現）
                                 primaryContainerColor
                             } else {
@@ -621,7 +621,7 @@ fun SeedCalendarGroupedInternal(
                                 size = Size(endX - startX + 4f, with(density) { 22.dp.toPx() })
                             )
                             // 播種期間の場合のみ、中央に線を引く
-                            if (item.itemLabel == "播種") {
+                            if (item.itemLabel == "まきどき") {
                                 drawLine(
                                     color = actualColor,
                                     start = Offset(startX, adjustedCenterY),
@@ -630,7 +630,7 @@ fun SeedCalendarGroupedInternal(
                                 )
                             }
                             
-                            if (item.itemLabel == "播種") {
+                            if (item.itemLabel == "まきどき") {
                                 // 🌱 「まいた日」アイコンの位置を計算（後で描画するため情報を保存）
                                 if (sowingDateString.isNotEmpty()) {
                                     try {
@@ -654,7 +654,7 @@ fun SeedCalendarGroupedInternal(
                                                 else -> gridLeft + colW * (sowingMonthIndex + 5f / 6f)                    // 下旬
                                             }
                                             
-                                            val plantingSize = with(density) { 22.dp.toPx() }
+                                            val plantingSize = with(density) { 24.dp.toPx() }
                                             val plantingY = adjustedCenterY - with(density) { 30.dp.toPx() }
                                             
                                             // アイコンbitmap取得（一度だけ取得）
