@@ -27,6 +27,8 @@ fun AppNavHost(
     selectedIds: MutableList<String>,
     settingsViewModel: com.example.seedstockkeeper6.viewmodel.SettingsViewModel? = null,
     onSaveRequest: () -> Unit = {}, // MainScaffoldからの保存リクエストコールバック
+    onSaveComplete: () -> Unit = {}, // 保存完了コールバック
+    onLoadingChange: (Boolean) -> Unit = {}, // AI処理中のアニメーション表示状態変更コールバック
     onDeleteSelected: (List<String>) -> Unit = {}, // 削除処理コールバック
     onRefreshUnreadCount: () -> Unit = {} // 未読通知数更新コールバック
 ) {
@@ -58,7 +60,9 @@ fun AppNavHost(
                 navController = navController,
                 viewModel = currentInputViewModel,
                 settingsViewModel = settingsViewModel,
-                onSaveRequest = onSaveRequest
+                onSaveRequest = onSaveRequest,
+                onSaveComplete = onSaveComplete,
+                onLoadingChange = onLoadingChange
             )
         }
         composable("input/{packet}") { backStackEntry ->
@@ -72,7 +76,9 @@ fun AppNavHost(
                 navController = navController,
                 viewModel = currentInputViewModel,
                 settingsViewModel = settingsViewModel,
-                onSaveRequest = onSaveRequest
+                onSaveRequest = onSaveRequest,
+                onSaveComplete = onSaveComplete,
+                onLoadingChange = onLoadingChange
             )
         }
         

@@ -16,6 +16,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import com.example.seedstockkeeper6.FullScreenSaveAnimation
+import com.example.seedstockkeeper6.FullScreenLoadingAnimation
 import com.example.seedstockkeeper6.AppNavHost
 import com.example.seedstockkeeper6.ui.components.MainScaffoldTopAppBar
 import com.example.seedstockkeeper6.ui.components.MainScaffoldNavigationBar
@@ -137,8 +138,10 @@ fun MainScaffold(
     
     // 全画面アニメーション用の状態
     var showSaveAnimation by remember { mutableStateOf(false) }
+    var showLoadingAnimation by remember { mutableStateOf(false) }
 
-    Scaffold(
+    Box(modifier = Modifier.fillMaxSize()) {
+        Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             MainScaffoldTopAppBar(
@@ -233,12 +236,19 @@ fun MainScaffold(
                 settingsViewModel = settingsViewModel,
                 onRefreshUnreadCount = refreshUnreadCount,
                 onSaveRequest = {
+                    // アニメーションを開始（保存処理開始時）
                     showSaveAnimation = true
-                    // 保存処理完了後にアニメーションを非表示にする
+                },
+                onSaveComplete = {
+                    // 保存完了時にアニメーションを非表示にする
                     scope.launch {
-                        delay(com.example.seedstockkeeper6.model.AnimationConstants.SAVE_ANIMATION_DURATION_MS.toLong()) // 2秒間アニメーション表示
+                        delay(500) // 少し待ってから非表示（視認性のため）
                         showSaveAnimation = false
                     }
+                },
+                onLoadingChange = { isLoading ->
+                    // AI処理中のアニメーション表示状態を更新
+                    showLoadingAnimation = isLoading
                 },
                 onDeleteSelected = { idsToDelete ->
                     // 削除処理を非同期で実行（バックグラウンドスレッドで実行）
@@ -288,11 +298,17 @@ fun MainScaffold(
                     }
                 }
             )
-            
-            // 全画面保存アニメーション（sukesan.gif）
-            if (showSaveAnimation) {
-                FullScreenSaveAnimation()
-            }
         }
+    }
+    
+    // 全画面保存アニメーション（Scaffoldの外側に配置してTopAppBarも含めてグレーアウト）
+    if (showSaveAnimation) {
+        FullScreenSaveAnimation()
+    }
+    
+    // AI処理中のアニメーション（Scaffoldの外側に配置してTopAppBarも含めてグレーアウト）
+    if (showLoadingAnimation) {
+        FullScreenLoadingAnimation()
+    }
     }
 }

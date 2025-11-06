@@ -189,7 +189,7 @@ fun CalendarSection(viewModel: SeedInputViewModel) {
         PeriodRow(
             label = "まきどき",
             color = MaterialTheme.colorScheme.primaryContainer,
-            iconRes = R.drawable.sesame_br,
+            iconRes = R.drawable.sesame,
             startText = formatDate(calendarEntry.sowing_start_date),
             endText = formatDate(calendarEntry.sowing_end_date),
             onStartClick = {

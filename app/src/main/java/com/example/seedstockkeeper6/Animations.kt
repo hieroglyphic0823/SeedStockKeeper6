@@ -17,6 +17,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.painter.Painter
@@ -30,6 +31,7 @@ import coil.compose.AsyncImage
 import coil.decode.ImageDecoderDecoder
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import com.airbnb.lottie.compose.*
 
 @Composable
 fun FullScreenSaveAnimation(
@@ -88,12 +90,13 @@ fun FullScreenSaveAnimation(
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .zIndex(999f) // TopAppBarより前面に表示
             .background(Color.Black.copy(alpha = 0.7f)),
         contentAlignment = Alignment.Center
     ) {
-        // tanesuke.gifアニメーション（保存中待機表示）
+        // sukesan250アニメーション（保存中待機表示）
         AsyncImage(
-            model = com.example.seedstockkeeper6.R.drawable.tanesuke,
+            model = com.example.seedstockkeeper6.R.drawable.sukesan250,
             contentDescription = "保存中...",
             imageLoader = imageLoader,
             modifier = Modifier
@@ -102,6 +105,47 @@ fun FullScreenSaveAnimation(
                     scaleY = animatedScale,
                     alpha = animatedAlpha
                 )
+                .fillMaxWidth(animationWidthRatio) // ダイアログと同じ幅
+                .aspectRatio(1f) // 正方形を維持
+        )
+    }
+}
+
+@Composable
+fun FullScreenLoadingAnimation(
+    onAnimationComplete: () -> Unit = {}
+) {
+    val context = LocalContext.current
+    
+    // ウィンドウサイズとアニメーションサイズを計算（ダイアログと同じ幅に設定）
+    val configuration = androidx.compose.ui.platform.LocalConfiguration.current
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    val windowWidthDp = configuration.screenWidthDp
+    
+    // ダイアログと同じ幅を計算（Card padding 16dp + Column padding 20dp = 36dp）
+    val dialogPadding = 16.dp + 20.dp // ダイアログの合計padding
+    val dialogActualWidthDp = windowWidthDp - dialogPadding.value
+    val animationWidthRatio = dialogActualWidthDp / windowWidthDp
+    
+    // Lottieアニメーションの準備
+    val composition by rememberLottieComposition(LottieCompositionSpec.Asset("Loading screen.json"))
+    val progress by animateLottieCompositionAsState(
+        composition,
+        iterations = LottieConstants.IterateForever
+    )
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .zIndex(999f) // TopAppBarより前面に表示
+            .background(Color.Black.copy(alpha = 0.7f)),
+        contentAlignment = Alignment.Center
+    ) {
+        // Loading screen.jsonアニメーション（AI処理中待機表示）
+        LottieAnimation(
+            composition = composition,
+            progress = { progress },
+            modifier = Modifier
                 .fillMaxWidth(animationWidthRatio) // ダイアログと同じ幅
                 .aspectRatio(1f) // 正方形を維持
         )

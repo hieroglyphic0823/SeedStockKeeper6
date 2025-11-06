@@ -51,13 +51,21 @@ fun SeedInputScreen(
     navController: NavController,
     viewModel: SeedInputViewModel,
     settingsViewModel: com.example.seedstockkeeper6.viewmodel.SettingsViewModel? = null,
-    onSaveRequest: () -> Unit = {} // MainScaffoldからの保存リクエストコールバック
+    onSaveRequest: () -> Unit = {}, // MainScaffoldからの保存リクエストコールバック
+    onSaveComplete: () -> Unit = {}, // 保存完了コールバック
+    onLoadingChange: (Boolean) -> Unit = {} // AI処理中のアニメーション表示状態変更コールバック
 ) {
     
     val scroll = rememberScrollState()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
+    
+    // AI処理中の状態をMainScaffoldに通知
+    LaunchedEffect(viewModel.isLoading, viewModel.isSaving) {
+        // AI処理中で保存処理中でない場合のみアニメーションを表示
+        onLoadingChange(viewModel.isLoading && !viewModel.isSaving)
+    }
     
     // 削除確認ダイアログの表示状態
     var showDeleteConfirmDialog by remember { mutableStateOf(false) }
@@ -191,6 +199,9 @@ fun SeedInputScreen(
                     onClick = {
                         onSaveRequest() // MainScaffoldの保存アニメーションを表示
                         viewModel.saveSeedData(context) { result ->
+                            // 保存完了時にアニメーションを非表示にする
+                            onSaveComplete()
+                            
                             if (result.isSuccess) {
                                 viewModel.exitEditMode()
                                 viewModel.markAsExistingData() // DisplayModeにする
@@ -301,18 +312,7 @@ fun SeedInputScreen(
                 CropConfirmDialog(viewModel = viewModel)
             }
             
-            // AI処理中のみSukesanGifAnimationを表示（保存処理中は表示しない）
-            if (viewModel.isLoading && !viewModel.isSaving) {
-                Box(
-                    Modifier
-                        .fillMaxSize()
-                        .background(Color.Black.copy(alpha = 0.5f))
-                        .zIndex(999f),
-                    contentAlignment = Alignment.Center
-                ) {
-                    SukesanGifAnimation()
-                }
-            }
+            // AI処理中のアニメーションはMainScaffoldで表示（TopAppBarも含めてグレーアウト）
         }
     }
 
