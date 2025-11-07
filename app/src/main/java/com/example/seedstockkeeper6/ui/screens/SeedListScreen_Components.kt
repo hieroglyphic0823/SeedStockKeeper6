@@ -40,6 +40,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.ui.zIndex
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -314,7 +316,15 @@ fun SeedGalleryItem(
     
     // 画像URLの変換
     var downloadUrl by remember { mutableStateOf<String?>(null) }
+    var isImageLoaded by remember { mutableStateOf(false) }
     val firstImageUrl = if (seed.imageUrls.isNotEmpty()) seed.imageUrls.first() else null
+    
+    // フェードインアニメーション
+    val imageAlpha by animateFloatAsState(
+        targetValue = if (isImageLoaded) 1f else 0f,
+        animationSpec = tween(durationMillis = 300),
+        label = "imageFadeIn"
+    )
     
     LaunchedEffect(firstImageUrl) {
         if (firstImageUrl != null) {
@@ -366,19 +376,18 @@ fun SeedGalleryItem(
                 navController.navigate("input/$encodedSeed")
             }
     ) {
-        // 種の写真（中央に表示）- 写真がある場合は最前面に表示
+        // 背景画像（常に表示）
+        Image(
+            painter = painterResource(id = frameImageResId),
+            contentDescription = null,
+            modifier = Modifier
+                .fillMaxSize()
+                .alpha(1f),
+            contentScale = ContentScale.FillBounds
+        )
+        
+        // 種の写真（中央に表示、前面に配置）- downloadUrlがある場合のみ表示
         if (downloadUrl != null) {
-            // 背景画像（k_goshiki_jin.png）- 写真がある場合は半透明で表示
-            Image(
-                painter = painterResource(id = frameImageResId),
-                contentDescription = null,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .alpha(1f),
-                contentScale = ContentScale.FillBounds
-            )
-            
-            // 種の写真（中央に表示、前面に配置）
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -391,65 +400,73 @@ fun SeedGalleryItem(
                     contentDescription = seed.productName,
                     modifier = Modifier
                         .fillMaxSize()
-                        .clip(RoundedCornerShape(4.dp)),
+                        .clip(RoundedCornerShape(4.dp))
+                        .alpha(imageAlpha), // フェードインアニメーション
                     contentScale = ContentScale.Crop,
-                    alignment = Alignment.Center
+                    alignment = Alignment.Center,
+                    onSuccess = {
+                        // 画像読み込み成功時にフェードイン
+                        isImageLoaded = true
+                    },
+                    onError = {
+                        // エラー時は読み込み失敗として扱う
+                        isImageLoaded = false
+                    }
                 )
             }
-            
-            // フレーム画像（最前面に配置）
-            Image(
-                painter = painterResource(id = frameImageResId),
-                contentDescription = null,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .zIndex(2f),
-                contentScale = ContentScale.FillBounds
-            )
-            
-            // 状態アイコンを右上にバッジ表示（写真がある場合）
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .zIndex(3f),
-                contentAlignment = Alignment.TopEnd
-            ) {
-                Box(
-                    modifier = Modifier
-                        .padding(4.dp)
-                        .background(
-                            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
-                            shape = CircleShape
-                        )
-                        .padding(4.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    // 状態アイコンをdrawableリソースから表示
-                    Icon(
-                        painter = painterResource(id = statusIconResId),
-                        contentDescription = when (seedStatus) {
-                            "finished" -> "まき終わり"
-                            "urgent" -> "期限間近"
-                            "thisMonth" -> "まきどき"
-                            "expired" -> "期限切れ"
-                            else -> "通常"
-                        },
-                        modifier = Modifier.size(16.dp),
-                        tint = Color.Unspecified
-                    )
-                }
-            }
         } else {
-            // 背景画像（k_goshiki_jin.png）- 写真がない場合は通常表示
-            Image(
-                painter = painterResource(id = frameImageResId),
-                contentDescription = null,
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.FillBounds
-            )
-            // 写真がない場合のフォールバック表示
+            // downloadUrlがnullの間はフォールバック表示を表示しない（フレーム画像のみ）
+        }
+            
+        // フレーム画像（最前面に配置）
+        Image(
+            painter = painterResource(id = frameImageResId),
+            contentDescription = null,
+            modifier = Modifier
+                .fillMaxSize()
+                .zIndex(2f),
+            contentScale = ContentScale.FillBounds
+        )
+        
+        // 状態アイコンを右上にバッジ表示
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .zIndex(3f),
+            contentAlignment = Alignment.TopEnd
+        ) {
             Box(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .padding(4.dp)
+                    .background(
+                        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
+                        shape = CircleShape
+                    )
+                    .padding(4.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                // 状態アイコンをdrawableリソースから表示
+                Icon(
+                    painter = painterResource(id = statusIconResId),
+                    contentDescription = when (seedStatus) {
+                        "finished" -> "まき終わり"
+                        "urgent" -> "期限間近"
+                        "thisMonth" -> "まきどき"
+                        "expired" -> "期限切れ"
+                        else -> "通常"
+                    },
+                    modifier = Modifier.size(16.dp),
+                    tint = Color.Unspecified
+                )
+            }
+        }
+        
+        // 写真がない場合のフォールバック表示（downloadUrlがnullで、画像URLが存在しない場合のみ）
+        if (downloadUrl == null && firstImageUrl == null) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .zIndex(1f),
                 contentAlignment = Alignment.Center
             ) {
                 Column(
@@ -476,49 +493,6 @@ fun SeedGalleryItem(
                         color = MaterialTheme.colorScheme.onSurface,
                         maxLines = 2,
                         overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-                    )
-                }
-            }
-            
-            // フレーム画像（最前面に配置）- 写真がない場合も表示
-            Image(
-                painter = painterResource(id = frameImageResId),
-                contentDescription = null,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .zIndex(2f),
-                contentScale = ContentScale.FillBounds
-            )
-            
-            // 状態アイコンを右上にバッジ表示（写真がない場合）
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .zIndex(3f),
-                contentAlignment = Alignment.TopEnd
-            ) {
-                Box(
-                    modifier = Modifier
-                        .padding(4.dp)
-                        .background(
-                            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
-                            shape = CircleShape
-                        )
-                        .padding(4.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    // 状態アイコンをdrawableリソースから表示
-                    Icon(
-                        painter = painterResource(id = statusIconResId),
-                        contentDescription = when (seedStatus) {
-                            "finished" -> "まき終わり"
-                            "urgent" -> "期限間近"
-                            "thisMonth" -> "まきどき"
-                            "expired" -> "期限切れ"
-                            else -> "通常"
-                        },
-                        modifier = Modifier.size(16.dp),
-                        tint = Color.Unspecified
                     )
                 }
             }
