@@ -10,6 +10,7 @@ import android.net.Uri
 import androidx.compose.runtime.*
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.seedstockkeeper6.BuildConfig
 import com.example.seedstockkeeper6.data.runGeminiOcr
 import com.example.seedstockkeeper6.data.uriToBitmap
 import com.example.seedstockkeeper6.ml.CalendarDetector
@@ -260,10 +261,15 @@ class SeedInputViewModel : ViewModel() {
 }
 
     suspend fun performOcr(context: Context) {
+        android.util.Log.d("SeedInputViewModel", "performOcr: start, ocrTargetIndex=$ocrTargetIndex, imageUris.size=${imageUris.size}")
         if (ocrTargetIndex !in imageUris.indices) {
             showSnackbar = "対象の画像がありません。"
             return
         }
+        
+        android.util.Log.d("SeedInputViewModel", "performOcr: setting isLoading=true")
+        isLoading = true
+        android.util.Log.d("SeedInputViewModel", "performOcr: after setting, isLoading=$isLoading")
         
         // アプリ起動直後は少し待機
         kotlinx.coroutines.delay(500L)
@@ -329,7 +335,7 @@ class SeedInputViewModel : ViewModel() {
                         // リトライ前に少し待機
                         kotlinx.coroutines.delay(1000L)
                     }
-                    result = runGeminiOcr(context, bmp)
+                    result = runGeminiOcr(BuildConfig.GEMINI_API_KEY, context, bmp)
                 } catch (e: Exception) {
                     if (attempt == 0) {
                         // 初回失敗時はリトライ
@@ -344,18 +350,26 @@ class SeedInputViewModel : ViewModel() {
             
             result ?: throw Exception("解析に失敗しました")
         } catch (e: Exception) {
+            android.util.Log.e("SeedInputViewModel", "performOcr: OCR failed", e)
             showSnackbar = "解析失敗"
+            isLoading = false
+            android.util.Log.d("SeedInputViewModel", "performOcr: after error, isLoading=$isLoading")
             return
         }
 
+        android.util.Log.d("SeedInputViewModel", "performOcr: OCR succeeded, parsing JSON")
         val parsed = try {
             val cleanedJson = jsonText.removePrefix("```json").removeSuffix("```" ).trim()
             kotlinx.serialization.json.Json.decodeFromString<SeedPacket>(cleanedJson)
         } catch (e: Exception) {
+            android.util.Log.e("SeedInputViewModel", "performOcr: JSON parsing failed", e)
             showSnackbar = "解析失敗"
+            isLoading = false
+            android.util.Log.d("SeedInputViewModel", "performOcr: after JSON parse error, isLoading=$isLoading")
             return
         }
         
+        android.util.Log.d("SeedInputViewModel", "performOcr: calling processImageWithAI, isLoading=$isLoading")
         // OCR結果を保存
         ocrResult = parsed
         
@@ -365,6 +379,7 @@ class SeedInputViewModel : ViewModel() {
         
         // 地域名を検出して地域選択ダイアログを表示
         val detectedRegions = extractRegionsFromOcrResult(parsed)
+        android.util.Log.d("SeedInputViewModel", "processImageWithAI: detectedRegions=$detectedRegions, isLoading=$isLoading")
         
         // 地域が検出されていない場合はデフォルト地域リストを使用
         val regionsToShow = if (detectedRegions.isNotEmpty()) {
@@ -373,7 +388,14 @@ class SeedInputViewModel : ViewModel() {
             listOf("北海道", "東北", "関東", "中部", "関西", "中国", "四国", "九州", "沖縄")
         }
         
+        android.util.Log.d("SeedInputViewModel", "processImageWithAI: regionsToShow=$regionsToShow, calling showRegionSelectionDialog")
         showRegionSelectionDialog(regionsToShow)
+        android.util.Log.d("SeedInputViewModel", "processImageWithAI: after showRegionSelectionDialog, showRegionSelectionDialog=$showRegionSelectionDialog")
+        
+        // AI処理完了を通知（アニメーションを非表示にする）
+        android.util.Log.d("SeedInputViewModel", "performOcr: AI processing completed, setting isLoading=false")
+        isLoading = false
+        android.util.Log.d("SeedInputViewModel", "performOcr: after setting isLoading=false, isLoading=$isLoading, showRegionSelectionDialog=$showRegionSelectionDialog")
         
         // カレンダー切り抜きは毎回実行
         try {
@@ -708,8 +730,10 @@ class SeedInputViewModel : ViewModel() {
                 showSnackbar = "保存に失敗しました: ${e.localizedMessage ?: "不明なエラー"}"
                 onComplete(Result.failure(e))
             } finally {
+                android.util.Log.d("SeedInputViewModel", "saveSeed: finally block, setting isLoading=false, isSaving=false")
                 isLoading = false
                 isSaving = false
+                android.util.Log.d("SeedInputViewModel", "saveSeed: after setting, isLoading=$isLoading, isSaving=$isSaving")
             }
         }
     }
@@ -1104,7 +1128,9 @@ class SeedInputViewModel : ViewModel() {
                 showCropConfirmDialog = true
 
             } finally {
+                android.util.Log.d("SeedInputViewModel", "processImageWithAI: finally block, setting isLoading=false")
                 isLoading = false
+                android.util.Log.d("SeedInputViewModel", "processImageWithAI: after setting, isLoading=$isLoading, showRegionSelectionDialog=$showRegionSelectionDialog")
             }
         }
     }
@@ -1329,9 +1355,11 @@ class SeedInputViewModel : ViewModel() {
 
     // 地域選択関連のメソッド
     fun showRegionSelectionDialog(regions: List<String>) {
+        android.util.Log.d("SeedInputViewModel", "showRegionSelectionDialog: regions=$regions, current isLoading=$isLoading")
         detectedRegions.clear()
         detectedRegions.addAll(regions)
         showRegionSelectionDialog = true
+        android.util.Log.d("SeedInputViewModel", "showRegionSelectionDialog: after setting, showRegionSelectionDialog=$showRegionSelectionDialog")
     }
 
     fun onRegionSelected(region: String) {

@@ -1254,6 +1254,28 @@ fun PeriodSelectionBottomSheet(
     isHarvestPeriod: Boolean = false // 収穫期間かどうかを判別
 ) {
     val currentYear = java.time.LocalDate.now().year
+    val currentMonth = java.time.LocalDate.now().monthValue
+    
+    // selectedYearが"0"の場合は現在年を初期値として設定
+    LaunchedEffect(selectedYear) {
+        if (selectedYear == "0" || selectedYear.isEmpty()) {
+            onYearChange(currentYear.toString())
+        }
+    }
+    
+    // selectedMonthが"0"の場合は現在月を初期値として設定
+    LaunchedEffect(selectedMonth) {
+        if (selectedMonth == "0" || selectedMonth.isEmpty()) {
+            onMonthChange(currentMonth.toString())
+        }
+    }
+    
+    // selectedStageが空の場合は"上旬"を初期値として設定
+    LaunchedEffect(selectedStage) {
+        if (selectedStage.isEmpty()) {
+            onStageChange("上旬")
+        }
+    }
     
     Column(
         modifier = Modifier

@@ -1,6 +1,7 @@
 package com.example.seedstockkeeper6.service
 
 import android.content.Context
+import com.example.seedstockkeeper6.BuildConfig
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.libraries.places.api.Places
 import com.google.android.libraries.places.api.model.Place
@@ -19,7 +20,7 @@ class GeocodingService(private val context: Context) {
     private fun initializePlaces() {
         try {
         if (!Places.isInitialized()) {
-            Places.initialize(context, "AIzaSyDr_WfQfx3TyH0oLDWf8Z7qHX4XHAH5J-E")
+            Places.initialize(context, BuildConfig.GOOGLE_MAPS_API_KEY)
             } else {
         }
         placesClient = Places.createClient(context)

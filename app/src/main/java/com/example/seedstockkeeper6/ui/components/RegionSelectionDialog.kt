@@ -78,8 +78,9 @@ fun RegionSelectionDialog(
     val dialogActualWidthDp = windowWidthDp - totalDialogPadding.value
     
     LaunchedEffect(showDialog) {
+        android.util.Log.d("RegionSelectionDialog", "LaunchedEffect: showDialog=$showDialog")
         if (showDialog) {
-            
+            android.util.Log.d("RegionSelectionDialog", "RegionSelectionDialog: dialog is showing, regionList=$regionList, ocrResult=${ocrResult != null}")
             // OCR結果の有効期限情報をログに表示
             ocrResult?.let { result ->
                 result.calendar?.forEach { entry ->
@@ -90,6 +91,7 @@ fun RegionSelectionDialog(
         }
     }
     
+    android.util.Log.d("RegionSelectionDialog", "RegionSelectionDialog composable: showDialog=$showDialog")
     if (showDialog) {
         // defaultRegionをキーにして、ダイアログが表示される度に初期化（農園設定の地域を優先）
         var selectedRegion by remember(showDialog, defaultRegion) { 

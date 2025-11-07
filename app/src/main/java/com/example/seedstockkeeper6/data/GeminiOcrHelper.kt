@@ -25,13 +25,13 @@ fun uriToBitmap(context: Context, uri: Uri): Bitmap? {
     }
 }
 
-suspend fun runGeminiOcr(context: Context, bitmap: Bitmap): String {
+suspend fun runGeminiOcr(apiKey: String, context: Context, bitmap: Bitmap): String {
     // 初回実行時は少し待機
     kotlinx.coroutines.delay(200)
     
     val model = GenerativeModel(
         modelName = "gemini-2.5-flash",
-        apiKey = BuildConfig.GEMINI_API_KEY
+        apiKey = apiKey
     )
 
     val inputContent = content {

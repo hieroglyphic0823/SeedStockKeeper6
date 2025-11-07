@@ -34,6 +34,9 @@ android {
         buildConfigField("String", "GEMINI_API_KEY", "\"$geminiKey\"")
         buildConfigField("String", "GOOGLE_MAPS_API_KEY", "\"$googleMapsKey\"")
         buildConfigField("String", "OPENWEATHER_API_KEY", "\"$openWeatherKey\"")
+        
+        // strings.xmlに値を注入（AndroidManifest.xmlで使用される）
+        resValue("string", "google_maps_key", googleMapsKey)
     }
 
     buildTypes {

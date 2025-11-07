@@ -248,7 +248,9 @@ fun MainScaffold(
                 },
                 onLoadingChange = { isLoading ->
                     // AI処理中のアニメーション表示状態を更新
+                    android.util.Log.d("MainScaffold", "onLoadingChange: isLoading=$isLoading, setting showLoadingAnimation=$isLoading")
                     showLoadingAnimation = isLoading
+                    android.util.Log.d("MainScaffold", "onLoadingChange: after setting, showLoadingAnimation=$showLoadingAnimation")
                 },
                 onDeleteSelected = { idsToDelete ->
                     // 削除処理を非同期で実行（バックグラウンドスレッドで実行）

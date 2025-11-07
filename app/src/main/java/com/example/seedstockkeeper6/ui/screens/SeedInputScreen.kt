@@ -62,9 +62,13 @@ fun SeedInputScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     
     // AI処理中の状態をMainScaffoldに通知
-    LaunchedEffect(viewModel.isLoading, viewModel.isSaving) {
+    LaunchedEffect(viewModel.isLoading, viewModel.isSaving, viewModel.showRegionSelectionDialog) {
+        android.util.Log.d("SeedInputScreen", "LaunchedEffect: isLoading=${viewModel.isLoading}, isSaving=${viewModel.isSaving}, showRegionSelectionDialog=${viewModel.showRegionSelectionDialog}")
         // AI処理中で保存処理中でない場合のみアニメーションを表示
-        onLoadingChange(viewModel.isLoading && !viewModel.isSaving)
+        // ただし、地域選択ダイアログが表示されている場合はアニメーションを非表示にする
+        val shouldShowAnimation = viewModel.isLoading && !viewModel.isSaving && !viewModel.showRegionSelectionDialog
+        android.util.Log.d("SeedInputScreen", "shouldShowAnimation=$shouldShowAnimation")
+        onLoadingChange(shouldShowAnimation)
     }
     
     // 削除確認ダイアログの表示状態

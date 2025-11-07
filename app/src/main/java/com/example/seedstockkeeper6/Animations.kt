@@ -117,22 +117,33 @@ fun FullScreenLoadingAnimation(
 ) {
     val context = LocalContext.current
     
-    // ウィンドウサイズとアニメーションサイズを計算（ダイアログと同じ幅に設定）
+    // ウィンドウサイズとアニメーションサイズを計算（画面幅の80%に設定して大きく表示）
     val configuration = androidx.compose.ui.platform.LocalConfiguration.current
     val density = androidx.compose.ui.platform.LocalDensity.current
     val windowWidthDp = configuration.screenWidthDp
     
-    // ダイアログと同じ幅を計算（Card padding 16dp + Column padding 20dp = 36dp）
-    val dialogPadding = 16.dp + 20.dp // ダイアログの合計padding
-    val dialogActualWidthDp = windowWidthDp - dialogPadding.value
-    val animationWidthRatio = dialogActualWidthDp / windowWidthDp
+    // 画面幅の80%をアニメーションサイズとして使用（大きく表示）
+    val animationWidthRatio = 0.8f
     
     // Lottieアニメーションの準備
     val composition by rememberLottieComposition(LottieCompositionSpec.Asset("Loading screen.json"))
+    
+    // ★★★ 1. iterations を 1 に変更（無限ループをやめて1回だけ再生） ★★★
     val progress by animateLottieCompositionAsState(
         composition,
-        iterations = LottieConstants.IterateForever
+        iterations = 1 // 無限ループをやめて1回だけ再生する
     )
+
+    // ★★★ 2. アニメーションの完了を検知する ★★★
+    LaunchedEffect(progress) {
+        // progress が 1.0f になったらアニメーション完了
+        if (progress >= 1.0f) {
+            // 少し待ってからコールバックを呼び出す（視認性のため）
+            kotlinx.coroutines.delay(200)
+            android.util.Log.d("FullScreenLoadingAnimation", "Animation completed, calling onAnimationComplete")
+            onAnimationComplete()
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -146,7 +157,7 @@ fun FullScreenLoadingAnimation(
             composition = composition,
             progress = { progress },
             modifier = Modifier
-                .fillMaxWidth(animationWidthRatio) // ダイアログと同じ幅
+                .fillMaxWidth(animationWidthRatio) // 画面幅の80%
                 .aspectRatio(1f) // 正方形を維持
         )
     }
