@@ -125,25 +125,34 @@ fun FullScreenLoadingAnimation(
     // 画面幅の80%をアニメーションサイズとして使用（大きく表示）
     val animationWidthRatio = 0.8f
     
-    // Lottieアニメーションの準備
-    val composition by rememberLottieComposition(LottieCompositionSpec.Asset("Loading screen.json"))
-    
-    // ★★★ 1. iterations を 1 に変更（無限ループをやめて1回だけ再生） ★★★
-    val progress by animateLottieCompositionAsState(
-        composition,
-        iterations = 1 // 無限ループをやめて1回だけ再生する
-    )
-
-    // ★★★ 2. アニメーションの完了を検知する ★★★
-    LaunchedEffect(progress) {
-        // progress が 1.0f になったらアニメーション完了
-        if (progress >= 1.0f) {
-            // 少し待ってからコールバックを呼び出す（視認性のため）
-            kotlinx.coroutines.delay(200)
-            android.util.Log.d("FullScreenLoadingAnimation", "Animation completed, calling onAnimationComplete")
-            onAnimationComplete()
-        }
+    // CoilのImageLoaderを設定（GIFサポート付き）
+    val imageLoader = remember {
+        ImageLoader.Builder(context)
+            .components {
+                add(ImageDecoderDecoder.Factory()) // GIFをサポートするために必要
+            }
+            .build()
     }
+    
+    // sukesan_ocr.gifのスケールアニメーション
+    val animatedScale by animateFloatAsState(
+        targetValue = 1f,
+        animationSpec = tween(
+            durationMillis = 500,
+            easing = EaseInOutQuart
+        ),
+        label = "scaleAnimation"
+    )
+    
+    // sukesan_ocr.gifの透明度アニメーション
+    val animatedAlpha by animateFloatAsState(
+        targetValue = 1f,
+        animationSpec = tween(
+            durationMillis = 300,
+            easing = EaseInOutQuart
+        ),
+        label = "alphaAnimation"
+    )
 
     Box(
         modifier = Modifier
@@ -152,11 +161,17 @@ fun FullScreenLoadingAnimation(
             .background(Color.Black.copy(alpha = 0.7f)),
         contentAlignment = Alignment.Center
     ) {
-        // Loading screen.jsonアニメーション（AI処理中待機表示）
-        LottieAnimation(
-            composition = composition,
-            progress = { progress },
+        // sukesan_ocr.gifアニメーション（OCR処理中待機表示）
+        AsyncImage(
+            model = com.example.seedstockkeeper6.R.drawable.sukesan_ocr,
+            contentDescription = "OCR処理中...",
+            imageLoader = imageLoader,
             modifier = Modifier
+                .graphicsLayer(
+                    scaleX = animatedScale,
+                    scaleY = animatedScale,
+                    alpha = animatedAlpha
+                )
                 .fillMaxWidth(animationWidthRatio) // 画面幅の80%
                 .aspectRatio(1f) // 正方形を維持
         )
