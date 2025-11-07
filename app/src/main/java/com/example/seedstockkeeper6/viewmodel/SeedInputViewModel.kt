@@ -99,11 +99,18 @@ class SeedInputViewModel : ViewModel() {
     
     // 農園情報の地域（地域選択ダイアログの初期値として使用）
     var farmDefaultRegion by mutableStateOf("")
+    
+    // 編集モードで選択した状態（getSeedStatusで優先的に使用）
+    var selectedStatus by mutableStateOf<String?>(null)
 
     fun setSeed(seed: SeedPacket?) {
         packet = seed ?: SeedPacket()
         // idまたはdocumentIdのいずれかが存在すれば既存データとみなす
         hasExistingData = (seed?.id?.isNotEmpty() == true) || (seed?.documentId?.isNotEmpty() == true)
+        // 既存データを読み込んだ場合は、selectedStatusをリセット
+        if (hasExistingData) {
+            selectedStatus = null
+        }
         isEditMode = false // 初期状態は表示モード
         
         
@@ -583,6 +590,22 @@ class SeedInputViewModel : ViewModel() {
                 // 0) 有効期限切れフラグを更新
                 checkAndUpdateExpirationFlag()
                 
+                // 0.5) 新規登録時または編集モード時に状態を判定して更新
+                val isNewSeed = packet.documentId == null
+                if (isNewSeed || isEditMode) {
+                    // 状態を判定（getSeedStatusを使用）
+                    val currentStatus = com.example.seedstockkeeper6.ui.screens.getSeedStatus(packet)
+                    
+                    // 状態に応じてisFinishedを更新（新規登録時のみ、編集モードでは既に設定されている状態を保持）
+                    if (isNewSeed) {
+                        // 新規登録時：状態に基づいてisFinishedを設定
+                        // ただし、isFinishedは手動設定なので、新規登録時はfalseのまま（状態はisExpiredで判定）
+                        // 既にcheckAndUpdateExpirationFlag()でisExpiredは更新されている
+                    } else {
+                        // 編集モード時：既に設定されているisFinishedを保持（updateStatusで設定済み）
+                    }
+                }
+                
                 // 1) docId を確定（既存なら流用、無ければ新規発番）
                 val target = packet.documentId?.let { db.collection("seeds").document(it) }
                     ?: db.collection("seeds").document()
@@ -688,9 +711,14 @@ class SeedInputViewModel : ViewModel() {
                     // 一部の画像アップロードが失敗した場合でも、成功した画像は保存する
                 }
 
+                // 編集モードで状態を変更した場合、その状態を保存する
+                // packetのisFinishedとisExpiredは既にupdateStatusで更新されている
                 val updatedPacket = packet.copy(
                     documentId = id,
-                    imageUrls = finalOrderedPaths
+                    imageUrls = finalOrderedPaths,
+                    // 状態フラグは既にpacketに反映されているので、そのまま使用
+                    isFinished = packet.isFinished,
+                    isExpired = packet.isExpired
                 )
 
                 // 失敗している行の置き換え版
@@ -1363,12 +1391,20 @@ class SeedInputViewModel : ViewModel() {
     }
 
     fun onRegionSelected(region: String) {
-        // CalendarEntry.regionを直接更新（selectedRegionは使わない）
+        // 既に保存されているカレンダーエントリの情報を保持しつつ、地域だけを更新
+        // saveEditingCalendarEntry()で既にpacket.calendarが更新されているので、
+        // 地域だけを更新する（日付情報は保持される）
         val updatedCalendar = if (packet.calendar.isNotEmpty()) {
             packet.calendar.mapIndexed { index, entry ->
-                if (index == 0) entry.copy(region = region) else entry
+                if (index == 0) {
+                    // 既存のエントリの情報（日付など）を保持しつつ、地域だけを更新
+                    entry.copy(region = region)
+                } else {
+                    entry
+                }
             }
         } else {
+            // カレンダーエントリがない場合は新規作成
             listOf(CalendarEntry(region = region))
         }
         
@@ -1466,32 +1502,21 @@ class SeedInputViewModel : ViewModel() {
     fun saveEditingCalendarEntry() {
         editingCalendarEntry?.let { entry ->
             
-            // 年を有効期限から計算して設定
-            val expirationYear = packet.expirationYear
-            val calculatedEntry = if (expirationYear > 0) {
-                // 有効期限の年を使用して日付を再構築
-                val updatedEntry = entry.copy(
-                    sowing_start_date = calculateDateWithYear(entry.sowing_start_date, expirationYear),
-                    sowing_end_date = calculateDateWithYear(entry.sowing_end_date, expirationYear),
-                    harvest_start_date = calculateDateWithYear(entry.harvest_start_date, expirationYear),
-                    harvest_end_date = calculateDateWithYear(entry.harvest_end_date, expirationYear)
-                )
-                updatedEntry
-            } else {
-                entry
-            }
+            // 編集された日付情報をそのまま使用（年を再計算しない）
+            // 地域選択ダイアログで指定した年を保持する
+            val savedEntry = entry
             
             // OCR結果を更新
             ocrResult?.let { result ->
                 val updatedCalendar = result.calendar.map { 
-                    if (it.region == calculatedEntry.region) calculatedEntry else it 
+                    if (it.region == savedEntry.region) savedEntry else it 
                 }
                 ocrResult = result.copy(calendar = updatedCalendar)
             } ?: run {
             }
             
-            // パケットのカレンダーも更新
-            packet = packet.copy(calendar = listOf(calculatedEntry))
+            // パケットのカレンダーも更新（編集された日付情報をそのまま使用）
+            packet = packet.copy(calendar = listOf(savedEntry))
             
             // 編集状態をクリア
             editingCalendarEntry = null
@@ -1590,10 +1615,17 @@ class SeedInputViewModel : ViewModel() {
     // 種情報登録画面の編集モード制御
     fun enterEditMode() {
         isEditMode = true
+        // 編集モードに入る時は、現在の状態をselectedStatusに設定
+        val currentStatus = com.example.seedstockkeeper6.ui.screens.getSeedStatus(packet)
+        selectedStatus = currentStatus
+        android.util.Log.d("SeedInputViewModel", "enterEditMode: selectedStatus=$selectedStatus を設定")
     }
     
     fun exitEditMode() {
         isEditMode = false
+        // 編集モードを終了する時は、selectedStatusをリセット
+        selectedStatus = null
+        android.util.Log.d("SeedInputViewModel", "exitEditMode: selectedStatusをリセット")
     }
     
     fun markAsExistingData() {
@@ -1601,15 +1633,21 @@ class SeedInputViewModel : ViewModel() {
     }
     
     fun updateFinishedFlag(isFinished: Boolean) {
+        android.util.Log.d("SeedInputViewModel", "updateFinishedFlag: 呼び出し - isFinished=$isFinished, 更新前のpacket.isFinished=${packet.isFinished}")
         packet = packet.copy(isFinished = isFinished)
+        android.util.Log.d("SeedInputViewModel", "updateFinishedFlag: 更新後のpacket.isFinished=${packet.isFinished}")
     }
     
     fun updateExpirationFlag(isExpired: Boolean) {
+        android.util.Log.d("SeedInputViewModel", "updateExpirationFlag: 呼び出し - isExpired=$isExpired, 更新前のpacket.isExpired=${packet.isExpired}")
         packet = packet.copy(isExpired = isExpired)
+        android.util.Log.d("SeedInputViewModel", "updateExpirationFlag: 更新後のpacket.isExpired=${packet.isExpired}")
     }
     
     fun onSowingDateChange(sowingDate: String) {
+        android.util.Log.d("SeedInputViewModel", "onSowingDateChange: 呼び出し - sowingDate=$sowingDate, 更新前のpacket.sowingDate=${packet.sowingDate}")
         packet = packet.copy(sowingDate = sowingDate)
+        android.util.Log.d("SeedInputViewModel", "onSowingDateChange: 更新後のpacket.sowingDate=${packet.sowingDate}")
     }
     
     fun updateFinishedFlagAndRefresh(isFinished: Boolean, onComplete: (Result<Unit>) -> Unit) {
@@ -1777,8 +1815,12 @@ class SeedInputViewModel : ViewModel() {
      */
     fun checkAndUpdateExpirationFlag() {
         val isExpired = ExpirationUtils.isSeedExpired(packet)
+        android.util.Log.d("SeedInputViewModel", "checkAndUpdateExpirationFlag: 計算結果 - isExpired=$isExpired, 現在のpacket.isExpired=${packet.isExpired}, expirationYear=${packet.expirationYear}, expirationMonth=${packet.expirationMonth}")
         if (packet.isExpired != isExpired) {
             packet = packet.copy(isExpired = isExpired)
+            android.util.Log.d("SeedInputViewModel", "checkAndUpdateExpirationFlag: 更新後のpacket.isExpired=${packet.isExpired}")
+        } else {
+            android.util.Log.d("SeedInputViewModel", "checkAndUpdateExpirationFlag: 変更なし（既にisExpired=$isExpired）")
         }
     }
     

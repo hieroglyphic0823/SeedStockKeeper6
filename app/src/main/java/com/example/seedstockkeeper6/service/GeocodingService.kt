@@ -19,12 +19,24 @@ class GeocodingService(private val context: Context) {
     
     private fun initializePlaces() {
         try {
-        if (!Places.isInitialized()) {
-            Places.initialize(context, BuildConfig.GOOGLE_MAPS_API_KEY)
-            } else {
-        }
-        placesClient = Places.createClient(context)
+            // APIキーが空でないことを確認
+            if (BuildConfig.GOOGLE_MAPS_API_KEY.isBlank()) {
+                android.util.Log.w("GeocodingService", "Google Maps API Key is empty. Places API will not be available.")
+                placesClient = null
+                return
+            }
+            
+            if (!Places.isInitialized()) {
+                Places.initialize(context, BuildConfig.GOOGLE_MAPS_API_KEY)
+            }
+            placesClient = Places.createClient(context)
+        } catch (e: SecurityException) {
+            // Google Play Servicesの内部エラー（DEVELOPER_ERRORなど）
+            // これは通常、Google Cloud Consoleの設定問題を示す
+            android.util.Log.e("GeocodingService", "Places API initialization failed (SecurityException): ${e.message}", e)
+            placesClient = null
         } catch (e: Exception) {
+            android.util.Log.e("GeocodingService", "Places API initialization failed: ${e.message}", e)
             placesClient = null
         }
     }

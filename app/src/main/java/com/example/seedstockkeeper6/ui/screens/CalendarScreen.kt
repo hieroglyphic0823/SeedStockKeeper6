@@ -51,6 +51,7 @@ import java.time.temporal.ChronoUnit
 import java.time.LocalDate
 import java.time.YearMonth
 import com.example.seedstockkeeper6.util.normalizeFamilyName
+import com.example.seedstockkeeper6.ui.theme.backgroundLightMediumContrast
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas as AndroidCanvas
@@ -443,22 +444,20 @@ fun CalendarScreen(
     // 並べ替えの状態
     var sortType by remember { mutableStateOf(SortType.IMPORTANCE) }
     
-    // データの取得（プレビュー時はViewModelから、実装時はFirebaseから）
+    // データの取得（プレビュー時はViewModelから、実装時はFirebaseリスナーで常に最新データを取得）
     val seeds = if (isPreview) {
         // プレビュー時：ViewModelからデータを取得
         val previewSeeds = viewModel.seeds.value
         previewSeeds.forEach { seed ->
         }
         previewSeeds
-    } else if (viewModel.seeds.value.isNotEmpty()) {
-        // 実装時：ViewModelにデータがある場合はそれを使用
-        viewModel.seeds.value
     } else {
-        // 実装時：Firebaseからデータを取得
+        // 実装時：Firebaseリスナーで常に最新データを取得（種覚書画面での変更も反映される）
         val db = Firebase.firestore
         val auth = FirebaseAuth.getInstance()
         val currentUid = auth.currentUser?.uid ?: ""
-        var firebaseSeeds by remember { mutableStateOf(listOf<SeedPacket>()) }
+        // 初期値としてViewModelのデータを使用（ある場合）
+        var firebaseSeeds by remember { mutableStateOf(viewModel.seeds.value) }
         
         DisposableEffect(currentUid) {
             var registration: com.google.firebase.firestore.ListenerRegistration? = null
@@ -472,10 +471,13 @@ fun CalendarScreen(
                                 // エラーハンドリングを改善
                                 when (error.code) {
                                     com.google.firebase.firestore.FirebaseFirestoreException.Code.UNAVAILABLE -> {
+                                        android.util.Log.w("CalendarScreen", "Firestore unavailable")
                                     }
                                     com.google.firebase.firestore.FirebaseFirestoreException.Code.DEADLINE_EXCEEDED -> {
+                                        android.util.Log.w("CalendarScreen", "Firestore deadline exceeded")
                                     }
                                     else -> {
+                                        android.util.Log.e("CalendarScreen", "Firestore error: ${error.message}")
                                     }
                                 }
                                 return@addSnapshotListener
@@ -486,20 +488,27 @@ fun CalendarScreen(
                                     try {
                                         doc.toObject(SeedPacket::class.java)?.copy(id = doc.id)
                                     } catch (e: Exception) {
+                                        android.util.Log.e("CalendarScreen", "Failed to parse seed: ${e.message}", e)
                                         null
                                     }
                                 }
+                                android.util.Log.d("CalendarScreen", "Firebaseリスナー: データ更新 - ${newSeeds.size}件")
                                 firebaseSeeds = newSeeds
+                                // ViewModelも更新（他の画面でも最新データを使用できるように）
+                                viewModel.loadSeeds()
                             }
                         }
                 } catch (e: Exception) {
+                    android.util.Log.e("CalendarScreen", "Firebaseリスナー設定エラー: ${e.message}", e)
                 }
             }
             
             onDispose {
                 try {
                     registration?.remove()
+                    android.util.Log.d("CalendarScreen", "Firebaseリスナー解除")
                 } catch (e: Exception) {
+                    android.util.Log.e("CalendarScreen", "Firebaseリスナー解除エラー: ${e.message}", e)
                 }
             }
         }
@@ -819,19 +828,7 @@ fun GanttChartRow(
     val density = LocalDensity.current
     val context = LocalContext.current
     
-    // 🌾 まきどきアイコン用：0→1 をループする時間（全体タイムライン）
-    val infiniteTransition = rememberInfiniteTransition(label = "sowingReveal")
-    val t by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 8000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "sowingRevealAnim"
-    )
-    
-    // 🥕 収穫アイコンのぷるぷる揺れアニメーション
+    // 🌾 まきどきアイコンと🥕 収穫アイコンのぷるぷる揺れアニメーション（共通）
     val harvestShakeTransition = rememberInfiniteTransition(label = "harvestShake")
     val shakeRotation by harvestShakeTransition.animateFloat(
         initialValue = -6f,
@@ -859,6 +856,10 @@ fun GanttChartRow(
     val outlineColor = MaterialTheme.colorScheme.surfaceContainerLowest // 背景色と同じ色に変更
     val surfaceContainerLowestColor = MaterialTheme.colorScheme.surfaceContainerLowest // 背景色を事前に取得
     val errorContainerColor = MaterialTheme.colorScheme.errorContainer // 期限切れの月の色
+    val surfaceContainerHighestColor = MaterialTheme.colorScheme.surfaceContainerHighest // 有効期限の月以降のグレーアウト色
+    // 播種期間の背景色定義（種目録のカレンダーと同じ）
+    val sowingExpiredBackgroundColor = backgroundLightMediumContrast // 有効期限の月の色
+    val sowingExpiredGrayColor = surfaceContainerHighestColor // 有効期限の月以降（お城画面の期限切れカードと同じ色）
 
     Row(
         modifier = Modifier
@@ -903,6 +904,7 @@ fun GanttChartRow(
         Box(
             modifier = Modifier
                 .width(80.dp)
+                .height(rowHeight)
                 .background(backgroundColor)
                 .clickable(enabled = navController != null) {
                     navController?.let {
@@ -913,7 +915,10 @@ fun GanttChartRow(
         ) {
             Column(
                 modifier = Modifier
-                    .padding(horizontal = 4.dp, vertical = 4.dp)
+                    .fillMaxHeight()
+                    .padding(horizontal = 4.dp)
+                    .wrapContentHeight(Alignment.CenterVertically),
+                verticalArrangement = Arrangement.Center
             ) {
                 Text(
                     text = seed.productName,
@@ -973,8 +978,54 @@ fun GanttChartRow(
                     .width((months.size * 3 * cellWidth.value).dp) // 明示的に幅を指定
                     .height(rowHeight)
             ) {
-                // 全体の背景
-                drawRect(color = gridBackgroundColor, size = size)
+                // 有効期限の判定用
+                val expirationDate = try {
+                    if (seed.expirationMonth > 0) {
+                        YearMonth.of(seed.expirationYear, seed.expirationMonth)
+                    } else {
+                        YearMonth.of(9999, 12) // 有効期限なしの場合は非常に遠い未来の日付を設定
+                    }
+                } catch (e: Exception) {
+                    YearMonth.of(9999, 12)
+                }
+                
+                // 月ごとに上半分と下半分を分けて背景色を描画（種目録のカレンダーと同じロジック）
+                months.forEachIndexed { index, (month, year) ->
+                    val monthStartX = index * 3 * cellWidthPx
+                    val monthWidth = 3 * cellWidthPx
+                    val currentMonthDate = YearMonth.of(year, month)
+                    
+                    // 上半分の背景色（播種期間表示部分）を有効期限に応じて変更
+                    val halfHeightPx = size.height / 2f
+                    val topHalfBackgroundColor = when {
+                        currentMonthDate < expirationDate -> {
+                            // 有効期限の月より前：通常色
+                            surfaceContainerLowColor
+                        }
+                        currentMonthDate == expirationDate -> {
+                            // 有効期限の月：backgroundLightMediumContrast
+                            sowingExpiredBackgroundColor
+                        }
+                        else -> {
+                            // 有効期限の月より後：グレーアウト
+                            sowingExpiredGrayColor
+                        }
+                    }
+                    
+                    // 上半分の背景を描画（播種期間表示部分）
+                    drawRect(
+                        color = topHalfBackgroundColor,
+                        topLeft = androidx.compose.ui.geometry.Offset(monthStartX, 0f),
+                        size = androidx.compose.ui.geometry.Size(monthWidth, halfHeightPx)
+                    )
+                    
+                    // 下半分の背景を描画（収穫期間表示部分、常に通常色）
+                    drawRect(
+                        color = surfaceContainerLowColor,
+                        topLeft = androidx.compose.ui.geometry.Offset(monthStartX, halfHeightPx),
+                        size = androidx.compose.ui.geometry.Size(monthWidth, halfHeightPx)
+                    )
+                }
                 
                 // 収穫が表示される場合は中央に横線を引く
                 if (showHarvest) {
@@ -1142,7 +1193,6 @@ fun GanttChartRow(
                                 val iconImage = iconBitmap.asImageBitmap()
                                 val iconDisplaySizeInt = iconSize.toInt()
                                 
-                                var seedIndex = 0
                                 for (m in startMonthIndex..endMonthIndex) {
                                     if (m < 0 || m >= months.size) continue
                                     val monthX = m * 3 * cellWidthPx
@@ -1161,58 +1211,28 @@ fun GanttChartRow(
                                             
                                             if (!isExpired) {
                                                 val iconY = centerY - sowingIconOffsetPx
-                                                val iconLeft = iconX - iconDisplaySizeInt / 2f
-                                                val iconTop = iconY
+                                                val iconCenterX = iconX
+                                                val iconCenterY = iconY + iconDisplaySizeInt / 2f
                                                 
-                                                val phaseShift = 0.08f * seedIndex
-                                                val localT = ((t + phaseShift) % 1f + 1f) % 1f
-                                                seedIndex++
+                                                // まきどきアイコンをぷるぷる揺れアニメーションで描画（収穫アイコンと同じ）
+                                                val nativeCanvas = drawContext.canvas.nativeCanvas
+                                                nativeCanvas.save()
+                                                val pivotX = iconCenterX
+                                                val pivotY = iconCenterY
+                                                nativeCanvas.translate(pivotX, pivotY)
+                                                nativeCanvas.rotate(shakeRotation)
+                                                nativeCanvas.translate(-pivotX, -pivotY)
                                                 
-                                                val iconHeight = iconDisplaySizeInt.toFloat()
-                                                val iconBottom = iconTop + iconHeight
-                                                
-                                                val appearEnd = 0.4f
-                                                val holdEnd = 0.6f
-                                                
-                                                val clipTop: Float
-                                                val clipBottom: Float
-                                                
-                                                when {
-                                                    localT < appearEnd -> {
-                                                        val f = (localT / appearEnd).coerceIn(0f, 1f)
-                                                        clipTop = iconTop
-                                                        clipBottom = iconTop + iconHeight * f
-                                                    }
-                                                    localT < holdEnd -> {
-                                                        clipTop = iconTop
-                                                        clipBottom = iconBottom
-                                                    }
-                                                    else -> {
-                                                        val g = ((localT - holdEnd) / (1f - holdEnd)).coerceIn(0f, 1f)
-                                                        clipTop = iconTop + iconHeight * g
-                                                        clipBottom = iconBottom
-                                                    }
-                                                }
-                                                
-                                                drawContext.canvas.save()
-                                                drawContext.canvas.clipRect(
-                                                    left = iconLeft,
-                                                    top = clipTop,
-                                                    right = iconLeft + iconDisplaySizeInt,
-                                                    bottom = clipBottom
+                                                val srcRect = android.graphics.Rect(0, 0, iconBitmap.width, iconBitmap.height)
+                                                val dstRect = android.graphics.RectF(
+                                                    iconCenterX - iconDisplaySizeInt / 2f,
+                                                    iconY,
+                                                    iconCenterX + iconDisplaySizeInt / 2f,
+                                                    iconY + iconDisplaySizeInt
                                                 )
                                                 
-                                                drawImage(
-                                                    image = iconImage,
-                                                    dstOffset = IntOffset(
-                                                        iconX.toInt() - iconDisplaySizeInt / 2,
-                                                        iconTop.toInt()
-                                                    ),
-                                                    dstSize = IntSize(iconDisplaySizeInt, iconDisplaySizeInt),
-                                                    colorFilter = ColorFilter.tint(onPrimaryContainerColor)
-                                                )
-                                                
-                                                drawContext.canvas.restore()
+                                                nativeCanvas.drawBitmap(iconBitmap, srcRect, dstRect, android.graphics.Paint())
+                                                nativeCanvas.restore()
                                             }
                                         }
                                     }

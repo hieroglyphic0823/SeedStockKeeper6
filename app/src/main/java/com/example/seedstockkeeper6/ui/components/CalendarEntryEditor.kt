@@ -199,6 +199,51 @@ fun CalendarEntryEditor(
             sowingStartStage = stage
         }
     }
+    
+    LaunchedEffect(currentEntry.sowing_end_date) {
+        val year = DateConversionUtils.getYearFromDate(currentEntry.sowing_end_date)
+        if (year > 0) {
+            sowingEndYear = year.toString()
+        }
+        val month = DateConversionUtils.getMonthFromDate(currentEntry.sowing_end_date)
+        if (month > 0) {
+            sowingEnd = month.toString()
+        }
+        val stage = DateConversionUtils.convertDateToStage(currentEntry.sowing_end_date)
+        if (stage.isNotEmpty()) {
+            sowingEndStage = stage
+        }
+    }
+    
+    LaunchedEffect(currentEntry.harvest_start_date) {
+        val year = DateConversionUtils.getYearFromDate(currentEntry.harvest_start_date)
+        if (year > 0) {
+            harvestStartYear = year.toString()
+        }
+        val month = DateConversionUtils.getMonthFromDate(currentEntry.harvest_start_date)
+        if (month > 0) {
+            harvestStart = month.toString()
+        }
+        val stage = DateConversionUtils.convertDateToStage(currentEntry.harvest_start_date)
+        if (stage.isNotEmpty()) {
+            harvestStartStage = stage
+        }
+    }
+    
+    LaunchedEffect(currentEntry.harvest_end_date) {
+        val year = DateConversionUtils.getYearFromDate(currentEntry.harvest_end_date)
+        if (year > 0) {
+            harvestEndYear = year.toString()
+        }
+        val month = DateConversionUtils.getMonthFromDate(currentEntry.harvest_end_date)
+        if (month > 0) {
+            harvestEnd = month.toString()
+        }
+        val stage = DateConversionUtils.convertDateToStage(currentEntry.harvest_end_date)
+        if (stage.isNotEmpty()) {
+            harvestEndStage = stage
+        }
+    }
 
     // 日付変換と更新処理
     fun updateSowingStart(year: String, month: String, stage: String) {
@@ -452,46 +497,24 @@ fun CalendarEntryEditor(
             ) {
                 PeriodSelectionBottomSheet(
                     title = "まきどき終了",
-                    selectedYear = if (currentEntry.sowing_end_date.isNotEmpty()) {
-                        try {
-                            currentEntry.sowing_end_date.split("-")[0]
-                        } catch (e: Exception) {
-                            "0"
-                        }
-                    } else {
-                        "0"
-                    },
+                    selectedYear = sowingEndYear,
                     selectedMonth = sowingEnd,
                     selectedStage = sowingEndStage,
                     onYearChange = { year ->
+                        sowingEndYear = year
                         val month = sowingEnd
                         val stage = sowingEndStage
                         updateSowingEnd(year, month, stage)
                     },
                     onMonthChange = { month ->
-                        val year = if (currentEntry.sowing_end_date.isNotEmpty()) {
-                            try {
-                                currentEntry.sowing_end_date.split("-")[0]
-                            } catch (e: Exception) {
-                                "0"
-                            }
-                        } else {
-                            "0"
-                        }
+                        sowingEnd = month
+                        val year = sowingEndYear
                         val stage = sowingEndStage
                         updateSowingEnd(year, month, stage)
                     },
                     onStageChange = { stage ->
                         sowingEndStage = stage
-                        val year = if (currentEntry.sowing_end_date.isNotEmpty()) {
-                            try {
-                                currentEntry.sowing_end_date.split("-")[0]
-                            } catch (e: Exception) {
-                                "0"
-                            }
-                        } else {
-                            "0"
-                        }
+                        val year = sowingEndYear
                         val month = sowingEnd
                         updateSowingEnd(year, month, stage)
                     },
@@ -625,46 +648,24 @@ fun CalendarEntryEditor(
             ) {
                 PeriodSelectionBottomSheet(
                     title = "収穫開始",
-                    selectedYear = if (currentEntry.harvest_start_date.isNotEmpty()) {
-                        try {
-                            currentEntry.harvest_start_date.split("-")[0]
-                        } catch (e: Exception) {
-                            "0"
-                        }
-                    } else {
-                        "0"
-                    },
+                    selectedYear = harvestStartYear,
                     selectedMonth = harvestStart,
                     selectedStage = harvestStartStage,
                     onYearChange = { year ->
+                        harvestStartYear = year
                         val month = harvestStart
                         val stage = harvestStartStage
                         updateHarvestStart(year, month, stage)
                     },
                     onMonthChange = { month ->
-                        val year = if (currentEntry.harvest_start_date.isNotEmpty()) {
-                            try {
-                                currentEntry.harvest_start_date.split("-")[0]
-                            } catch (e: Exception) {
-                                "0"
-                            }
-                        } else {
-                            "0"
-                        }
+                        harvestStart = month
+                        val year = harvestStartYear
                         val stage = harvestStartStage
                         updateHarvestStart(year, month, stage)
                     },
                     onStageChange = { stage ->
                         harvestStartStage = stage
-                        val year = if (currentEntry.harvest_start_date.isNotEmpty()) {
-                            try {
-                                currentEntry.harvest_start_date.split("-")[0]
-                            } catch (e: Exception) {
-                                "0"
-                            }
-                        } else {
-                            "0"
-                        }
+                        val year = harvestStartYear
                         val month = harvestStart
                         updateHarvestStart(year, month, stage)
                     },
@@ -686,46 +687,24 @@ fun CalendarEntryEditor(
             ) {
                 PeriodSelectionBottomSheet(
                     title = "収穫終了",
-                    selectedYear = if (currentEntry.harvest_end_date.isNotEmpty()) {
-                        try {
-                            currentEntry.harvest_end_date.split("-")[0]
-                        } catch (e: Exception) {
-                            "0"
-                        }
-                    } else {
-                        "0"
-                    },
+                    selectedYear = harvestEndYear,
                     selectedMonth = harvestEnd,
                     selectedStage = harvestEndStage,
                     onYearChange = { year ->
+                        harvestEndYear = year
                         val month = harvestEnd
                         val stage = harvestEndStage
                         updateHarvestEnd(year, month, stage)
                     },
                     onMonthChange = { month ->
-                        val year = if (currentEntry.harvest_end_date.isNotEmpty()) {
-                            try {
-                                currentEntry.harvest_end_date.split("-")[0]
-                            } catch (e: Exception) {
-                                "0"
-                            }
-                        } else {
-                            "0"
-                        }
+                        harvestEnd = month
+                        val year = harvestEndYear
                         val stage = harvestEndStage
                         updateHarvestEnd(year, month, stage)
                     },
                     onStageChange = { stage ->
                         harvestEndStage = stage
-                        val year = if (currentEntry.harvest_end_date.isNotEmpty()) {
-                            try {
-                                currentEntry.harvest_end_date.split("-")[0]
-                            } catch (e: Exception) {
-                                "0"
-                            }
-                        } else {
-                            "0"
-                        }
+                        val year = harvestEndYear
                         val month = harvestEnd
                         updateHarvestEnd(year, month, stage)
                     },

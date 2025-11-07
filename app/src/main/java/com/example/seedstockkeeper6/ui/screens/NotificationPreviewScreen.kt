@@ -159,11 +159,30 @@ fun NotificationPreviewScreen(
                 scope.launch {
                     try {
                         val farmOwnerValue = userSettings["farmOwner"] ?: "水戸黄門"
+                        
+                        // フィルタリング処理を追加（まき終わり・期限切れを除外）
+                        val filteredSeeds = geminiService.filterNotificationEligibleSeeds(userSeeds)
+                        
+                        // ログ出力：フィルタリング前後の種の状態を確認
+                        android.util.Log.d("NotificationPreviewScreen", "月次通知テスト: フィルタリング前 - ${userSeeds.size}件")
+                        userSeeds.forEach { seed ->
+                            val status = when {
+                                seed.isFinished -> "まき終わり"
+                                seed.isExpired -> "期限切れ"
+                                else -> "通常"
+                            }
+                            android.util.Log.d("NotificationPreviewScreen", "  種: ${seed.productName} (${seed.variety}), 状態=$status, isFinished=${seed.isFinished}, isExpired=${seed.isExpired}")
+                        }
+                        android.util.Log.d("NotificationPreviewScreen", "月次通知テスト: フィルタリング後 - ${filteredSeeds.size}件")
+                        filteredSeeds.forEach { seed ->
+                            android.util.Log.d("NotificationPreviewScreen", "  種: ${seed.productName} (${seed.variety}), isFinished=${seed.isFinished}, isExpired=${seed.isExpired}")
+                        }
+                        
                         val title = geminiService.generateMonthlyNotificationTitle(
                             region = userSettings["defaultRegion"] ?: "温暖地",
                             prefecture = userSettings["selectedPrefecture"] ?: "",
                             seedInfoUrl = getSeedInfoUrl(userSettings),
-                            userSeeds = userSeeds,
+                            userSeeds = filteredSeeds, // フィルタリングされた種を使用
                             currentMonth = java.util.Calendar.getInstance().get(java.util.Calendar.MONTH) + 1,
                             farmOwner = farmOwnerValue,
                             customFarmOwner = userSettings["customFarmOwner"] ?: ""
@@ -173,7 +192,7 @@ fun NotificationPreviewScreen(
                             prefecture = userSettings["selectedPrefecture"] ?: "",
                             seedInfoUrl = getSeedInfoUrl(userSettings),
                             currentMonth = java.util.Calendar.getInstance().get(java.util.Calendar.MONTH) + 1,
-                            userSeeds = userSeeds,
+                            userSeeds = filteredSeeds, // フィルタリングされた種を使用
                             farmOwner = farmOwnerValue,
                             customFarmOwner = userSettings["customFarmOwner"] ?: ""
                         )
@@ -279,6 +298,24 @@ fun NotificationPreviewScreen(
                             val farmOwnerValue = userSettings["farmOwner"] ?: "水戸黄門"
                             val currentMonth = java.util.Calendar.getInstance().get(java.util.Calendar.MONTH) + 1
                             
+                            // フィルタリング処理を追加（まき終わり・期限切れを除外）
+                            val filteredSeeds = geminiService.filterNotificationEligibleSeeds(userSeeds)
+                            
+                            // ログ出力：フィルタリング前後の種の状態を確認
+                            android.util.Log.d("NotificationPreviewScreen", "月次プレビュー: フィルタリング前 - ${userSeeds.size}件")
+                            userSeeds.forEach { seed ->
+                                val status = when {
+                                    seed.isFinished -> "まき終わり"
+                                    seed.isExpired -> "期限切れ"
+                                    else -> "通常"
+                                }
+                                android.util.Log.d("NotificationPreviewScreen", "  種: ${seed.productName} (${seed.variety}), 状態=$status, isFinished=${seed.isFinished}, isExpired=${seed.isExpired}")
+                            }
+                            android.util.Log.d("NotificationPreviewScreen", "月次プレビュー: フィルタリング後 - ${filteredSeeds.size}件")
+                            filteredSeeds.forEach { seed ->
+                                android.util.Log.d("NotificationPreviewScreen", "  種: ${seed.productName} (${seed.variety}), isFinished=${seed.isFinished}, isExpired=${seed.isExpired}")
+                            }
+                            
                             // タイトルとコンテンツを並行生成
                             val titleDeferred = scope.async {
                                 val farmAddressValue = userSettings["farmAddress"] ?: ""
@@ -286,7 +323,7 @@ fun NotificationPreviewScreen(
                                     region = userSettings["defaultRegion"] ?: "温暖地",
                                     prefecture = userSettings["selectedPrefecture"] ?: "",
                                     seedInfoUrl = getSeedInfoUrl(userSettings),
-                                    userSeeds = userSeeds,
+                                    userSeeds = filteredSeeds, // フィルタリングされた種を使用
                                     currentMonth = currentMonth,
                                     farmOwner = farmOwnerValue,
                                     customFarmOwner = userSettings["customFarmOwner"] ?: "",
@@ -299,7 +336,7 @@ fun NotificationPreviewScreen(
                                     region = userSettings["defaultRegion"] ?: "温暖地",
                                     prefecture = userSettings["selectedPrefecture"] ?: "",
                                     seedInfoUrl = getSeedInfoUrl(userSettings),
-                                    userSeeds = userSeeds,
+                                    userSeeds = filteredSeeds, // フィルタリングされた種を使用
                                     currentMonth = currentMonth,
                                     farmOwner = farmOwnerValue,
                                     customFarmOwner = userSettings["customFarmOwner"] ?: ""

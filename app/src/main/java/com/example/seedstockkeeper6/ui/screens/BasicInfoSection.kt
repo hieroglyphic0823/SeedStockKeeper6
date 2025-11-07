@@ -59,10 +59,36 @@ fun BasicInfoSection(
     
     // 状態を更新する関数
     fun updateStatus(selectedStatus: String) {
+        android.util.Log.d("BasicInfoSection", "updateStatus: 開始 - selectedStatus=$selectedStatus, isEditMode=${viewModel.isEditMode}, hasExistingData=${viewModel.hasExistingData}")
+        android.util.Log.d("BasicInfoSection", "updateStatus: 更新前のpacket状態 - isFinished=${viewModel.packet.isFinished}, isExpired=${viewModel.packet.isExpired}, sowingDate=${viewModel.packet.sowingDate}")
+        
+        // 編集モード時は選択した状態を保持
+        if (viewModel.isEditMode || !viewModel.hasExistingData) {
+            viewModel.selectedStatus = selectedStatus
+            android.util.Log.d("BasicInfoSection", "updateStatus: selectedStatusを設定 - ${viewModel.selectedStatus}")
+        }
+        
         when (selectedStatus) {
             "finished" -> {
                 // まき終わり: isFinished = true
-                if (viewModel.hasExistingData) {
+                val currentDate = java.time.LocalDate.now()
+                val sowingDate = currentDate.format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE)
+                
+                // 編集モードまたは新規作成時はローカルのみ更新
+                if (viewModel.isEditMode || !viewModel.hasExistingData) {
+                    android.util.Log.d("BasicInfoSection", "updateStatus: 編集モード/新規作成 - ローカルのみ更新")
+                    // 状態を即座に更新（再コンポジションを確実に発生させる）
+                    viewModel.updateFinishedFlag(true)
+                    android.util.Log.d("BasicInfoSection", "updateStatus: updateFinishedFlag(true) 呼び出し後 - isFinished=${viewModel.packet.isFinished}")
+                    viewModel.onSowingDateChange(sowingDate)
+                    android.util.Log.d("BasicInfoSection", "updateStatus: onSowingDateChange($sowingDate) 呼び出し後 - sowingDate=${viewModel.packet.sowingDate}")
+                    // isExpiredをfalseに設定（まき終わりの場合は期限切れではない）
+                    viewModel.updateExpirationFlag(false)
+                    android.util.Log.d("BasicInfoSection", "updateStatus: updateExpirationFlag(false) 呼び出し後 - isExpired=${viewModel.packet.isExpired}")
+                    android.util.Log.d("BasicInfoSection", "updateStatus: 更新後のpacket状態 - isFinished=${viewModel.packet.isFinished}, isExpired=${viewModel.packet.isExpired}, sowingDate=${viewModel.packet.sowingDate}")
+                    vibrateOnce()
+                } else {
+                    // 既存データで編集モードでない場合のみFirebaseに即座に保存
                     scope.launch {
                         viewModel.updateFinishedFlagAndRefresh(true) { result ->
                             scope.launch {
@@ -81,18 +107,23 @@ fun BasicInfoSection(
                             }
                         }
                     }
-                } else {
-                    // 新規作成時はローカルのみ更新
-                    val currentDate = java.time.LocalDate.now()
-                    val sowingDate = currentDate.format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE)
-                    viewModel.updateFinishedFlag(true)
-                    viewModel.onSowingDateChange(sowingDate)
-                    vibrateOnce()
                 }
             }
             "expired" -> {
                 // 期限切れ: isExpired = true, isFinished = false, sowingDate = ""
-                if (viewModel.hasExistingData) {
+                // 編集モードまたは新規作成時はローカルのみ更新
+                if (viewModel.isEditMode || !viewModel.hasExistingData) {
+                    android.util.Log.d("BasicInfoSection", "updateStatus: 編集モード/新規作成 - ローカルのみ更新（期限切れ）")
+                    viewModel.updateFinishedFlag(false)
+                    android.util.Log.d("BasicInfoSection", "updateStatus: updateFinishedFlag(false) 呼び出し後 - isFinished=${viewModel.packet.isFinished}")
+                    viewModel.updateExpirationFlag(true)
+                    android.util.Log.d("BasicInfoSection", "updateStatus: updateExpirationFlag(true) 呼び出し後 - isExpired=${viewModel.packet.isExpired}")
+                    viewModel.onSowingDateChange("")
+                    android.util.Log.d("BasicInfoSection", "updateStatus: onSowingDateChange(\"\") 呼び出し後 - sowingDate=${viewModel.packet.sowingDate}")
+                    android.util.Log.d("BasicInfoSection", "updateStatus: 更新後のpacket状態 - isFinished=${viewModel.packet.isFinished}, isExpired=${viewModel.packet.isExpired}, sowingDate=${viewModel.packet.sowingDate}")
+                    vibrateOnce()
+                } else {
+                    // 既存データで編集モードでない場合のみFirebaseに即座に保存
                     scope.launch {
                         viewModel.updateFinishedFlag(false)
                         viewModel.updateExpirationFlag(true)
@@ -125,17 +156,25 @@ fun BasicInfoSection(
                             }
                         }
                     }
-                } else {
-                    // 新規作成時はローカルのみ更新
-                    viewModel.updateFinishedFlag(false)
-                    viewModel.updateExpirationFlag(true)
-                    viewModel.onSowingDateChange("")
-                    vibrateOnce()
                 }
             }
             else -> {
                 // 通常/期限間近/まきどき: isFinished = false, sowingDate = ""（isExpiredは自動判定される）
-                if (viewModel.hasExistingData) {
+                // 編集モードまたは新規作成時はローカルのみ更新
+                if (viewModel.isEditMode || !viewModel.hasExistingData) {
+                    android.util.Log.d("BasicInfoSection", "updateStatus: 編集モード/新規作成 - ローカルのみ更新（通常/期限間近/まきどき）")
+                    // 状態を即座に更新（再コンポジションを確実に発生させる）
+                    viewModel.updateFinishedFlag(false)
+                    android.util.Log.d("BasicInfoSection", "updateStatus: updateFinishedFlag(false) 呼び出し後 - isFinished=${viewModel.packet.isFinished}")
+                    viewModel.onSowingDateChange("")
+                    android.util.Log.d("BasicInfoSection", "updateStatus: onSowingDateChange(\"\") 呼び出し後 - sowingDate=${viewModel.packet.sowingDate}")
+                    // isExpiredは自動判定されるので、checkAndUpdateExpirationFlagを呼ぶ
+                    viewModel.checkAndUpdateExpirationFlag()
+                    android.util.Log.d("BasicInfoSection", "updateStatus: checkAndUpdateExpirationFlag() 呼び出し後 - isExpired=${viewModel.packet.isExpired}")
+                    android.util.Log.d("BasicInfoSection", "updateStatus: 更新後のpacket状態 - isFinished=${viewModel.packet.isFinished}, isExpired=${viewModel.packet.isExpired}, sowingDate=${viewModel.packet.sowingDate}")
+                    vibrateOnce()
+                } else {
+                    // 既存データで編集モードでない場合のみFirebaseに即座に保存
                     scope.launch {
                         viewModel.updateFinishedFlagAndRefresh(false) { result ->
                             scope.launch {
@@ -159,11 +198,6 @@ fun BasicInfoSection(
                             }
                         }
                     }
-                } else {
-                    // 新規作成時はローカルのみ更新
-                    viewModel.updateFinishedFlag(false)
-                    viewModel.onSowingDateChange("")
-                    vibrateOnce()
                 }
             }
         }
@@ -174,8 +208,26 @@ fun BasicInfoSection(
             .fillMaxWidth()
             .padding(vertical = 8.dp)
     ) {
-        // 種の状態を判定
-        val seedStatus = getSeedStatus(viewModel.packet)
+        // 種の状態を判定（編集モード時は選択した状態を優先）
+        val seedStatus = if ((viewModel.isEditMode || !viewModel.hasExistingData) && viewModel.selectedStatus != null) {
+            // 編集モード時は選択した状態を優先（ただし、finishedとexpiredはpacketの状態を優先）
+            val selected = viewModel.selectedStatus!!
+            android.util.Log.d("BasicInfoSection", "画面表示: 編集モード - selectedStatus=$selected を使用")
+            if (selected == "finished" && viewModel.packet.isFinished) {
+                "finished"
+            } else if (selected == "expired" && viewModel.packet.isExpired) {
+                "expired"
+            } else if (selected != "finished" && selected != "expired") {
+                // finished/expired以外の状態（urgent、thisMonth、normal）は選択した状態を使用
+                selected
+            } else {
+                // 選択した状態とpacketの状態が一致しない場合は、packetの状態を優先
+                getSeedStatus(viewModel.packet)
+            }
+        } else {
+            getSeedStatus(viewModel.packet)
+        }
+        android.util.Log.d("BasicInfoSection", "画面表示: seedStatus=$seedStatus, packet.isFinished=${viewModel.packet.isFinished}, packet.isExpired=${viewModel.packet.isExpired}, packet.sowingDate=${viewModel.packet.sowingDate}, selectedStatus=${viewModel.selectedStatus}")
         val statusIconResId = when (seedStatus) {
             "finished" -> R.drawable.seed  // まき終わり：seed
             "urgent" -> R.drawable.warning  // 期限間近：warning
@@ -466,8 +518,15 @@ fun BasicInfoSection(
                     
                     Button(
                         onClick = {
+                            android.util.Log.d("BasicInfoSection", "ボトムシート: 状態選択 - status=$status, name=$name")
                             updateStatus(status)
-                            showStatusBottomSheet = false
+                            // 状態更新後にボトムシートを閉じる（状態更新が反映されるように少し遅延）
+                            scope.launch {
+                                kotlinx.coroutines.delay(50) // 状態更新が反映されるまで少し待つ
+                                android.util.Log.d("BasicInfoSection", "ボトムシート: 閉じる前のpacket状態 - isFinished=${viewModel.packet.isFinished}, isExpired=${viewModel.packet.isExpired}, sowingDate=${viewModel.packet.sowingDate}")
+                                showStatusBottomSheet = false
+                                android.util.Log.d("BasicInfoSection", "ボトムシート: 閉じた後のpacket状態 - isFinished=${viewModel.packet.isFinished}, isExpired=${viewModel.packet.isExpired}, sowingDate=${viewModel.packet.sowingDate}")
+                            }
                         },
                         modifier = Modifier.fillMaxWidth(),
                         colors = ButtonDefaults.buttonColors(

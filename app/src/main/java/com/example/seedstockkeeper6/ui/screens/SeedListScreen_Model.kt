@@ -30,11 +30,19 @@ fun getSeedStatus(seed: SeedPacket): String {
     val currentMonth = currentDate.monthValue
     val currentYear = currentDate.year
     
+    android.util.Log.d("getSeedStatus", "状態判定開始 - isFinished=${seed.isFinished}, isExpired=${seed.isExpired}, sowingDate=${seed.sowingDate}, calendar.size=${seed.calendar.size}")
+    
     // 1. まき終わりの判定（最優先）
-    if (seed.isFinished) return "finished"
+    if (seed.isFinished) {
+        android.util.Log.d("getSeedStatus", "状態判定結果: finished (isFinished=true)")
+        return "finished"
+    }
     
     // 2. 期限切れの判定
-    if (seed.isExpired) return "expired"
+    if (seed.isExpired) {
+        android.util.Log.d("getSeedStatus", "状態判定結果: expired (isExpired=true)")
+        return "expired"
+    }
     
     // 3. 終了間近の判定
     val isUrgent = seed.calendar.any { entry ->
@@ -42,24 +50,40 @@ fun getSeedStatus(seed: SeedPacket): String {
         val sowingEndYear = com.example.seedstockkeeper6.utils.DateConversionUtils.getYearFromDate(entry.sowing_end_date)
         sowingEndMonth == currentMonth && sowingEndYear == currentYear
     }
-    if (isUrgent) return "urgent"
+    if (isUrgent) {
+        android.util.Log.d("getSeedStatus", "状態判定結果: urgent (終了間近)")
+        return "urgent"
+    }
     
-    // 4. 今月まける種の判定
+    // 4. 今月まける種の判定（年をまたぐ期間にも対応）
     val isThisMonth = seed.calendar.any { entry ->
         if (entry.sowing_start_date.isNotEmpty() && entry.sowing_end_date.isNotEmpty()) {
             try {
                 val startMonth = entry.sowing_start_date.split("-")[1].toInt()
                 val endMonth = entry.sowing_end_date.split("-")[1].toInt()
-                startMonth <= currentMonth && endMonth >= currentMonth
+                val startYear = entry.sowing_start_date.split("-")[0].toInt()
+                val endYear = entry.sowing_end_date.split("-")[0].toInt()
+                
+                // 年をまたぐ期間にも対応：現在の月・年が播種期間内にあるかチェック
+                val isInPeriod = (startYear < currentYear || (startYear == currentYear && startMonth <= currentMonth)) &&
+                                 (endYear > currentYear || (endYear == currentYear && endMonth >= currentMonth))
+                
+                android.util.Log.d("getSeedStatus", "今月まきどき判定 - startDate=${entry.sowing_start_date}, endDate=${entry.sowing_end_date}, currentDate=$currentDate, isInPeriod=$isInPeriod")
+                isInPeriod
             } catch (e: Exception) {
+                android.util.Log.e("getSeedStatus", "今月まきどき判定エラー: ${e.message}", e)
                 false
             }
         } else {
             false
         }
     }
-    if (isThisMonth) return "thisMonth"
+    if (isThisMonth) {
+        android.util.Log.d("getSeedStatus", "状態判定結果: thisMonth (今月まきどき)")
+        return "thisMonth"
+    }
     
+    android.util.Log.d("getSeedStatus", "状態判定結果: normal (通常)")
     return "normal"
 }
 
